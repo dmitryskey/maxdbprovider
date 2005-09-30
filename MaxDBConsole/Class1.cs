@@ -59,7 +59,7 @@ namespace MaxDBDataProvider
 			else
 				rc = SQLDBC.SQLDBC_Statement_executeASCII(stmt, "SELECT 'Hello World!' from DUAL");
 			
-			rc = SQLDBC.SQLDBC_Statement_executeASCII(stmt, "SELECT timeout FROM DOMAIN.CONNECTPARAMETERS");
+			//rc = SQLDBC.SQLDBC_Statement_executeASCII(stmt, "SELECT timeout FROM DOMAIN.CONNECTPARAMETERS");
 			
 			if(0 != rc) 
 			{
@@ -92,12 +92,12 @@ namespace MaxDBDataProvider
 			/*
 			 * Get a string value from the column.
 			 */
-			byte[] szString = new byte[sizeof(Int32)];
+			byte[] szString = new byte[30];
 			Int32 ind = 0;
 
 			fixed(byte *buffer = szString)
 			{
-				rc = SQLDBC.SQLDBC_ResultSet_getObject(result, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, new IntPtr(buffer), ref ind, sizeof(Int32), 0);
+				rc = SQLDBC.SQLDBC_ResultSet_getObject(result, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, new IntPtr(buffer), ref ind, 30, 0);
 				if(0 != rc) 
 				{
 					IntPtr herror = SQLDBC.SQLDBC_ResultSet_getError(result);
