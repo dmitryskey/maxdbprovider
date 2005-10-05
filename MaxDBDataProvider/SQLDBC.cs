@@ -105,7 +105,7 @@ namespace MaxDBDataProvider
 	public class SQLDBC
 	{
 		[DllImport("libsqldbc_c")]
-		public extern static IntPtr ClientRuntime_GetClientRuntime(byte[] errorText, Int32 errorTextSize);
+		public extern static IntPtr ClientRuntime_GetClientRuntime(byte[] errorText, int errorTextSize);
 
 		[DllImport("libsqldbc_c")]
 		public extern static IntPtr SQLDBC_Environment_new_SQLDBC_Environment(IntPtr runtime);
@@ -147,7 +147,7 @@ namespace MaxDBDataProvider
 		public extern static IntPtr SQLDBC_Connection_getError(IntPtr conn);
 
 		[DllImport("libsqldbc_c")]
-		public extern static IntPtr SQLDBC_Statement_getError(IntPtr stmt);
+		public extern static IntPtr SQLDBC_PreparedStatement_getError(IntPtr stmt);
 
 		[DllImport("libsqldbc_c")]
 		public extern static IntPtr SQLDBC_ResultSet_getError(IntPtr result);
@@ -159,16 +159,48 @@ namespace MaxDBDataProvider
 		public extern static IntPtr SQLDBC_Connection_createStatement(IntPtr conn);
 
 		[DllImport("libsqldbc_c")]
+		public extern static IntPtr SQLDBC_Connection_createPreparedStatement(IntPtr conn);
+
+		[DllImport("libsqldbc_c")]
 		public extern static int SQLDBC_Connection_releaseStatement(IntPtr conn, IntPtr stmt);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_Statement_executeNTS(IntPtr stmt, byte[] query , StringEncodingType type);
+		public extern static int SQLDBC_Connection_releasePreparedStatement(IntPtr conn, IntPtr stmt);
+
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_PreparedStatement_prepareNTS(IntPtr stmt, byte[] query , StringEncodingType type);
+
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_PreparedStatement_prepareASCII(IntPtr stmt, string query);
+
+		[DllImport("libsqldbc_c")]
+		public extern static IntPtr SQLDBC_PreparedStatement_getParameterMetaData(IntPtr stmt);
+ 
+		[DllImport("libsqldbc_c")]
+		public extern static short SQLDBC_ParameterMetaData_getParameterCount(IntPtr hdl);
+ 
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_ParameterMetaData_getParameterName(IntPtr hdl, short param, char[] buffer, StringEncodingType type,
+								int size, out int length);  
+
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_PreparedStatement_executeASCII(IntPtr stmt);
 
 		[DllImport("libsqldbc_c")]
 		public extern static int SQLDBC_Statement_executeASCII(IntPtr stmt, string query);
 
 		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_PreparedStatement_clearParameters(IntPtr stmt);
+
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_PreparedStatement_bindParameter(IntPtr stmt, ushort index, SQLDBC_HostType type, IntPtr paramAddr,  
+						ref int length, int size, int terminate);  
+
+		[DllImport("libsqldbc_c")]
 		public extern static IntPtr SQLDBC_Statement_getResultSet(IntPtr stmt);
+
+		[DllImport("libsqldbc_c")]
+		public extern static IntPtr SQLDBC_PreparedStatement_getResultSet(IntPtr stmt);
 
 		[DllImport("libsqldbc_c")]
 		public extern static void SQLDBC_ResultSet_close(IntPtr result);
@@ -189,6 +221,6 @@ namespace MaxDBDataProvider
 		public extern static byte SQLDBC_Connection_isUnicodeDatabase(IntPtr conn);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_ResultSet_getObject(IntPtr result, Int32 index, SQLDBC_HostType type, IntPtr paramAddr, ref Int32 length, Int32 size, int terminate); 
+		public extern static int SQLDBC_ResultSet_getObject(IntPtr result, int index, SQLDBC_HostType type, IntPtr paramAddr, ref int length, int size, int terminate); 
 	}
 }

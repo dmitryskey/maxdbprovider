@@ -110,7 +110,7 @@ namespace MaxDBDataProvider
 						return 0;
 
 					/*
-					 * Position the curors within the resultset by doing a fetch next call.
+					 * Position the cursor within the resultset by doing a fetch next call.
 					 */
 
 					if(SQLDBC.SQLDBC_ResultSet_next(result) != 0) 
@@ -148,9 +148,7 @@ namespace MaxDBDataProvider
 					return 0;
 			}
 
-			//??? use byte order property
-			
-			return timeout[0] + 0x100 * timeout[1] + 0x10000 * timeout[2] + 0x1000000 * timeout[3];
+			return BitConverter.ToInt32(timeout, 0);
 		}
 
 		public string Database
@@ -160,6 +158,14 @@ namespace MaxDBDataProvider
 				// Returns an initial database as set in the connection string.
 				// An empty string indicates not set - do not return a null reference.
 				return m_ConnArgs.dbname;
+			}
+		}
+
+		public Encoding DatabaseEncoding
+		{
+			get
+			{
+				return enc;
 			}
 		}
 
@@ -250,7 +256,7 @@ namespace MaxDBDataProvider
 			}
 
 			if (SQLDBC.SQLDBC_Connection_isUnicodeDatabase(connHandler) == 1)
-				enc = Encoding.Unicode;
+				enc = Encoding.Unicode;//little-endian unicode
 			else
 				enc = Encoding.ASCII;
 
