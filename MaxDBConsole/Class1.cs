@@ -18,6 +18,7 @@ namespace MaxDBDataProvider
 			//
 			// TODO: Add code to start application here
 			//
+
 			byte[] errorText = new byte[200];
 
 			IntPtr runtime = SQLDBC.ClientRuntime_GetClientRuntime(errorText, 200);
@@ -52,18 +53,51 @@ namespace MaxDBDataProvider
 			* Create a new statment object and execute it.
 			*/
 			
-			IntPtr stmt = SQLDBC.SQLDBC_Connection_createStatement(conn);
+			IntPtr stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(conn);
 
 			if (isUnicode)
-				rc = SQLDBC.SQLDBC_Statement_executeNTS(stmt, enc.GetBytes("SELECT 'Hello World (Привет)!' from DUAL"), StringEncodingType.UCS2Swapped);
+				rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(stmt, enc.GetBytes("SELECT 'Hello World (Привет)!' from DUAL"), StringEncodingType.UCS2Swapped);
 			else
-				rc = SQLDBC.SQLDBC_Statement_executeASCII(stmt, "SELECT 'Hello World!' from DUAL");
-			
-			//rc = SQLDBC.SQLDBC_Statement_executeASCII(stmt, "SELECT timeout FROM DOMAIN.CONNECTPARAMETERS");
+				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, "SELECT 'Hello World!' from DUAL WHERE :a=1 AND :b='123'");
 			
 			if(0 != rc) 
 			{
-				IntPtr herror = SQLDBC.SQLDBC_Statement_getError(stmt);
+				IntPtr herror = SQLDBC.SQLDBC_PreparedStatement_getError(stmt);
+				Console.Out.WriteLine("Execution failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
+				return;
+			}
+
+			IntPtr meta = SQLDBC.SQLDBC_PreparedStatement_getParameterMetaData(stmt);
+			for (short cnt = 1; cnt <= SQLDBC.SQLDBC_ParameterMetaData_getParameterCount(meta); cnt++)
+			{
+				int length;
+				char[] buffer = new char[100];
+				rc = SQLDBC.SQLDBC_ParameterMetaData_getParameterName(meta, cnt, buffer, StringEncodingType.UCS2Swapped, 100, out length);
+				buffer = new char[length + 1];
+				rc = SQLDBC.SQLDBC_ParameterMetaData_getParameterName(meta, cnt, buffer, StringEncodingType.UCS2Swapped, length + 1, out length);
+				int i =1;
+			}
+
+			rc = SQLDBC.SQLDBC_PreparedStatement_clearParameters(stmt);
+
+			int a = 1;
+			int a_len = sizeof(int);
+			int a_size = sizeof(int);
+			byte[] b = Encoding.ASCII.GetBytes("123");
+			int b_len = 3;
+			int b_size = 3;
+
+			fixed(byte *b_ref = b)
+			{
+				rc = SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, new IntPtr(&a), ref a_len, a_size, 0);
+				rc = SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, 2, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, new IntPtr(b_ref), ref b_len, b_size, 0);
+			}
+
+			rc = SQLDBC.SQLDBC_PreparedStatement_executeASCII(stmt);
+			
+			if(0 != rc) 
+			{
+				IntPtr herror = SQLDBC.SQLDBC_PreparedStatement_getError(stmt);
 				Console.Out.WriteLine("Execution failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
 				return;
 			}
@@ -71,10 +105,10 @@ namespace MaxDBDataProvider
 			/*
 			* Check if the SQL command return a resultset and get a result set object.
 			*/  
-			IntPtr result = SQLDBC.SQLDBC_Statement_getResultSet(stmt);
+			IntPtr result = SQLDBC.SQLDBC_PreparedStatement_getResultSet(stmt);
 			if(result == IntPtr.Zero) 
 			{
-				IntPtr herror = SQLDBC.SQLDBC_Statement_getError(stmt);
+				IntPtr herror = SQLDBC.SQLDBC_PreparedStatement_getError(stmt);
 				Console.Out.WriteLine("SQL command doesn't return a result set " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
 				return;
 			}
@@ -110,7 +144,7 @@ namespace MaxDBDataProvider
 
 			SQLDBC.SQLDBC_ResultSet_close(result);
 
-			rc = SQLDBC.SQLDBC_Connection_releaseStatement(conn, stmt);
+			rc = SQLDBC.SQLDBC_Connection_releasePreparedStatement(conn, stmt);
 
 			SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(conn_prop);
 
