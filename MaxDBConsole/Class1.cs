@@ -28,12 +28,10 @@ namespace MaxDBDataProvider
 			IntPtr conn = SQLDBC.SQLDBC_Environment_createConnection(Environment);
 			IntPtr conn_prop = SQLDBC.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
 
-			int rc = SQLDBC.SQLDBC_Connection_connectASCII(conn, "localhost", "TESTDB", "DBA", "123", conn_prop);
-
-			if(0 != rc) 
+			if(SQLDBC.SQLDBC_Connection_connectASCII(conn, "localhost", "TESTDB", "DBA", "123", conn_prop) != SQLDBC_Retcode.SQLDBC_OK) 
 			{
-				IntPtr herror = SQLDBC.SQLDBC_Connection_getError(conn);
-				Console.Out.WriteLine("Connecting to the database failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
+				Console.Out.WriteLine("Connecting to the database failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+					SQLDBC.SQLDBC_Connection_getError(conn)));
 				return;
 			}
 
@@ -47,7 +45,7 @@ namespace MaxDBDataProvider
 
 			int ddd = SQLDBC.SQLDBC_Connection_getTransactionIsolation(conn);
 
-			string prop = SQLDBC.SQLDBC_ConnectProperties_getProperty(conn_prop, Encoding.ASCII.GetBytes("APPVERSION\0"), Encoding.ASCII.GetBytes("0\0"));
+			string prop = SQLDBC.SQLDBC_ConnectProperties_getProperty(conn_prop, Encoding.ASCII.GetBytes("DATE_TIME-FORMAT\0"), Encoding.ASCII.GetBytes("0\0"));
 
 			/*
 			* Create a new statment object and execute it.
@@ -55,15 +53,17 @@ namespace MaxDBDataProvider
 			
 			IntPtr stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(conn);
 
+			SQLDBC_Retcode rc;
+
 			if (isUnicode)
 				rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(stmt, enc.GetBytes("SELECT 'Hello World (Привет)!' from DUAL"), StringEncodingType.UCS2Swapped);
 			else
-				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, "SELECT 'Hello World!' from DUAL WHERE :a=1 AND :b='123'");
+				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, "SELECT DATE_FIELD from TEST WHERE DATE_FIELD = :field");
 			
-			if(0 != rc) 
+			if(rc != SQLDBC_Retcode.SQLDBC_OK) 
 			{
-				IntPtr herror = SQLDBC.SQLDBC_PreparedStatement_getError(stmt);
-				Console.Out.WriteLine("Execution failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
+				Console.Out.WriteLine("Execution failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+					SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 				return;
 			}
 
@@ -80,25 +80,27 @@ namespace MaxDBDataProvider
 
 			rc = SQLDBC.SQLDBC_PreparedStatement_clearParameters(stmt);
 
-			int a = 1;
-			int a_len = sizeof(int);
-			int a_size = sizeof(int);
-			byte[] b = Encoding.ASCII.GetBytes("123");
-			int b_len = 3;
-			int b_size = 3;
+			DateTime dt = new DateTime(1999, 2, 18);
+			byte[] b = new byte[6];//Encoding.ASCII.GetBytes("1999-02-18");
+			b[0] = (byte)(dt.Year % 0x100);
+			b[1] = (byte)(dt.Year / 0x100);
+			b[2] = (byte)(dt.Month % 0x100);
+			b[3] = (byte)(dt.Month / 0x100);
+			b[4] = (byte)(dt.Day % 0x100);
+			b[5] = (byte)(dt.Day / 0x100);
+			int b_len = b.Length;
 
 			fixed(byte *b_ref = b)
 			{
-				rc = SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, new IntPtr(&a), ref a_len, a_size, 0);
-				rc = SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, 2, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, new IntPtr(b_ref), ref b_len, b_size, 0);
+				rc = SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, new IntPtr(b_ref), ref b_len, b.Length, 0);
 			}
 
 			rc = SQLDBC.SQLDBC_PreparedStatement_executeASCII(stmt);
 			
-			if(0 != rc) 
+			if(rc != SQLDBC_Retcode.SQLDBC_OK) 
 			{
-				IntPtr herror = SQLDBC.SQLDBC_PreparedStatement_getError(stmt);
-				Console.Out.WriteLine("Execution failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
+				Console.Out.WriteLine("Execution failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+					SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 				return;
 			}
 
@@ -108,19 +110,18 @@ namespace MaxDBDataProvider
 			IntPtr result = SQLDBC.SQLDBC_PreparedStatement_getResultSet(stmt);
 			if(result == IntPtr.Zero) 
 			{
-				IntPtr herror = SQLDBC.SQLDBC_PreparedStatement_getError(stmt);
-				Console.Out.WriteLine("SQL command doesn't return a result set " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
+				Console.Out.WriteLine("SQL command doesn't return a result set " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+					SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 				return;
 			}
 			/*
 			 * Position the curors within the resultset by doing a fetch next call.
 			 */
 
-			rc = SQLDBC.SQLDBC_ResultSet_next(result);
-			if(0 != rc) 
+			if(SQLDBC.SQLDBC_ResultSet_next(result) != SQLDBC_Retcode.SQLDBC_OK) 
 			{
-				IntPtr herror = SQLDBC.SQLDBC_ResultSet_getError(result);
-				Console.Out.WriteLine("Error fetching data " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
+				Console.Out.WriteLine("Error fetching data " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+					SQLDBC.SQLDBC_ResultSet_getError(result)));
 				return;
 			}
 			/*
@@ -131,11 +132,9 @@ namespace MaxDBDataProvider
 
 			fixed(byte *buffer = szString)
 			{
-				rc = SQLDBC.SQLDBC_ResultSet_getObject(result, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, new IntPtr(buffer), ref ind, 30, 0);
-				if(0 != rc) 
+				if(SQLDBC.SQLDBC_ResultSet_getObject(result, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, new IntPtr(buffer), ref ind, 30, 0) != SQLDBC_Retcode.SQLDBC_OK) 
 				{
-					IntPtr herror = SQLDBC.SQLDBC_ResultSet_getError(result);
-					Console.Out.WriteLine("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
+					Console.Out.WriteLine("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(result)));
 					return;
 				}
 
@@ -144,14 +143,13 @@ namespace MaxDBDataProvider
 
 			SQLDBC.SQLDBC_ResultSet_close(result);
 
-			rc = SQLDBC.SQLDBC_Connection_releasePreparedStatement(conn, stmt);
+			SQLDBC.SQLDBC_Connection_releasePreparedStatement(conn, stmt);
 
 			SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(conn_prop);
 
 			rc = SQLDBC.SQLDBC_Connection_close(conn);
 
 			SQLDBC.SQLDBC_Environment_delete_SQLDBC_Environment(Environment);
-			rc=1;
 		}
 	}
 }
