@@ -44,12 +44,9 @@ namespace MaxDBDataProvider
 			 * not provide an implementation, it should never be 
 			 * a no-op because data corruption could result.
 			 */
-			int rc = SQLDBC.SQLDBC_Connection_commit(conn.connHandler);
-			if(rc != 0) 
-			{
-				IntPtr herror = SQLDBC.SQLDBC_Connection_getError(conn.connHandler);
-				throw new MaxDBException("COMMIT failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
-			}
+			if(SQLDBC.SQLDBC_Connection_commit(conn.connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
+				throw new MaxDBException("COMMIT failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+					SQLDBC.SQLDBC_Connection_getError(conn.connHandler)));
 		}
 
 		public void Rollback()
@@ -59,12 +56,9 @@ namespace MaxDBDataProvider
 			 * not provide an implementation, it should never be
 			 * a no-op because data corruption could result.
 			 */
-			int rc = SQLDBC.SQLDBC_Connection_rollback(conn.connHandler);
-			if(rc != 0) 
-			{
-				IntPtr herror = SQLDBC.SQLDBC_Connection_getError(conn.connHandler);
-				throw new MaxDBException("ROLLBACK failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
-			}
+			if(SQLDBC.SQLDBC_Connection_rollback(conn.connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
+				throw new MaxDBException("ROLLBACK failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+					SQLDBC.SQLDBC_Connection_getError(conn.connHandler)));
 		}
 
 		public IDbConnection Connection

@@ -62,7 +62,7 @@ namespace MaxDBDataProvider
 				throw new ArgumentException("parameter must be named");
 		}
 
-		public int Add(string parameterName, DbType type)
+		public int Add(string parameterName, MaxDBType type)
 		{
 			return Add(new MaxDBParameter(parameterName, type));
 		}

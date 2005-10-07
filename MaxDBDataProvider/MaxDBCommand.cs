@@ -138,43 +138,82 @@ namespace MaxDBDataProvider
       
 			// There must be a valid and open connection.
 			if (m_connection == null || m_connection.State != ConnectionState.Open)
-				throw new MaxDBException("Connection must valid and open");
+				throw new MaxDBException("Connection must valid and open.");
 
 			// Execute the command.
 			IntPtr stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.connHandler);
 
-			int rc;
+			SQLDBC_Retcode rc;
 
 			if (m_connection.DatabaseEncoding is UnicodeEncoding)
 				rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(stmt, m_connection.DatabaseEncoding.GetBytes(m_sCmdText), StringEncodingType.UCS2Swapped);
 			else
 				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, m_sCmdText);
 			
-			if(0 != rc) 
-			{
-				IntPtr herror = SQLDBC.SQLDBC_PreparedStatement_getError(stmt);
-				throw new MaxDBException("Execution failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
-			}
+			if(rc != SQLDBC_Retcode.SQLDBC_OK) 
+				throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+					SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 
-			foreach (MaxDBParameter param in m_parameters)
-			{
-				switch(param.m_dbType)
-				{
-					case MaxDBType.Boolean:
-						break;//???
-				}
-			}
+			BindParameters(stmt, m_parameters);
 
-			if(SQLDBC.SQLDBC_PreparedStatement_executeASCII(stmt) != 0) 
-			{
-				IntPtr herror = SQLDBC.SQLDBC_PreparedStatement_getError(stmt);
-				throw new MaxDBException("Execution failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
-			}
+			rc = SQLDBC.SQLDBC_PreparedStatement_executeASCII(stmt);
+
+			if(rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND) 
+				throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 
 			SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.connHandler, stmt);
 
 			// use SQLDBC_PreparedStatement_getRowsAffected???
 			return 0;
+		}
+
+		private unsafe void BindParameters(IntPtr stmt, MaxDBParameterCollection parameters)
+		{
+			for(ushort i = 1; i <= parameters.Count; i++)
+			{
+				MaxDBParameter param = (MaxDBParameter)parameters[i];
+				int val_length;
+				switch(param.m_dbType)
+				{
+					case MaxDBType.Boolean:
+						byte byte_val = (byte)((bool)param.Value ? 1 : 0);
+						val_length = sizeof(byte);
+						if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_UINT1, new IntPtr(&byte_val), 
+							ref val_length, sizeof(byte), 0) != SQLDBC_Retcode.SQLDBC_OK) 
+							throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+								SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+						break;
+					case MaxDBType.CharA:case MaxDBType.CharB:
+						fixed (byte* byte_ref = Encoding.ASCII.GetBytes((string)param.Value))
+						{
+							val_length = ((string)param.Value).Length;
+							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, new IntPtr(byte_ref), 
+									ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+						}
+						break;
+					case MaxDBType.Date:
+						DateTime dt = (DateTime)param.Value;
+						byte[] b = new byte[6];//ODBC date format
+						b[0] = (byte)(dt.Year % 0x100);
+						b[1] = (byte)(dt.Year / 0x100);
+						b[2] = (byte)(dt.Month % 0x100);
+						b[3] = (byte)(dt.Month / 0x100);
+						b[4] = (byte)(dt.Day % 0x100);
+						b[5] = (byte)(dt.Day / 0x100);
+						val_length = b.Length;
+						fixed (byte* byte_ref = b)
+						{
+							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, new IntPtr(byte_ref), 
+								ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+						}
+						break;
+					
+				}
+			}
 		}
 
 		public IDataReader ExecuteReader()

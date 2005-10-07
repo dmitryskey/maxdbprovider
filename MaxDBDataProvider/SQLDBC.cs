@@ -3,6 +3,19 @@ using System.Runtime.InteropServices;
 
 namespace MaxDBDataProvider
 {
+	public enum SQLDBC_Retcode 
+	{
+		SQLDBC_INVALID_OBJECT           =-10909,    /*!< Application tries to use an invalid object reference. */
+		SQLDBC_OK                       = 0,     /*!< Function call successful. */
+		SQLDBC_NOT_OK                   = 1,     /*!< Function call not successful. Further information 
+                                                can be found in the corresponding error object. */
+		SQLDBC_DATA_TRUNC               =2,      /*!< Data was truncated during the call. */
+		SQLDBC_OVERFLOW                 =3,      /*!< Signalizes a numeric overflow. */
+		SQLDBC_SUCCESS_WITH_INFO        =4,      /*!< The method succeeded with warnings. */
+		SQLDBC_NO_DATA_FOUND            =100,    /*!< Data was not found. */
+		SQLDBC_NEED_DATA                =99      /*!< Late binding, data is needed for execution. */
+	}
+
 	public enum StringEncodingType 
 	{
 		Unknown     = 0,
@@ -126,22 +139,22 @@ namespace MaxDBDataProvider
 		public extern static int SQLDBC_Connection_getTransactionIsolation(IntPtr conn);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_Connection_setTransactionIsolation(IntPtr conn, int level);
+		public extern static SQLDBC_Retcode SQLDBC_Connection_setTransactionIsolation(IntPtr conn, int level);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_Connection_commit(IntPtr conn);
+		public extern static SQLDBC_Retcode SQLDBC_Connection_commit(IntPtr conn);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_Connection_rollback(IntPtr conn);
+		public extern static SQLDBC_Retcode SQLDBC_Connection_rollback(IntPtr conn);
 
 		[DllImport("libsqldbc_c")]
 		public extern static void SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(IntPtr prop); 
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_Connection_connectASCII(IntPtr conn, string host, string dbname, string username, string password, IntPtr conn_prop);
+		public extern static SQLDBC_Retcode SQLDBC_Connection_connectASCII(IntPtr conn, string host, string dbname, string username, string password, IntPtr conn_prop);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_Connection_close(IntPtr conn);
+		public extern static SQLDBC_Retcode SQLDBC_Connection_close(IntPtr conn);
 	
 		[DllImport("libsqldbc_c")]
 		public extern static IntPtr SQLDBC_Connection_getError(IntPtr conn);
@@ -162,16 +175,16 @@ namespace MaxDBDataProvider
 		public extern static IntPtr SQLDBC_Connection_createPreparedStatement(IntPtr conn);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_Connection_releaseStatement(IntPtr conn, IntPtr stmt);
+		public extern static void SQLDBC_Connection_releaseStatement(IntPtr conn, IntPtr stmt);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_Connection_releasePreparedStatement(IntPtr conn, IntPtr stmt);
+		public extern static void SQLDBC_Connection_releasePreparedStatement(IntPtr conn, IntPtr stmt);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_PreparedStatement_prepareNTS(IntPtr stmt, byte[] query , StringEncodingType type);
+		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareNTS(IntPtr stmt, byte[] query , StringEncodingType type);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_PreparedStatement_prepareASCII(IntPtr stmt, string query);
+		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareASCII(IntPtr stmt, string query);
 
 		[DllImport("libsqldbc_c")]
 		public extern static IntPtr SQLDBC_PreparedStatement_getParameterMetaData(IntPtr stmt);
@@ -180,20 +193,20 @@ namespace MaxDBDataProvider
 		public extern static short SQLDBC_ParameterMetaData_getParameterCount(IntPtr hdl);
  
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_ParameterMetaData_getParameterName(IntPtr hdl, short param, char[] buffer, StringEncodingType type,
-								int size, out int length);  
+		public extern static SQLDBC_Retcode SQLDBC_ParameterMetaData_getParameterName(IntPtr hdl, short param, char[] buffer, 
+					StringEncodingType type, int size, out int length);  
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_PreparedStatement_executeASCII(IntPtr stmt);
+		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_executeASCII(IntPtr stmt);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_Statement_executeASCII(IntPtr stmt, string query);
+		public extern static SQLDBC_Retcode SQLDBC_Statement_executeASCII(IntPtr stmt, string query);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_PreparedStatement_clearParameters(IntPtr stmt);
+		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_clearParameters(IntPtr stmt);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_PreparedStatement_bindParameter(IntPtr stmt, ushort index, SQLDBC_HostType type, IntPtr paramAddr,  
+		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_bindParameter(IntPtr stmt, ushort index, SQLDBC_HostType type, IntPtr paramAddr,  
 						ref int length, int size, int terminate);  
 
 		[DllImport("libsqldbc_c")]
@@ -206,21 +219,22 @@ namespace MaxDBDataProvider
 		public extern static void SQLDBC_ResultSet_close(IntPtr result);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_ResultSet_next(IntPtr result);
+		public extern static SQLDBC_Retcode SQLDBC_ResultSet_next(IntPtr result);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_ResultSet_prev(IntPtr result);
+		public extern static SQLDBC_Retcode SQLDBC_ResultSet_prev(IntPtr result);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_ResultSet_first(IntPtr result);
+		public extern static SQLDBC_Retcode SQLDBC_ResultSet_first(IntPtr result);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_ResultSet_last(IntPtr result);
+		public extern static SQLDBC_Retcode SQLDBC_ResultSet_last(IntPtr result);
 
 		[DllImport("libsqldbc_c")]
 		public extern static byte SQLDBC_Connection_isUnicodeDatabase(IntPtr conn);
 
 		[DllImport("libsqldbc_c")]
-		public extern static int SQLDBC_ResultSet_getObject(IntPtr result, int index, SQLDBC_HostType type, IntPtr paramAddr, ref int length, int size, int terminate); 
+		public extern static SQLDBC_Retcode SQLDBC_ResultSet_getObject(IntPtr result, int index, SQLDBC_HostType type, IntPtr paramAddr, 
+						ref int length, int size, int terminate); 
 	}
 }

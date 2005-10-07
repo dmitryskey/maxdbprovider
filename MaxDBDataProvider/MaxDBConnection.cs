@@ -206,12 +206,10 @@ namespace MaxDBDataProvider
 					break;
 			}
 
-			int rc = SQLDBC.SQLDBC_Connection_setTransactionIsolation(connHandler, MaxDBLevel);
-			if(rc != 0) 
-			{
-				IntPtr herror = SQLDBC.SQLDBC_Connection_getError(connHandler);
-				throw new MaxDBException("Can't set isolation level " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
-			}
+			if(SQLDBC.SQLDBC_Connection_setTransactionIsolation(connHandler, MaxDBLevel) != SQLDBC_Retcode.SQLDBC_OK) 
+				throw new MaxDBException("Can't set isolation level: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+					SQLDBC.SQLDBC_Connection_getError(connHandler)));
+
 			return new MaxDBTransaction(this);
 		}
 
@@ -247,13 +245,10 @@ namespace MaxDBDataProvider
 			connHandler = SQLDBC.SQLDBC_Environment_createConnection(envHandler);
 			connPropHandler = SQLDBC.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
 
-			int rc = SQLDBC.SQLDBC_Connection_connectASCII(connHandler, m_ConnArgs.host, m_ConnArgs.dbname, m_ConnArgs.username, m_ConnArgs.password, connPropHandler);
-
-			if(rc != 0) 
-			{
-				IntPtr herror = SQLDBC.SQLDBC_Connection_getError(connHandler);
-				throw new MaxDBException("Connecting to the database failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(herror));
-			}
+			if(SQLDBC.SQLDBC_Connection_connectASCII(connHandler, m_ConnArgs.host, m_ConnArgs.dbname, m_ConnArgs.username, 
+				m_ConnArgs.password, connPropHandler) != SQLDBC_Retcode.SQLDBC_OK) 
+				throw new MaxDBException("Connecting to the database failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+					SQLDBC.SQLDBC_Connection_getError(connHandler)));
 
 			if (SQLDBC.SQLDBC_Connection_isUnicodeDatabase(connHandler) == 1)
 				enc = Encoding.Unicode;//little-endian unicode
@@ -285,7 +280,7 @@ namespace MaxDBDataProvider
 		public IDbCommand CreateCommand()
 		{
 			// Return a new instance of a command object.
-			return null;//new TemplateCommand();
+			return new MaxDBCommand();
 		}
 
 		void IDisposable.Dispose() 
