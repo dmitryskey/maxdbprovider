@@ -111,6 +111,16 @@ namespace MaxDBDataProvider
 		SQLDBC_HOSTTYPE_MAX = SQLDBC_HOSTTYPE_USERDEFINED  
 	}
 
+	public struct TIMESTAMP_STRUCT 
+	{
+		public short year; 
+		public short month; 
+		public short day; 
+		public short hour; 
+		public short minute; 
+		public short second; 
+		public uint fraction;
+	}
 
 	/// <summary>
 	/// Summary description for SQLDBC.
