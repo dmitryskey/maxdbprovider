@@ -43,9 +43,9 @@ namespace MaxDBDataProvider
 			else
 				enc = Encoding.ASCII;
 
-			int ddd = SQLDBC.SQLDBC_Connection_getTransactionIsolation(conn);
+			//int ddd = SQLDBC.SQLDBC_Connection_getTransactionIsolation(conn);
 
-			string prop = SQLDBC.SQLDBC_ConnectProperties_getProperty(conn_prop, Encoding.ASCII.GetBytes("DATE_TIME-FORMAT\0"), Encoding.ASCII.GetBytes("0\0"));
+			//string prop = SQLDBC.SQLDBC_ConnectProperties_getProperty(conn_prop, Encoding.ASCII.GetBytes("DATE_TIME-FORMAT\0"), Encoding.ASCII.GetBytes("0\0"));
 
 			/*
 			* Create a new statment object and execute it.
@@ -58,7 +58,7 @@ namespace MaxDBDataProvider
 			if (isUnicode)
 				rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(stmt, enc.GetBytes("SELECT 'Hello World (Привет)!' from DUAL"), StringEncodingType.UCS2Swapped);
 			else
-				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, "SELECT TIMESTAMP_FIELD from TEST WHERE TIMESTAMP_FIELD = :field");
+				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, "SELECT CHARU_FIELD from TEST WHERE CHARU_FIELD = :field");
 			
 			if(rc != SQLDBC_Retcode.SQLDBC_OK) 
 			{
@@ -75,28 +75,20 @@ namespace MaxDBDataProvider
 				rc = SQLDBC.SQLDBC_ParameterMetaData_getParameterName(meta, cnt, buffer, StringEncodingType.UCS2Swapped, 100, out length);
 				buffer = new char[length + 1];
 				rc = SQLDBC.SQLDBC_ParameterMetaData_getParameterName(meta, cnt, buffer, StringEncodingType.UCS2Swapped, length + 1, out length);
-				int i =1;
+				//int i =1;
 			}
 
 			rc = SQLDBC.SQLDBC_PreparedStatement_clearParameters(stmt);
 
-			double d = 123.456;
-			DateTime dt = new DateTime(1999, 2, 18, 12, 01, 02, 123);
-			TIMESTAMP_STRUCT b = new TIMESTAMP_STRUCT();
-			b.year = (short)dt.Year;
-			b.month = (short)dt.Month;
-			b.second = (short)dt.Second;
-		    b.hour = (short)(dt.Hour % 0x10000);
-			b.minute = (short)(dt.Minute % 0x10000);
-			b.second = (short)(dt.Second % 0x10000);
-			b.fraction = (uint) dt.Millisecond * 1000000;
+			byte[] b = Encoding.Unicode.GetBytes("Hello");
  
-			int b_len = sizeof(TIMESTAMP_STRUCT);
-
-			rc = SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, new IntPtr(&b), ref b_len, b_len, 0);
-
-			rc = SQLDBC.SQLDBC_PreparedStatement_executeASCII(stmt);
+			int b_len = b.Length * sizeof(byte);
 			
+			fixed (byte *b_ref = b)
+			{
+				rc = SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED, new IntPtr(b_ref), ref b_len, b_len, 0);
+				rc = SQLDBC.SQLDBC_PreparedStatement_executeASCII(stmt);
+			}			
 			if(rc != SQLDBC_Retcode.SQLDBC_OK) 
 			{
 				Console.Out.WriteLine("Execution failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
@@ -132,7 +124,7 @@ namespace MaxDBDataProvider
 
 			fixed(byte *buffer = szString)
 			{
-				if(SQLDBC.SQLDBC_ResultSet_getObject(result, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, new IntPtr(buffer), ref ind, 30, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+				if(SQLDBC.SQLDBC_ResultSet_getObject(result, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, new IntPtr(buffer), ref ind, 30, 0) != SQLDBC_Retcode.SQLDBC_OK) 
 				{
 					Console.Out.WriteLine("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(result)));
 					return;
