@@ -144,7 +144,8 @@ namespace MaxDBDataProvider
 
 			fixed(byte *buffer = timeout)
 			{
-				if(SQLDBC.SQLDBC_ResultSet_getObject(result, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, new IntPtr(buffer), ref ind, sizeof(Int32), 0) != 0) 
+				if(SQLDBC.SQLDBC_ResultSet_getObject(result, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, 
+					new IntPtr(buffer), ref ind, sizeof(Int32), 0) != 0) 
 					return 0;
 			}
 

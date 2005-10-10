@@ -145,114 +145,205 @@ namespace MaxDBDataProvider
 
 			SQLDBC_Retcode rc;
 
-			if (m_connection.DatabaseEncoding is UnicodeEncoding)
-				rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(stmt, m_connection.DatabaseEncoding.GetBytes(m_sCmdText), StringEncodingType.UCS2Swapped);
-			else
-				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, m_sCmdText);
+			try
+			{
+				if (m_connection.DatabaseEncoding is UnicodeEncoding)
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(stmt, m_connection.DatabaseEncoding.GetBytes(m_sCmdText), StringEncodingType.UCS2Swapped);
+				else
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, m_sCmdText);
 			
-			if(rc != SQLDBC_Retcode.SQLDBC_OK) 
-				throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-					SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+				if(rc != SQLDBC_Retcode.SQLDBC_OK) 
+					throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+						SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 
-			BindParameters(stmt, m_parameters);
-
-			rc = SQLDBC.SQLDBC_PreparedStatement_executeASCII(stmt);
-
-			if(rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND) 
-				throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
-
-			SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.connHandler, stmt);
+				BindAndExecute(stmt, m_parameters);
+			}
+			catch
+			{
+				throw;
+			}
+			finally
+			{
+				SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.connHandler, stmt);
+			}
 
 			// use SQLDBC_PreparedStatement_getRowsAffected???
 			return 0;
 		}
 
-		private unsafe void BindParameters(IntPtr stmt, MaxDBParameterCollection parameters)
+		private unsafe void BindAndExecute(IntPtr stmt, MaxDBParameterCollection parameters)
 		{
+			int buffer_length = 0;
+			int buffer_offset = 0;
+
 			for(ushort i = 1; i <= parameters.Count; i++)
 			{
 				MaxDBParameter param = (MaxDBParameter)parameters[i];
-				int val_length;
 				switch(param.m_dbType)
 				{
 					case MaxDBType.Boolean:
-						byte byte_val = (byte)((bool)param.Value ? 1 : 0);
-						val_length = sizeof(byte);
-						if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_UINT1, new IntPtr(&byte_val), 
-							ref val_length, sizeof(byte), 0) != SQLDBC_Retcode.SQLDBC_OK) 
-							throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-								SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+						buffer_length += sizeof(byte);
 						break;
 					case MaxDBType.CharA: case MaxDBType.CharB: case MaxDBType.StrA: case MaxDBType.StrB: case MaxDBType.VarCharA: case MaxDBType.VarCharB:
-						fixed (byte* byte_ref = Encoding.ASCII.GetBytes((string)param.Value))
-						{
-							val_length = ((string)param.Value).Length;
-							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, new IntPtr(byte_ref), 
-									ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
-						}
+						buffer_length += ((string)param.Value).Length * sizeof(byte);
 						break;
-					case MaxDBType.Date:
-						DateTime dt = (DateTime)param.Value;
-						//ODBC date format
-						short[] dt_arr = new short[3]{(short)(dt.Year % 0x10000), (short)(dt.Month % 0x10000), (short)(dt.Day % 0x10000)};
-						val_length = dt_arr.Length * sizeof(short);
-						fixed (short* short_ref = dt_arr)
-						{
-							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, new IntPtr(short_ref), 
-								ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
-						}
+					case MaxDBType.Date: case MaxDBType.Time:
+						buffer_length += 3 * sizeof(ushort);
 						break;
 					case MaxDBType.Fixed: case MaxDBType.Float: case MaxDBType.VFloat:
-						byte[] double_val = BitConverter.GetBytes((double)param.Value);
-						val_length = double_val.Length;
-						fixed (byte* byte_ref = double_val)
-						{
-							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_DOUBLE, new IntPtr(byte_ref), 
-								ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
-						}
+						buffer_length += sizeof(double);
 						break;
 					case MaxDBType.Integer:
-						byte[] integer_val = BitConverter.GetBytes((int)param.Value);
-						val_length = integer_val.Length;
-						fixed (byte* byte_ref = integer_val)
-						{
-							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, new IntPtr(byte_ref), 
-								ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
-						}
+						buffer_length += sizeof(int);
 						break;
 					case MaxDBType.SmallInt:
-						byte[] short_val = BitConverter.GetBytes((short)param.Value);
-						val_length = short_val.Length;
-						fixed (byte* byte_ref = short_val)
-						{
-							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT2, new IntPtr(byte_ref), 
-								ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
-						}
+						buffer_length += sizeof(short);
 						break;
-					case MaxDBType.Time:
-						DateTime tm = (DateTime)param.Value;
-						//ODBC time format
-						short[] tm_arr = new short[3]{(short)(tm.Hour % 0x10000), (short)(tm.Minute % 0x10000), (short)(tm.Second % 0x10000)};
-						val_length = tm_arr.Length * sizeof(short);
-						fixed (short* short_ref = tm_arr)
-						{
-							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, new IntPtr(short_ref), 
-								ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
-						}
+					case MaxDBType.TimeStamp:
+						buffer_length += (6 + sizeof(uint) / sizeof(ushort)) * sizeof(ushort);
+						break;
+					case MaxDBType.Unicode: case MaxDBType.StrUni: case MaxDBType.VarCharUni:
+						buffer_length += ((string)param.Value).Length * sizeof(char);
 						break;
 				}
+			}
+
+			byte[] param_buffer = new byte[buffer_length];
+
+			fixed(byte *buffer_ptr = param_buffer)
+			{
+
+				for(ushort i = 1; i <= parameters.Count; i++)
+				{
+					MaxDBParameter param = (MaxDBParameter)parameters[i];
+					int val_length;
+					switch(param.m_dbType)
+					{
+						case MaxDBType.Boolean:
+							param_buffer[buffer_offset] = (byte)((bool)param.Value ? 1 : 0);
+							val_length = sizeof(byte);
+							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_UINT1, 
+									new IntPtr(buffer_ptr + buffer_offset), ref val_length, sizeof(byte), 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.CharA: case MaxDBType.CharB: case MaxDBType.StrA: case MaxDBType.StrB: case MaxDBType.VarCharA: case MaxDBType.VarCharB:
+							val_length = ((string)param.Value).Length * sizeof(byte);
+							Array.Copy(Encoding.ASCII.GetBytes((string)param.Value), 0 , param_buffer, buffer_offset, val_length); 
+							
+							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, 
+									new IntPtr(buffer_ptr + buffer_offset),	ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.Date:
+							DateTime dt = (DateTime)param.Value;
+							//ODBC date format
+							short[] dt_array = new short[3]{(short)(dt.Year % 0x10000), (short)(dt.Month % 0x10000), (short)(dt.Day % 0x10000)};
+							val_length = dt_array.Length * sizeof(short);
+							
+							for(int idx = 0; idx < dt_array.Length; idx++)
+								Array.Copy(BitConverter.GetBytes(dt_array[idx]), 0, param_buffer, buffer_offset, sizeof(short));
+	
+							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, 
+									new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+							
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.Fixed: case MaxDBType.Float: case MaxDBType.VFloat:
+							Array.Copy(BitConverter.GetBytes((double)param.Value), 0, param_buffer, buffer_offset, sizeof(double));
+							val_length = sizeof(double);
+							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_DOUBLE, 
+									new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+										SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.Integer:
+							Array.Copy(BitConverter.GetBytes((int)param.Value), 0, param_buffer, buffer_offset, sizeof(int));
+							val_length = sizeof(int);
+							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, 
+									new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+										SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.SmallInt:
+							Array.Copy(BitConverter.GetBytes((short)param.Value), 0, param_buffer, buffer_offset, sizeof(short));
+							val_length = sizeof(short);
+							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT2, 
+									new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+										SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.Time:
+							DateTime tm = (DateTime)param.Value;
+							//ODBC time format
+							short[] tm_array = new short[3]{(short)(tm.Hour % 0x10000), (short)(tm.Minute % 0x10000), (short)(tm.Second % 0x10000)};
+							val_length = tm_array.Length * sizeof(short);
+
+							for(int idx = 0; idx < tm_array.Length; idx++)
+								Array.Copy(BitConverter.GetBytes(tm_array[idx]), 0, param_buffer, buffer_offset, sizeof(short));
+
+							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, 
+									new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+										SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.TimeStamp:
+							DateTime ts = (DateTime)param.Value;
+							//ODBC timestamp format
+							ushort[] ts_array = new ushort[6 + sizeof(uint) / sizeof(ushort)];
+							ts_array[0] = (ushort)(ts.Year % 0x10000);
+							ts_array[1] = (ushort)(ts.Month % 0x10000);
+							ts_array[2] = (ushort)(ts.Day % 0x10000);
+							ts_array[3] = (ushort)(ts.Hour % 0x10000);
+							ts_array[4] = (ushort)(ts.Minute % 0x10000);
+							ts_array[5] = (ushort)(ts.Second % 0x10000);
+							uint fraction = (uint) ts.Millisecond * 1000000;
+							if (BitConverter.IsLittleEndian)
+							{
+								ts_array[6] = (ushort)(fraction % 0x10000);
+								ts_array[7] = (ushort)(fraction / 0x10000);
+							}
+							else
+							{
+								ts_array[6] = (ushort)(fraction / 0x10000);
+								ts_array[7] = (ushort)(fraction % 0x10000);
+							}
+							val_length = ts_array.Length * sizeof(ushort);
+
+							for(int idx = 0; idx < ts_array.Length; idx++)
+								Array.Copy(BitConverter.GetBytes(ts_array[idx]), 0, param_buffer, buffer_offset, sizeof(ushort));
+
+							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, 
+									new IntPtr(buffer_ptr + buffer_offset),	ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+										SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.Unicode: case MaxDBType.StrUni: case MaxDBType.VarCharUni:
+							val_length = ((string)param.Value).Length * sizeof(char);
+							Array.Copy(Encoding.Unicode.GetBytes((string)param.Value), 0, param_buffer, buffer_offset, val_length);
+							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED, 
+									new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+										SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+							buffer_offset += val_length;
+							break;
+					}
+				}
+
+				SQLDBC_Retcode rc = SQLDBC.SQLDBC_PreparedStatement_executeASCII(stmt);
+
+				if(rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND) 
+					throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 			}
 		}
 
