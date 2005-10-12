@@ -118,9 +118,7 @@ namespace MaxDBDataProvider
 		 ****/
 		public void Cancel()
 		{
-			// The sample does not support canceling a command
-			// once it has been initiated.
-			throw new NotSupportedException();
+			SQLDBC.SQLDBC_Connection_cancel(m_connection.connHandler);			
 		}
 
 		public IDbDataParameter CreateParameter()
@@ -141,9 +139,10 @@ namespace MaxDBDataProvider
 				throw new MaxDBException("Connection must valid and open.");
 
 			// Execute the command.
-			IntPtr stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.connHandler);
 
 			SQLDBC_Retcode rc;
+
+			IntPtr stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.connHandler);
 
 			try
 			{
@@ -169,6 +168,78 @@ namespace MaxDBDataProvider
 
 			// use SQLDBC_PreparedStatement_getRowsAffected???
 			return 0;
+		}
+
+		public IDataReader ExecuteReader()
+		{
+			return ExecuteReader(CommandBehavior.Default);
+		}
+
+		public IDataReader ExecuteReader(CommandBehavior behavior)
+		{
+			/*
+			 * ExecuteReader should retrieve results from the data source
+			 * and return a DataReader that allows the user to process 
+			 * the results.
+			 */
+
+			// There must be a valid and open connection.
+			if (m_connection == null || m_connection.State != ConnectionState.Open)
+				throw new InvalidOperationException("Connection must valid and open");
+
+			// Execute the command.
+
+			SQLDBC_Retcode rc;
+
+			IntPtr stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.connHandler);
+
+			try
+			{
+				if (m_connection.DatabaseEncoding is UnicodeEncoding)
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(stmt, m_connection.DatabaseEncoding.GetBytes(m_sCmdText), StringEncodingType.UCS2Swapped);
+				else
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, m_sCmdText);
+			
+				if(rc != SQLDBC_Retcode.SQLDBC_OK) 
+					throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+						SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+
+				BindAndExecute(stmt, m_parameters);
+
+				/*
+				* Check if the SQL command return a resultset and get a result set object.
+				*/  
+				IntPtr result = SQLDBC.SQLDBC_PreparedStatement_getResultSet(stmt);
+				if(result == IntPtr.Zero) 
+					throw new Exception("SQL command doesn't return a result set " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+						SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+
+			}
+			catch
+			{
+				throw;
+			}
+			finally
+			{
+				SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.connHandler, stmt);
+			}
+
+			/*
+			 * The only CommandBehavior option supported by this
+			 * sample is the automatic closing of the connection
+			 * when the user is done with the reader.
+			 */
+//			if (behavior == CommandBehavior.CloseConnection)
+//				return new TemplateDataReader(resultset, m_connection);
+//			else
+//				return new TemplateDataReader(resultset);
+			return null;
+		}
+
+		public object ExecuteScalar()
+		{
+			IDataReader result = ExecuteReader(CommandBehavior.SingleResult);
+			return null;
 		}
 
 		private unsafe void BindAndExecute(IntPtr stmt, MaxDBParameterCollection parameters)
@@ -212,7 +283,6 @@ namespace MaxDBDataProvider
 
 			fixed(byte *buffer_ptr = param_buffer)
 			{
-
 				for(ushort i = 1; i <= parameters.Count; i++)
 				{
 					MaxDBParameter param = (MaxDBParameter)parameters[i];
@@ -223,7 +293,7 @@ namespace MaxDBDataProvider
 							param_buffer[buffer_offset] = (byte)((bool)param.Value ? 1 : 0);
 							val_length = sizeof(byte);
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_UINT1, 
-									new IntPtr(buffer_ptr + buffer_offset), ref val_length, sizeof(byte), 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								new IntPtr(buffer_ptr + buffer_offset), ref val_length, sizeof(byte), 0) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
 									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							buffer_offset += val_length;
@@ -233,7 +303,7 @@ namespace MaxDBDataProvider
 							Array.Copy(Encoding.ASCII.GetBytes((string)param.Value), 0 , param_buffer, buffer_offset, val_length); 
 							
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, 
-									new IntPtr(buffer_ptr + buffer_offset),	ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								new IntPtr(buffer_ptr + buffer_offset),	ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
 									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							buffer_offset += val_length;
@@ -248,7 +318,7 @@ namespace MaxDBDataProvider
 								Array.Copy(BitConverter.GetBytes(dt_array[idx]), 0, param_buffer, buffer_offset, sizeof(short));
 	
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, 
-									new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
 									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							
@@ -258,27 +328,27 @@ namespace MaxDBDataProvider
 							Array.Copy(BitConverter.GetBytes((double)param.Value), 0, param_buffer, buffer_offset, sizeof(double));
 							val_length = sizeof(double);
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_DOUBLE, 
-									new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-										SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							buffer_offset += val_length;
 							break;
 						case MaxDBType.Integer:
 							Array.Copy(BitConverter.GetBytes((int)param.Value), 0, param_buffer, buffer_offset, sizeof(int));
 							val_length = sizeof(int);
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, 
-									new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-										SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							buffer_offset += val_length;
 							break;
 						case MaxDBType.SmallInt:
 							Array.Copy(BitConverter.GetBytes((short)param.Value), 0, param_buffer, buffer_offset, sizeof(short));
 							val_length = sizeof(short);
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT2, 
-									new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-										SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							buffer_offset += val_length;
 							break;
 						case MaxDBType.Time:
@@ -291,9 +361,9 @@ namespace MaxDBDataProvider
 								Array.Copy(BitConverter.GetBytes(tm_array[idx]), 0, param_buffer, buffer_offset, sizeof(short));
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, 
-									new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-										SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							buffer_offset += val_length;
 							break;
 						case MaxDBType.TimeStamp:
@@ -323,18 +393,18 @@ namespace MaxDBDataProvider
 								Array.Copy(BitConverter.GetBytes(ts_array[idx]), 0, param_buffer, buffer_offset, sizeof(ushort));
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, 
-									new IntPtr(buffer_ptr + buffer_offset),	ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								new IntPtr(buffer_ptr + buffer_offset),	ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-										SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							buffer_offset += val_length;
 							break;
 						case MaxDBType.Unicode: case MaxDBType.StrUni: case MaxDBType.VarCharUni:
 							val_length = ((string)param.Value).Length * sizeof(char);
 							Array.Copy(Encoding.Unicode.GetBytes((string)param.Value), 0, param_buffer, buffer_offset, val_length);
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED, 
-									new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+								new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-										SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							buffer_offset += val_length;
 							break;
 					}
@@ -347,97 +417,16 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		public IDataReader ExecuteReader()
+		void IDbCommand.Prepare()
 		{
-			/*
-			 * ExecuteReader should retrieve results from the data source
-			 * and return a DataReader that allows the user to process 
-			 * the results.
-			 */
-			// There must be a valid and open connection.
-			if (m_connection == null || m_connection.State != ConnectionState.Open)
-				throw new InvalidOperationException("Connection must valid and open");
-
-			// Execute the command.
-//			SampleDb.SampleDbResultSet resultset;
-//			m_connection.SampleDb.Execute(m_sCmdText, out resultset);
-//
-//			return new TemplateDataReader(resultset);
-			return null;
-		}
-
-		public IDataReader ExecuteReader(CommandBehavior behavior)
-		{
-			/*
-			 * ExecuteReader should retrieve results from the data source
-			 * and return a DataReader that allows the user to process 
-			 * the results.
-			 */
-
-			// There must be a valid and open connection.
-			if (m_connection == null || m_connection.State != ConnectionState.Open)
-				throw new InvalidOperationException("Connection must valid and open");
-
-			// Execute the command.
-//			SampleDb.SampleDbResultSet resultset;
-//			m_connection.SampleDb.Execute(m_sCmdText, out resultset);
-
-			/*
-			 * The only CommandBehavior option supported by this
-			 * sample is the automatic closing of the connection
-			 * when the user is done with the reader.
-			 */
-//			if (behavior == CommandBehavior.CloseConnection)
-//				return new TemplateDataReader(resultset, m_connection);
-//			else
-//				return new TemplateDataReader(resultset);
-			return null;
-		}
-
-		public object ExecuteScalar()
-		{
-			/*
-			 * ExecuteScalar assumes that the command will return a single
-			 * row with a single column, or if more rows/columns are returned
-			 * it will return the first column of the first row.
-			 */
-
-			// There must be a valid and open connection.
-			if (m_connection == null || m_connection.State != ConnectionState.Open)
-				throw new InvalidOperationException("Connection must valid and open");
-
-			// Execute the command.
-//			SampleDb.SampleDbResultSet resultset;
-//			m_connection.SampleDb.Execute(m_sCmdText, out resultset);
-//
-//			// Return the first column of the first row.
-//			// Return a null reference if there is no data.
-//			if (resultset.data.Length == 0)
-//				return null;
-//
-//			return resultset.data[0, 0];
-
-			return null;
-		}
-
-		public void Prepare()
-		{
-			// The sample Prepare is a no-op.
+			// The Prepare is a no-op since parameter preparing and query execution
+			// has to be in the one "fixed" block of code
 		}
 
 		void IDisposable.Dispose() 
 		{
-			this.Dispose(true);
 			System.GC.SuppressFinalize(this);
 		}
-
-		private void Dispose(bool disposing) 
-		{
-			/*
-			 * Dispose of the object and perform any cleanup.
-			 */
-		}
-
 	}
 }
 

@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 
 namespace MaxDBDataProvider
 {
+	#region "Enumerations"
+
 	public enum SQLDBC_Retcode 
 	{
 		SQLDBC_INVALID_OBJECT           =-10909,    /*!< Application tries to use an invalid object reference. */
@@ -25,7 +27,7 @@ namespace MaxDBDataProvider
 		UTF8        = 4
 	};
 
-	enum SQLDBC_SQLType 
+	public enum SQLDBC_SQLType 
 	{
 		SQLDBC_SQLTYPE_MIN       = 0,            
 		SQLDBC_SQLTYPE_FIXED     = SQLDBC_SQLTYPE_MIN, 
@@ -111,13 +113,24 @@ namespace MaxDBDataProvider
 		SQLDBC_HOSTTYPE_MAX = SQLDBC_HOSTTYPE_USERDEFINED  
 	}
 
+	#endregion
+
 	/// <summary>
 	/// Summary description for SQLDBC.
 	/// </summary>
 	public class SQLDBC
 	{
+		#region "Runtime"
+
 		[DllImport("libsqldbc_c")]
 		public extern static IntPtr ClientRuntime_GetClientRuntime(byte[] errorText, int errorTextSize);
+
+		[DllImport("libsqldbc_c")]
+		public extern static string SQLDBC_ErrorHndl_getErrorText(IntPtr herror);
+		
+		#endregion
+
+		#region "Environment"
 
 		[DllImport("libsqldbc_c")]
 		public extern static IntPtr SQLDBC_Environment_new_SQLDBC_Environment(IntPtr runtime);
@@ -127,15 +140,32 @@ namespace MaxDBDataProvider
 
 		[DllImport("libsqldbc_c")]
 		public extern static IntPtr SQLDBC_Environment_createConnection(IntPtr environment);
+
+		[DllImport("libsqldbc_c")]
+		public extern static void SQLDBC_Environment_releaseConnection (IntPtr hdl, IntPtr conn); 
+
+		#endregion
  
+		#region "Connect Properties"
+
 		[DllImport("libsqldbc_c")]
 		public extern static IntPtr SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
 
 		[DllImport("libsqldbc_c")]
 		public extern static string SQLDBC_ConnectProperties_getProperty(IntPtr conn_prop, byte[] key, byte[] defaultvalue);
+
+		[DllImport("libsqldbc_c")]
+		public extern static void SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(IntPtr prop); 
   
+		#endregion
+
+		#region "Connection"
+
 		[DllImport("libsqldbc_c")]
 		public extern static int SQLDBC_Connection_getTransactionIsolation(IntPtr conn);
+
+		[DllImport("libsqldbc_c")]
+		public extern static byte SQLDBC_Connection_isUnicodeDatabase(IntPtr conn);
 
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_Connection_setTransactionIsolation(IntPtr conn, int level);
@@ -147,25 +177,10 @@ namespace MaxDBDataProvider
 		public extern static SQLDBC_Retcode SQLDBC_Connection_rollback(IntPtr conn);
 
 		[DllImport("libsqldbc_c")]
-		public extern static void SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(IntPtr prop); 
-
-		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_Connection_connectASCII(IntPtr conn, string host, string dbname, string username, string password, IntPtr conn_prop);
 
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_Connection_close(IntPtr conn);
-	
-		[DllImport("libsqldbc_c")]
-		public extern static IntPtr SQLDBC_Connection_getError(IntPtr conn);
-
-		[DllImport("libsqldbc_c")]
-		public extern static IntPtr SQLDBC_PreparedStatement_getError(IntPtr stmt);
-
-		[DllImport("libsqldbc_c")]
-		public extern static IntPtr SQLDBC_ResultSet_getError(IntPtr result);
-
-		[DllImport("libsqldbc_c")]
-		public extern static string SQLDBC_ErrorHndl_getErrorText(IntPtr herror);
 
 		[DllImport("libsqldbc_c")]
 		public extern static IntPtr SQLDBC_Connection_createStatement(IntPtr conn);
@@ -178,6 +193,29 @@ namespace MaxDBDataProvider
 
 		[DllImport("libsqldbc_c")]
 		public extern static void SQLDBC_Connection_releasePreparedStatement(IntPtr conn, IntPtr stmt);
+		
+		[DllImport("libsqldbc_c")]
+		public extern static SQLDBC_Retcode SQLDBC_Connection_cancel(IntPtr conn);   
+	
+		[DllImport("libsqldbc_c")]
+		public extern static IntPtr SQLDBC_Connection_getError(IntPtr conn);
+
+		#endregion
+
+		#region "Statement"
+
+		[DllImport("libsqldbc_c")]
+		public extern static SQLDBC_Retcode SQLDBC_Statement_executeASCII(IntPtr stmt, string query);
+
+		[DllImport("libsqldbc_c")]
+		public extern static IntPtr SQLDBC_Statement_getResultSet(IntPtr stmt);
+
+		#endregion
+
+		#region "Prepared Statement"
+
+		[DllImport("libsqldbc_c")]
+		public extern static IntPtr SQLDBC_PreparedStatement_getError(IntPtr stmt);
 
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareNTS(IntPtr stmt, byte[] query , StringEncodingType type);
@@ -186,33 +224,27 @@ namespace MaxDBDataProvider
 		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareASCII(IntPtr stmt, string query);
 
 		[DllImport("libsqldbc_c")]
+		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_bindParameter(IntPtr stmt, ushort index, SQLDBC_HostType type, IntPtr paramAddr,  
+						ref int length, int size, int terminate);		
+		
+		[DllImport("libsqldbc_c")]
 		public extern static IntPtr SQLDBC_PreparedStatement_getParameterMetaData(IntPtr stmt);
  
-		[DllImport("libsqldbc_c")]
-		public extern static short SQLDBC_ParameterMetaData_getParameterCount(IntPtr hdl);
- 
-		[DllImport("libsqldbc_c")]
-		public extern static SQLDBC_Retcode SQLDBC_ParameterMetaData_getParameterName(IntPtr hdl, short param, char[] buffer, 
-					StringEncodingType type, int size, out int length);  
-
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_executeASCII(IntPtr stmt);
 
 		[DllImport("libsqldbc_c")]
-		public extern static SQLDBC_Retcode SQLDBC_Statement_executeASCII(IntPtr stmt, string query);
-
-		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_clearParameters(IntPtr stmt);
+		
+		[DllImport("libsqldbc_c")]
+		public extern static IntPtr SQLDBC_PreparedStatement_getResultSet(IntPtr stmt);		
+		
+		#endregion
+
+		#region "Result Set"
 
 		[DllImport("libsqldbc_c")]
-		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_bindParameter(IntPtr stmt, ushort index, SQLDBC_HostType type, IntPtr paramAddr,  
-						ref int length, int size, int terminate);  
-
-		[DllImport("libsqldbc_c")]
-		public extern static IntPtr SQLDBC_Statement_getResultSet(IntPtr stmt);
-
-		[DllImport("libsqldbc_c")]
-		public extern static IntPtr SQLDBC_PreparedStatement_getResultSet(IntPtr stmt);
+		public extern static IntPtr SQLDBC_ResultSet_getError(IntPtr result);
 
 		[DllImport("libsqldbc_c")]
 		public extern static void SQLDBC_ResultSet_close(IntPtr result);
@@ -230,10 +262,40 @@ namespace MaxDBDataProvider
 		public extern static SQLDBC_Retcode SQLDBC_ResultSet_last(IntPtr result);
 
 		[DllImport("libsqldbc_c")]
-		public extern static byte SQLDBC_Connection_isUnicodeDatabase(IntPtr conn);
+		public extern static SQLDBC_Retcode SQLDBC_ResultSet_relative(IntPtr result, short offset);
+
+		[DllImport("libsqldbc_c")]
+		public extern static IntPtr SQLDBC_ResultSet_getResultSetMetaData(IntPtr hdl); 
 
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_ResultSet_getObject(IntPtr result, int index, SQLDBC_HostType type, IntPtr paramAddr, 
-						ref int length, int size, int terminate); 
+			ref int length, int size, int terminate);
+
+		#endregion
+
+		#region "Parameter Metadata"
+
+		[DllImport("libsqldbc_c")]
+		public extern static short SQLDBC_ParameterMetaData_getParameterCount(IntPtr hdl);
+ 
+		[DllImport("libsqldbc_c")]
+		public extern static SQLDBC_Retcode SQLDBC_ParameterMetaData_getParameterName(IntPtr hdl, short param, char[] buffer, 
+			StringEncodingType type, int size, out int length);
+
+		#endregion
+
+		#region "Result Set Meta Data"
+
+		[DllImport("libsqldbc_c")]
+		public extern static SQLDBC_SQLType SQLDBC_ResultSetMetaData_getColumnType(IntPtr hdl, short column);
+
+		[DllImport("libsqldbc_c")]
+		public extern static short SQLDBC_ResultSetMetaData_getColumnCount(IntPtr hdl);
+
+		[DllImport("libsqldbc_c")]
+		public extern static SQLDBC_Retcode SQLDBC_ResultSetMetaData_getColumnName(IntPtr hdl, short column, byte[] buffer, 
+			StringEncodingType encoding, int size, ref int length); 
+
+		#endregion
 	}
 }
