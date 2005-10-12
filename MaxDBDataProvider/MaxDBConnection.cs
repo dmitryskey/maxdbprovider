@@ -23,7 +23,7 @@ namespace MaxDBDataProvider
 		private IntPtr envHandler;
 		internal IntPtr connHandler;
 		private IntPtr connPropHandler;
-		private Encoding enc;
+		private Encoding enc = Encoding.ASCII;
 
 		// Always have a default constructor.
 		public MaxDBConnection()
@@ -33,7 +33,7 @@ namespace MaxDBDataProvider
 		}
     
 		// Have a constructor that takes a connection string.
-		public MaxDBConnection(string sConnString)
+		public MaxDBConnection(string sConnString) 
 		{
 			// Initialize the connection object into a closed state.
 			m_state = ConnectionState.Closed;
@@ -94,7 +94,7 @@ namespace MaxDBDataProvider
 					ConnectionState status = m_state;
 
 					if (status != ConnectionState.Closed)
-						Open();
+						((IDbConnection)this).Open();
 
 					IntPtr stmt = SQLDBC.SQLDBC_Connection_createStatement(connHandler);
 
@@ -123,7 +123,7 @@ namespace MaxDBDataProvider
 					SQLDBC.SQLDBC_Connection_releaseStatement(connHandler, stmt);
 
 					if (status == ConnectionState.Closed)
-						Close();
+						((IDbConnection)this).Close();
 
 					return timeout;
 				}
@@ -238,15 +238,15 @@ namespace MaxDBDataProvider
 			byte[] errorText = new byte[256];
 
 			runtimeHandler = SQLDBC.ClientRuntime_GetClientRuntime(errorText, 256);
-			if (runtimeHandler != IntPtr.Zero)
+			if (runtimeHandler == IntPtr.Zero)
 				throw new MaxDBException(Encoding.ASCII.GetString(errorText));
 
 			envHandler = SQLDBC.SQLDBC_Environment_new_SQLDBC_Environment(runtimeHandler);
 
 			connHandler = SQLDBC.SQLDBC_Environment_createConnection(envHandler);
-			connPropHandler = SQLDBC.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
 
-			if(SQLDBC.SQLDBC_Connection_connectASCII(connHandler, m_ConnArgs.host, m_ConnArgs.dbname, m_ConnArgs.username, 
+			connPropHandler = SQLDBC.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
+			if (SQLDBC.SQLDBC_Connection_connectASCII(connHandler, m_ConnArgs.host, m_ConnArgs.dbname, m_ConnArgs.username, 
 				m_ConnArgs.password, connPropHandler) != SQLDBC_Retcode.SQLDBC_OK) 
 				throw new MaxDBException("Connecting to the database failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
 					SQLDBC.SQLDBC_Connection_getError(connHandler)));
@@ -272,8 +272,9 @@ namespace MaxDBDataProvider
 			connPropHandler = IntPtr.Zero;
 
 			SQLDBC.SQLDBC_Connection_close(connHandler);
-			connHandler = IntPtr.Zero;
 
+			SQLDBC.SQLDBC_Environment_releaseConnection(envHandler, connHandler);
+			connHandler = IntPtr.Zero;
 			SQLDBC.SQLDBC_Environment_delete_SQLDBC_Environment(envHandler);
 			envHandler = IntPtr.Zero;
 		}
@@ -284,22 +285,13 @@ namespace MaxDBDataProvider
 			return new MaxDBCommand();
 		}
 
-		void IDisposable.Dispose() 
+		public void Dispose() 
 		{
-			this.Dispose(true);
+			if (m_state == ConnectionState.Open)
+				((IDbConnection)this).Close();
+
 			System.GC.SuppressFinalize(this);
 		}
-
-		private void Dispose(bool disposing) 
-		{
-			/*
-			 * Dispose of the object and perform any cleanup.
-			 */
-
-			if (m_state == ConnectionState.Open)
-				this.Close();
-		}
-
 	}
 }
 

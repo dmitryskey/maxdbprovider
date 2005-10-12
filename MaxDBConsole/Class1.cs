@@ -122,6 +122,38 @@ namespace MaxDBDataProvider
 			byte[] szString = new byte[30];
 			Int32 ind = 0;
 
+			byte[] columnName = new byte[0];
+			int len = 0;
+
+			rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1, columnName, 
+				StringEncodingType.UCS2Swapped, len, ref len);
+
+			if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+			{
+				Console.Out.WriteLine("Error fetching data " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+					SQLDBC.SQLDBC_ResultSet_getError(result)));
+				return;
+			}
+
+			len += sizeof(char);
+			columnName = new byte[len];
+
+			rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1, columnName, 
+				StringEncodingType.UCS2Swapped, len, ref len);
+
+			
+
+			if (rc != SQLDBC_Retcode.SQLDBC_OK)
+			{
+				Console.Out.WriteLine("Error fetching data " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
+					SQLDBC.SQLDBC_ResultSet_getError(result)));
+				return;
+			}
+
+			string colName = Encoding.Unicode.GetString(columnName).TrimEnd('\0');
+
+			SQLDBC_SQLType type = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1);
+
 			fixed(byte *buffer = szString)
 			{
 				if(SQLDBC.SQLDBC_ResultSet_getObject(result, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, new IntPtr(buffer), ref ind, 30, 0) != SQLDBC_Retcode.SQLDBC_OK) 
