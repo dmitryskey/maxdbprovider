@@ -106,8 +106,46 @@ namespace MaxDBDataProvider
 
 		public DataTable GetSchemaTable()
 		{
-			//$
-			throw new NotSupportedException();
+			DataTable schema = new DataTable("SchemaTable");
+
+			schema.Columns.Add(new DataColumn("ColumnName", typeof(string)));
+			schema.Columns.Add(new DataColumn("ColumnOrdinal", typeof(int)));
+			schema.Columns.Add(new DataColumn("ColumnSize", typeof(int)));
+			schema.Columns.Add(new DataColumn("NumericPrecision", typeof(int)));
+			schema.Columns.Add(new DataColumn("NumericScale", typeof(int)));
+			schema.Columns.Add(new DataColumn("DataType", typeof(Type)));
+			schema.Columns.Add(new DataColumn("IsLong", typeof(bool)));
+			schema.Columns.Add(new DataColumn("AllowDBNull", typeof(bool)));
+			schema.Columns.Add(new DataColumn("IsReadOnly", typeof(bool)));
+
+			IntPtr meta = SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset);
+
+			for (short cnt = 0; cnt <= FieldCount - 1; cnt++)
+			{
+				DataRow row = schema.NewRow();
+				row["ColumnName"] = GetName(cnt);
+				row["ColumnOrdinal"] = cnt + 1;
+				row["ColumnSize"] = SQLDBC.SQLDBC_ResultSetMetaData_getPhysicalLength(meta, cnt);
+				row["NumericPrecision"] = SQLDBC.SQLDBC_ResultSetMetaData_getPrecision(meta, cnt);
+				row["NumericScale"] = SQLDBC.SQLDBC_ResultSetMetaData_getScale(meta, cnt);
+				row["DataType"] = GetFieldType(cnt);
+				switch(SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(cnt + 1)))
+				{
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
+						row["IsLong"] = true;
+						break;
+					default:
+						row["IsLong"] = false;
+						break;
+				}
+				row["AllowDBNull"] = (SQLDBC.SQLDBC_ResultSetMetaData_isNullable(meta, cnt) == ColumnNullBehavior.columnNullable);
+				row["IsReadOnly"] = (SQLDBC.SQLDBC_ResultSetMetaData_isWritable(meta, cnt) == 0);
+				schema.Rows.Add(row);
+			}
+
+			return schema;
 		}
 
 		/****
@@ -126,7 +164,7 @@ namespace MaxDBDataProvider
 			byte[] columnName = new byte[0];
 			int len = 0;
 
-			SQLDBC_Retcode rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)i, columnName, 
+			SQLDBC_Retcode rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1), columnName, 
 				StringEncodingType.UCS2Swapped, len, ref len);
 
 			if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
@@ -157,7 +195,37 @@ namespace MaxDBDataProvider
 		public Type GetFieldType(int i)
 		{
 			// Return the actual Type class for the data type.
-			throw new NotImplementedException();
+			switch(SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1)))
+			{
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN:
+					return typeof(bool);
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+					return typeof(byte);
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
+					return typeof(DateTime);
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_FIXED:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_FLOAT:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VFLOAT:
+					return typeof(double);
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_INTEGER:
+					return typeof(int);
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
+					return typeof(short);
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
+					return typeof(string);
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
+					return typeof(char);
+				default:
+					return typeof(object);
+			}
 		}
 
 		public Object GetValue(int i)
@@ -173,7 +241,10 @@ namespace MaxDBDataProvider
 		public int GetOrdinal(string name)
 		{
 			// Throw an exception if the ordinal cannot be found.
-			throw new NotImplementedException();
+			for (short cnt = 0; cnt <= FieldCount - 1; cnt++)
+				if (GetName(cnt).Trim().ToUpper() == name.Trim().ToUpper())
+					return cnt;
+			throw new MaxDBException("Can't find field '" + name + "'");
 		}
 
 		public object this [ int i ]

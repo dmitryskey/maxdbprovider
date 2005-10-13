@@ -27,6 +27,7 @@ namespace MaxDBDataProvider
 
 			IntPtr conn = SQLDBC.SQLDBC_Environment_createConnection(Environment);
 			IntPtr conn_prop = SQLDBC.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
+			SQLDBC.SQLDBC_Connection_setSQLMode(conn, SQLDBC_SQLMode.SQLDBC_INTERNAL);
 
 			if(SQLDBC.SQLDBC_Connection_connectASCII(conn, "localhost", "TESTDB", "DBA", "123", conn_prop) != SQLDBC_Retcode.SQLDBC_OK) 
 			{
@@ -58,7 +59,7 @@ namespace MaxDBDataProvider
 			if (isUnicode)
 				rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(stmt, enc.GetBytes("SELECT 'Hello World (Привет)!' from DUAL"), StringEncodingType.UCS2Swapped);
 			else
-				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, "SELECT CHARU_FIELD from TEST WHERE CHARU_FIELD = :field");
+				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, "SELECT LOB_FIELD from TEST WHERE CHARU_FIELD = :field");
 			
 			if(rc != SQLDBC_Retcode.SQLDBC_OK) 
 			{

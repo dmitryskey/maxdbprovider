@@ -27,45 +27,55 @@ namespace MaxDBDataProvider
 		UTF8        = 4
 	};
 
+	public enum SQLDBC_SQLMode 
+	{ 
+		SQLDBC_INTERNAL = 2, 
+		SQLDBC_ANSI = 3, 
+		SQLDBC_DB2 = 4, 
+		SQLDBC_ORACLE = 5, 
+		SQLDBC_SAPR3 = 6 
+	}; 
+
+	//commented values are deprecated
 	public enum SQLDBC_SQLType 
 	{
 		SQLDBC_SQLTYPE_MIN       = 0,            
 		SQLDBC_SQLTYPE_FIXED     = SQLDBC_SQLTYPE_MIN, 
 		SQLDBC_SQLTYPE_FLOAT     = 1,            
 		SQLDBC_SQLTYPE_CHA       = 2,            
-		SQLDBC_SQLTYPE_CHE       = 3,            
+//		SQLDBC_SQLTYPE_CHE       = 3,            
 		SQLDBC_SQLTYPE_CHB       = 4,            
-		SQLDBC_SQLTYPE_ROWID     = 5,            
+//		SQLDBC_SQLTYPE_ROWID     = 5,            
 		SQLDBC_SQLTYPE_STRA      = 6,            
-		SQLDBC_SQLTYPE_STRE      = 7,            
+//		SQLDBC_SQLTYPE_STRE      = 7,            
 		SQLDBC_SQLTYPE_STRB      = 8,            
-		SQLDBC_SQLTYPE_STRDB     = 9,            
+//		SQLDBC_SQLTYPE_STRDB     = 9,            
 		SQLDBC_SQLTYPE_DATE      = 10,           
 		SQLDBC_SQLTYPE_TIME      = 11,           
 		SQLDBC_SQLTYPE_VFLOAT    = 12,           
 		SQLDBC_SQLTYPE_TIMESTAMP = 13,           
-		SQLDBC_SQLTYPE_UNKNOWN   = 14,           
-		SQLDBC_SQLTYPE_NUMBER    = 15,           
-		SQLDBC_SQLTYPE_NONUMBER  = 16,           
-		SQLDBC_SQLTYPE_DURATION  = 17,           
-		SQLDBC_SQLTYPE_DBYTEEBCDIC = 18,         
-		SQLDBC_SQLTYPE_LONGA     = 19,           
-		SQLDBC_SQLTYPE_LONGE     = 20,           
-		SQLDBC_SQLTYPE_LONGB     = 21,           
-		SQLDBC_SQLTYPE_LONGDB    = 22,           
+//		SQLDBC_SQLTYPE_UNKNOWN   = 14,           
+//		SQLDBC_SQLTYPE_NUMBER    = 15,           
+//		SQLDBC_SQLTYPE_NONUMBER  = 16,           
+//		SQLDBC_SQLTYPE_DURATION  = 17,           
+//		SQLDBC_SQLTYPE_DBYTEEBCDIC = 18,         
+//		SQLDBC_SQLTYPE_LONGA     = 19,           
+//		SQLDBC_SQLTYPE_LONGE     = 20,           
+//		SQLDBC_SQLTYPE_LONGB     = 21,           
+//		SQLDBC_SQLTYPE_LONGDB    = 22,           
 		SQLDBC_SQLTYPE_BOOLEAN   = 23,           
 		SQLDBC_SQLTYPE_UNICODE   = 24,           
-		SQLDBC_SQLTYPE_DTFILLER1 = 25,           
-		SQLDBC_SQLTYPE_DTFILLER2 = 26,           
-		SQLDBC_SQLTYPE_DTFILLER3 = 27,           
-		SQLDBC_SQLTYPE_DTFILLER4 = 28,           
+//		SQLDBC_SQLTYPE_DTFILLER1 = 25,           
+//		SQLDBC_SQLTYPE_DTFILLER2 = 26,           
+//		SQLDBC_SQLTYPE_DTFILLER3 = 27,           
+//		SQLDBC_SQLTYPE_DTFILLER4 = 28,           
 		SQLDBC_SQLTYPE_SMALLINT  = 29,           
 		SQLDBC_SQLTYPE_INTEGER   = 30,           
 		SQLDBC_SQLTYPE_VARCHARA  = 31,           
-		SQLDBC_SQLTYPE_VARCHARE  = 32,           
+//		SQLDBC_SQLTYPE_VARCHARE  = 32,           
 		SQLDBC_SQLTYPE_VARCHARB  = 33,           
 		SQLDBC_SQLTYPE_STRUNI    = 34,           
-		SQLDBC_SQLTYPE_LONGUNI   = 35,           
+//		SQLDBC_SQLTYPE_LONGUNI   = 35,           
 		SQLDBC_SQLTYPE_VARCHARUNI = 36,          
 		SQLDBC_SQLTYPE_UDT       = 37,           
 		SQLDBC_SQLTYPE_ABAPTABHANDLE = 38,       
@@ -113,6 +123,13 @@ namespace MaxDBDataProvider
 		SQLDBC_HOSTTYPE_MAX = SQLDBC_HOSTTYPE_USERDEFINED  
 	}
 
+	public enum ColumnNullBehavior 
+	{
+		columnNoNulls = 0,
+		columnNullable = 1,
+		columnNullableUnknown = 2
+	}
+
 	#endregion
 
 	/// <summary>
@@ -155,6 +172,9 @@ namespace MaxDBDataProvider
 		public extern static string SQLDBC_ConnectProperties_getProperty(IntPtr conn_prop, byte[] key, byte[] defaultvalue);
 
 		[DllImport("libsqldbc_c")]
+		public extern static void SQLDBC_ConnectProperties_setProperty(IntPtr conn_prop, byte[] key, byte[] defaultvalue);
+
+		[DllImport("libsqldbc_c")]
 		public extern static void SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(IntPtr prop); 
   
 		#endregion
@@ -169,6 +189,9 @@ namespace MaxDBDataProvider
 
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_Connection_setTransactionIsolation(IntPtr conn, int level);
+
+		[DllImport("libsqldbc_c")]
+		public extern static void SQLDBC_Connection_setSQLMode(IntPtr conn, SQLDBC_SQLMode sqlmode); 
 
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_Connection_commit(IntPtr conn);
@@ -287,14 +310,35 @@ namespace MaxDBDataProvider
 		#region "Result Set Meta Data"
 
 		[DllImport("libsqldbc_c")]
-		public extern static SQLDBC_SQLType SQLDBC_ResultSetMetaData_getColumnType(IntPtr hdl, short column);
-
-		[DllImport("libsqldbc_c")]
 		public extern static short SQLDBC_ResultSetMetaData_getColumnCount(IntPtr hdl);
 
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_ResultSetMetaData_getColumnName(IntPtr hdl, short column, byte[] buffer, 
 			StringEncodingType encoding, int size, ref int length); 
+
+		[DllImport("libsqldbc_c")]
+		public extern static SQLDBC_SQLType SQLDBC_ResultSetMetaData_getColumnType(IntPtr hdl, short column);
+
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_ResultSetMetaData_getColumnLength(IntPtr hdl, short column); 
+
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_ResultSetMetaData_getColumnPrecision(IntPtr hdl, short column); 
+
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_ResultSetMetaData_getPrecision(IntPtr hdl, short column);
+ 
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_ResultSetMetaData_getScale(IntPtr hdl, short column); 
+
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_ResultSetMetaData_getPhysicalLength(IntPtr hdl, short column);
+
+		[DllImport("libsqldbc_c")]
+		public extern static ColumnNullBehavior SQLDBC_ResultSetMetaData_isNullable(IntPtr hdl, short column);
+ 
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_ResultSetMetaData_isWritable(IntPtr hdl, short column); 
 
 		#endregion
 	}
