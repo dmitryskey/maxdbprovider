@@ -24,6 +24,7 @@ namespace MaxDBDataProvider
 		internal IntPtr connHandler;
 		private IntPtr connPropHandler;
 		private Encoding enc = Encoding.ASCII;
+		private SQLDBC_SQLMode mode = SQLDBC_SQLMode.SQLDBC_INTERNAL;
 
 		// Always have a default constructor.
 		public MaxDBConnection()
@@ -59,6 +60,26 @@ namespace MaxDBDataProvider
 							break;
 						case "PASSWORD":
 							m_ConnArgs.password = param.Split('=')[1].Trim();
+							break;
+						case "MODE":
+							switch(param.Split('=')[1].Trim().ToUpper())
+							{
+								case "ANSI":
+									mode = SQLDBC_SQLMode.SQLDBC_ANSI;
+									break;
+								case "DB2":
+									mode = SQLDBC_SQLMode.SQLDBC_DB2;
+									break;
+								case "ORACLE":
+									mode = SQLDBC_SQLMode.SQLDBC_ORACLE;
+									break;
+								case "SAPR3":
+									mode = SQLDBC_SQLMode.SQLDBC_SAPR3;
+									break;
+								default:
+									mode = SQLDBC_SQLMode.SQLDBC_INTERNAL;
+									break;
+							}
 							break;
 					}
 			}
@@ -164,15 +185,18 @@ namespace MaxDBDataProvider
 
 		public Encoding DatabaseEncoding
 		{
-			get
-			{
-				return enc;
-			}
+			get{return enc;}
 		}
 
 		public ConnectionState State
 		{
 			get { return m_state; }
+		}
+
+		public SQLDBC_SQLMode SQLMode
+		{
+			get{return mode;}
+			set{mode = value;}
 		}
 
 		/****
@@ -246,6 +270,8 @@ namespace MaxDBDataProvider
 			connHandler = SQLDBC.SQLDBC_Environment_createConnection(envHandler);
 
 			connPropHandler = SQLDBC.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
+			SQLDBC.SQLDBC_Connection_setSQLMode(connHandler, mode);
+
 			if (SQLDBC.SQLDBC_Connection_connectASCII(connHandler, m_ConnArgs.host, m_ConnArgs.dbname, m_ConnArgs.username, 
 				m_ConnArgs.password, connPropHandler) != SQLDBC_Retcode.SQLDBC_OK) 
 				throw new MaxDBException("Connecting to the database failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
@@ -288,7 +314,7 @@ namespace MaxDBDataProvider
 		public void Dispose() 
 		{
 			if (m_state == ConnectionState.Open)
-				((IDbConnection)this).Close();
+				this.Close();
 
 			System.GC.SuppressFinalize(this);
 		}
