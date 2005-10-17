@@ -132,11 +132,132 @@ namespace MaxDBDataProvider
 
 	#endregion
 
+	#region "Structures"
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct ODBCDATE
+	{
+		public short year;
+		public ushort month;
+		public ushort day;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct ODBCTIME
+	{
+		public ushort hour;
+		public ushort minute;
+		public ushort second;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct ODBCTIMESTAMP
+	{
+		public short year;
+		public ushort month;
+		public ushort day;
+		public ushort hour;
+		public ushort minute;
+		public ushort second;
+		public uint fraction;
+	}
+
+	#endregion
+
+	public class ODBCConverter
+	{
+		public static unsafe byte[] GetBytes(ODBCDATE dt)
+		{
+			byte[] result = new byte[sizeof(ODBCDATE)];
+
+			Array.Copy(BitConverter.GetBytes(dt.year), 0, result, 0, sizeof(short));
+			Array.Copy(BitConverter.GetBytes(dt.month), 0, result, sizeof(short), sizeof(ushort));
+			Array.Copy(BitConverter.GetBytes(dt.month), 0, result, sizeof(short) + sizeof(ushort), sizeof(ushort));
+
+			return result;
+		}
+
+		public static unsafe byte[] GetBytes(ODBCTIME tm)
+		{
+			byte[] result = new byte[sizeof(ODBCTIME)];
+
+			Array.Copy(BitConverter.GetBytes(tm.hour), 0, result, 0, sizeof(ushort));
+			Array.Copy(BitConverter.GetBytes(tm.minute), 0, result, sizeof(ushort), sizeof(ushort));
+			Array.Copy(BitConverter.GetBytes(tm.second), 0, result, 2 * sizeof(ushort), sizeof(ushort));
+
+			return result;
+		}
+
+		public static unsafe byte[] GetBytes(ODBCTIMESTAMP ts)
+		{
+			byte[] result = new byte[sizeof(ODBCTIMESTAMP)];
+
+			Array.Copy(BitConverter.GetBytes(ts.year), 0, result, 0, sizeof(short));
+			Array.Copy(BitConverter.GetBytes(ts.month), 0, result, sizeof(short), sizeof(ushort));
+			Array.Copy(BitConverter.GetBytes(ts.month), 0, result, sizeof(short) + sizeof(ushort), sizeof(ushort));
+			Array.Copy(BitConverter.GetBytes(ts.hour), 0, result, sizeof(short) + 2*sizeof(ushort), sizeof(ushort));
+			Array.Copy(BitConverter.GetBytes(ts.minute), 0, result, sizeof(short) + 3*sizeof(ushort), sizeof(ushort));
+			Array.Copy(BitConverter.GetBytes(ts.second), 0, result, sizeof(short) + 4*sizeof(ushort), sizeof(ushort));
+			Array.Copy(BitConverter.GetBytes(ts.fraction), 0, result, sizeof(short) + 5*sizeof(ushort), sizeof(uint));
+
+			return result;
+		}
+
+		public static unsafe ODBCDATE GetDate(byte[] data)
+		{
+			ODBCDATE dt_val;
+			
+			dt_val.year = BitConverter.ToInt16(data, 0);
+			dt_val.month = BitConverter.ToUInt16(data, sizeof(short));
+			dt_val.day = BitConverter.ToUInt16(data, sizeof(short) + sizeof(ushort));
+
+			return dt_val;
+		}
+
+		public static unsafe ODBCTIME GetTime(byte[] data)
+		{
+			ODBCTIME tm_val;
+
+			tm_val.hour = BitConverter.ToUInt16(data, 0);
+			tm_val.minute = BitConverter.ToUInt16(data, sizeof(ushort));
+			tm_val.second = BitConverter.ToUInt16(data, 2 * sizeof(ushort));
+
+			return tm_val;
+		}
+
+		public static unsafe ODBCTIMESTAMP GetTimeStamp(byte[] data)
+		{
+			ODBCTIMESTAMP ts_val;
+
+			ts_val.year = BitConverter.ToInt16(data, 0);
+			ts_val.month = BitConverter.ToUInt16(data, sizeof(short));
+			ts_val.day = BitConverter.ToUInt16(data, sizeof(short) + sizeof(ushort));
+			ts_val.hour = BitConverter.ToUInt16(data, sizeof(short) + 2 * sizeof(ushort));
+			ts_val.minute = BitConverter.ToUInt16(data, sizeof(short) + 3 * sizeof(ushort));
+			ts_val.second = BitConverter.ToUInt16(data, sizeof(short) + 4 * sizeof(ushort));
+			ts_val.fraction = BitConverter.ToUInt32(data, sizeof(short) + 5 * sizeof(ushort));
+
+			return ts_val;
+		}
+	}
+
 	/// <summary>
 	/// Summary description for SQLDBC.
 	/// </summary>
 	public class SQLDBC
 	{
+		#region "Constants"
+
+			public const int SQLDBC_NULL_DATA  =-1;
+			public const int SQLDBC_DATA_AT_EXEC  =-2;
+			public const int SQLDBC_NTS           =-3;
+			public const int SQLDBC_NO_TOTAL      =-4;
+			public const int SQLDBC_DEFAULT_PARAM =-5;
+			public const int SQLDBC_IGNORE        =-6;
+			public const int SQLDBC_LEN_DATA_AT_EXEC_OFFSET =-100;
+
+		#endregion
+
 		#region "Runtime"
 
 		[DllImport("libsqldbc_c")]
@@ -169,10 +290,10 @@ namespace MaxDBDataProvider
 		public extern static IntPtr SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
 
 		[DllImport("libsqldbc_c")]
-		public extern static string SQLDBC_ConnectProperties_getProperty(IntPtr conn_prop, byte[] key, byte[] defaultvalue);
+		public extern static string SQLDBC_ConnectProperties_getProperty(IntPtr conn_prop, string key, string defaultvalue);
 
 		[DllImport("libsqldbc_c")]
-		public extern static void SQLDBC_ConnectProperties_setProperty(IntPtr conn_prop, byte[] key, byte[] defaultvalue);
+		public extern static void SQLDBC_ConnectProperties_setProperty(IntPtr conn_prop, string key, string defaultvalue);
 
 		[DllImport("libsqldbc_c")]
 		public extern static void SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(IntPtr prop); 
@@ -302,8 +423,8 @@ namespace MaxDBDataProvider
 		public extern static short SQLDBC_ParameterMetaData_getParameterCount(IntPtr hdl);
  
 		[DllImport("libsqldbc_c")]
-		public extern static SQLDBC_Retcode SQLDBC_ParameterMetaData_getParameterName(IntPtr hdl, short param, char[] buffer, 
-			StringEncodingType type, int size, out int length);
+		public extern static SQLDBC_Retcode SQLDBC_ParameterMetaData_getParameterName(IntPtr hdl, short param, byte[] buffer, 
+			StringEncodingType type, int size, ref int length);
 
 		#endregion
 

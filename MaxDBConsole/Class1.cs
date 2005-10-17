@@ -21,8 +21,12 @@ namespace MaxDBDataProvider
 
 			byte[] errorText = new byte[200];
 
-			IntPtr runtime = SQLDBC.ClientRuntime_GetClientRuntime(errorText, 200);
-
+			IntPtr runtime;
+				
+			fixed (byte* buff = errorText)
+			{
+				runtime = SQLDBC.ClientRuntime_GetClientRuntime(errorText, 200);
+			}
 			IntPtr Environment = SQLDBC.SQLDBC_Environment_new_SQLDBC_Environment(runtime);
 
 			IntPtr conn = SQLDBC.SQLDBC_Environment_createConnection(Environment);
@@ -46,7 +50,8 @@ namespace MaxDBDataProvider
 
 			//int ddd = SQLDBC.SQLDBC_Connection_getTransactionIsolation(conn);
 
-			//string prop = SQLDBC.SQLDBC_ConnectProperties_getProperty(conn_prop, Encoding.ASCII.GetBytes("DATE_TIME-FORMAT\0"), Encoding.ASCII.GetBytes("0\0"));
+			SQLDBC.SQLDBC_ConnectProperties_setProperty(conn_prop, "DATE_TIME-FORMAT", "ВАП");
+			string prop = SQLDBC.SQLDBC_ConnectProperties_getProperty(conn_prop, "DATE_TIME-FORMAT", "ВАП123");
 
 			/*
 			* Create a new statment object and execute it.
@@ -59,7 +64,7 @@ namespace MaxDBDataProvider
 			if (isUnicode)
 				rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(stmt, enc.GetBytes("SELECT 'Hello World (Привет)!' from DUAL"), StringEncodingType.UCS2Swapped);
 			else
-				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, "SELECT LOB_FIELD from TEST WHERE CHARU_FIELD = :field");
+				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, "SELECT LOB_FIELD from TEST WHERE DATE_FIELD = :field");
 			
 			if(rc != SQLDBC_Retcode.SQLDBC_OK) 
 			{
@@ -68,28 +73,20 @@ namespace MaxDBDataProvider
 				return;
 			}
 
-			IntPtr meta = SQLDBC.SQLDBC_PreparedStatement_getParameterMetaData(stmt);
-			for (short cnt = 1; cnt <= SQLDBC.SQLDBC_ParameterMetaData_getParameterCount(meta); cnt++)
-			{
-				int length;
-				char[] buffer = new char[100];
-				rc = SQLDBC.SQLDBC_ParameterMetaData_getParameterName(meta, cnt, buffer, StringEncodingType.UCS2Swapped, 100, out length);
-				buffer = new char[length + 1];
-				rc = SQLDBC.SQLDBC_ParameterMetaData_getParameterName(meta, cnt, buffer, StringEncodingType.UCS2Swapped, length + 1, out length);
-				//int i =1;
-			}
-
 			rc = SQLDBC.SQLDBC_PreparedStatement_clearParameters(stmt);
 
-			byte[] b = Encoding.Unicode.GetBytes("Hello");
+			ODBCDATE date;
+			date.year = 1999;
+			date.month = 2;
+			date.day = 18;
  
-			int b_len = b.Length * sizeof(byte);
+			int b_len = sizeof(ODBCDATE);
 			
-			fixed (byte *b_ref = b)
-			{
-				rc = SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED, new IntPtr(b_ref), ref b_len, b_len, 0);
+			//fixed (byte *b_ref = b)
+			//{
+				rc = SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, new IntPtr(&date), ref b_len, b_len, 0);
 				rc = SQLDBC.SQLDBC_PreparedStatement_executeASCII(stmt);
-			}			
+			//}			
 			if(rc != SQLDBC_Retcode.SQLDBC_OK) 
 			{
 				Console.Out.WriteLine("Execution failed " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
@@ -123,11 +120,14 @@ namespace MaxDBDataProvider
 			byte[] szString = new byte[30];
 			Int32 ind = 0;
 
-			byte[] columnName = new byte[0];
+			byte[] columnName = new byte[1];
 			int len = 0;
 
-			rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1, columnName, 
-				StringEncodingType.UCS2Swapped, len, ref len);
+			fixed(byte *namePtr = columnName)
+			{
+				rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1, columnName, 
+					StringEncodingType.UCS2Swapped, len, ref len);
+			}
 
 			if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
 			{
@@ -139,11 +139,12 @@ namespace MaxDBDataProvider
 			len += sizeof(char);
 			columnName = new byte[len];
 
-			rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1, columnName, 
-				StringEncodingType.UCS2Swapped, len, ref len);
-
+			fixed(byte *namePtr = columnName)
+			{
+				rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1, columnName, 
+					StringEncodingType.UCS2Swapped, len, ref len);
+			}
 			
-
 			if (rc != SQLDBC_Retcode.SQLDBC_OK)
 			{
 				Console.Out.WriteLine("Error fetching data " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
@@ -153,7 +154,12 @@ namespace MaxDBDataProvider
 
 			string colName = Encoding.Unicode.GetString(columnName).TrimEnd('\0');
 
-			SQLDBC_SQLType type = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1);
+			//SQLDBC_SQLType type = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1);
+
+			byte val;
+			int val_length = sizeof(byte);
+			rc = SQLDBC.SQLDBC_ResultSet_getObject(result, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT1, new IntPtr(&val), 
+						ref val_length, val_length, 0);
 
 			fixed(byte *buffer = szString)
 			{

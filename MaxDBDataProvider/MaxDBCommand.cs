@@ -214,6 +214,7 @@ namespace MaxDBDataProvider
 					throw new Exception("SQL command doesn't return a result set " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
 						SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 
+				return new MaxDBDataReader(result);				
 			}
 			catch
 			{
@@ -223,23 +224,15 @@ namespace MaxDBDataProvider
 			{
 				SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.connHandler, stmt);
 			}
-
-			/*
-			 * The only CommandBehavior option supported by this
-			 * sample is the automatic closing of the connection
-			 * when the user is done with the reader.
-			 */
-//			if (behavior == CommandBehavior.CloseConnection)
-//				return new TemplateDataReader(resultset, m_connection);
-//			else
-//				return new TemplateDataReader(resultset);
-			return null;
 		}
 
 		public object ExecuteScalar()
 		{
 			IDataReader result = ExecuteReader(CommandBehavior.SingleResult);
-			return null;
+			if (result.FieldCount > 0 && result.Read())
+				return result.GetValue(0);
+			else
+				return null;
 		}
 
 		private unsafe void BindAndExecute(IntPtr stmt, MaxDBParameterCollection parameters)
@@ -258,8 +251,11 @@ namespace MaxDBDataProvider
 					case MaxDBType.CharA: case MaxDBType.CharB: case MaxDBType.StrA: case MaxDBType.StrB: case MaxDBType.VarCharA: case MaxDBType.VarCharB:
 						buffer_length += ((string)param.Value).Length * sizeof(byte);
 						break;
-					case MaxDBType.Date: case MaxDBType.Time:
-						buffer_length += 3 * sizeof(ushort);
+					case MaxDBType.Date:
+						buffer_length += sizeof(ODBCDATE);
+						break;
+					case MaxDBType.Time:
+						buffer_length += sizeof(ODBCTIME);
 						break;
 					case MaxDBType.Fixed: case MaxDBType.Float: case MaxDBType.VFloat:
 						buffer_length += sizeof(double);
@@ -271,7 +267,7 @@ namespace MaxDBDataProvider
 						buffer_length += sizeof(short);
 						break;
 					case MaxDBType.TimeStamp:
-						buffer_length += (6 + sizeof(uint) / sizeof(ushort)) * sizeof(ushort);
+						buffer_length += sizeof(ODBCTIMESTAMP);
 						break;
 					case MaxDBType.Unicode: case MaxDBType.StrUni: case MaxDBType.VarCharUni:
 						buffer_length += ((string)param.Value).Length * sizeof(char);
@@ -311,12 +307,14 @@ namespace MaxDBDataProvider
 						case MaxDBType.Date:
 							DateTime dt = (DateTime)param.Value;
 							//ODBC date format
-							short[] dt_array = new short[3]{(short)(dt.Year % 0x10000), (short)(dt.Month % 0x10000), (short)(dt.Day % 0x10000)};
-							val_length = dt_array.Length * sizeof(short);
-							
-							for(int idx = 0; idx < dt_array.Length; idx++)
-								Array.Copy(BitConverter.GetBytes(dt_array[idx]), 0, param_buffer, buffer_offset, sizeof(short));
-	
+							ODBCDATE dt_odbc;
+							dt_odbc.year = (short)(dt.Year % 0x10000);
+							dt_odbc.month = (ushort)(dt.Month % 0x10000);
+							dt_odbc.day = (ushort)(dt.Day % 0x10000);
+
+							val_length = sizeof(ODBCDATE);
+							Array.Copy(ODBCConverter.GetBytes(dt_odbc), 0, param_buffer, buffer_offset, val_length);
+
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, 
 								new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
@@ -354,11 +352,14 @@ namespace MaxDBDataProvider
 						case MaxDBType.Time:
 							DateTime tm = (DateTime)param.Value;
 							//ODBC time format
-							short[] tm_array = new short[3]{(short)(tm.Hour % 0x10000), (short)(tm.Minute % 0x10000), (short)(tm.Second % 0x10000)};
-							val_length = tm_array.Length * sizeof(short);
+							ODBCTIME tm_odbc;
+							tm_odbc.hour = (ushort)(tm.Hour % 0x10000);
+							tm_odbc.minute = (ushort)(tm.Minute % 0x10000);
+							tm_odbc.second = (ushort)(tm.Second % 0x10000);
 
-							for(int idx = 0; idx < tm_array.Length; idx++)
-								Array.Copy(BitConverter.GetBytes(tm_array[idx]), 0, param_buffer, buffer_offset, sizeof(short));
+							val_length = sizeof(ODBCTIME);
+							
+							Array.Copy(ODBCConverter.GetBytes(tm_odbc), 0, param_buffer, buffer_offset, val_length);
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, 
 								new IntPtr(buffer_ptr + buffer_offset), ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
@@ -369,28 +370,18 @@ namespace MaxDBDataProvider
 						case MaxDBType.TimeStamp:
 							DateTime ts = (DateTime)param.Value;
 							//ODBC timestamp format
-							ushort[] ts_array = new ushort[6 + sizeof(uint) / sizeof(ushort)];
-							ts_array[0] = (ushort)(ts.Year % 0x10000);
-							ts_array[1] = (ushort)(ts.Month % 0x10000);
-							ts_array[2] = (ushort)(ts.Day % 0x10000);
-							ts_array[3] = (ushort)(ts.Hour % 0x10000);
-							ts_array[4] = (ushort)(ts.Minute % 0x10000);
-							ts_array[5] = (ushort)(ts.Second % 0x10000);
-							uint fraction = (uint) ts.Millisecond * 1000000;
-							if (BitConverter.IsLittleEndian)
-							{
-								ts_array[6] = (ushort)(fraction % 0x10000);
-								ts_array[7] = (ushort)(fraction / 0x10000);
-							}
-							else
-							{
-								ts_array[6] = (ushort)(fraction / 0x10000);
-								ts_array[7] = (ushort)(fraction % 0x10000);
-							}
-							val_length = ts_array.Length * sizeof(ushort);
+							ODBCTIMESTAMP ts_odbc;
+							ts_odbc.year = (short)(ts.Year % 0x10000);
+							ts_odbc.month = (ushort)(ts.Month % 0x10000);
+							ts_odbc.day = (ushort)(ts.Day % 0x10000);
+							ts_odbc.hour = (ushort)(ts.Hour % 0x10000);
+							ts_odbc.minute = (ushort)(ts.Minute % 0x10000);
+							ts_odbc.second = (ushort)(ts.Second % 0x10000);
+							ts_odbc.fraction = (uint) ts.Millisecond * 1000000;
 
-							for(int idx = 0; idx < ts_array.Length; idx++)
-								Array.Copy(BitConverter.GetBytes(ts_array[idx]), 0, param_buffer, buffer_offset, sizeof(ushort));
+							val_length = sizeof(ODBCTIMESTAMP);
+
+							Array.Copy(BitConverter.GetBytes(ts_odbc.year), 0, param_buffer, buffer_offset, val_length);
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, 
 								new IntPtr(buffer_ptr + buffer_offset),	ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
