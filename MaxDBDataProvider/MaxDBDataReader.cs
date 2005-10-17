@@ -12,7 +12,7 @@ namespace MaxDBDataProvider
 
 		// Keep track of the results and position
 		// within the resultset (starts prior to first record).
-		private IntPtr  m_resultset;
+		private IntPtr  m_resultset = IntPtr.Zero;
 
 		/* 
 		 * Keep track of the connection in order to implement the
@@ -156,8 +156,8 @@ namespace MaxDBDataProvider
 
 		private unsafe byte[] GetNameBytes(short pos)
 		{
-			byte[] columnName = new byte[1];
-			int len = 0;
+			byte[] columnName = new byte[sizeof(char)];
+			int len = columnName.Length;
 
 			SQLDBC_Retcode rc;
 
