@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.IO;
+using System.Data;
 
 namespace MaxDBDataProvider
 {
@@ -18,6 +19,24 @@ namespace MaxDBDataProvider
 			//
 			// TODO: Add code to start application here
 			//
+
+			MaxDBConnection maxdbconn = new MaxDBConnection("DATA SOURCE=R55S;INITIAL CATALOG=TESTDB;USER ID=DBA;PASSWORD=123");
+			maxdbconn.Open();
+
+			using(MaxDBCommand cmd = new MaxDBCommand("SELECT DATE_FIELD FROM TEST", maxdbconn))
+			{
+				IDataReader reader = cmd.ExecuteReader();
+				string name = reader.GetName(0);
+
+				DataSet ds = new DataSet();
+				MaxDBDataAdapter da = new MaxDBDataAdapter();
+				da.SelectCommand = cmd;
+				da.Fill(ds, "List");
+				foreach(DataRow row in ds.Tables[0].Rows)
+					Console.WriteLine(row[0].ToString());
+			}
+			
+			maxdbconn.Close();
 
 			byte[] errorText = new byte[200];
 
@@ -64,7 +83,7 @@ namespace MaxDBDataProvider
 			if (isUnicode)
 				rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(stmt, enc.GetBytes("SELECT 'Hello World (Привет)!' from DUAL"), StringEncodingType.UCS2Swapped);
 			else
-				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, "SELECT LOB_FIELD from TEST WHERE DATE_FIELD = :field");
+				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, "SELECT LOB_FIELD FROM TEST WHERE DATE_FIELD = :field");
 			
 			if(rc != SQLDBC_Retcode.SQLDBC_OK) 
 			{
@@ -154,7 +173,7 @@ namespace MaxDBDataProvider
 
 			string colName = Encoding.Unicode.GetString(columnName).TrimEnd('\0');
 
-			//SQLDBC_SQLType type = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1);
+			SQLDBC_SQLType type = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1);
 
 			byte val;
 			int val_length = sizeof(byte);

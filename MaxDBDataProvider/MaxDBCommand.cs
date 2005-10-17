@@ -12,10 +12,12 @@ namespace MaxDBDataProvider
 		UpdateRowSource m_updatedRowSource = UpdateRowSource.None;
 		MaxDBParameterCollection m_parameters = new MaxDBParameterCollection();
 		CommandType m_sCmdType = CommandType.Text;
+		IntPtr stmt = IntPtr.Zero;
 
 		// Implement the default constructor here.
 		public MaxDBCommand()
 		{
+			stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.connHandler);
 		}
 
 		// Implement other constructors here.
@@ -28,6 +30,7 @@ namespace MaxDBDataProvider
 		{
 			m_sCmdText    = cmdText;
 			m_connection  = connection;
+			stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.connHandler);
 		}
 
 		public MaxDBCommand(string cmdText, MaxDBConnection connection, MaxDBTransaction txn)
@@ -35,6 +38,7 @@ namespace MaxDBDataProvider
 			m_sCmdText    = cmdText;
 			m_connection  = connection;
 			m_txn      = txn;
+			stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.connHandler);
 		}
 
 		/****
@@ -142,8 +146,6 @@ namespace MaxDBDataProvider
 
 			SQLDBC_Retcode rc;
 
-			IntPtr stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.connHandler);
-
 			try
 			{
 				if (m_connection.DatabaseEncoding is UnicodeEncoding)
@@ -220,10 +222,6 @@ namespace MaxDBDataProvider
 			{
 				throw;
 			}
-			finally
-			{
-				SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.connHandler, stmt);
-			}
 		}
 
 		public object ExecuteScalar()
@@ -275,7 +273,7 @@ namespace MaxDBDataProvider
 				}
 			}
 
-			byte[] param_buffer = new byte[buffer_length];
+			byte[] param_buffer = new byte[buffer_length + 1];
 
 			fixed(byte *buffer_ptr = param_buffer)
 			{
@@ -416,6 +414,8 @@ namespace MaxDBDataProvider
 
 		void IDisposable.Dispose() 
 		{
+			if (stmt != IntPtr.Zero)
+				SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.connHandler, stmt);
 			System.GC.SuppressFinalize(this);
 		}
 	}
