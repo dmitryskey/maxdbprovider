@@ -259,9 +259,24 @@ namespace MaxDBDataProvider
 			 * If the provider also supports automatic enlistment in 
 			 * distributed transactions, it should enlist during Open().
 			 */
-			byte[] errorText = new byte[256];
+			OpenConnection();
 
-			runtimeHandler = SQLDBC.ClientRuntime_GetClientRuntime(errorText, 256);
+			if (SQLDBC.SQLDBC_Connection_isUnicodeDatabase(connHandler) == 1)
+				enc = Encoding.Unicode;//little-endian unicode
+			else
+				enc = Encoding.ASCII;
+
+			m_state = ConnectionState.Open;
+		}
+
+		private unsafe void OpenConnection()
+		{
+			byte[] errorText = new byte[256];
+			
+			fixed(byte* errPtr = errorText)
+			{
+				runtimeHandler = SQLDBC.ClientRuntime_GetClientRuntime(errorText, errorText.Length);
+			}
 			if (runtimeHandler == IntPtr.Zero)
 				throw new MaxDBException(Encoding.ASCII.GetString(errorText));
 
@@ -276,13 +291,6 @@ namespace MaxDBDataProvider
 				m_ConnArgs.password, connPropHandler) != SQLDBC_Retcode.SQLDBC_OK) 
 				throw new MaxDBException("Connecting to the database failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
 					SQLDBC.SQLDBC_Connection_getError(connHandler)));
-
-			if (SQLDBC.SQLDBC_Connection_isUnicodeDatabase(connHandler) == 1)
-				enc = Encoding.Unicode;//little-endian unicode
-			else
-				enc = Encoding.ASCII;
-
-			m_state = ConnectionState.Open;
 		}
 
 		public void Close()

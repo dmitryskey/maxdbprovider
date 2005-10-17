@@ -19,7 +19,7 @@ namespace MaxDBDataProvider
 		 * CommandBehavior.CloseConnection flag. A null reference means
 		 * normal behavior (do not automatically close).
 		 */
-		private MaxDBConnection m_connection = null;
+		//private MaxDBConnection m_connection = null;
 
 		/*
 		 * Because the user should not be able to directly create a 
@@ -28,7 +28,7 @@ namespace MaxDBDataProvider
 		 */
 		internal MaxDBDataReader(IntPtr resultset)
 		{
-			m_resultset   = resultset;
+			m_resultset = resultset;
 		}
 
 		/****
@@ -76,22 +76,12 @@ namespace MaxDBDataProvider
 
 		public bool NextResult()
 		{
-			SQLDBC_Retcode rc = SQLDBC.SQLDBC_ResultSet_next(m_resultset);
-
-			switch (rc)
-			{
-				case SQLDBC_Retcode.SQLDBC_OK:
-					return true;
-				case SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND:
-					return false;
-				default:
-					throw new MaxDBException("Error fetching data " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
-			}
+			return false;
 		}
 
 		public bool Read()
 		{
-			SQLDBC_Retcode rc = SQLDBC.SQLDBC_ResultSet_relative(m_resultset, 0);
+			SQLDBC_Retcode rc = SQLDBC.SQLDBC_ResultSet_next(m_resultset);
 
 			switch (rc)
 			{
@@ -161,25 +151,37 @@ namespace MaxDBDataProvider
 
 		public string GetName(int i)
 		{
-			byte[] columnName = new byte[0];
+			return Encoding.Unicode.GetString(GetNameBytes((short)(i + 1))).TrimEnd('\0');
+		}
+
+		private unsafe byte[] GetNameBytes(short pos)
+		{
+			byte[] columnName = new byte[1];
 			int len = 0;
 
-			SQLDBC_Retcode rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1), columnName, 
-				StringEncodingType.UCS2Swapped, len, ref len);
+			SQLDBC_Retcode rc;
 
-			if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-				throw new MaxDBException("Can't not allocate buffer for the column name");
+			fixed(byte *namePtr = columnName)
+			{
+				rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), pos, 
+					columnName, StringEncodingType.UCS2Swapped, len, ref len);
+				if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+					throw new MaxDBException("Can't not allocate buffer for the column name");
+			}
 
-			len += 2;
+			len += sizeof(char);
 			columnName = new byte[len];
 
-			rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), 1, columnName, 
-				StringEncodingType.UCS2Swapped, len, ref len);
+			fixed(byte *namePtr = columnName)
+			{
+				rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), pos, columnName, 
+					StringEncodingType.UCS2Swapped, len, ref len);
 
-			if (rc != SQLDBC_Retcode.SQLDBC_OK)
-				throw new MaxDBException("Can't not get column name");
+				if (rc != SQLDBC_Retcode.SQLDBC_OK)
+					throw new MaxDBException("Can't not get column name");
+			}
 
-			return Encoding.Unicode.GetString(columnName).TrimEnd('\0');
+			return columnName;
 		}
 
 		public string GetDataTypeName(int i)
@@ -199,9 +201,6 @@ namespace MaxDBDataProvider
 			{
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN:
 					return typeof(bool);
-				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
-				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
-					return typeof(byte);
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
@@ -214,6 +213,9 @@ namespace MaxDBDataProvider
 					return typeof(int);
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
 					return typeof(short);
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
@@ -221,21 +223,192 @@ namespace MaxDBDataProvider
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
 					return typeof(string);
-				case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
-					return typeof(char);
 				default:
 					return typeof(object);
 			}
 		}
 
-		public Object GetValue(int i)
+
+		private unsafe byte[] GetValueBytes(int i, out SQLDBC_SQLType columnType)
 		{
-			throw new NotImplementedException();
+			int val_length;
+			columnType = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1));
+			switch(columnType)
+			{
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN:
+					byte byte_val;
+					val_length = sizeof(byte);
+					if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT1, new IntPtr(&byte_val), 
+						ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+						throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+						return null;
+					else
+						return new byte[]{byte_val};
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE:
+					byte[] dt_val = new byte[sizeof(ODBCDATE)];
+					val_length = dt_val.Length;
+					fixed(byte *dt_ptr = dt_val)
+					{
+						if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, new IntPtr(dt_ptr), 
+							ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+							throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+					}
+					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+						return null;
+					else
+						return dt_val;
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
+					byte[] tm_val = new byte[sizeof(ODBCTIME)];
+					val_length = tm_val.Length;
+					fixed(byte* tm_ptr = tm_val)
+					{
+						if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, new IntPtr(tm_ptr), 
+							ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+							throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+					}
+					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+						return null;
+					else
+						return tm_val;
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
+					byte[] ts_val = new byte[sizeof(ODBCTIMESTAMP)];
+					val_length = ts_val.Length;
+					fixed(byte *ts_ptr = ts_val)
+					{
+						if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, new IntPtr(ts_ptr), 
+							ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+							throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+					}
+					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+						return null;
+					else
+						return ts_val;
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_FIXED:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_FLOAT:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VFLOAT:
+					double double_val;
+					val_length = sizeof(double);
+					if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_DOUBLE, new IntPtr(&double_val), 
+						ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+						throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+						return null;
+					else
+						return BitConverter.GetBytes(double_val);
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_INTEGER:
+					int int_val;
+					val_length = sizeof(int);
+					if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, new IntPtr(&int_val), 
+						ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+						throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+						return null;
+					else
+						return BitConverter.GetBytes(int_val);
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
+					short short_val;
+					val_length = sizeof(short);
+					if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT2, new IntPtr(&short_val), 
+						ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+						throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+						return null;
+					else
+						return BitConverter.GetBytes(short_val);
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
+					byte[] columnValue = new byte[1];
+					val_length = 0;
+
+					SQLDBC_Retcode rc;
+
+					fixed(byte *valuePtr = columnValue)
+					{
+						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED, 
+							new IntPtr(valuePtr), ref val_length, val_length, 0);
+						if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+							throw new MaxDBException("Can't not allocate buffer for the column value");
+					}
+
+					val_length += sizeof(char);
+					columnValue = new byte[val_length];
+
+					fixed(byte *valuePtr = columnValue)
+					{
+						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED, 
+							new IntPtr(valuePtr), ref val_length, val_length, 0);
+
+						if (rc != SQLDBC_Retcode.SQLDBC_OK)
+							throw new MaxDBException("Can't not get column value");
+					}
+
+					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+						return null;
+					else
+						return columnValue;
+				default:
+					return null;
+			}
+		}
+
+		public object GetValue(int i)
+		{
+			SQLDBC_SQLType columnType;
+			byte[] data = GetValueBytes(i, out columnType);
+			if (data != null)
+			{
+				switch(columnType)
+				{
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN:
+						return (data[0] == 1);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE:
+						ODBCDATE dt_val = ODBCConverter.GetDate(data);
+						return new DateTime(dt_val.year, dt_val.month, dt_val.day);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
+						ODBCTIME tm_val = ODBCConverter.GetTime(data);
+						return new DateTime(0, 0, 0, tm_val.hour, tm_val.minute, tm_val.second);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
+						ODBCTIMESTAMP ts_val = ODBCConverter.GetTimeStamp(data);
+						return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second, (int)(ts_val.fraction/1000000));
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FIXED:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FLOAT:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VFLOAT:
+						return BitConverter.ToDouble(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_INTEGER:
+						return BitConverter.ToInt32(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
+						return BitConverter.ToInt16(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
+						return Encoding.Unicode.GetString(data);
+					default:
+						return DBNull.Value;
+				}
+			}
+			else
+				return DBNull.Value; 
 		}
 
 		public int GetValues(object[] values)
 		{
-			throw new NotImplementedException();
+			for (int i = 0; i < Math.Min(this.FieldCount, values.Length); i++)
+				values[i] = GetValue(i);
+			return Math.Min(this.FieldCount, values.Length);
 		}
 
 		public int GetOrdinal(string name)
@@ -251,7 +424,7 @@ namespace MaxDBDataProvider
 		{
 			get
 			{
-				throw new NotImplementedException();
+				return GetValue(i);
 			}
 		}
 
@@ -259,7 +432,7 @@ namespace MaxDBDataProvider
 		{
 			// Look up the ordinal and return 
 			// the value at that position.
-			get { throw new NotImplementedException(); }
+			get { return GetValue(GetOrdinal(name)); }
 		}
 
 		public bool GetBoolean(int i)
@@ -268,7 +441,44 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-			throw new NotImplementedException();
+			SQLDBC_SQLType columnType;
+			byte[] data = GetValueBytes(i, out columnType);
+			if (data != null)
+			{
+				switch(columnType)
+				{
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN:
+						return (data[0] == 1);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE:
+						throw new InvalidCastException("Can't convert date value to boolean");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
+						throw new InvalidCastException("Can't convert time value to boolean");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
+						throw new InvalidCastException("Can't convert timestamp value to boolean");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FIXED:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FLOAT:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VFLOAT:
+						return (BitConverter.ToDouble(data, 0) == 1);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_INTEGER:
+						return (BitConverter.ToInt32(data, 0) == 1);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
+						return (BitConverter.ToInt16(data, 0) == 1);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
+						return bool.Parse(Encoding.Unicode.GetString(data));
+					default:
+						throw new InvalidCastException("Unknown column type");
+				}
+			}
+			else
+				throw new InvalidCastException("Can't get the boolean value since column's value is NULL");
 		}
 
 		public byte GetByte(int i)
@@ -277,13 +487,24 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-			throw new NotImplementedException();
+			return (byte)GetValue(i);
 		}
 
 		public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
 		{
-			// The sample does not support this method.
-			throw new NotSupportedException("GetBytes not supported.");
+			if (buffer.Length - bufferoffset > length)
+				length = buffer.Length - bufferoffset;
+
+			SQLDBC_SQLType columnType;
+			byte[] fieldBytes = GetValueBytes(i, out columnType);
+			
+			long length_to_copy = length;
+			
+			if (fieldBytes.LongLength - fieldOffset > length_to_copy)
+				length_to_copy = fieldBytes.LongLength - fieldOffset;
+			Array.Copy(fieldBytes, fieldOffset, buffer, bufferoffset, length_to_copy);
+			
+			return length_to_copy;
 		}
 
 		public char GetChar(int i)
@@ -292,13 +513,17 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-			throw new NotImplementedException();
+			return (char)GetValue(i);
 		}
 
 		public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
 		{
-			// The sample does not support this method.
-			throw new NotSupportedException("GetChars not supported.");
+			const int char_size = 2;
+			byte[] byte_buffer = new byte[buffer.LongLength * char_size];
+			long copied_chars = GetBytes(i, fieldoffset * char_size, byte_buffer, bufferoffset * char_size, length * char_size) / char_size;
+			for (i = bufferoffset; i < bufferoffset + copied_chars; i++)
+				buffer[i] = BitConverter.ToChar(byte_buffer, i * char_size);
+			return copied_chars;
 		}
 
 		public Guid GetGuid(int i)
@@ -310,31 +535,142 @@ namespace MaxDBDataProvider
 			throw new NotImplementedException();
 		}
 
-		public Int16 GetInt16(int i)
+		public short GetInt16(int i)
 		{
 			/*
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-			throw new NotImplementedException();
+			SQLDBC_SQLType columnType;
+			byte[] data = GetValueBytes(i, out columnType);
+			if (data != null)
+			{
+				switch(columnType)
+				{
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN:
+						return data[0];
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE:
+						throw new InvalidCastException("Can't convert date value to Int16");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
+						throw new InvalidCastException("Can't convert time value to Int16");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
+						throw new InvalidCastException("Can't convert timestamp value to Int16");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FIXED:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FLOAT:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VFLOAT:
+						return (short)BitConverter.ToDouble(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_INTEGER:
+						return (short)BitConverter.ToInt32(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
+						return BitConverter.ToInt16(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
+						return short.Parse(Encoding.Unicode.GetString(data));
+					default:
+						throw new InvalidCastException("Unknown column type");
+				}
+			}
+			else
+				throw new InvalidCastException("Can't get the Int16 value since column's value is NULL");
 		}
 
-		public Int32 GetInt32(int i)
+		public int GetInt32(int i)
 		{
 			/*
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-			throw new NotImplementedException();
+			SQLDBC_SQLType columnType;
+			byte[] data = GetValueBytes(i, out columnType);
+			if (data != null)
+			{
+				switch(columnType)
+				{
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN:
+						return data[0];
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE:
+						throw new InvalidCastException("Can't convert date value to Int32");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
+						throw new InvalidCastException("Can't convert time value to Int32");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
+						throw new InvalidCastException("Can't convert timestamp value to Int32");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FIXED:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FLOAT:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VFLOAT:
+						return (int)BitConverter.ToDouble(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_INTEGER:
+						return BitConverter.ToInt32(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
+						return BitConverter.ToInt16(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
+						return int.Parse(Encoding.Unicode.GetString(data));
+					default:
+						throw new InvalidCastException("Unknown column type");
+				}
+			}
+			else
+				throw new InvalidCastException("Can't get the Int32 value since column's value is NULL");
 		}
 
-		public Int64 GetInt64(int i)
+		public long GetInt64(int i)
 		{
 			/*
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-			throw new NotImplementedException();
+			SQLDBC_SQLType columnType;
+			byte[] data = GetValueBytes(i, out columnType);
+			if (data != null)
+			{
+				switch(columnType)
+				{
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN:
+						return data[0];
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE:
+						throw new InvalidCastException("Can't convert date value to Int64");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
+						throw new InvalidCastException("Can't convert time value to Int64");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
+						throw new InvalidCastException("Can't convert timestamp value to Int64");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FIXED:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FLOAT:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VFLOAT:
+						return (long)BitConverter.ToDouble(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_INTEGER:
+						return BitConverter.ToInt32(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
+						return BitConverter.ToInt16(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
+						return long.Parse(Encoding.Unicode.GetString(data));
+					default:
+						throw new InvalidCastException("Unknown column type");
+				}
+			}
+			else
+				throw new InvalidCastException("Can't get the Int64 value since column's value is NULL");
 		}
 
 		public float GetFloat(int i)
@@ -343,7 +679,44 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-			throw new NotImplementedException();
+			SQLDBC_SQLType columnType;
+			byte[] data = GetValueBytes(i, out columnType);
+			if (data != null)
+			{
+				switch(columnType)
+				{
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN:
+						return data[0];
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE:
+						throw new InvalidCastException("Can't convert date value to Float");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
+						throw new InvalidCastException("Can't convert time value to Float");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
+						throw new InvalidCastException("Can't convert timestamp value to Float");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FIXED:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FLOAT:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VFLOAT:
+						return (float)BitConverter.ToDouble(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_INTEGER:
+						return BitConverter.ToInt32(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
+						return BitConverter.ToInt16(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
+						return float.Parse(Encoding.Unicode.GetString(data));
+					default:
+						throw new InvalidCastException("Unknown column type");
+				}
+			}
+			else
+				throw new InvalidCastException("Can't get the Float value since column's value is NULL");
 		}
 
 		public double GetDouble(int i)
@@ -352,25 +725,140 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-			throw new NotImplementedException();
+			SQLDBC_SQLType columnType;
+			byte[] data = GetValueBytes(i, out columnType);
+			if (data != null)
+			{
+				switch(columnType)
+				{
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN:
+						return data[0];
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE:
+						throw new InvalidCastException("Can't convert date value to Double");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
+						throw new InvalidCastException("Can't convert time value to Double");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
+						throw new InvalidCastException("Can't convert timestamp value to Double");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FIXED:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FLOAT:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VFLOAT:
+						return BitConverter.ToDouble(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_INTEGER:
+						return BitConverter.ToInt32(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
+						return BitConverter.ToInt16(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
+						return double.Parse(Encoding.Unicode.GetString(data));
+					default:
+						throw new InvalidCastException("Unknown column type");
+				}
+			}
+			else
+				throw new InvalidCastException("Can't get the Double value since column's value is NULL");
 		}
 
-		public String GetString(int i)
+		public string GetString(int i)
 		{
 			/*
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-			throw new NotImplementedException();
+			SQLDBC_SQLType columnType;
+			byte[] data = GetValueBytes(i, out columnType);
+			if (data != null)
+			{
+				switch(columnType)
+				{
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN:
+						return (data[0] == 1).ToString();
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE:
+						ODBCDATE dt_val = ODBCConverter.GetDate(data);
+						return (new DateTime(dt_val.year, dt_val.month, dt_val.day)).ToShortDateString();
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
+						ODBCTIME tm_val = ODBCConverter.GetTime(data);
+						return (new DateTime(0, 0, 0, tm_val.hour, tm_val.minute, tm_val.second)).ToShortTimeString();
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
+						ODBCTIMESTAMP ts_val = ODBCConverter.GetTimeStamp(data);
+						return (new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second, 
+							(int)(ts_val.fraction/1000000))).ToString();
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FIXED:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FLOAT:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VFLOAT:
+						return BitConverter.ToDouble(data, 0).ToString();
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_INTEGER:
+						return BitConverter.ToInt32(data, 0).ToString();
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
+						return BitConverter.ToInt16(data, 0).ToString();
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
+						return Encoding.Unicode.GetString(data);
+					default:
+						throw new InvalidCastException("Unknown column type");
+				}
+			}
+			else
+				throw new InvalidCastException("Can't get the String value since column's value is NULL");
 		}
 
-		public Decimal GetDecimal(int i)
+		public decimal GetDecimal(int i)
 		{
 			/*
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-			throw new NotImplementedException();
+			SQLDBC_SQLType columnType;
+			byte[] data = GetValueBytes(i, out columnType);
+			if (data != null)
+			{
+				switch(columnType)
+				{
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN:
+						return data[0];
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE:
+						throw new InvalidCastException("Can't convert date value to Decimal");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
+						throw new InvalidCastException("Can't convert time value to Decimal");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
+						throw new InvalidCastException("Can't convert timestamp value to Decimal");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FIXED:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FLOAT:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VFLOAT:
+						return (decimal)BitConverter.ToDouble(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_INTEGER:
+						return BitConverter.ToInt32(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
+						return BitConverter.ToInt16(data, 0);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
+						return decimal.Parse(Encoding.Unicode.GetString(data));
+					default:
+						throw new InvalidCastException("Unknown column type");
+				}
+			}
+			else
+				throw new InvalidCastException("Can't get the Decimal value since column's value is NULL");
 		}
 
 		public DateTime GetDateTime(int i)
@@ -378,8 +866,50 @@ namespace MaxDBDataProvider
 			/*
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
-			*/
-			throw new NotImplementedException();
+			 */
+			SQLDBC_SQLType columnType;
+			byte[] data = GetValueBytes(i, out columnType);
+			if (data != null)
+			{
+				switch(columnType)
+				{
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN:
+						throw new InvalidCastException("Can't convert Boolean value to DateTime");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE:
+						ODBCDATE dt_val = ODBCConverter.GetDate(data);
+						return new DateTime(dt_val.year, dt_val.month, dt_val.day);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
+						ODBCTIME tm_val = ODBCConverter.GetTime(data);
+						return new DateTime(0, 0, 0, tm_val.hour, tm_val.minute, tm_val.second);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
+						ODBCTIMESTAMP ts_val = ODBCConverter.GetTimeStamp(data);
+						return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second, 
+							(int)(ts_val.fraction/1000000));
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FIXED:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_FLOAT:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VFLOAT:
+						throw new InvalidCastException("Can't convert Double value to DateTime");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_INTEGER:
+						throw new InvalidCastException("Can't convert Int32 value to DateTime");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
+						throw new InvalidCastException("Can't convert Int16 value to DateTime");
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
+						return DateTime.Parse(Encoding.Unicode.GetString(data));
+					default:
+						throw new InvalidCastException("Unknown column type");
+				}
+			}
+			else
+				throw new InvalidCastException("Can't get the DateTime value since column's value is NULL");
+
 		}
 
 		public IDataReader GetData(int i)
@@ -394,7 +924,7 @@ namespace MaxDBDataProvider
 
 		public bool IsDBNull(int i)
 		{
-			throw new NotImplementedException();
+			return (GetValue(i) == DBNull.Value);
 		}
 
 		/*
@@ -421,8 +951,7 @@ namespace MaxDBDataProvider
 				}
 				catch (Exception e) 
 				{
-					throw new SystemException("An exception of type " + e.GetType() + 
-						" was encountered while closing the TemplateDataReader.");
+					throw new SystemException("An exception of type " + e.GetType() + " was encountered while closing the MaxDBDataReader.");
 				}
 			}
 		}

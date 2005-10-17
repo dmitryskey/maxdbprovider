@@ -99,6 +99,11 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "MaxDBDataAdapter.cs"
+                    SubType = "Component"
+                    BuildAction = "Compile"
+                />
+                <File
                     RelPath = "MaxDBDataReader.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
