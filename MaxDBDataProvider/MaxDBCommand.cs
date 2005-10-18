@@ -409,7 +409,7 @@ namespace MaxDBDataProvider
 		void IDbCommand.Prepare()
 		{
 			// The Prepare is a no-op since parameter preparing and query execution
-			// has to be in the one "fixed" block of code
+			// has to be in the single "fixed" block of code
 		}
 
 		void IDisposable.Dispose() 

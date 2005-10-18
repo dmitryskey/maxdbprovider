@@ -164,7 +164,7 @@ namespace MaxDBDataProvider
 			fixed(byte *namePtr = columnName)
 			{
 				rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), pos, 
-					columnName, StringEncodingType.UCS2Swapped, len, ref len);
+					new IntPtr(namePtr), StringEncodingType.UCS2Swapped, len, ref len);
 				if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
 					throw new MaxDBException("Can't not allocate buffer for the column name");
 			}
@@ -174,8 +174,8 @@ namespace MaxDBDataProvider
 
 			fixed(byte *namePtr = columnName)
 			{
-				rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), pos, columnName, 
-					StringEncodingType.UCS2Swapped, len, ref len);
+				rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), pos, 
+					new IntPtr(namePtr), StringEncodingType.UCS2Swapped, len, ref len);
 
 				if (rc != SQLDBC_Retcode.SQLDBC_OK)
 					throw new MaxDBException("Can't not get column name");
@@ -232,6 +232,7 @@ namespace MaxDBDataProvider
 		private unsafe byte[] GetValueBytes(int i, out SQLDBC_SQLType columnType)
 		{
 			int val_length;
+			SQLDBC_Retcode rc;
 			columnType = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1));
 			switch(columnType)
 			{
@@ -317,25 +318,20 @@ namespace MaxDBDataProvider
 					else
 						return BitConverter.GetBytes(short_val);
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
-				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
-				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
-				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
-					byte[] columnValue = new byte[1];
-					val_length = 0;
-
-					SQLDBC_Retcode rc;
+					byte[] columnValue = new byte[sizeof(char)];
+					val_length = columnValue.Length;
 
 					fixed(byte *valuePtr = columnValue)
 					{
 						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED, 
 							new IntPtr(valuePtr), ref val_length, val_length, 0);
 						if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-							throw new MaxDBException("Can't not allocate buffer for the column value");
+							throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
 					val_length += sizeof(char);
@@ -347,13 +343,43 @@ namespace MaxDBDataProvider
 							new IntPtr(valuePtr), ref val_length, val_length, 0);
 
 						if (rc != SQLDBC_Retcode.SQLDBC_OK)
-							throw new MaxDBException("Can't not get column value");
+							throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
 					else
 						return columnValue;
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+					byte[] binValue = new byte[1];
+					val_length = binValue.Length;
+
+					fixed(byte *valuePtr = binValue)
+					{
+						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY, 
+							new IntPtr(valuePtr), ref val_length, val_length, 0);
+						if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+							throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+					}
+
+					val_length += sizeof(byte);
+					binValue = new byte[val_length];
+
+					fixed(byte *valuePtr = binValue)
+					{
+						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY, 
+							new IntPtr(valuePtr), ref val_length, val_length, 0);
+
+						if (rc != SQLDBC_Retcode.SQLDBC_OK)
+							throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+					}
+
+					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+						return null;
+					else
+						return binValue;
 				default:
 					return null;
 			}
@@ -387,15 +413,16 @@ namespace MaxDBDataProvider
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
 						return BitConverter.ToInt16(data, 0);
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
-					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
-					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
-					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
 						return Encoding.Unicode.GetString(data);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+						return Encoding.ASCII.GetString(data);
 					default:
 						return DBNull.Value;
 				}
@@ -930,10 +957,6 @@ namespace MaxDBDataProvider
 		/*
 		 * Implementation specific methods.
 		 */
-		private int _cultureAwareCompare(string strA, string strB)
-		{
-			return CultureInfo.CurrentCulture.CompareInfo.Compare(strA, strB, CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase);
-		}
 
 		void IDisposable.Dispose() 
 		{
