@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using System.IO;
 using System.Data;
+using System.Data.Odbc;
 
 namespace MaxDBDataProvider
 {
@@ -20,23 +21,56 @@ namespace MaxDBDataProvider
 			// TODO: Add code to start application here
 			//
 
-			MaxDBConnection maxdbconn = new MaxDBConnection("DATA SOURCE=R55S;INITIAL CATALOG=TESTDB;USER ID=DBA;PASSWORD=123");
-			maxdbconn.Open();
-
-			using(MaxDBCommand cmd = new MaxDBCommand("SELECT DATE_FIELD FROM TEST", maxdbconn))
-			{
-				IDataReader reader = cmd.ExecuteReader();
-				string name = reader.GetName(0);
-
-				DataSet ds = new DataSet();
-				MaxDBDataAdapter da = new MaxDBDataAdapter();
-				da.SelectCommand = cmd;
-				da.Fill(ds, "List");
-				foreach(DataRow row in ds.Tables[0].Rows)
-					Console.WriteLine(row[0].ToString());
-			}
-			
-			maxdbconn.Close();
+//			try
+//			{
+//				MaxDBConnection maxdbconn = new MaxDBConnection("DATA SOURCE=r55s;INITIAL CATALOG=TESTDB;USER ID=DBA;PASSWORD=123");
+//				
+//				maxdbconn.Open();
+//
+//				DateTime start_time = DateTime.Now;
+//
+//				for(int i=0;i<1000;i++)
+//				{
+//					using(MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM TEST", maxdbconn))
+//					{
+//						DataSet ds = new DataSet();
+//						MaxDBDataAdapter da = new MaxDBDataAdapter();
+//						da.SelectCommand = cmd;
+//						da.Fill(ds, "List");
+//					}
+//				}
+//
+//				Console.WriteLine(DateTime.Now - start_time);
+//
+//				maxdbconn.Close();
+//
+////				OdbcConnection odbcconn = new OdbcConnection("Dsn=TESTDB;Uid=DBA;Pwd=123;");
+////				odbcconn.Open();
+////				
+////				DateTime start_time = DateTime.Now;
+////				
+////				for(int i=0;i<1000;i++)
+////				{
+////					using(OdbcCommand cmd = new OdbcCommand("SELECT DATE_FIELD FROM TEST", odbcconn))
+////					{
+////						DataSet ds = new DataSet();
+////						OdbcDataAdapter da = new OdbcDataAdapter();
+////						da.SelectCommand = cmd;
+////						da.Fill(ds, "List");
+////					}
+////				}
+////				
+////				Console.WriteLine(DateTime.Now - start_time);
+////				
+////				odbcconn.Close();
+//
+//			}
+//			catch(Exception ex)
+//			{
+//				Console.WriteLine(ex.Message);
+//			}
+//
+//			return;
 
 			byte[] errorText = new byte[200];
 
@@ -44,7 +78,7 @@ namespace MaxDBDataProvider
 				
 			fixed (byte* buff = errorText)
 			{
-				runtime = SQLDBC.ClientRuntime_GetClientRuntime(errorText, 200);
+				runtime = SQLDBC.ClientRuntime_GetClientRuntime(new IntPtr(buff), 200);
 			}
 			IntPtr Environment = SQLDBC.SQLDBC_Environment_new_SQLDBC_Environment(runtime);
 
@@ -83,7 +117,7 @@ namespace MaxDBDataProvider
 			if (isUnicode)
 				rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(stmt, enc.GetBytes("SELECT 'Hello World (Привет)!' from DUAL"), StringEncodingType.UCS2Swapped);
 			else
-				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, "SELECT LOB_FIELD FROM TEST WHERE DATE_FIELD = :field");
+				rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, "SELECT CHARB_FIELD FROM TEST WHERE DATE_FIELD = :field");
 			
 			if(rc != SQLDBC_Retcode.SQLDBC_OK) 
 			{
@@ -136,7 +170,7 @@ namespace MaxDBDataProvider
 			/*
 			 * Get a string value from the column.
 			 */
-			byte[] szString = new byte[30];
+			byte[] szString = new byte[10];
 			Int32 ind = 0;
 
 			byte[] columnName = new byte[1];
@@ -144,7 +178,7 @@ namespace MaxDBDataProvider
 
 			fixed(byte *namePtr = columnName)
 			{
-				rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1, columnName, 
+				rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1, new IntPtr(namePtr), 
 					StringEncodingType.UCS2Swapped, len, ref len);
 			}
 
@@ -160,7 +194,7 @@ namespace MaxDBDataProvider
 
 			fixed(byte *namePtr = columnName)
 			{
-				rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1, columnName, 
+				rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(result), 1, new IntPtr(namePtr), 
 					StringEncodingType.UCS2Swapped, len, ref len);
 			}
 			
@@ -182,7 +216,7 @@ namespace MaxDBDataProvider
 
 			fixed(byte *buffer = szString)
 			{
-				if(SQLDBC.SQLDBC_ResultSet_getObject(result, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, new IntPtr(buffer), ref ind, 30, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+				if(SQLDBC.SQLDBC_ResultSet_getObject(result, 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY, new IntPtr(buffer), ref ind, 10, 0) != SQLDBC_Retcode.SQLDBC_OK) 
 				{
 					Console.Out.WriteLine("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(result)));
 					return;

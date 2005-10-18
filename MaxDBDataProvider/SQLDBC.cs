@@ -261,7 +261,7 @@ namespace MaxDBDataProvider
 		#region "Runtime"
 
 		[DllImport("libsqldbc_c")]
-		public extern static IntPtr ClientRuntime_GetClientRuntime(byte[] errorText, int errorTextSize);
+		public extern static IntPtr ClientRuntime_GetClientRuntime(IntPtr errorText, int errorTextSize);
 
 		[DllImport("libsqldbc_c")]
 		public extern static string SQLDBC_ErrorHndl_getErrorText(IntPtr herror);
@@ -434,7 +434,7 @@ namespace MaxDBDataProvider
 		public extern static short SQLDBC_ResultSetMetaData_getColumnCount(IntPtr hdl);
 
 		[DllImport("libsqldbc_c")]
-		public extern static SQLDBC_Retcode SQLDBC_ResultSetMetaData_getColumnName(IntPtr hdl, short column, byte[] buffer, 
+		public extern static SQLDBC_Retcode SQLDBC_ResultSetMetaData_getColumnName(IntPtr hdl, short column, IntPtr buffer, 
 			StringEncodingType encoding, int size, ref int length); 
 
 		[DllImport("libsqldbc_c")]

@@ -273,9 +273,9 @@ namespace MaxDBDataProvider
 		{
 			byte[] errorText = new byte[256];
 			
-			fixed(byte* errPtr = errorText)
+			fixed(byte* errorPtr = errorText)
 			{
-				runtimeHandler = SQLDBC.ClientRuntime_GetClientRuntime(errorText, errorText.Length);
+				runtimeHandler = SQLDBC.ClientRuntime_GetClientRuntime(new IntPtr(errorPtr), errorText.Length);
 			}
 			if (runtimeHandler == IntPtr.Zero)
 				throw new MaxDBException(Encoding.ASCII.GetString(errorText));
