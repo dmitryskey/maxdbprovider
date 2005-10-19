@@ -172,7 +172,7 @@ namespace MaxDBDataProvider
 
 			Array.Copy(BitConverter.GetBytes(dt.year), 0, result, 0, sizeof(short));
 			Array.Copy(BitConverter.GetBytes(dt.month), 0, result, sizeof(short), sizeof(ushort));
-			Array.Copy(BitConverter.GetBytes(dt.month), 0, result, sizeof(short) + sizeof(ushort), sizeof(ushort));
+			Array.Copy(BitConverter.GetBytes(dt.day), 0, result, sizeof(short) + sizeof(ushort), sizeof(ushort));
 
 			return result;
 		}
@@ -194,7 +194,7 @@ namespace MaxDBDataProvider
 
 			Array.Copy(BitConverter.GetBytes(ts.year), 0, result, 0, sizeof(short));
 			Array.Copy(BitConverter.GetBytes(ts.month), 0, result, sizeof(short), sizeof(ushort));
-			Array.Copy(BitConverter.GetBytes(ts.month), 0, result, sizeof(short) + sizeof(ushort), sizeof(ushort));
+			Array.Copy(BitConverter.GetBytes(ts.day), 0, result, sizeof(short) + sizeof(ushort), sizeof(ushort));
 			Array.Copy(BitConverter.GetBytes(ts.hour), 0, result, sizeof(short) + 2*sizeof(ushort), sizeof(ushort));
 			Array.Copy(BitConverter.GetBytes(ts.minute), 0, result, sizeof(short) + 3*sizeof(ushort), sizeof(ushort));
 			Array.Copy(BitConverter.GetBytes(ts.second), 0, result, sizeof(short) + 4*sizeof(ushort), sizeof(ushort));

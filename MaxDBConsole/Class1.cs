@@ -21,56 +21,68 @@ namespace MaxDBDataProvider
 			// TODO: Add code to start application here
 			//
 
-//			try
-//			{
-//				MaxDBConnection maxdbconn = new MaxDBConnection("DATA SOURCE=r55s;INITIAL CATALOG=TESTDB;USER ID=DBA;PASSWORD=123");
+			try
+			{
+				MaxDBConnection maxdbconn = new MaxDBConnection("DATA SOURCE=r55s;INITIAL CATALOG=TESTDB;USER ID=DBA;PASSWORD=123");
+				
+				maxdbconn.Open();
+
+				DateTime start_time = DateTime.Now;
+
+				for(int i=0;i<1000;i++)
+				{
+					using(MaxDBCommand cmd = new MaxDBCommand("SELECT DATE_FIELD FROM TEST WHERE CHARA_FIELD=:a AND DATE_FIELD=:b", maxdbconn))
+					{
+						cmd.Parameters.Add(":a", "Test");
+						cmd.Parameters.Add(":b", MaxDBType.Date, new DateTime(1999, 2, 18));
+						MaxDBDataReader reader = cmd.ExecuteReader();
+//						DataTable dt = reader.GetSchemaTable();
+
+
+						DataSet ds = new DataSet();
+						MaxDBDataAdapter da = new MaxDBDataAdapter();
+						da.SelectCommand = cmd;
+						da.Fill(ds, "List");
+						foreach(DataRow row in ds.Tables[0].Rows)
+							Console.WriteLine(row[0].ToString());
+					}
+				}
+
+				Console.WriteLine(DateTime.Now - start_time);
+
+				maxdbconn.Close();
+
+//				OdbcConnection odbcconn = new OdbcConnection("Dsn=TESTDB;Uid=DBA;Pwd=123;");
+//				odbcconn.Open();
 //				
-//				maxdbconn.Open();
-//
-//				DateTime start_time = DateTime.Now;
-//
+//				start_time = DateTime.Now;
+//				
 //				for(int i=0;i<1000;i++)
 //				{
-//					using(MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM TEST", maxdbconn))
+//					using(OdbcCommand cmd = new OdbcCommand("SELECT * FROM TEST WHERE CHARA_FIELD=:a", odbcconn))
 //					{
+//						cmd.Parameters.Add(":a", "Test");
+//
 //						DataSet ds = new DataSet();
-//						MaxDBDataAdapter da = new MaxDBDataAdapter();
+//						OdbcDataAdapter da = new OdbcDataAdapter();
 //						da.SelectCommand = cmd;
 //						da.Fill(ds, "List");
 //					}
 //				}
-//
+//				
 //				Console.WriteLine(DateTime.Now - start_time);
-//
-//				maxdbconn.Close();
-//
-////				OdbcConnection odbcconn = new OdbcConnection("Dsn=TESTDB;Uid=DBA;Pwd=123;");
-////				odbcconn.Open();
-////				
-////				DateTime start_time = DateTime.Now;
-////				
-////				for(int i=0;i<1000;i++)
-////				{
-////					using(OdbcCommand cmd = new OdbcCommand("SELECT DATE_FIELD FROM TEST", odbcconn))
-////					{
-////						DataSet ds = new DataSet();
-////						OdbcDataAdapter da = new OdbcDataAdapter();
-////						da.SelectCommand = cmd;
-////						da.Fill(ds, "List");
-////					}
-////				}
-////				
-////				Console.WriteLine(DateTime.Now - start_time);
-////				
-////				odbcconn.Close();
-//
-//			}
-//			catch(Exception ex)
-//			{
-//				Console.WriteLine(ex.Message);
-//			}
-//
-//			return;
+//				
+//				odbcconn.Close();
+
+			}
+			catch(Exception ex)
+			{
+				Console.WriteLine(ex.Message);
+			}
+
+			return;
+
+			byte[] ddd = new byte[]{200, 201};
 
 			byte[] errorText = new byte[200];
 
