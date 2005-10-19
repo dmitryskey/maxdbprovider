@@ -172,9 +172,14 @@ namespace MaxDBDataProvider
 			return 0;
 		}
 
-		public IDataReader ExecuteReader()
+		IDataReader IDbCommand.ExecuteReader()
 		{
 			return ExecuteReader(CommandBehavior.Default);
+		}
+
+		public MaxDBDataReader ExecuteReader()
+		{
+			return (MaxDBDataReader)ExecuteReader(CommandBehavior.Default);
 		}
 
 		public IDataReader ExecuteReader(CommandBehavior behavior)
@@ -238,9 +243,9 @@ namespace MaxDBDataProvider
 			int buffer_length = 0;
 			int buffer_offset = 0;
 
-			for(ushort i = 1; i <= parameters.Count; i++)
+			for(ushort i = 0; i < parameters.Count; i++)
 			{
-				MaxDBParameter param = (MaxDBParameter)parameters[i];
+				MaxDBParameter param = parameters[i];
 				switch(param.m_dbType)
 				{
 					case MaxDBType.Boolean:
@@ -279,7 +284,7 @@ namespace MaxDBDataProvider
 			{
 				for(ushort i = 1; i <= parameters.Count; i++)
 				{
-					MaxDBParameter param = (MaxDBParameter)parameters[i];
+					MaxDBParameter param = parameters[i - 1];
 					int val_length;
 					switch(param.m_dbType)
 					{
@@ -379,7 +384,7 @@ namespace MaxDBDataProvider
 
 							val_length = sizeof(ODBCTIMESTAMP);
 
-							Array.Copy(BitConverter.GetBytes(ts_odbc.year), 0, param_buffer, buffer_offset, val_length);
+							Array.Copy(ODBCConverter.GetBytes(ts_odbc), 0, param_buffer, buffer_offset, val_length);
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, 
 								new IntPtr(buffer_ptr + buffer_offset),	ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 

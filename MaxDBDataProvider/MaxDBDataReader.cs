@@ -97,6 +97,12 @@ namespace MaxDBDataProvider
 		public DataTable GetSchemaTable()
 		{
 			DataTable schema = new DataTable("SchemaTable");
+			
+			DataColumn dcID = new DataColumn("id", typeof(int));
+			dcID.AutoIncrement = true;
+			dcID.AutoIncrementSeed = 1;
+			schema.Columns.Add(dcID);
+
 
 			schema.Columns.Add(new DataColumn("ColumnName", typeof(string)));
 			schema.Columns.Add(new DataColumn("ColumnOrdinal", typeof(int)));
@@ -110,14 +116,14 @@ namespace MaxDBDataProvider
 
 			IntPtr meta = SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset);
 
-			for (short cnt = 0; cnt <= FieldCount - 1; cnt++)
+			for (int cnt = 0; cnt <= FieldCount - 1; cnt++)
 			{
 				DataRow row = schema.NewRow();
 				row["ColumnName"] = GetName(cnt);
 				row["ColumnOrdinal"] = cnt + 1;
-				row["ColumnSize"] = SQLDBC.SQLDBC_ResultSetMetaData_getPhysicalLength(meta, cnt);
-				row["NumericPrecision"] = SQLDBC.SQLDBC_ResultSetMetaData_getPrecision(meta, cnt);
-				row["NumericScale"] = SQLDBC.SQLDBC_ResultSetMetaData_getScale(meta, cnt);
+				row["ColumnSize"] = SQLDBC.SQLDBC_ResultSetMetaData_getPhysicalLength(meta, (short)(cnt + 1));
+				row["NumericPrecision"] = SQLDBC.SQLDBC_ResultSetMetaData_getPrecision(meta, (short)(cnt + 1));
+				row["NumericScale"] = SQLDBC.SQLDBC_ResultSetMetaData_getScale(meta, (short)(cnt + 1));
 				row["DataType"] = GetFieldType(cnt);
 				switch(SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(cnt + 1)))
 				{
@@ -130,8 +136,8 @@ namespace MaxDBDataProvider
 						row["IsLong"] = false;
 						break;
 				}
-				row["AllowDBNull"] = (SQLDBC.SQLDBC_ResultSetMetaData_isNullable(meta, cnt) == ColumnNullBehavior.columnNullable);
-				row["IsReadOnly"] = (SQLDBC.SQLDBC_ResultSetMetaData_isWritable(meta, cnt) == 0);
+				row["AllowDBNull"] = (SQLDBC.SQLDBC_ResultSetMetaData_isNullable(meta, (short)(cnt + 1)) == ColumnNullBehavior.columnNullable);
+				row["IsReadOnly"] = (SQLDBC.SQLDBC_ResultSetMetaData_isWritable(meta, (short)(cnt + 1)) == 0);
 				schema.Rows.Add(row);
 			}
 
@@ -214,15 +220,16 @@ namespace MaxDBDataProvider
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
 					return typeof(short);
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
-				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
-				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
-				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
 					return typeof(string);
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					return typeof(byte[]);
 				default:
 					return typeof(object);
 			}
@@ -324,17 +331,20 @@ namespace MaxDBDataProvider
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
 					byte[] columnValue = new byte[sizeof(char)];
-					val_length = columnValue.Length;
+					val_length = 0;
 
 					fixed(byte *valuePtr = columnValue)
 					{
 						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED, 
 							new IntPtr(valuePtr), ref val_length, val_length, 0);
+
+						if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+							return null;
+
 						if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
 							throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
-					val_length += sizeof(char);
 					columnValue = new byte[val_length];
 
 					fixed(byte *valuePtr = columnValue)
@@ -346,25 +356,25 @@ namespace MaxDBDataProvider
 							throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
-					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
-						return null;
-					else
-						return columnValue;
+					return columnValue;
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
 				case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
 					byte[] binValue = new byte[1];
-					val_length = binValue.Length;
+					val_length = 0;
 
 					fixed(byte *valuePtr = binValue)
 					{
 						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY, 
 							new IntPtr(valuePtr), ref val_length, val_length, 0);
+
+						if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+							return null;
+
 						if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
 							throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
-					val_length += sizeof(byte);
 					binValue = new byte[val_length];
 
 					fixed(byte *valuePtr = binValue)
@@ -376,10 +386,7 @@ namespace MaxDBDataProvider
 							throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
-					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
-						return null;
-					else
-						return binValue;
+					return binValue;
 				default:
 					return null;
 			}
@@ -400,7 +407,7 @@ namespace MaxDBDataProvider
 						return new DateTime(dt_val.year, dt_val.month, dt_val.day);
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME:
 						ODBCTIME tm_val = ODBCConverter.GetTime(data);
-						return new DateTime(0, 0, 0, tm_val.hour, tm_val.minute, tm_val.second);
+						return new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, tm_val.hour, tm_val.minute, tm_val.second);
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP:
 						ODBCTIMESTAMP ts_val = ODBCConverter.GetTimeStamp(data);
 						return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second, (int)(ts_val.fraction/1000000));
@@ -422,7 +429,7 @@ namespace MaxDBDataProvider
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
-						return Encoding.ASCII.GetString(data);
+						return data;
 					default:
 						return DBNull.Value;
 				}
@@ -825,15 +832,16 @@ namespace MaxDBDataProvider
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
 						return BitConverter.ToInt16(data, 0).ToString();
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
-					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
-					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
-					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
 						return Encoding.Unicode.GetString(data);
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+						return Encoding.ASCII.GetString(data);
 					default:
 						throw new InvalidCastException("Unknown column type");
 				}
@@ -871,15 +879,16 @@ namespace MaxDBDataProvider
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
 						return BitConverter.ToInt16(data, 0);
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
-					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
-					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
-					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
 						return decimal.Parse(Encoding.Unicode.GetString(data));
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+						return decimal.Parse(Encoding.ASCII.GetString(data));
 					default:
 						throw new InvalidCastException("Unknown column type");
 				}
@@ -921,15 +930,16 @@ namespace MaxDBDataProvider
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT:
 						throw new InvalidCastException("Can't convert Int16 value to DateTime");
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA:
-					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA:
-					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA:
-					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
 					case SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE:
 						return DateTime.Parse(Encoding.Unicode.GetString(data));
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB:
+					case SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB:
+						return DateTime.Parse(Encoding.ASCII.GetString(data));
 					default:
 						throw new InvalidCastException("Unknown column type");
 				}

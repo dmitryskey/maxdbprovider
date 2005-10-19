@@ -26,15 +26,14 @@ namespace MaxDBDataProvider
 		public MaxDBParameter(string parameterName, object value)
 		{
 			m_sParamName = parameterName;
-			this.Value = value;   
-			// Setting the value also infers the type.
+			Value = value;   
 		}
 
-		public MaxDBParameter( string parameterName, MaxDBType dbType, string sourceColumn )
+		public MaxDBParameter( string parameterName, MaxDBType dbType, object value )
 		{
 			m_sParamName  = parameterName;
 			m_dbType    = dbType;
-			m_sSourceColumn = sourceColumn;
+			m_value = value;
 		}
 
 		public DbType DbType 
