@@ -1,12 +1,12 @@
 !if !defined (TARGET)
-TARGET=.\bin\Debug
+TARGET=.\bin\Release
 !else
 TARGET=.\bin\$(TARGET)
 !endif
 
 MCS=mcs
 !if !defined(RELEASE)
-MCSFLAGS=-debug -unsafe --stacktrace
+MCSFLAGS=-unsafe --stacktrace
 !endif
 
 MAXDBCONSOLE_EXE=$(TARGET)\MaxDBConsole.exe
