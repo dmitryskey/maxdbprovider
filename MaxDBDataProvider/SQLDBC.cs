@@ -130,6 +130,12 @@ namespace MaxDBDataProvider
 		columnNullableUnknown = 2
 	}
 
+	public enum SQLDBC_BOOL : byte
+	{
+		SQLDBC_FALSE = 0,
+		SQLDBC_TRUE = 1
+	}
+
 	#endregion
 
 	#region "Structures"
@@ -248,13 +254,13 @@ namespace MaxDBDataProvider
 	{
 		#region "Constants"
 
-			public const int SQLDBC_NULL_DATA  =-1;
-			public const int SQLDBC_DATA_AT_EXEC  =-2;
-			public const int SQLDBC_NTS           =-3;
-			public const int SQLDBC_NO_TOTAL      =-4;
-			public const int SQLDBC_DEFAULT_PARAM =-5;
-			public const int SQLDBC_IGNORE        =-6;
-			public const int SQLDBC_LEN_DATA_AT_EXEC_OFFSET =-100;
+			public const int SQLDBC_NULL_DATA = -1;
+			public const int SQLDBC_DATA_AT_EXEC = -2;
+			public const int SQLDBC_NTS =-3;
+			public const int SQLDBC_NO_TOTAL = -4;
+			public const int SQLDBC_DEFAULT_PARAM = -5;
+			public const int SQLDBC_IGNORE = -6;
+			public const int SQLDBC_LEN_DATA_AT_EXEC_OFFSET = -100;
 
 		#endregion
 
@@ -369,7 +375,7 @@ namespace MaxDBDataProvider
 
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_bindParameter(IntPtr stmt, ushort index, SQLDBC_HostType type, IntPtr paramAddr,  
-						ref int length, int size, int terminate);		
+						ref int length, int size, SQLDBC_BOOL terminate);		
 		
 		[DllImport("libsqldbc_c")]
 		public extern static IntPtr SQLDBC_PreparedStatement_getParameterMetaData(IntPtr stmt);

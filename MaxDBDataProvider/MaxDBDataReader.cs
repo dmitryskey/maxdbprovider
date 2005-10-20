@@ -103,7 +103,6 @@ namespace MaxDBDataProvider
 			dcID.AutoIncrementSeed = 1;
 			schema.Columns.Add(dcID);
 
-
 			schema.Columns.Add(new DataColumn("ColumnName", typeof(string)));
 			schema.Columns.Add(new DataColumn("ColumnOrdinal", typeof(int)));
 			schema.Columns.Add(new DataColumn("ColumnSize", typeof(int)));
@@ -234,7 +233,6 @@ namespace MaxDBDataProvider
 					return typeof(object);
 			}
 		}
-
 
 		private unsafe byte[] GetValueBytes(int i, out SQLDBC_SQLType columnType)
 		{
