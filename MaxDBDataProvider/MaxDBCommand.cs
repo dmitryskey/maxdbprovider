@@ -427,6 +427,77 @@ namespace MaxDBDataProvider
 
 				SQLDBC_Retcode rc = SQLDBC.SQLDBC_PreparedStatement_executeASCII(stmt);
 
+				buffer_offset = 0;
+
+				for(ushort i = 1; i <= parameters.Count; i++)
+				{
+					MaxDBParameter param = parameters[i - 1];
+					int val_length;
+					
+					switch(param.m_dbType)
+					{
+						case MaxDBType.Boolean:
+							param.Value = (param_buffer[buffer_offset] == 1 );
+							buffer_offset += sizeof(byte);
+							break;
+						case MaxDBType.CharA: case MaxDBType.StrA: case MaxDBType.VarCharA: 
+							val_length = (((string)param.Value).Length + 1)* sizeof(byte);
+							param.Value = Encoding.ASCII.GetString(param_buffer, buffer_offset, val_length - 1);
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.CharB: case MaxDBType.StrB: case MaxDBType.VarCharB:
+							val_length = ((byte[])param.Value).Length * sizeof(byte);
+							Array.Copy(param_buffer, buffer_offset, (byte[])param.Value, 0 , val_length); 
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.Date:
+							//ODBC date format
+							ODBCDATE dt_odbc = new ODBCDATE();
+							val_length = sizeof(ODBCDATE);
+							Array.Copy(param_buffer, buffer_offset, ODBCConverter.GetBytes(dt_odbc), 0, val_length);
+							param.Value = new DateTime(dt_odbc.year, dt_odbc.month, dt_odbc.day);
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.Fixed: case MaxDBType.Float: case MaxDBType.VFloat:
+							val_length = sizeof(double);
+							param.Value = BitConverter.ToDouble(param_buffer, buffer_offset);
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.Integer:
+							val_length = sizeof(int);
+							param.Value = BitConverter.ToInt32(param_buffer, buffer_offset);
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.SmallInt:
+							val_length = sizeof(int);
+							param.Value = BitConverter.ToInt16(param_buffer, buffer_offset);
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.Time:
+							ODBCTIME tm_odbc = new ODBCTIME();
+							val_length = sizeof(ODBCTIME);
+							Array.Copy(param_buffer, buffer_offset, ODBCConverter.GetBytes(tm_odbc), 0, val_length);
+							param.Value = new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, 
+								tm_odbc.hour, tm_odbc.minute, tm_odbc.second);
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.TimeStamp:
+							ODBCTIMESTAMP ts_odbc = new ODBCTIMESTAMP();
+							val_length = sizeof(ODBCTIMESTAMP);
+							Array.Copy(param_buffer, buffer_offset, ODBCConverter.GetBytes(ts_odbc), 0, val_length);
+							param.Value = new DateTime(ts_odbc.year, ts_odbc.month, ts_odbc.day, 
+								ts_odbc.hour, ts_odbc.minute, ts_odbc.second, (int)(ts_odbc.fraction / 1000000));
+							buffer_offset += val_length;
+							break;
+						case MaxDBType.Unicode: case MaxDBType.StrUni: case MaxDBType.VarCharUni:
+							val_length = (((string)param.Value).Length + 1)* sizeof(char);
+							param.Value = Encoding.Unicode.GetString(param_buffer, buffer_offset, val_length - 1);
+							buffer_offset += val_length;
+							break;
+					}
+				}
+
+
 				if(rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND) 
 					throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 			}

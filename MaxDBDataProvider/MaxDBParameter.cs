@@ -29,11 +29,50 @@ namespace MaxDBDataProvider
 			Value = value;   
 		}
 
-		public MaxDBParameter( string parameterName, MaxDBType dbType, object value )
+		public MaxDBParameter( string parameterName, MaxDBType dbType, object p_value )
 		{
 			m_sParamName  = parameterName;
 			m_dbType    = dbType;
-			m_value = value;
+			switch (m_dbType)
+			{
+				case MaxDBType.Boolean:
+					m_value = (bool)p_value;
+					break;
+				case MaxDBType.CharA:
+					m_value = (sbyte)p_value;
+					break;
+				case MaxDBType.CharB:
+					m_value = (byte)p_value;
+					break;
+				case MaxDBType.Date:
+				case MaxDBType.Time:
+				case MaxDBType.TimeStamp:
+					m_value = (DateTime)p_value;
+					break;
+				case MaxDBType.Fixed:
+				case MaxDBType.Float:
+				case MaxDBType.VFloat:
+					m_value = (double)p_value;
+					break;
+				case MaxDBType.Integer:
+					m_value = (int)p_value;
+					break;
+				case MaxDBType.SmallInt:
+					m_value = (short)p_value;
+					break;
+				case MaxDBType.StrA:
+				case MaxDBType.StrB:
+				case MaxDBType.VarCharA:
+				case MaxDBType.VarCharB:
+				case MaxDBType.Unicode:
+				case MaxDBType.VarCharUni:
+				case MaxDBType.StrUni:
+					m_value = (string)p_value;
+					break;
+				default:
+					m_value = p_value;
+					break;
+			}
 		}
 
 		public DbType DbType 
@@ -55,8 +94,6 @@ namespace MaxDBDataProvider
 						return DbType.Date;
 
 					case MaxDBType.Fixed:
-						return DbType.Double;
-
 					case MaxDBType.Float:
 					case MaxDBType.VFloat:
 						return DbType.Double;

@@ -31,10 +31,10 @@ namespace MaxDBDataProvider
 
 				for(int i=0;i<1000;i++)
 				{
-					using(MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM TEST WHERE CHARU_FIELD=:a AND DATE_FIELD=:b", maxdbconn))
+					using(MaxDBCommand cmd = new MaxDBCommand("CALL avg_price(:a, :b)--SELECT * FROM TEST WHERE CHARU_FIELD=:a AND DATE_FIELD=:b", maxdbconn))
 					{
 						cmd.Parameters.Add(":a", MaxDBType.VarCharUni, "Hello");
-						cmd.Parameters.Add(":b", MaxDBType.Date, new DateTime(1999, 2, 18));
+						cmd.Parameters.Add(":b", MaxDBType.Fixed, 0.0);
 												
 						//MaxDBDataReader reader = cmd.ExecuteReader();
 //						DataTable dt = reader.GetSchemaTable();
