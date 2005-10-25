@@ -203,12 +203,29 @@ namespace MaxDBDataProvider
 		 * IMPLEMENT THE REQUIRED METHODS.
 		 ****/
 
-		public IDbTransaction BeginTransaction()
+		IDbTransaction IDbConnection.BeginTransaction()
 		{
 			return new MaxDBTransaction(this);
 		}
 
-		public IDbTransaction BeginTransaction(IsolationLevel level)
+		public MaxDBTransaction BeginTransaction()
+		{
+			return new MaxDBTransaction(this);
+		}
+
+		public MaxDBTransaction BeginTransaction(IsolationLevel level)
+		{
+			SetIsolationLevel(level);
+			return new MaxDBTransaction(this);
+		}
+
+		IDbTransaction IDbConnection.BeginTransaction(IsolationLevel level)
+		{
+			SetIsolationLevel(level);
+			return new MaxDBTransaction(this);
+		}
+
+		private void SetIsolationLevel(IsolationLevel level)
 		{
 			int MaxDBLevel;
 
@@ -234,8 +251,6 @@ namespace MaxDBDataProvider
 			if(SQLDBC.SQLDBC_Connection_setTransactionIsolation(connHandler, MaxDBLevel) != SQLDBC_Retcode.SQLDBC_OK) 
 				throw new MaxDBException("Can't set isolation level: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
 					SQLDBC.SQLDBC_Connection_getError(connHandler)));
-
-			return new MaxDBTransaction(this);
 		}
 
 		public void ChangeDatabase(string dbName)

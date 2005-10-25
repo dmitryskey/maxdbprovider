@@ -23,27 +23,40 @@ namespace MaxDBDataProvider
 
 			try
 			{
-				MaxDBConnection maxdbconn = new MaxDBConnection("DATA SOURCE=r55s;INITIAL CATALOG=TESTDB;USER ID=DBA;PASSWORD=123");
+				MaxDBConnection maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
 				
 				maxdbconn.Open();
 
 				DateTime start_time = DateTime.Now;
+				
+				MaxDBTransaction trans = maxdbconn.BeginTransaction(IsolationLevel.ReadUncommitted);
+
+				using(MaxDBCommand cmd = new MaxDBCommand("INSERT INTO TEST (CHARU_FIELD) VALUES('123Hello')", maxdbconn))
+				{
+					cmd.Transaction = trans;
+					cmd.ExecuteNonQuery();
+					cmd.Transaction.Commit();
+				}
 
 				for(int i=0;i<1000;i++)
 				{
-					using(MaxDBCommand cmd = new MaxDBCommand("CALL avg_price(:a, :b)--SELECT * FROM TEST WHERE CHARU_FIELD=:a AND DATE_FIELD=:b", maxdbconn))
+					using(MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM TEST --WHERE CHARU_FIELD=:a --AND DATE_FIELD=:b", maxdbconn))
 					{
-						cmd.Parameters.Add(":a", MaxDBType.VarCharUni, "Hello");
-						cmd.Parameters.Add(":b", MaxDBType.Fixed, 0.0);
+//						cmd.Parameters.Add(":a", MaxDBType.VarCharUni, "Hello");
+//						cmd.Parameters.Add(":b", MaxDBType.Fixed, 0.0);
+
+						cmd.Transaction = trans;
 												
 						//MaxDBDataReader reader = cmd.ExecuteReader();
 //						DataTable dt = reader.GetSchemaTable();
-
 
 						DataSet ds = new DataSet();
 						MaxDBDataAdapter da = new MaxDBDataAdapter();
 						da.SelectCommand = cmd;
 						da.Fill(ds, "List");
+
+						cmd.Transaction.Rollback();
+
 						foreach(DataRow row in ds.Tables[0].Rows)
 							Console.WriteLine(row[0].ToString());
 					}

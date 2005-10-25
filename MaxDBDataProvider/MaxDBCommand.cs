@@ -163,10 +163,6 @@ namespace MaxDBDataProvider
 			{
 				throw;
 			}
-			finally
-			{
-				SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.connHandler, stmt);
-			}
 
 			// use SQLDBC_PreparedStatement_getRowsAffected???
 			return 0;
@@ -197,8 +193,6 @@ namespace MaxDBDataProvider
 			// Execute the command.
 
 			SQLDBC_Retcode rc;
-
-			IntPtr stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.connHandler);
 
 			try
 			{
@@ -281,7 +275,8 @@ namespace MaxDBDataProvider
 				}
 			}
 
-			byte[] param_buffer = new byte[buffer_length];
+			// +1 byte to avoid zero-length array
+			byte[] param_buffer = new byte[buffer_length + 1];
 
 			fixed(byte *buffer_ptr = param_buffer)
 			{
