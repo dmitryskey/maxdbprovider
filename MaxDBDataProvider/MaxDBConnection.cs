@@ -14,14 +14,13 @@ namespace MaxDBDataProvider
 
 	public class MaxDBConnection : IDbConnection
 	{
-		private ConnectionState m_state;
 		private string      m_sConnString;
 
 		private ConnectArgs m_ConnArgs;
 
 		private IntPtr runtimeHandler;
 		private IntPtr envHandler;
-		internal IntPtr connHandler;
+		internal IntPtr connHandler = IntPtr.Zero;
 		private IntPtr connPropHandler;
 		private Encoding enc = Encoding.ASCII;
 		private SQLDBC_SQLMode mode = SQLDBC_SQLMode.SQLDBC_INTERNAL;
@@ -29,15 +28,11 @@ namespace MaxDBDataProvider
 		// Always have a default constructor.
 		public MaxDBConnection()
 		{
-			// Initialize the connection object into the closed state.
-			m_state = ConnectionState.Closed;
 		}
     
 		// Have a constructor that takes a connection string.
 		public MaxDBConnection(string sConnString) 
 		{
-			// Initialize the connection object into a closed state.
-			m_state = ConnectionState.Closed;
 			ParseConnectionString(sConnString);
 		}
 
@@ -112,10 +107,8 @@ namespace MaxDBDataProvider
 				// execute query 'SELECT timeout FROM DOMAIN.CONNECTPARAMETERS'
 				try
 				{
-					ConnectionState status = m_state;
-
-					if (status != ConnectionState.Closed)
-						((IDbConnection)this).Open();
+					if (State != ConnectionState.Closed)
+						Open();
 
 					IntPtr stmt = SQLDBC.SQLDBC_Connection_createStatement(connHandler);
 
@@ -143,8 +136,8 @@ namespace MaxDBDataProvider
 
 					SQLDBC.SQLDBC_Connection_releaseStatement(connHandler, stmt);
 
-					if (status == ConnectionState.Closed)
-						((IDbConnection)this).Close();
+					if (State == ConnectionState.Closed)
+						Close();
 
 					return timeout;
 				}
@@ -190,13 +183,52 @@ namespace MaxDBDataProvider
 
 		public ConnectionState State
 		{
-			get { return m_state; }
+			get 
+			{ 
+				if (connHandler != IntPtr.Zero && SQLDBC.SQLDBC_Connection_isConnected(connHandler) == SQLDBC_BOOL.SQLDBC_TRUE)
+					return ConnectionState.Open;
+				else
+					return ConnectionState.Closed;
+			}
 		}
 
 		public SQLDBC_SQLMode SQLMode
 		{
 			get{return mode;}
 			set{mode = value;}
+		}
+
+		public bool AutoCommit
+		{
+			get
+			{
+				if (State != ConnectionState.Open)
+					throw new MaxDBException("Connection is not opened.");
+
+				return SQLDBC.SQLDBC_Connection_getAutoCommit(connHandler) == SQLDBC_BOOL.SQLDBC_TRUE;
+			}
+			set
+			{
+				if (State != ConnectionState.Open)
+					throw new MaxDBException("Connection is not opened.");
+
+				SQLDBC.SQLDBC_Connection_setAutoCommit(connHandler, value ? SQLDBC_BOOL.SQLDBC_TRUE : SQLDBC_BOOL.SQLDBC_FALSE);
+			}
+		}
+
+		public string ServerVersion 
+		{
+			get
+			{
+				if (State != ConnectionState.Open)
+					throw new MaxDBException("Connection is not opened.");
+
+				int version = SQLDBC.SQLDBC_Connection_getKernelVersion(connHandler);
+				int correction_level = version % 100; 
+				int minor_release  = ((version - correction_level) % 10000)/ 100;
+				int mayor_release = (version - minor_release * 100 - correction_level) / 10000;
+				return mayor_release.ToString() + "." + minor_release.ToString() + "." + correction_level.ToString();
+			}
 		}
 
 		/****
@@ -280,8 +312,6 @@ namespace MaxDBDataProvider
 				enc = Encoding.Unicode;//little-endian unicode
 			else
 				enc = Encoding.ASCII;
-
-			m_state = ConnectionState.Open;
 		}
 
 		private unsafe void OpenConnection()
@@ -315,8 +345,6 @@ namespace MaxDBDataProvider
 			 * property. If the underlying connection to the server is
 			 * being pooled, Close() will release it back to the pool.
 			 */
-			m_state = ConnectionState.Closed;
-
 			SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(connPropHandler);
 			connPropHandler = IntPtr.Zero;
 
@@ -328,7 +356,13 @@ namespace MaxDBDataProvider
 			envHandler = IntPtr.Zero;
 		}
 
-		public IDbCommand CreateCommand()
+		public MaxDBCommand CreateCommand()
+		{
+			// Return a new instance of a command object.
+			return new MaxDBCommand();
+		}
+
+		IDbCommand IDbConnection.CreateCommand()
 		{
 			// Return a new instance of a command object.
 			return new MaxDBCommand();
@@ -336,8 +370,8 @@ namespace MaxDBDataProvider
 
 		public void Dispose() 
 		{
-			if (m_state == ConnectionState.Open)
-				this.Close();
+			if (State == ConnectionState.Open)
+				Close();
 
 			System.GC.SuppressFinalize(this);
 		}

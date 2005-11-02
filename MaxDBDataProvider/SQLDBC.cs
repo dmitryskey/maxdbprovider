@@ -312,13 +312,25 @@ namespace MaxDBDataProvider
 		public extern static int SQLDBC_Connection_getTransactionIsolation(IntPtr conn);
 
 		[DllImport("libsqldbc_c")]
-		public extern static byte SQLDBC_Connection_isUnicodeDatabase(IntPtr conn);
-
-		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_Connection_setTransactionIsolation(IntPtr conn, int level);
 
 		[DllImport("libsqldbc_c")]
-		public extern static void SQLDBC_Connection_setSQLMode(IntPtr conn, SQLDBC_SQLMode sqlmode); 
+		public extern static byte SQLDBC_Connection_isUnicodeDatabase(IntPtr conn);
+
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_Connection_getKernelVersion (IntPtr conn);
+
+		[DllImport("libsqldbc_c")]
+		public extern static SQLDBC_BOOL SQLDBC_Connection_isConnected(IntPtr conn);
+
+		[DllImport("libsqldbc_c")]
+		public extern static void SQLDBC_Connection_setSQLMode(IntPtr conn, SQLDBC_SQLMode sqlmode);
+ 
+		[DllImport("libsqldbc_c")]
+		public extern static void SQLDBC_Connection_setAutoCommit(IntPtr conn, SQLDBC_BOOL autocommit); 
+
+		[DllImport("libsqldbc_c")]
+		public extern static SQLDBC_BOOL SQLDBC_Connection_getAutoCommit(IntPtr conn);
 
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_Connection_commit(IntPtr conn);

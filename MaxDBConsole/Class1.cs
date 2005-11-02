@@ -21,11 +21,39 @@ namespace MaxDBDataProvider
 			// TODO: Add code to start application here
 			//
 
+			long val = -1234567890;
+			double ddd = BitConverter.Int64BitsToDouble(val);
+			int bytes = 8;
+
+			byte[] data = new byte[128]; 
+
+			for(int i = 0; i < bytes; i++)
+			{
+				if (BitConverter.IsLittleEndian)
+				{
+					data[i] = (byte)(val & 0xFF);
+					val >>= 8;
+				}
+				else
+				{
+					data[bytes - i - 1] = (byte)(val & 0xFF);
+					val <<= 8;					
+				}
+			}
+
+			long test = BitConverter.ToInt64(data, 0);
+
 			try
 			{
 				MaxDBConnection maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
 				
+				string ver = maxdbconn.ServerVersion;
+
 				maxdbconn.Open();
+
+				bool auto = maxdbconn.AutoCommit;
+
+				
 
 				DateTime start_time = DateTime.Now;
 				
