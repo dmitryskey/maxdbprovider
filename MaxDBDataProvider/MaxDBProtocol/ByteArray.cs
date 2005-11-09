@@ -73,6 +73,16 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			writeValue(val, offset, 2);
 		}
 
+		public short readInt16(int offset)
+		{
+			return BitConverter.ToInt16(data, this.offset + offset);
+		}
+
+		public void writeInt16(short val, int offset)
+		{
+			writeValue(val, offset, 2);
+		}
+
 		public uint readUInt32(int offset)
 		{
 			return BitConverter.ToUInt32(data, this.offset + offset);
@@ -83,12 +93,32 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			writeValue(val, offset, 4);
 		}
 
+		public int readInt32(int offset)
+		{
+			return BitConverter.ToInt32(data, this.offset + offset);
+		}
+
+		public void writeInt32(int val, int offset)
+		{
+			writeValue(val, offset, 4);
+		}
+
 		public ulong readUInt64(int offset)
 		{
 			return BitConverter.ToUInt64(data, this.offset + offset);
 		}
 
 		public void writeUInt64(ulong val, int offset)
+		{
+			writeValue(val, offset, 8);
+		}
+
+		public long readInt64(int offset)
+		{
+			return BitConverter.ToInt64(data, this.offset + offset);
+		}
+
+		public void writeInt64(long val, int offset)
 		{
 			writeValue(val, offset, 8);
 		}
@@ -134,6 +164,18 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		}
 
 		protected void writeValue(ulong val, int offset, int bytes)
+		{
+			for(int i = 0; i < bytes; i++)
+			{
+				if (BitConverter.IsLittleEndian)
+					data[i] = (byte)(val & 0xFF);
+				else
+					data[bytes - i - 1] = (byte)(val & 0xFF);
+				val >>= 8;
+			}
+		}
+
+		protected void writeValue(long val, int offset, int bytes)
 		{
 			for(int i = 0; i < bytes; i++)
 			{

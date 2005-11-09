@@ -18,6 +18,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const int ClientDB       =	32;   // C8
 		public const int VarPart		 =    40;   // C256
 		public const int END             =    296;
+
+		// other connect header constants
+		public const int DBNameSize        =      8;
+		public const int MinSize            =     64;   // for Unix vserver
 	}
 
 	internal struct HeaderOffset
@@ -35,82 +39,110 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const int END               =     24;
 	}
 
-	internal enum Ports
+	internal struct Ports
 	{
-		Default        =   7210,
-		DefaultSecure  =   7270,
-		DefaultNI      =   7269
+		public const int Default        =   7210;
+		public const int DefaultSecure  =   7270;
+		public const int DefaultNI      =   7269;
+	}
+
+	internal class CommError
+	{
+		public static string[] ErrorText = new string[14]
+			{
+				"OK",
+				"Connection down, session released",
+				"Tasklimit",
+				"Timeout",
+				"Crash",
+				"Restart required",
+				"Shutdown",
+				"Send line down",
+				"Receive line down",
+				"Packet limit",
+				"Released",
+				"Would block",
+				"Unknown Request",
+				"Server or DB unknown"
+			};
+	}
+
+	internal struct RTEReturnCodes
+	{
+		// rte return codes
+		public const byte SQLOK                   =      0;
+		public const byte SQLNOTOK                =      1;
+		public const byte SQLTASKLIMIT            =      2;
+		public const byte SQLTIMEOUT              =      3;
+		public const byte SQLCRASH                =      4;
+		public const byte SQLSTART_REQUIRED       =      5;
+		public const byte SQLSHUTDOWN             =      6;
+		public const byte SQLSEND_LINE_DOWN       =      7;
+		public const byte SQLRECEIVE_LINE_DOWN    =      8;
+		public const byte SQLPACKETLIMIT          =      9;
+		public const byte SQLRELEASED             =     10;
+		public const byte SQLWOULDBLOCK           =     11;
+		public const byte SQLUNKNOWN_REQUEST      =     12;
+		public const byte SQLSERVER_DB_UNKNOWN    =     13;
+	}
+
+	internal struct RSQLTypes
+	{
+		// request/reply types
+		public const byte RTE_PROT_TCP          =      3;
+		public const byte INFO_REQUEST_KEEP_ALIVE  =     50;
+		public const byte INFO_REQUEST          =     51;
+		public const byte INFO_REPLY            =     52;
+		public const byte USER_CONN_REQUEST     =     61;
+		public const byte USER_CONN_REPLY       =     62;
+		public const byte USER_DATA_REQUEST     =     63;
+		public const byte USER_DATA_REPLY       =     64;
+		public const byte USER_CANCEL_REQUEST   =     65;
+		public const byte USER_RELEASE_REQUEST  =     66;
+		public const byte KERN_CONN_REQUEST     =     71;
+		public const byte KERN_CONN_REPLY       =     72;
+		public const byte KERN_DATA_REQUEST     =     73;
+		public const byte KERN_DATA_REPLY       =     74;
+		public const byte KERN_RELEASE_REQUEST  =     76;
+		public const byte DUMP_REQUEST          =     81;
+		public const byte CTRL_CONN_REQUEST     =     91;
+		public const byte CTRL_CONN_REPLY       =     92;
+		public const byte CTRL_CANCEL_REQUEST   =     93;
+		public const byte NORMAL                =      0;
 	}
 
 	/// <summary>
 	/// Summary description for Consts.
 	/// </summary>
-	internal enum Consts
+	internal struct Consts
 	{
-		// request/reply types
-		RSQL_RTE_PROT_TCP          =      3,
-		RSQL_INFO_REQUEST_KEEP_ALIVE  =     50,
-		RSQL_INFO_REQUEST          =     51,
-		RSQL_INFO_REPLY            =     52,
-		RSQL_USERONN_REQUEST     =     61,
-		RSQL_USERONN_REPLY       =     62,
-		RSQL_USER_DATA_REQUEST     =     63,
-		RSQL_USER_DATA_REPLY       =     64,
-		RSQL_USERANCEL_REQUEST   =     65,
-		RSQL_USER_RELEASE_REQUEST  =     66,
-		RSQL_KERNONN_REQUEST     =     71,
-		RSQL_KERNONN_REPLY       =     72,
-		RSQL_KERN_DATA_REQUEST     =     73,
-		RSQL_KERN_DATA_REPLY       =     74,
-		RSQL_KERN_RELEASE_REQUEST  =     76,
-		RSQL_DUMP_REQUEST          =     81,
-		RSQLTRLONN_REQUEST     =     91,
-		RSQLTRLONN_REPLY       =     92,
-		RSQLTRLANCEL_REQUEST   =     93,
-		RSQL_NORMAL                =      0,
-		// rte return codes
-		SQLOK                      =      0,
-		SQLNOTOK                   =      1,
-		SQLTASKLIMIT               =      2,
-		SQLTIMEOUT                 =      3,
-		SQLCRASH                   =      4,
-		SQLSTART_REQUIRED          =      5,
-		SQLSHUTDOWN                =      6,
-		SQLSEND_LINE_DOWN          =      7,
-		SQLRECEIVE_LINE_DOWN       =      8,
-		SQLPACKETLIMIT             =      9,
-		SQLRELEASED                =     10,
-		SQLWOULDBLOCK              =     11,
-		SQLUNKNOWN_REQUEST         =     12,
-		SQLSERVERR_DB_UNKNOWN    =     13,
 		// user types
-		SQL_USER                   =      0,
-		SQL_ASYNC_USER             =      1,
-		SQL_UTILITY                =      2,
-		SQL_DISTRIBUTION           =      3,
-		SQLONTROL                =      4,
-		SQL_EVENT                  =      5,
-		// other connect header constants
-		Connect_Dbname_Size        =      8,
-		Connect_MinSize            =     64,   // for Unix vserver
-		/*geo03.h*/
-		ARGID_PORT_NO              =   0x50,   // = P
-		ARGID_REM_PID              =   0x49,   // = I
-		ARGID_ACKNOWLEDGE          =   0x52,   // = R
-		ARGID_NODE                 =   0x3E,   // = N
-		ARGID_DBROOT               =   0x64,   // = d
-		ARGID_SERVERPGM            =   0x70,   // = p
-		ARGID_AUTH_ALLOW           =   0x61,   // = a
-		ARGID_OMIT_REPLY_PART      =   0x72,   // = r int1 
+		public const byte SQL_USER                   =      0;
+		public const byte SQL_ASYNC_USER             =      1;
+		public const byte SQL_UTILITY                =      2;
+		public const byte SQL_DISTRIBUTION           =      3;
+		public const byte SQLONTROL                =      4;
+		public const byte SQL_EVENT                  =      5;
+		
+		//geo03.h
+		public const byte ARGID_PORT_NO              =   0x50;   // = P
+		public const byte ARGID_REM_PID              =   0x49;   // = I
+		public const byte ARGID_ACKNOWLEDGE          =   0x52;   // = R
+		public const byte ARGID_NODE                 =   0x3E;   // = N
+		public const byte ARGID_DBROOT               =   0x64;   // = d
+		public const byte ARGID_SERVERPGM            =   0x70;   // = p
+		public const byte ARGID_AUTH_ALLOW           =   0x61;   // = a
+		public const byte ARGID_OMIT_REPLY_PART      =   0x72;   // = r int1 
     
 		// some constants
-		ASCIIClient                =      0,
-		UnicodeSwapClient          =     19,
-		NotSwapped                 =      1,
-		RSQL_WIN32               =     13,
-		RSQL_JAVA                = RSQL_WIN32,
+		public const byte ASCIIClient                =      0;
+		public const byte UnicodeSwapClient          =     19;
+		public const byte NotSwapped                 =      1;
+		public const byte RSQL_WIN32               =     13;
+		public const byte RSQL_JAVA                = RSQL_WIN32;
+
 		// other connect header constants
-		DBNameSize    =      8,
-		MinSize        =     64   // for Unix vserver
+		public const byte DBNameSize    =      8;
+		public const byte MinSize        =     64;   // for Unix vserver
 	}
 }
