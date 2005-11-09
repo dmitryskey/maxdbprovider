@@ -370,7 +370,7 @@ namespace MaxDBDataProvider
 						case MaxDBType.Time:
 							DateTime tm = (DateTime)param.Value;
 							//ODBC time format
-							ODBCTIME tm_odbc;
+							ODBCTIME tm_odbc = new ODBCTIME();
 							tm_odbc.hour = (ushort)(tm.Hour % 0x10000);
 							tm_odbc.minute = (ushort)(tm.Minute % 0x10000);
 							tm_odbc.second = (ushort)(tm.Second % 0x10000);
@@ -388,7 +388,7 @@ namespace MaxDBDataProvider
 						case MaxDBType.TimeStamp:
 							DateTime ts = (DateTime)param.Value;
 							//ODBC timestamp format
-							ODBCTIMESTAMP ts_odbc;
+							ODBCTIMESTAMP ts_odbc = new ODBCTIMESTAMP();
 							ts_odbc.year = (short)(ts.Year % 0x10000);
 							ts_odbc.month = (ushort)(ts.Month % 0x10000);
 							ts_odbc.day = (ushort)(ts.Day % 0x10000);
