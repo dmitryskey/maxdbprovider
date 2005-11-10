@@ -6,14 +6,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	/// <summary>
 	/// Summary description for MaxDBComm.
 	/// </summary>
-	internal class MaxDBComm
+	public class MaxDBComm
 	{
 		private ISocketIntf m_socket;
 		private string m_dbname;
 		private int m_sender = 0;
 		private int m_receiver = 0;
 		private int m_maxSendLen = 0;
-		private int swapMode = Consts.NotSwapped;
+		private int swapMode = SwapMode.NotSwapped;
 
 		public MaxDBComm(ISocketIntf s)
 		{
@@ -27,7 +27,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				MaxDBPacket request = new MaxDBPacket(new ByteArray(HeaderOffset.END + ConnectPacketOffset.END), dbname, port);
 				request.FillHeader(RSQLTypes.INFO_REQUEST, m_sender, m_receiver, m_maxSendLen);
 				request.FillPacketLength();
-				request.PacketSendLength = ConnectPacketOffset.END;
+				request.PacketSendLength = request.PacketLength;
 				m_socket.Stream.Write(request.arrayData, 0, request.arrayData.Length);
 
 				int returnCode = GetConnectReply().readInt16(HeaderOffset.RTEReturnCode);
