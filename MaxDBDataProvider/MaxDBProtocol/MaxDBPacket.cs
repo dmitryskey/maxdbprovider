@@ -14,11 +14,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
-		public MaxDBPacket(ByteArray array, string dbname, int port) : base(array.arrayData)
+		public MaxDBPacket(ByteArray array, string dbname, int port) : base(array.arrayData, false)
 		{
 			// fill body
 			writeByte(Consts.ASCIIClient, HeaderOffset.END + ConnectPacketOffset.MessCode);
-			writeByte(Consts.NotSwapped, HeaderOffset.END + ConnectPacketOffset.MessCode + 1);
+			writeByte(SwapMode.NotSwapped, HeaderOffset.END + ConnectPacketOffset.MessCode + 1);
 			writeUInt16(ConnectPacketOffset.END, HeaderOffset.END + ConnectPacketOffset.ConnectLength);
 			writeByte(Consts.SQL_USER, HeaderOffset.END + ConnectPacketOffset.ServiceType);
 			writeByte(Consts.RSQL_JAVA, HeaderOffset.END + ConnectPacketOffset.OSType);
@@ -28,18 +28,20 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			writeUInt32(0, HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
 			writeUInt32(0, HeaderOffset.END + ConnectPacketOffset.PacketSize);
 			writeUInt32(0, HeaderOffset.END + ConnectPacketOffset.MinReplySize);
-			writeASCII(dbname.Substring(0, Consts.DBNameSize), HeaderOffset.END + ConnectPacketOffset.ServerDB);
+			if (dbname.Length > Consts.DBNameSize)
+				dbname = dbname.Substring(0, Consts.DBNameSize);
+			writeASCII(dbname.PadRight(Consts.DBNameSize, ' '), HeaderOffset.END + ConnectPacketOffset.ServerDB);
 			writeASCII("        ", HeaderOffset.END + ConnectPacketOffset.ClientDB);
 			// fill out variable part
-			writeByte(3, curPos++);
+			writeByte(4, curPos++);
 			writeByte(Consts.ARGID_REM_PID, curPos++);
-			writeByte(0, curPos++);
+			writeASCII("0", curPos++);
 			writeByte(0, curPos++);
 			// add port number
 			writeByte(4, curPos++);
 			writeByte(Consts.ARGID_PORT_NO, curPos++);
-			writeByte((byte)(port / 0xFF), curPos++);
-			writeByte((byte)(port % 0xFF), curPos++);
+			writeUInt16((ushort)port, curPos);
+			curPos += 2;
 			// add aknowledge flag
 			writeByte(3, curPos++);
 			writeByte(Consts.ARGID_ACKNOWLEDGE, curPos++);
@@ -84,8 +86,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			set
 			{
-				writeInt32(value + HeaderOffset.END, HeaderOffset.ActSendLen);
-				writeInt32(value + HeaderOffset.END, HeaderOffset.MaxSendLen);
+				writeInt32(value, HeaderOffset.ActSendLen);
+				writeInt32(value, HeaderOffset.MaxSendLen);
 			}
 		}
 

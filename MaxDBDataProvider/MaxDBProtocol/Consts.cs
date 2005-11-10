@@ -111,6 +111,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const byte NORMAL                =      0;
 	}
 
+	internal struct SwapMode
+	{
+		public const byte NotSwapped  = 1;
+		public const byte Swapped	  =	2;
+	}
+
 	/// <summary>
 	/// Summary description for Consts.
 	/// </summary>
@@ -137,7 +143,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		// some constants
 		public const byte ASCIIClient                =      0;
 		public const byte UnicodeSwapClient          =     19;
-		public const byte NotSwapped                 =      1;
 		public const byte RSQL_WIN32               =     13;
 		public const byte RSQL_JAVA                = RSQL_WIN32;
 

@@ -6,7 +6,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	/// <summary>
 	/// Summary description for SocketIntf.
 	/// </summary>
-	internal interface ISocketIntf
+	public interface ISocketIntf
 	{
 		bool ReopenSocketAfterInfoPacket{get;}
 		NetworkStream Stream{get;}
@@ -15,7 +15,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		void Close();
 	}
 
-	internal class SocketClass : TcpClient, ISocketIntf
+	public class SocketClass : TcpClient, ISocketIntf
 	{
 		private string m_host;
 		private int m_port;
