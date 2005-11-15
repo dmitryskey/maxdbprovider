@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace MaxDBDataProvider.MaxDBProtocol
+namespace MaxDBDataProvider
 {
 	/// <summary>
 	/// Summary description for ByteArray.

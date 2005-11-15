@@ -24,13 +24,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			try
 			{
-				MaxDBPacket request = new MaxDBPacket(new ByteArray(HeaderOffset.END + ConnectPacketOffset.END), dbname, port);
+				MaxDBPacket request = new MaxDBPacket(new byte[HeaderOffset.END + ConnectPacketOffset.END], dbname, port, 1024 * 32, 0, 0, 0);
 				request.FillHeader(RSQLTypes.INFO_REQUEST, m_sender, m_receiver, m_maxSendLen);
 				request.FillPacketLength();
 				request.PacketSendLength = request.PacketLength;
-				m_socket.Stream.Write(request.arrayData, 0, request.arrayData.Length);
+				m_socket.Stream.Write(request.arrayData, 0, request.PacketLength);
 
-				int returnCode = GetConnectReply().readInt16(HeaderOffset.RTEReturnCode);
+				MaxDBPacket reply = GetConnectReply();
+				int returnCode = reply.ReturnCode;
 				if (returnCode != 0)
 				{
 					Close();
@@ -40,18 +41,20 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				if (m_socket.ReopenSocketAfterInfoPacket)
 				{
 					Close();
-					m_socket.Open();
+					m_socket = m_socket.GetNewInstance();
 				}
 
 				m_dbname = dbname;
 				//m_session = true;
 
-				MaxDBPacket db_request = new MaxDBPacket(new ByteArray(HeaderOffset.END + request.MaxDataLength), dbname, port);
-				request.FillPacketLength();
-				request.PacketSendLength = ConnectPacketOffset.END;
-				m_socket.Stream.Write(request.arrayData, 0, request.arrayData.Length);
+				MaxDBPacket db_request = new MaxDBPacket(new byte[HeaderOffset.END + reply.MaxDataLength], dbname, port,
+						reply.PacketSize, reply.MaxDataLength, reply.PacketSize, reply.MinReplySize);
+				db_request.FillHeader(RSQLTypes.USER_CONN_REQUEST, m_sender, m_receiver, m_maxSendLen);
+				db_request.FillPacketLength();
+				db_request.PacketSendLength = db_request.PacketLength;
+				m_socket.Stream.Write(db_request.arrayData, 0, db_request.PacketLength);
 
-				GetConnectReply();
+				returnCode = GetConnectReply().ReturnCode;
 			}
 			catch(Exception ex)
 			{
@@ -59,15 +62,18 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		private ByteArray GetConnectReply()
+		private MaxDBPacket GetConnectReply()
 		{
-			ByteArray replyPacket = new ByteArray(HeaderOffset.END + ConnectPacketOffset.END);
+			byte[] replyBuffer = new byte[HeaderOffset.END + ConnectPacketOffset.END];
 
-			int len = m_socket.Stream.Read(replyPacket.arrayData, 0, replyPacket.arrayData.Length);
+			int len = m_socket.Stream.Read(replyBuffer, 0, replyBuffer.Length);
 			if (len <= HeaderOffset.END)
 				throw new Exception("Receive line down");
 
-			swapMode = replyPacket.readByte(HeaderOffset.END + 1);
+			swapMode = replyBuffer[HeaderOffset.END + 1];
+			
+			ByteArray replyPacket = new ByteArray(replyBuffer, swapMode == SwapMode.Swapped);
+
 			int actLen = replyPacket.readInt32(HeaderOffset.ActSendLen);
 			if (actLen < 0 || actLen > 500 * 1024)
 				throw new Exception("Receive garbled reply");
@@ -77,12 +83,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			m_sender = replyPacket.readInt32(HeaderOffset.SenderRef);
 
-			return replyPacket;
+			return new MaxDBPacket(replyBuffer, swapMode == SwapMode.Swapped);
 		}
 
 		public void Close()
 		{
-			MaxDBPacket request = new MaxDBPacket(new ByteArray(HeaderOffset.END));
+			MaxDBPacket request = new MaxDBPacket(new byte[HeaderOffset.END], true);
 			request.FillHeader(RSQLTypes.USER_RELEASE_REQUEST, m_sender, m_receiver, m_maxSendLen);
 			request.PacketSendLength = 0;
 			m_socket.Stream.Write(request.arrayData, 0, request.arrayData.Length);

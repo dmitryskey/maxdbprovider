@@ -6,7 +6,7 @@ namespace MaxDBDataProvider
 	public class MaxDBParameter : IDataParameter
 	{
 		internal MaxDBType m_dbType  = MaxDBType.Fixed;
-		ParameterDirection m_direction = ParameterDirection.Input;
+		internal ParameterDirection m_direction = ParameterDirection.Input;
 		bool m_fNullable  = false;
 		string m_sParamName;
 		string m_sSourceColumn;

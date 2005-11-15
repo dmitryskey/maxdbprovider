@@ -11,7 +11,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		bool ReopenSocketAfterInfoPacket{get;}
 		NetworkStream Stream{get;}
 
-		void Open();
+		ISocketIntf GetNewInstance();
 		void Close();
 	}
 
@@ -44,14 +44,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public void Open()
+		ISocketIntf ISocketIntf.GetNewInstance()
 		{
-			base.Connect(m_host, m_port);
+			return new SocketClass(m_host, m_port);
 		}
 
 		void ISocketIntf.Close()
 		{
-			base.Close();
+			Close();
 		}
 
 		#endregion

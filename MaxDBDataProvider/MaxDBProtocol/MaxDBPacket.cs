@@ -10,45 +10,46 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	{
 		private int curPos = HeaderOffset.END + ConnectPacketOffset.VarPart;
 
-		public MaxDBPacket(ByteArray array) : base(array.arrayData)
+		public MaxDBPacket(byte[] data, bool SwapMode) : base(data, SwapMode)
 		{
 		}
 
-		public MaxDBPacket(ByteArray array, string dbname, int port) : base(array.arrayData, false)
+		public MaxDBPacket(byte[] data, string dbname, int port, 
+			int maxsegsize, int maxdatalen, int packetsize, int minreplysize) : base(data, false)
 		{
 			// fill body
 			writeByte(Consts.ASCIIClient, HeaderOffset.END + ConnectPacketOffset.MessCode);
 			writeByte(SwapMode.NotSwapped, HeaderOffset.END + ConnectPacketOffset.MessCode + 1);
 			writeUInt16(ConnectPacketOffset.END, HeaderOffset.END + ConnectPacketOffset.ConnectLength);
-			writeByte(Consts.SQL_USER, HeaderOffset.END + ConnectPacketOffset.ServiceType);
+			writeByte(SQLType.USER, HeaderOffset.END + ConnectPacketOffset.ServiceType);
 			writeByte(Consts.RSQL_JAVA, HeaderOffset.END + ConnectPacketOffset.OSType);
 			writeByte(0, HeaderOffset.END + ConnectPacketOffset.Filler1);
 			writeByte(0, HeaderOffset.END + ConnectPacketOffset.Filler2);
-			writeUInt32(1024 * 32, HeaderOffset.END + ConnectPacketOffset.MaxSegmentSize);
-			writeUInt32(0, HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
-			writeUInt32(0, HeaderOffset.END + ConnectPacketOffset.PacketSize);
-			writeUInt32(0, HeaderOffset.END + ConnectPacketOffset.MinReplySize);
+			writeInt32(maxsegsize, HeaderOffset.END + ConnectPacketOffset.MaxSegmentSize);
+			writeInt32(maxdatalen, HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
+			writeInt32(packetsize, HeaderOffset.END + ConnectPacketOffset.PacketSize);
+			writeInt32(minreplysize, HeaderOffset.END + ConnectPacketOffset.MinReplySize);
 			if (dbname.Length > Consts.DBNameSize)
 				dbname = dbname.Substring(0, Consts.DBNameSize);
 			writeASCII(dbname.PadRight(Consts.DBNameSize, ' '), HeaderOffset.END + ConnectPacketOffset.ServerDB);
 			writeASCII("        ", HeaderOffset.END + ConnectPacketOffset.ClientDB);
 			// fill out variable part
 			writeByte(4, curPos++);
-			writeByte(Consts.ARGID_REM_PID, curPos++);
+			writeByte(ArgType.REM_PID, curPos++);
 			writeASCII("0", curPos++);
 			writeByte(0, curPos++);
 			// add port number
 			writeByte(4, curPos++);
-			writeByte(Consts.ARGID_PORT_NO, curPos++);
+			writeByte(ArgType.PORT_NO, curPos++);
 			writeUInt16((ushort)port, curPos);
 			curPos += 2;
 			// add aknowledge flag
 			writeByte(3, curPos++);
-			writeByte(Consts.ARGID_ACKNOWLEDGE, curPos++);
+			writeByte(ArgType.ACKNOWLEDGE, curPos++);
 			writeByte(0, curPos++);
 			// add omit reply part flag
 			writeByte(3, curPos++);
-			writeByte(Consts.ARGID_OMIT_REPLY_PART, curPos++);
+			writeByte(ArgType.OMIT_REPLY_PART, curPos++);
 			writeByte(1, curPos++);
 		}
 
@@ -69,9 +70,17 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public void FillPacketLength()
 		{
-			const int packetMinLen = ConnectPacketOffset.MinSize;
+			const int packetMinLen = Consts.MinSize;
 			if (curPos < packetMinLen) curPos = packetMinLen;
 			writeUInt16((ushort)(curPos - HeaderOffset.END), HeaderOffset.END + ConnectPacketOffset.ConnectLength);
+		}
+
+		public bool IsSwapped
+		{
+			get
+			{
+				return (readByte(HeaderOffset.END + ConnectPacketOffset.MessCode + 1) == SwapMode.Swapped);
+			}
 		}
 
 		public int PacketLength
@@ -130,7 +139,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				int pos = HeaderOffset.END + ConnectPacketOffset.VarPart;
 				while(pos < data.Length)
 				{
-					if (readByte(pos + 1) == Consts.ARGID_PORT_NO)
+					if (readByte(pos + 1) == ArgType.PORT_NO)
 						return readByte(pos + 2) * 0xFF + readByte(pos + 3);//port number is always not swapped
 					else
 						pos += readByte(pos);
@@ -148,7 +157,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				while(pos < data.Length)
 				{
 					byte len = readByte(pos);
-					if (readByte(pos + 1) == Consts.ARGID_AUTH_ALLOW)
+					if (readByte(pos + 1) == ArgType.AUTH_ALLOW)
 						foreach(string authParam in Encoding.ASCII.GetString(data, pos + 2, len - 3).Split(','))
 							if (authParam.ToUpper() == "SCRAMMD5")
 								return true;
@@ -157,6 +166,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				}
 
 				return false;
+			}
+		}
+
+		public int ReturnCode
+		{
+			get
+			{
+				return readInt16(HeaderOffset.RTEReturnCode);
 			}
 		}
 	}
