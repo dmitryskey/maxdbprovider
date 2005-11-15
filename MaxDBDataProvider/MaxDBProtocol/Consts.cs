@@ -18,10 +18,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const int ClientDB       =	32;   // C8
 		public const int VarPart		 =    40;   // C256
 		public const int END             =    296;
-
-		// other connect header constants
-		public const int DBNameSize        =      8;
-		public const int MinSize            =     64;   // for Unix vserver
 	}
 
 	internal struct HeaderOffset
@@ -117,37 +113,43 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const byte Swapped	  =	2;
 	}
 
+	internal struct SQLType
+	{
+		// user types
+		public const byte USER           = 0;
+		public const byte ASYNC_USER     = 1;
+		public const byte UTILITY        = 2;
+		public const byte DISTRIBUTION   = 3;
+		public const byte CONTROL        = 4;
+		public const byte EVENT          = 5;
+	}
+
+	internal struct ArgType
+	{
+		//geo03.h
+		public const byte PORT_NO         = 0x50;   // = P
+		public const byte REM_PID         = 0x49;   // = I
+		public const byte ACKNOWLEDGE     = 0x52;   // = R
+		public const byte NODE            = 0x3E;   // = N
+		public const byte DBROOT          = 0x64;   // = d
+		public const byte SERVERPGM       = 0x70;   // = p
+		public const byte AUTH_ALLOW      = 0x61;   // = a
+		public const byte OMIT_REPLY_PART = 0x72;   // = r
+	}
+
 	/// <summary>
 	/// Summary description for Consts.
 	/// </summary>
 	internal struct Consts
 	{
-		// user types
-		public const byte SQL_USER                   =      0;
-		public const byte SQL_ASYNC_USER             =      1;
-		public const byte SQL_UTILITY                =      2;
-		public const byte SQL_DISTRIBUTION           =      3;
-		public const byte SQLONTROL                =      4;
-		public const byte SQL_EVENT                  =      5;
-		
-		//geo03.h
-		public const byte ARGID_PORT_NO              =   0x50;   // = P
-		public const byte ARGID_REM_PID              =   0x49;   // = I
-		public const byte ARGID_ACKNOWLEDGE          =   0x52;   // = R
-		public const byte ARGID_NODE                 =   0x3E;   // = N
-		public const byte ARGID_DBROOT               =   0x64;   // = d
-		public const byte ARGID_SERVERPGM            =   0x70;   // = p
-		public const byte ARGID_AUTH_ALLOW           =   0x61;   // = a
-		public const byte ARGID_OMIT_REPLY_PART      =   0x72;   // = r int1 
-    
 		// some constants
-		public const byte ASCIIClient                =      0;
-		public const byte UnicodeSwapClient          =     19;
+		public const byte ASCIIClient              =      0;
+		public const byte UnicodeSwapClient        =     19;
 		public const byte RSQL_WIN32               =     13;
 		public const byte RSQL_JAVA                = RSQL_WIN32;
 
 		// other connect header constants
-		public const byte DBNameSize    =      8;
-		public const byte MinSize        =     64;   // for Unix vserver
+		public const int DBNameSize        =      8;
+		public const int MinSize            =     64;   // for Unix vserver
 	}
 }
