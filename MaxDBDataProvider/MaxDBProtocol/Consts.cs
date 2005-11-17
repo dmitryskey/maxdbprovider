@@ -4,34 +4,34 @@ namespace MaxDBDataProvider.MaxDBProtocol
 {
 	internal struct ConnectPacketOffset
 	{
-		public const int MessCode	     =	0;   // C2
-		public const int ConnectLength  =	2;   // INT2
-		public const int ServiceType    =	4;   // INT1
-		public const int OSType         =	5;   // INT1
-		public const int Filler1        =	6;   // INT1
-		public const int Filler2        =	7;   // INT1
-		public const int MaxSegmentSize =	8;   // INT4
-		public const int MaxDataLen     =	12;   // INT4
-		public const int PacketSize     =	16;   // INT4
-		public const int MinReplySize   =	20;   // INT4
-		public const int ServerDB       =	24;   // C8
-		public const int ClientDB       =	32;   // C8
-		public const int VarPart		 =    40;   // C256
-		public const int END             =    296;
+		public const int MessCode	     =	   0;   // C2
+		public const int ConnectLength   =	   2;   // INT2
+		public const int ServiceType     =	   4;   // INT1
+		public const int OSType          =	   5;   // INT1
+		public const int Filler1         =	   6;   // INT1
+		public const int Filler2         =	   7;   // INT1
+		public const int MaxSegmentSize  =	   8;   // INT4
+		public const int MaxDataLen      =	  12;   // INT4
+		public const int PacketSize      =	  16;   // INT4
+		public const int MinReplySize    =	  20;   // INT4
+		public const int ServerDB        =	  24;   // C8
+		public const int ClientDB        =	  32;   // C8
+		public const int VarPart		 =	  40;   // C256
+		public const int END             =	 296;
 	}
 
 	internal struct HeaderOffset
 	{
-		public const int ActSendLen          =      0;   // INT4
-		public const int ProtocolID          =      4;   // INT1
-		public const int MessClass           =      5;   // INT1
-		public const int RTEFlags            =      6;   // INT1
-		public const int ResidualPackets     =      7;   // INT1
-		public const int SenderRef           =      8;   // INT4
-		public const int ReceiverRef         =     12;   // INT4
-		public const int RTEReturnCode       =     16;   // INT2
-		public const int Filler              =     18;   // INT2
-		public const int MaxSendLen          =     20;   // INT4
+		public const int ActSendLen        =      0;   // INT4
+		public const int ProtocolID        =      4;   // INT1
+		public const int MessClass         =      5;   // INT1
+		public const int RTEFlags          =      6;   // INT1
+		public const int ResidualPackets   =      7;   // INT1
+		public const int SenderRef         =      8;   // INT4
+		public const int ReceiverRef       =     12;   // INT4
+		public const int RTEReturnCode     =     16;   // INT2
+		public const int Filler            =     18;   // INT2
+		public const int MaxSendLen        =     20;   // INT4
 		public const int END               =     24;
 	}
 
