@@ -3,10 +3,20 @@ using System.Text;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
+	public struct ConnectPacketData
+	{
+		public string DBName;
+		public int Port;
+		public int MaxSegSize;
+		public int MaxDataLen;
+		public int PacketSize;
+		public int MinReplySize;
+	}
+
 	/// <summary>
 	/// Summary description for MaxDBPacket.
 	/// </summary>
-	internal class MaxDBPacket : ByteArray
+	public class MaxDBPacket : ByteArray
 	{
 		private int curPos = HeaderOffset.END + ConnectPacketOffset.VarPart;
 
@@ -14,8 +24,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
-		public MaxDBPacket(byte[] data, string dbname, int port, 
-			int maxsegsize, int maxdatalen, int packetsize, int minreplysize) : base(data, false)
+		public MaxDBPacket(byte[] data, ConnectPacketData connData) : base(data, false)
 		{
 			// fill body
 			writeByte(Consts.ASCIIClient, HeaderOffset.END + ConnectPacketOffset.MessCode);
@@ -25,13 +34,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			writeByte(Consts.RSQL_JAVA, HeaderOffset.END + ConnectPacketOffset.OSType);
 			writeByte(0, HeaderOffset.END + ConnectPacketOffset.Filler1);
 			writeByte(0, HeaderOffset.END + ConnectPacketOffset.Filler2);
-			writeInt32(maxsegsize, HeaderOffset.END + ConnectPacketOffset.MaxSegmentSize);
-			writeInt32(maxdatalen, HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
-			writeInt32(packetsize, HeaderOffset.END + ConnectPacketOffset.PacketSize);
-			writeInt32(minreplysize, HeaderOffset.END + ConnectPacketOffset.MinReplySize);
-			if (dbname.Length > Consts.DBNameSize)
-				dbname = dbname.Substring(0, Consts.DBNameSize);
-			writeASCII(dbname.PadRight(Consts.DBNameSize, ' '), HeaderOffset.END + ConnectPacketOffset.ServerDB);
+			writeInt32(connData.MaxSegSize, HeaderOffset.END + ConnectPacketOffset.MaxSegmentSize);
+			writeInt32(connData.MaxDataLen, HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
+			writeInt32(connData.PacketSize, HeaderOffset.END + ConnectPacketOffset.PacketSize);
+			writeInt32(connData.MinReplySize, HeaderOffset.END + ConnectPacketOffset.MinReplySize);
+			if (connData.DBName.Length > Consts.DBNameSize)
+				connData.DBName = connData.DBName.Substring(0, Consts.DBNameSize);
+			writeASCII(connData.DBName.PadRight(Consts.DBNameSize, ' '), HeaderOffset.END + ConnectPacketOffset.ServerDB);
 			writeASCII("        ", HeaderOffset.END + ConnectPacketOffset.ClientDB);
 			// fill out variable part
 			writeByte(4, curPos++);
@@ -41,7 +50,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			// add port number
 			writeByte(4, curPos++);
 			writeByte(ArgType.PORT_NO, curPos++);
-			writeUInt16((ushort)port, curPos);
+			writeUInt16((ushort)connData.Port, curPos);
 			curPos += 2;
 			// add aknowledge flag
 			writeByte(3, curPos++);
@@ -91,12 +100,25 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public int PacketSendLength
+		public void SetSendLength(int val)
 		{
-			set
+			writeInt32(val, HeaderOffset.ActSendLen);
+			writeInt32(val, HeaderOffset.MaxSendLen);
+		}
+
+		public int MaxSendLength
+		{
+			get
 			{
-				writeInt32(value, HeaderOffset.ActSendLen);
-				writeInt32(value, HeaderOffset.MaxSendLen);
+				return readInt32(HeaderOffset.MaxSendLen);
+			}
+		}
+
+		public int ActSendLength
+		{
+			get
+			{
+				return readInt32(HeaderOffset.ActSendLen);
 			}
 		}
 
@@ -105,6 +127,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			get
 			{
 				return readInt32(HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
+			}
+		}
+
+		public int PacketSender
+		{
+			get
+			{
+				return readInt32(HeaderOffset.SenderRef);
 			}
 		}
 
@@ -157,12 +187,16 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				while(pos < data.Length)
 				{
 					byte len = readByte(pos);
+
+					if (len == 0)
+						break;
+
 					if (readByte(pos + 1) == ArgType.AUTH_ALLOW)
 						foreach(string authParam in Encoding.ASCII.GetString(data, pos + 2, len - 3).Split(','))
 							if (authParam.ToUpper() == "SCRAMMD5")
 								return true;
-							else
-								pos += len;
+					
+					pos += len;
 				}
 
 				return false;
