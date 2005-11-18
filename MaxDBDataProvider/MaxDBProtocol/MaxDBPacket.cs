@@ -16,50 +16,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	/// <summary>
 	/// Summary description for MaxDBPacket.
 	/// </summary>
-	public class MaxDBPacket : ByteArray
+	public abstract class MaxDBPacket : ByteArray
 	{
-		private int curPos = HeaderOffset.END + ConnectPacketOffset.VarPart;
-
 		public MaxDBPacket(byte[] data, bool SwapMode) : base(data, SwapMode)
 		{
-		}
-
-		public MaxDBPacket(byte[] data, ConnectPacketData connData) : base(data, false)
-		{
-			// fill body
-			writeByte(Consts.ASCIIClient, HeaderOffset.END + ConnectPacketOffset.MessCode);
-			writeByte(SwapMode.NotSwapped, HeaderOffset.END + ConnectPacketOffset.MessCode + 1);
-			writeUInt16(ConnectPacketOffset.END, HeaderOffset.END + ConnectPacketOffset.ConnectLength);
-			writeByte(SQLType.USER, HeaderOffset.END + ConnectPacketOffset.ServiceType);
-			writeByte(Consts.RSQL_JAVA, HeaderOffset.END + ConnectPacketOffset.OSType);
-			writeByte(0, HeaderOffset.END + ConnectPacketOffset.Filler1);
-			writeByte(0, HeaderOffset.END + ConnectPacketOffset.Filler2);
-			writeInt32(connData.MaxSegSize, HeaderOffset.END + ConnectPacketOffset.MaxSegmentSize);
-			writeInt32(connData.MaxDataLen, HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
-			writeInt32(connData.PacketSize, HeaderOffset.END + ConnectPacketOffset.PacketSize);
-			writeInt32(connData.MinReplySize, HeaderOffset.END + ConnectPacketOffset.MinReplySize);
-			if (connData.DBName.Length > Consts.DBNameSize)
-				connData.DBName = connData.DBName.Substring(0, Consts.DBNameSize);
-			writeASCII(connData.DBName.PadRight(Consts.DBNameSize, ' '), HeaderOffset.END + ConnectPacketOffset.ServerDB);
-			writeASCII("        ", HeaderOffset.END + ConnectPacketOffset.ClientDB);
-			// fill out variable part
-			writeByte(4, curPos++);
-			writeByte(ArgType.REM_PID, curPos++);
-			writeASCII("0", curPos++);
-			writeByte(0, curPos++);
-			// add port number
-			writeByte(4, curPos++);
-			writeByte(ArgType.PORT_NO, curPos++);
-			writeUInt16((ushort)connData.Port, curPos);
-			curPos += 2;
-			// add aknowledge flag
-			writeByte(3, curPos++);
-			writeByte(ArgType.ACKNOWLEDGE, curPos++);
-			writeByte(0, curPos++);
-			// add omit reply part flag
-			writeByte(3, curPos++);
-			writeByte(ArgType.OMIT_REPLY_PART, curPos++);
-			writeByte(1, curPos++);
 		}
 
 		public void FillHeader(byte msgClass, int senderRef, int receiverRef, int maxSendLen)
@@ -75,29 +35,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			writeUInt16(0, HeaderOffset.RTEReturnCode);
 			writeUInt16(0, HeaderOffset.Filler);
 			writeInt32(maxSendLen, HeaderOffset.MaxSendLen);
-		}
-
-		public void FillPacketLength()
-		{
-			const int packetMinLen = Consts.MinSize;
-			if (curPos < packetMinLen) curPos = packetMinLen;
-			writeUInt16((ushort)(curPos - HeaderOffset.END), HeaderOffset.END + ConnectPacketOffset.ConnectLength);
-		}
-
-		public bool IsSwapped
-		{
-			get
-			{
-				return (readByte(HeaderOffset.END + ConnectPacketOffset.MessCode + 1) == SwapMode.Swapped);
-			}
-		}
-
-		public int PacketLength
-		{
-			get
-			{
-				return curPos;
-			}
 		}
 
 		public void SetSendLength(int val)
@@ -122,19 +59,105 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public int MaxDataLength
-		{
-			get
-			{
-				return readInt32(HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
-			}
-		}
-
 		public int PacketSender
 		{
 			get
 			{
 				return readInt32(HeaderOffset.SenderRef);
+			}
+		}
+
+		public int ReturnCode
+		{
+			get
+			{
+				return readInt16(HeaderOffset.RTEReturnCode);
+			}
+		}
+
+		protected int alignSize(int val)
+		{
+			if (val % Consts.AlignValue != 0)
+				return val + (Consts.AlignValue - val % Consts.AlignValue);
+			else
+				return val;
+		}
+	}
+
+	public class MaxDBConnectPacket : MaxDBPacket
+	{
+		private int m_curPos = HeaderOffset.END + ConnectPacketOffset.VarPart;
+
+		public MaxDBConnectPacket(byte[] data, bool SwapMode) : base(data, SwapMode)
+		{
+		}
+
+		public MaxDBConnectPacket(byte[] data, ConnectPacketData connData) : base(data, false)
+		{
+			// fill body
+			writeByte(Consts.ASCIIClient, HeaderOffset.END + ConnectPacketOffset.MessCode);
+			writeByte(SwapMode.NotSwapped, HeaderOffset.END + ConnectPacketOffset.MessCode + 1);
+			writeUInt16(ConnectPacketOffset.END, HeaderOffset.END + ConnectPacketOffset.ConnectLength);
+			writeByte(SQLType.USER, HeaderOffset.END + ConnectPacketOffset.ServiceType);
+			writeByte(Consts.RSQL_JAVA, HeaderOffset.END + ConnectPacketOffset.OSType);
+			writeByte(0, HeaderOffset.END + ConnectPacketOffset.Filler1);
+			writeByte(0, HeaderOffset.END + ConnectPacketOffset.Filler2);
+			writeInt32(connData.MaxSegSize, HeaderOffset.END + ConnectPacketOffset.MaxSegmentSize);
+			writeInt32(connData.MaxDataLen, HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
+			writeInt32(connData.PacketSize, HeaderOffset.END + ConnectPacketOffset.PacketSize);
+			writeInt32(connData.MinReplySize, HeaderOffset.END + ConnectPacketOffset.MinReplySize);
+			if (connData.DBName.Length > Consts.DBNameSize)
+				connData.DBName = connData.DBName.Substring(0, Consts.DBNameSize);
+			writeASCII(connData.DBName.PadRight(Consts.DBNameSize, ' '), HeaderOffset.END + ConnectPacketOffset.ServerDB);
+			writeASCII("        ", HeaderOffset.END + ConnectPacketOffset.ClientDB);
+			// fill out variable part
+			writeByte(4, m_curPos++);
+			writeByte(ArgType.REM_PID, m_curPos++);
+			writeASCII("0", m_curPos++);
+			writeByte(0, m_curPos++);
+			// add port number
+			writeByte(4, m_curPos++);
+			writeByte(ArgType.PORT_NO, m_curPos++);
+			writeUInt16((ushort)connData.Port, m_curPos);
+			m_curPos += 2;
+			// add aknowledge flag
+			writeByte(3, m_curPos++);
+			writeByte(ArgType.ACKNOWLEDGE, m_curPos++);
+			writeByte(0, m_curPos++);
+			// add omit reply part flag
+			writeByte(3, m_curPos++);
+			writeByte(ArgType.OMIT_REPLY_PART, m_curPos++);
+			writeByte(1, m_curPos++);
+		}
+
+		public void FillPacketLength()
+		{
+			const int packetMinLen = Consts.MinSize;
+			if (m_curPos < packetMinLen) m_curPos = packetMinLen;
+			writeUInt16((ushort)(m_curPos - HeaderOffset.END), HeaderOffset.END + ConnectPacketOffset.ConnectLength);
+		}
+
+		public bool IsSwapped
+		{
+			get
+			{
+				return (readByte(HeaderOffset.END + ConnectPacketOffset.MessCode + 1) == SwapMode.Swapped);
+			}
+		}
+
+		public int PacketLength
+		{
+			get
+			{
+				return m_curPos;
+			}
+		}
+
+		public int MaxDataLength
+		{
+			get
+			{
+				return readInt32(HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
 			}
 		}
 
@@ -193,7 +216,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 					if (readByte(pos + 1) == ArgType.AUTH_ALLOW)
 						foreach(string authParam in Encoding.ASCII.GetString(data, pos + 2, len - 3).Split(','))
-							if (authParam.ToUpper() == "SCRAMMD5")
+							if (authParam.ToUpper() == SCRAMMD5.AlgName)
 								return true;
 					
 					pos += len;
@@ -202,13 +225,169 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				return false;
 			}
 		}
+	}
 
-		public int ReturnCode
+	public class MaxDBRequestPacket : MaxDBPacket
+	{
+		private int m_length = PacketHeaderOffset.Segment;
+		private short m_segments = 0;
+		private int m_partOffset = -1, m_partLength = -1, m_segOffset = -1, m_segLength = -1;
+		private short m_partArgs = -1, m_segParts = -1;
+		private byte currentSqlMode = SqlMode.SessionSqlmode;
+		private int replyReserve;
+		private int maxNumberOfSeg = Consts.defaultmaxNumberOfSegm;
+
+		public MaxDBRequestPacket(byte[] data, string appID, string appVer) : base(data, false)
+		{
+			writeByte(Consts.ASCIIClient, PacketHeaderOffset.MessCode);
+			writeByte(SwapMode.NotSwapped, PacketHeaderOffset.MessSwap);
+			writeASCII(appVer, PacketHeaderOffset.ApplVersion);
+			writeASCII(appID, PacketHeaderOffset.Appl);
+			writeInt32(data.Length - HeaderOffset.END - PacketHeaderOffset.Segment, PacketHeaderOffset.VarpartSize);
+			m_length = PacketHeaderOffset.Segment;
+		}
+
+		private int dataPos 
 		{
 			get
 			{
-				return readInt16(HeaderOffset.RTEReturnCode);
+				return m_partOffset + PartHeaderOffset.Data + m_partLength;
 			}
 		}
+
+		public void writeASCII(string data) 
+		{
+			writeASCII(data, dataPos);
+			m_partLength += data.Length;
+		}
+
+		private void Reset()
+		{
+			m_length = PacketHeaderOffset.Segment;
+			m_segments = 0;
+			m_segOffset = -1;
+			m_segLength = -1;
+			m_segParts = -1;
+			maxNumberOfSeg = Consts.defaultmaxNumberOfSegm;
+			m_partOffset = -1;
+			m_partLength = -1;
+			m_partArgs = -1;
+			replyReserve = 0;
+		}
+
+		public void initDbsCommand(bool autocommit, string cmd) 
+		{
+			initDbsCommand (cmd, true, autocommit);
+		}
+
+		public bool initDbsCommand(string cmd, bool reset, bool autocommit) 
+		{
+			if (!reset) 
+			{
+				CloseSegment();
+				if (data.Length - HeaderOffset.END - m_length - SegmentHeaderOffset.Part - PartHeaderOffset.Data
+					- replyReserve - Consts.ReserveForReply < cmd.Length || m_segments >= maxNumberOfSeg) 
+					return false;
+			}
+			initDbs(reset, autocommit);
+			writeASCII(cmd);
+			m_partArgs = 1;
+			return true;
+		}
+
+		public void initDbs(bool reset, bool autocommit) 
+		{
+			if (reset) 
+				Reset();
+		
+			NewSegment(CmdMessType.Dbs, autocommit, false);
+			NewPart(PartKind.Command);
+			m_partArgs = 1;
+		}
+
+		#region "Part operations"
+
+		public void NewPart (byte kind) 
+		{
+			ClosePart();
+			InitPart(kind);
+		}
+
+		private void InitPart (byte kind) 
+		{
+			m_segParts++;
+			m_partOffset = m_segOffset + m_segLength;
+			m_partLength = 0;
+			m_partArgs = 0;
+			writeByte(kind, m_partOffset + PartHeaderOffset.PartKind);
+			writeByte(0, m_partOffset + PartHeaderOffset.Attributes);
+			writeInt16(1, m_partOffset + PartHeaderOffset.ArgCount);
+			writeInt32(m_segOffset - PacketHeaderOffset.Segment, m_partOffset + PartHeaderOffset.SegmOffs);
+			writeInt32(PartHeaderOffset.Data, m_partOffset + PartHeaderOffset.BufLen);
+			writeInt32(data.Length - HeaderOffset.END - m_partOffset, m_partOffset + PartHeaderOffset.BufSize);
+		}
+
+		private void ClosePart() 
+		{
+			if (m_partOffset == -1) 
+				return;
+
+			writeInt32(m_partLength, m_partOffset + PartHeaderOffset.BufLen);
+			writeInt16(m_partArgs, m_partOffset + PartHeaderOffset.ArgCount);
+			m_segLength += alignSize(m_partLength + PartHeaderOffset.Data);
+			m_partOffset = -1;
+			m_partLength = -1;
+			m_partArgs = -1;
+			return;
+		}
+
+		#endregion
+
+		#region "Segment operations"
+
+		private void NewSegment(byte kind, bool autocommit, bool parseagain) 
+		{
+			CloseSegment();
+
+			m_segOffset = m_length;
+			m_segLength = SegmentHeaderOffset.Part;
+			m_segParts = 0;
+			writeInt32(0, m_segOffset + SegmentHeaderOffset.Len);
+			writeInt32(m_segOffset - PacketHeaderOffset.Segment, m_segOffset + SegmentHeaderOffset.Offs);
+			writeInt16(0, m_segOffset + SegmentHeaderOffset.NoOfParts);
+			writeInt16(++m_segments, m_segOffset + SegmentHeaderOffset.OwnIndex);
+			writeByte(SegmKind.Cmd, m_segOffset + SegmentHeaderOffset.SegmKind);
+
+			// request segment
+			writeByte(kind, m_segOffset + SegmentHeaderOffset.MessType);
+			writeByte(currentSqlMode, m_segOffset + SegmentHeaderOffset.SqlMode);
+			writeByte(Producer.UserCmd, m_segOffset + SegmentHeaderOffset.Producer);
+			writeByte((byte)(autocommit?1:0), m_segOffset + SegmentHeaderOffset.CommitImmediateley);
+			writeByte(0, m_segOffset + SegmentHeaderOffset.IgnoreCostwarning);
+			writeByte(0, m_segOffset + SegmentHeaderOffset.Prepare);
+			writeByte(0, m_segOffset + SegmentHeaderOffset.WithInfo);
+			writeByte(0, m_segOffset + SegmentHeaderOffset.MassCmd);
+			writeByte((byte)(parseagain?1:0), m_segOffset + SegmentHeaderOffset.ParsingAgain);
+			writeByte(0, m_segOffset + SegmentHeaderOffset.CommandOptions);
+
+			replyReserve += (m_segments == 2)?Consts.ReserveFor2ndSegment:Consts.ReserveForReply;
+		}
+
+		private void CloseSegment() 
+		{
+			if (m_segOffset == -1) 
+				return;
+
+			ClosePart();
+			writeInt32(m_segLength, m_segOffset + SegmentHeaderOffset.Len);
+			writeInt16(m_segParts, m_segOffset + SegmentHeaderOffset.NoOfParts);
+			m_length += m_segLength;
+			m_segOffset = -1;
+			m_segLength = -1;
+			m_segParts = -1;
+			return;
+		}
+
+		#endregion
 	}
 }

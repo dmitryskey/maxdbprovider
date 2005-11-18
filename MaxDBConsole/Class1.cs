@@ -22,18 +22,6 @@ namespace MaxDBDataProvider
 			// TODO: Add code to start application here
 			//
 
-			string client_proof = "5d7f4505accba4e92c5778ea808dbc6a";
-			byte[] salt = Encoding.ASCII.GetBytes("der Salt");
-			byte[] password = Encoding.ASCII.GetBytes("secret");
-			byte[] clientkey = Encoding.ASCII.GetBytes("eine UserId und eine Zufallszahl");
-			byte[] serverkey = Encoding.ASCII.GetBytes("-Value und eine andere Zufallszahl");
-			byte[] erg = SCRAMMD5.scrammMD5(salt, password, clientkey, serverkey);
-
-			SocketClass s = new SocketClass("localhost", 7210);
-			MaxDBComm m = new MaxDBComm(s);
-			m.Connect("TESTDB", 7210);
-			m.Close();
-
 			try
 			{
 				MaxDBConnection maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
