@@ -11,11 +11,11 @@ namespace MaxDBDataProvider
 		SQLDBC_OK                       = 0,     /*!< Function call successful. */
 		SQLDBC_NOT_OK                   = 1,     /*!< Function call not successful. Further information 
                                                 can be found in the corresponding error object. */
-		SQLDBC_DATA_TRUNC               =2,      /*!< Data was truncated during the call. */
-		SQLDBC_OVERFLOW                 =3,      /*!< Signalizes a numeric overflow. */
-		SQLDBC_SUCCESS_WITH_INFO        =4,      /*!< The method succeeded with warnings. */
-		SQLDBC_NO_DATA_FOUND            =100,    /*!< Data was not found. */
-		SQLDBC_NEED_DATA                =99      /*!< Late binding, data is needed for execution. */
+		SQLDBC_DATA_TRUNC               = 2,      /*!< Data was truncated during the call. */
+		SQLDBC_OVERFLOW                 = 3,      /*!< Signalizes a numeric overflow. */
+		SQLDBC_SUCCESS_WITH_INFO        = 4,      /*!< The method succeeded with warnings. */
+		SQLDBC_NO_DATA_FOUND            = 100,    /*!< Data was not found. */
+		SQLDBC_NEED_DATA                = 99      /*!< Late binding, data is needed for execution. */
 	}
 
 	public enum StringEncodingType 

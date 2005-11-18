@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Text;
+using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider
 {
@@ -22,6 +23,9 @@ namespace MaxDBDataProvider
 		private IntPtr envHandler;
 		internal IntPtr connHandler = IntPtr.Zero;
 		private IntPtr connPropHandler;
+
+		private MaxDBComm comm;
+
 		private Encoding enc = Encoding.ASCII;
 		private SQLDBC_SQLMode mode = SQLDBC_SQLMode.SQLDBC_INTERNAL;
 
@@ -34,6 +38,7 @@ namespace MaxDBDataProvider
 		public MaxDBConnection(string sConnString) 
 		{
 			ParseConnectionString(sConnString);
+			comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, Ports.Default));
 		}
 
 		private void ParseConnectionString(string sConnString)
@@ -283,6 +288,8 @@ namespace MaxDBDataProvider
 			if(SQLDBC.SQLDBC_Connection_setTransactionIsolation(connHandler, MaxDBLevel) != SQLDBC_Retcode.SQLDBC_OK) 
 				throw new MaxDBException("Can't set isolation level: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
 					SQLDBC.SQLDBC_Connection_getError(connHandler)));
+
+			// "SET ISOLATION LEVEL " + MaxDBLevel.ToString()
 		}
 
 		public void ChangeDatabase(string dbName)
@@ -316,6 +323,10 @@ namespace MaxDBDataProvider
 
 		private unsafe void OpenConnection()
 		{
+			comm.Connect(m_ConnArgs.dbname, Ports.Default);
+			byte[] requestBuf = new byte[HeaderOffset.END + comm.MaxCmdSize];
+
+
 			byte[] errorText = new byte[256];
 			
 			fixed(byte* errorPtr = errorText)
@@ -345,6 +356,8 @@ namespace MaxDBDataProvider
 			 * property. If the underlying connection to the server is
 			 * being pooled, Close() will release it back to the pool.
 			 */
+			comm.Close();
+
 			SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(connPropHandler);
 			connPropHandler = IntPtr.Zero;
 

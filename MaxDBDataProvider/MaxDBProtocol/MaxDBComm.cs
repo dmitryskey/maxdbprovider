@@ -13,7 +13,25 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		private int m_sender = 0;
 		private int m_receiver = 0;
 		private int m_maxSendLen = 0;
-		private int swapMode = SwapMode.NotSwapped;
+		private int m_swapMode = SwapMode.NotSwapped;
+		private bool m_isauthallowed = false;
+		private int m_maxcmdsize = 0;
+
+		public bool IsAuthAllowed
+		{
+			get
+			{
+				return m_isauthallowed;
+			}
+		}
+
+		public int MaxCmdSize
+		{
+			get
+			{
+				return m_maxcmdsize;
+			}
+		}
 
 		public MaxDBComm(ISocketIntf s)
 		{
@@ -28,13 +46,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				connData.DBName = dbname;
 				connData.Port = port;
 				connData.MaxSegSize = 1024 * 32;
-				MaxDBPacket request = new MaxDBPacket(new byte[HeaderOffset.END + ConnectPacketOffset.END], connData);
+				MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END + ConnectPacketOffset.END], connData);
 				request.FillHeader(RSQLTypes.INFO_REQUEST, m_sender, m_receiver, m_maxSendLen);
 				request.FillPacketLength();
 				request.SetSendLength(request.PacketLength);
 				m_socket.Stream.Write(request.arrayData, 0, request.PacketLength);
 
-				MaxDBPacket reply = GetConnectReply();
+				MaxDBConnectPacket reply = GetConnectReply();
 				int returnCode = reply.ReturnCode;
 				if (returnCode != 0)
 				{
@@ -58,13 +76,15 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				connData.PacketSize = reply.PacketSize;
 				connData.MinReplySize = reply.MinReplySize;
 
-				MaxDBPacket db_request = new MaxDBPacket(new byte[HeaderOffset.END + reply.MaxDataLength], connData);
+				MaxDBConnectPacket db_request = new MaxDBConnectPacket(new byte[HeaderOffset.END + reply.MaxDataLength], connData);
 				db_request.FillHeader(RSQLTypes.USER_CONN_REQUEST, m_sender, m_receiver, m_maxSendLen);
 				db_request.FillPacketLength();
 				db_request.SetSendLength(db_request.PacketLength);
 				m_socket.Stream.Write(db_request.arrayData, 0, db_request.PacketLength);
 
-				GetConnectReply();
+				reply = GetConnectReply();
+				m_isauthallowed = reply.IsAuthAllowed;
+				m_maxcmdsize = reply.MaxDataLength - reply.MinReplySize;
 			}
 			catch(Exception ex)
 			{
@@ -72,7 +92,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		private MaxDBPacket GetConnectReply()
+		private MaxDBConnectPacket GetConnectReply()
 		{
 			byte[] replyBuffer = new byte[HeaderOffset.END + ConnectPacketOffset.END];
 
@@ -80,9 +100,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if (len <= HeaderOffset.END)
 				throw new Exception("Receive line down");
 
-			swapMode = replyBuffer[HeaderOffset.END + ConnectPacketOffset.MessCode + 1];
+			m_swapMode = replyBuffer[HeaderOffset.END + ConnectPacketOffset.MessCode + 1];
 			
-			MaxDBPacket replyPacket = new MaxDBPacket(replyBuffer, swapMode == SwapMode.Swapped);
+			MaxDBConnectPacket replyPacket = new MaxDBConnectPacket(replyBuffer, m_swapMode == SwapMode.Swapped);
 
 			int actLen = replyPacket.ActSendLength;
 			if (actLen < 0 || actLen > 500 * 1024)
@@ -98,14 +118,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			m_sender = replyPacket.PacketSender;
 
-			bool dd = replyPacket.IsAuthAllowed;
-
 			return replyPacket;
 		}
 
 		public void Close()
 		{
-			MaxDBPacket request = new MaxDBPacket(new byte[HeaderOffset.END], true);
+			MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END], true);
 			request.FillHeader(RSQLTypes.USER_RELEASE_REQUEST, m_sender, m_receiver, m_maxSendLen);
 			request.SetSendLength(0);
 			m_socket.Stream.Write(request.arrayData, 0, request.arrayData.Length);
@@ -121,7 +139,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if (m_socket.Stream.Read(headerBuf, 0, headerBuf.Length) < HeaderOffset.END)
 				throw new Exception("Receive line down");
 
-			MaxDBPacket header = new MaxDBPacket(headerBuf, true);
+			MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf, true);
 			int returnCode = header.ReturnCode;
 			if (returnCode != 0)
 				throw new Exception(CommError.ErrorText[returnCode]);
@@ -137,7 +155,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					throw new Exception("Chunk overflow in read");
 			}
 
-			return new MaxDBPacket(packetBuf, true);
+			//return new MaxDBPacket(packetBuf, true);
+			return null;
 		}
 	}
 }

@@ -8,6 +8,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	/// </summary>
 	public class SCRAMMD5
 	{
+		public static string AlgName
+		{
+			get
+			{
+				return "SCRAMMD5";
+			}
+		}
+
 		private static byte[] hmacMD5(byte[] data, byte[] key)  
 		{
 			byte[] ipad = new byte[64];
