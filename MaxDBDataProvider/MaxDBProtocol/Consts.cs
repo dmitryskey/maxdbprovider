@@ -213,7 +213,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const byte ProcservFill4           =  57;
 		public const byte ProcservFill5           =  58;
 		public const byte ProcservUpperBound      =  59;
-		public const byte LastCmdMessType           =  60;
+		public const byte LastCmdMessType         =  60;
 	}
 
 	//
@@ -259,6 +259,93 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const byte Clientid                =  35;
 	}
 
+	internal struct Feature 
+	{
+		public const byte MultipleDropParseid   =  1;
+		public const byte SpaceOption           =  2;
+		public const byte VariableInput         =  3;
+		public const byte OptimizedStreams      =  4;
+		public const byte CheckScrollableoption =  5;
+	}
+
+	//
+	// copy of vsp001::tsp1_part_attributes.
+	//
+	// The _E-values can be used to build a set by ORing them
+	//
+	public struct PartAttributes 
+	{
+		public const byte LastPacket              =   0;
+		public const byte NextPacket              =   1;
+		public const byte FirstPacket             =   2;
+		public const byte Fill3                   =   3;
+		public const byte Fill4                   =   4;
+		public const byte Fill5                   =   5;
+		public const byte Fill6                   =   6;
+		public const byte Fill7                   =   7;
+		public const byte LastPacket              =   1;
+		public const byte NextPacket              =   2;
+		public const byte FirstPacket             =   4;
+	}
+
+	//
+	// copy of gsp00::tsp00_LongDescBlock and related constants
+	//
+	public struct LongDesc 
+	{
+		// tsp00_LdbChange
+		public const byte UseTermchar = 0;
+		public const byte UseConversion = 1;
+		public const byte UseToAscii = 2;
+		public const byte UseUCS2_Swap = 3;
+
+		// tsp00_ValMode
+		public const byte DataPart = 0;
+		public const byte AllData = 1;
+		public const byte LastData = 2;
+		public const byte NoData = 3;
+		public const byte NoMoreData = 4;
+		public const byte LastPutval = 5;
+		public const byte DataTrunc = 6;
+		public const byte Close = 7;
+		public const byte Error = 8;
+		public const byte StartposInvalid = 9;
+
+		// infoset
+		public const byte ExTrigger = 1;
+		public const byte WithLock = 2;
+		public const byte NoCLose = 4;
+		public const byte NewRec = 8;
+		public const byte IsComment = 16;
+		public const byte IsCatalog = 32;
+		public const byte Unicode = 64;
+
+		// state
+		public const byte StateUseTermChar   = 1; 
+		public const byte StateStream        = 1; 
+		public const byte StateUseConversion = 2;
+		public const byte StateUseToAscii    = 4;
+		public const byte StateUseUcs2Swap   = 8;
+		public const byte StateShortScol     = 16;
+		public const byte StateFirstInsert   = 32;
+		public const byte StateCopy          = 64;
+		public const byte StateFirstCall     = 128;
+    
+		// tsp00_LongDescBlock = RECORD
+		public const byte Descriptor = 0;   // c8
+		public const byte Tabid = 8;        // c8
+		public const byte MaxLen = 16;      // c4
+		public const byte InternPos = 20;   // i4
+		public const byte Infoset = 24;     // set1
+		public const byte State = 25;   // bool
+		public const byte unused1 = 26;     // c1
+		public const byte Valmode = 27;     // i1
+		public const byte Valind = 28;      // i2
+		public const byte unused = 30;      // i2
+		public const byte Valpos = 32;      // i4;
+		public const byte Vallen = 36;      // i4;
+		public const byte Size = 40;
+	}
 
 	internal struct Ports
 	{
