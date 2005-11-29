@@ -216,7 +216,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 					if (readByte(pos + 1) == ArgType.AUTH_ALLOW)
 						foreach(string authParam in Encoding.ASCII.GetString(data, pos + 2, len - 3).Split(','))
-							if (authParam.ToUpper() == SCRAMMD5.AlgName)
+							if (authParam.ToUpper() == Crypt.ScramMD5Name)
 								return true;
 					
 					pos += len;
@@ -255,10 +255,18 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public void writeASCII(string data) 
+		public void addData (byte[] data) 
 		{
-			writeASCII(data, dataPos);
-			m_partLength += data.Length;
+			writeByte(0, dataPos);
+			writeBytes(data, dataPos + 1);
+			m_partLength += data.Length + 1;
+		}
+
+		public void addASCII(string data)
+		{
+			writeByte(0x20, dataPos);
+			writeASCII(data, dataPos + 1);
+			m_partLength += data.Length + 1;
 		}
 
 		private void Reset()
@@ -290,7 +298,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					return false;
 			}
 			initDbs(reset, autocommit);
-			writeASCII(cmd);
+			writeASCII(cmd, dataPos);
+			m_partLength += cmd.Length;
 			m_partArgs = 1;
 			return true;
 		}
@@ -327,18 +336,49 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			writeInt32(data.Length - HeaderOffset.END - m_partOffset, m_partOffset + PartHeaderOffset.BufSize);
 		}
 
+		public void AddPartFeature(byte[] features)
+		{
+			if (features != null)
+			{
+				NewPart(PartKind.Feature);
+				writeBytes(features, dataPos);
+				m_partLength += features.Length;
+				m_partArgs += (short)(features.Length / 2);
+				ClosePart();
+			}
+		}
+
+		public void addPartAttr(byte attr)
+		{
+			int attrOffset = m_partOffset + PartHeaderOffset.Attributes;
+			writeByte(getByte(attrOffset) | attr, attrOffset);
+		}
+
+		public void AddPassword(string passwd, string termID)
+		{
+			NewPart(PartKind.Data);
+			addData(Crypt.Mangle(passwd, false));
+			addASCII(termID);
+			m_partArgs++;
+		}
+
 		private void ClosePart() 
+		{
+			ClosePart(m_partLength, m_partArgs);
+		}
+
+		public void ClosePart(int extent, int args)
 		{
 			if (m_partOffset == -1) 
 				return;
 
-			writeInt32(m_partLength, m_partOffset + PartHeaderOffset.BufLen);
-			writeInt16(m_partArgs, m_partOffset + PartHeaderOffset.ArgCount);
-			m_segLength += alignSize(m_partLength + PartHeaderOffset.Data);
+			writeInt32(extent, m_partOffset + PartHeaderOffset.BufLen);
+			writeInt16(args, m_partOffset + PartHeaderOffset.ArgCount);
+			m_segLength += alignSize(extent + PartHeaderOffset.Data);
 			m_partOffset = -1;
 			m_partLength = -1;
 			m_partArgs = -1;
-			return;
+
 		}
 
 		#endregion

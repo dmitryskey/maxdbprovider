@@ -126,7 +126,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END], true);
 			request.FillHeader(RSQLTypes.USER_RELEASE_REQUEST, m_sender, m_receiver, m_maxSendLen);
 			request.SetSendLength(0);
-			m_socket.Stream.Write(request.arrayData, 0, request.arrayData.Length);
+			m_socket.Stream.Write(request.arrayData, 0, request.Length);
 			m_socket.Close();
 		}
 
