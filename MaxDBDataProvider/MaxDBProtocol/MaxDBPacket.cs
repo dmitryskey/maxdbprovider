@@ -351,7 +351,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public void addPartAttr(byte attr)
 		{
 			int attrOffset = m_partOffset + PartHeaderOffset.Attributes;
-			writeByte(getByte(attrOffset) | attr, attrOffset);
+			writeByte((byte)(readByte(attrOffset) | attr), attrOffset);
 		}
 
 		public void AddPassword(string passwd, string termID)
@@ -367,7 +367,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			ClosePart(m_partLength, m_partArgs);
 		}
 
-		public void ClosePart(int extent, int args)
+		public void ClosePart(int extent, short args)
 		{
 			if (m_partOffset == -1) 
 				return;

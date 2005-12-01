@@ -112,6 +112,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#endregion
 
+	#region "Cryptography class"
+
 	/// <summary>
 	/// Summary description for Crypt.
 	/// </summary>
@@ -228,4 +230,117 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return result.arrayData;
 		}
 	}
+
+	#endregion
+
+	#region "Authentication Class"
+
+	public class Auth
+	{
+		private byte[] salt;
+    
+		private byte[] clientchallenge;
+    
+		private byte[] serverchallenge;
+    
+		private int maxPasswordLen = 0;
+
+		public Auth()
+		{
+			clientchallenge = new byte[64];
+			(new RNGCryptoServiceProvider()).GetBytes(clientchallenge);
+		}
+
+		public byte[] ClientChallenge
+		{
+			get
+			{
+				return clientchallenge;
+			}
+		}
+
+		public int MaxPasswordLength
+		{
+			get
+			{
+				return maxPasswordLen;
+			}
+		}
+
+		public byte[] getClientProof(byte[] password)
+		{
+			return Crypt.ScrammMD5(salt, password, clientchallenge, serverchallenge);
+		}
+
+		// Parses the serverchallenge and split it into salt and real server challenge.
+		public void parseServerChallenge(DataPartVariable vData)
+		{
+			const string WRONGSERVERCHALLENGERECEIVED = "Wrong Server Challenge Received";
+			if (!vData.nextRow() || !vData.nextField())
+				throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+
+			string alg = vData.readASCII(vData.CurrentOffset, vData.CurrentFieldLen);
+			if (alg.ToUpper().Trim() != Crypt.ScramMD5Name)
+				throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+
+			if (!vData.nextField() || vData.CurrentFieldLen < 8)
+				throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+
+			if (vData.CurrentFieldLen == 40)
+			{
+				/*first version of challenge response 
+				 *should only occurs with database version 7.6.0.0 <= kernel <= 7.6.0.7*/
+				salt = vData.readBytes(vData.CurrentOffset, 8);
+				serverchallenge = vData.readBytes(vData.CurrentOffset + 8, vData.CurrentFieldLen - 8);
+			}
+			else
+			{
+				DataPartVariable vd = new DataPartVariable(new ByteArray(vData.readBytes(vData.CurrentOffset, vData.CurrentFieldLen)), 1);
+				if (!vd.nextRow() || !vd.nextField())
+					throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+
+				salt = vd.readBytes(vd.CurrentOffset, vd.CurrentFieldLen);
+				if (!vd.nextField())
+					throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+
+				serverchallenge = vd.readBytes(vd.CurrentOffset, vd.CurrentFieldLen);
+
+				/*from Version 7.6.0.10 on also the max password length will be delivered*/
+				if (vData.nextField())
+				{
+					DataPartVariable mp_vd = new DataPartVariable(new ByteArray(vData.readBytes(vData.CurrentOffset, vData.CurrentFieldLen)), 1);
+					if (!mp_vd.nextRow() || !mp_vd.nextField()) 
+						throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+
+					do 
+					{
+						if (mp_vd.readASCII(mp_vd.CurrentOffset, mp_vd.CurrentFieldLen).ToLower().Trim() == Packet.MaxPasswordLenTag)
+						{
+							if (!mp_vd.nextField()) 
+								throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+							else
+							{
+								try 
+								{
+									maxPasswordLen = int.Parse(mp_vd.readASCII(mp_vd.CurrentOffset, mp_vd.CurrentFieldLen));
+								} 
+								catch
+								{
+									throw new Exception(WRONGSERVERCHALLENGERECEIVED);	
+								} 
+							}
+						} 
+						else 
+						{
+							if (!mp_vd.nextField()) 
+								throw new Exception(WRONGSERVERCHALLENGERECEIVED);	
+						}     
+					} 
+					while (mp_vd.nextField());
+				}
+			}
+		}
+	}
+
+	#endregion
 }

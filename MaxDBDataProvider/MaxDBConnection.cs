@@ -321,6 +321,14 @@ namespace MaxDBDataProvider
 				enc = Encoding.ASCII;
 		}
 
+		private string TermID
+		{
+			get
+			{
+				return ("ado.net@" + this.GetHashCode().ToString("x")).PadRight(18);
+			}
+		}
+
 		private unsafe void OpenConnection()
 		{
 			comm.Connect(m_ConnArgs.dbname, Ports.Default);

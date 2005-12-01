@@ -283,9 +283,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const byte Fill5                   =   5;
 		public const byte Fill6                   =   6;
 		public const byte Fill7                   =   7;
-		public const byte LastPacket              =   1;
-		public const byte NextPacket              =   2;
-		public const byte FirstPacket             =   4;
+		public const byte LastPacket_Ext              =   1;
+		public const byte NextPacket_Ext              =   2;
+		public const byte FirstPacket_Etx             =   4;
 	}
 
 	//
@@ -345,6 +345,25 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const byte Valpos = 32;      // i4;
 		public const byte Vallen = 36;      // i4;
 		public const byte Size = 40;
+	}
+
+	internal struct Packet
+	{
+		//
+		// indicators for fields with variable length
+		//   
+		public const byte MaxOneByteLength   = 245;
+		public const byte Ignored            = 250;
+		public const byte SpecialNull        = 251;
+		public const byte BlobDescription    = 252;
+		public const byte DefaultValue       = 253;
+		public const byte NullValue          = 254;
+		public const byte TwiByteLength      = 255;
+    
+		// 
+		// property names used to identify fields
+		///
+		public const string MaxPasswordLenTag  = "maxpasswordlen";
 	}
 
 	internal struct Ports

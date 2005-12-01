@@ -144,11 +144,6 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "MaxDBProtocol\Consts.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
                     RelPath = "MaxDBProtocol\Crypt.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
@@ -159,7 +154,22 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "MaxDBProtocol\MaxDBConsts.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "MaxDBProtocol\MaxDBDataPart.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
                     RelPath = "MaxDBProtocol\MaxDBPacket.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "MaxDBProtocol\MaxDBTranslators.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
