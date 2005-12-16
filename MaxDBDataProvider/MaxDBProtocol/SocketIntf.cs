@@ -11,8 +11,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	{
 		bool ReopenSocketAfterInfoPacket{get;}
 		NetworkStream Stream{get;}
+		string Host{get;}
+		int Port{get;}
 
-		ISocketIntf GetNewInstance();
+		ISocketIntf Clone();
 		void Close();
 	}
 
@@ -21,15 +23,16 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		private string m_host;
 		private int m_port;
 
-		public SocketClass(string host, int port) : base(host, port)
+		public SocketClass(string host, int port, int timeout) : base(host, port)
 		{
 			m_host = host;
 			m_port = port;
+			base.ReceiveTimeout = timeout;
 		}
 
 		#region SocketIntf Members
 
-		public bool ReopenSocketAfterInfoPacket
+		bool ISocketIntf.ReopenSocketAfterInfoPacket
 		{
 			get
 			{
@@ -37,7 +40,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public NetworkStream Stream
+		NetworkStream ISocketIntf.Stream
 		{
 			get
 			{
@@ -45,9 +48,25 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		ISocketIntf ISocketIntf.GetNewInstance()
+		string ISocketIntf.Host
 		{
-			return new SocketClass(m_host, m_port);
+			get
+			{
+				return m_host;
+			}
+		}
+
+		int ISocketIntf.Port
+		{
+			get
+			{
+				return m_port;
+			}
+		}
+
+		ISocketIntf ISocketIntf.Clone()
+		{
+			return new SocketClass(m_host, m_port, base.ReceiveTimeout);
 		}
 
 		void ISocketIntf.Close()
@@ -65,7 +84,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		protected Stream[] streams;
 		protected Stream currentStream;
 		protected int currentIndex = -1;
-	
+
 		public JoinStream(Stream[] streams)
 		{
 			this.streams = streams;
@@ -219,7 +238,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		private Stream ips;
 
 		private int readlength = 0;
-		private int markedlength = 0;
     
 		public StreamFilter(Stream ips, int length)
 		{

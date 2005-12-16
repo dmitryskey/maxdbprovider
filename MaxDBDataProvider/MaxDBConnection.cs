@@ -1,6 +1,8 @@
 using System;
 using System.Data;
 using System.Text;
+using System.Collections;
+using System.Runtime.CompilerServices;
 using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider
@@ -11,23 +13,51 @@ namespace MaxDBDataProvider
 		public string password;
 		public string dbname;
 		public string host;
+		public int port;
 	};
 
 	public class MaxDBConnection : IDbConnection
 	{
-		private string      m_sConnString;
+		private string m_sConnString;
 
 		private ConnectArgs m_ConnArgs;
 
-		private IntPtr runtimeHandler;
-		private IntPtr envHandler;
-		internal IntPtr connHandler = IntPtr.Zero;
-		private IntPtr connPropHandler;
+		#region "SQLDBC Wrapper parameters"
+		
+		private IntPtr m_runtimeHandler;
+		private IntPtr m_envHandler;
+		internal IntPtr m_connHandler = IntPtr.Zero;
+		private IntPtr m_connPropHandler;
+		
+		#endregion
 
-		private MaxDBComm comm;
+		#region "Native implementation parameters"
+		
+		private MaxDBComm m_comm = null;
+		private Stack m_packetPool = new Stack();
+		private bool m_autocommit = false;
+		private GarbageParseid m_garbageParseids = null;
+		private GarbageCursor  m_garbageCursors  = null;
+		private object m_execObj;
+		private static string syncObj = string.Empty;
+		private int m_nonRecyclingExecutions = 0;
+		private bool m_inTransaction = false;
+		private bool m_inReconnect = false;
+		private string m_cache;
+		private int m_timeout, m_cacheLimit, m_cacheSize;
+		private ParseInfoCache m_parseCache = null;
+		private bool m_auth = false;
+		private bool m_spaceoption = false;
+		int m_sessionID = -1;
+		private int m_kernelVersion; // Version without patch level, e.g. 70402 or 70600.
+		private static byte[] defaultFeatureSet = {1, 0, 2, 0, 3, 0, 4, 0, 5, 0};
+		private byte[] kernelFeatures = new byte[defaultFeatureSet.Length];
 
-		private Encoding enc = Encoding.ASCII;
-		private SQLDBC_SQLMode mode = SQLDBC_SQLMode.SQLDBC_INTERNAL;
+		#endregion
+		
+		private Encoding m_enc = Encoding.ASCII;
+		private int m_mode = SqlMode.Internal;
+		private int m_level = -1;
 
 		// Always have a default constructor.
 		public MaxDBConnection()
@@ -38,7 +68,7 @@ namespace MaxDBDataProvider
 		public MaxDBConnection(string sConnString) 
 		{
 			ParseConnectionString(sConnString);
-			comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, Ports.Default));
+			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout));
 		}
 
 		private void ParseConnectionString(string sConnString)
@@ -50,7 +80,16 @@ namespace MaxDBDataProvider
 					switch (param.Split('=')[0].Trim().ToUpper())
 					{
 						case "DATA SOURCE":
-							m_ConnArgs.host = param.Split('=')[1].Trim();
+							string[] hostPort = param.Split('=')[1].Trim().Split(':');
+							m_ConnArgs.host = hostPort[0];
+							try
+							{
+								m_ConnArgs.port = int.Parse(hostPort[1]);
+							}
+							catch
+							{
+								m_ConnArgs.port = Ports.Default;
+							}
 							break;
 						case "INITIAL CATALOG":
 							m_ConnArgs.dbname = param.Split('=')[1].Trim();
@@ -61,25 +100,70 @@ namespace MaxDBDataProvider
 						case "PASSWORD":
 							m_ConnArgs.password = param.Split('=')[1].Trim();
 							break;
-						case "MODE":
-							switch(param.Split('=')[1].Trim().ToUpper())
+						case "TIMEOUT":
+							try
 							{
-								case "ANSI":
-									mode = SQLDBC_SQLMode.SQLDBC_ANSI;
-									break;
-								case "DB2":
-									mode = SQLDBC_SQLMode.SQLDBC_DB2;
-									break;
-								case "ORACLE":
-									mode = SQLDBC_SQLMode.SQLDBC_ORACLE;
-									break;
-								case "SAPR3":
-									mode = SQLDBC_SQLMode.SQLDBC_SAPR3;
-									break;
-								default:
-									mode = SQLDBC_SQLMode.SQLDBC_INTERNAL;
-									break;
+								m_timeout = int.Parse(param.Split('=')[1]);
 							}
+							catch
+							{
+								m_timeout = 0;
+							}
+							break;
+						case "CACHE":
+							m_cache = param.Split('=')[1].Trim();
+							break;
+						case "CACHELIMIT":
+							try
+							{
+								m_cacheLimit = int.Parse(param.Split('=')[1]);
+							}
+							catch
+							{
+								m_cacheLimit = 0;
+							}
+							break;
+						case "CACHESIZE":
+							try
+							{
+								m_cacheSize = int.Parse(param.Split('=')[1]);
+							}
+							catch
+							{
+								m_cacheSize = 0;
+							}
+							break;
+						case "AUTH":
+							if (param.Split('=')[1].Trim().ToUpper() == "TRUE")
+								m_auth = true;
+							break;
+						case "SPACE":
+							if (param.Split('=')[1].Trim().ToUpper() == "TRUE")
+								m_spaceoption = true;
+							break;
+						case "MODE":
+							string mode = param.Split('=')[1].Trim().ToUpper();
+							if(mode == SqlModeName.Value[SqlMode.Ansi])
+							{
+								m_mode = SqlMode.Ansi;
+								break;
+							}
+							if(mode == SqlModeName.Value[SqlMode.Db2])
+							{
+								m_mode = SqlMode.Db2;
+								break;
+							}
+							if(mode == SqlModeName.Value[SqlMode.Oracle])
+							{
+								m_mode = SqlMode.Oracle;
+								break;
+							}
+							if(mode == SqlModeName.Value[SqlMode.SAPR3])
+							{
+								m_mode = SqlMode.SAPR3;
+								break;
+							}
+							m_mode = SqlMode.Internal;
 							break;
 					}
 			}
@@ -115,7 +199,7 @@ namespace MaxDBDataProvider
 					if (State != ConnectionState.Closed)
 						Open();
 
-					IntPtr stmt = SQLDBC.SQLDBC_Connection_createStatement(connHandler);
+					IntPtr stmt = SQLDBC.SQLDBC_Connection_createStatement(m_connHandler);
 
 					if(SQLDBC.SQLDBC_Statement_executeASCII(stmt, "SELECT timeout FROM DOMAIN.CONNECTPARAMETERS") != 0) 
 						return 0;
@@ -139,7 +223,7 @@ namespace MaxDBDataProvider
 
 					SQLDBC.SQLDBC_ResultSet_close(result);
 
-					SQLDBC.SQLDBC_Connection_releaseStatement(connHandler, stmt);
+					SQLDBC.SQLDBC_Connection_releaseStatement(m_connHandler, stmt);
 
 					if (State == ConnectionState.Closed)
 						Close();
@@ -183,24 +267,24 @@ namespace MaxDBDataProvider
 
 		public Encoding DatabaseEncoding
 		{
-			get{return enc;}
+			get{return m_enc;}
 		}
 
 		public ConnectionState State
 		{
 			get 
 			{ 
-				if (connHandler != IntPtr.Zero && SQLDBC.SQLDBC_Connection_isConnected(connHandler) == SQLDBC_BOOL.SQLDBC_TRUE)
+				if (m_connHandler != IntPtr.Zero && SQLDBC.SQLDBC_Connection_isConnected(m_connHandler) == SQLDBC_BOOL.SQLDBC_TRUE)
 					return ConnectionState.Open;
 				else
 					return ConnectionState.Closed;
 			}
 		}
 
-		public SQLDBC_SQLMode SQLMode
+		public int SQLMode
 		{
-			get{return mode;}
-			set{mode = value;}
+			get{return m_mode;}
+			set{m_mode = value;}
 		}
 
 		public bool AutoCommit
@@ -210,14 +294,14 @@ namespace MaxDBDataProvider
 				if (State != ConnectionState.Open)
 					throw new MaxDBException("Connection is not opened.");
 
-				return SQLDBC.SQLDBC_Connection_getAutoCommit(connHandler) == SQLDBC_BOOL.SQLDBC_TRUE;
+				return SQLDBC.SQLDBC_Connection_getAutoCommit(m_connHandler) == SQLDBC_BOOL.SQLDBC_TRUE;
 			}
 			set
 			{
 				if (State != ConnectionState.Open)
 					throw new MaxDBException("Connection is not opened.");
 
-				SQLDBC.SQLDBC_Connection_setAutoCommit(connHandler, value ? SQLDBC_BOOL.SQLDBC_TRUE : SQLDBC_BOOL.SQLDBC_FALSE);
+				SQLDBC.SQLDBC_Connection_setAutoCommit(m_connHandler, value ? SQLDBC_BOOL.SQLDBC_TRUE : SQLDBC_BOOL.SQLDBC_FALSE);
 			}
 		}
 
@@ -228,7 +312,7 @@ namespace MaxDBDataProvider
 				if (State != ConnectionState.Open)
 					throw new MaxDBException("Connection is not opened.");
 
-				int version = SQLDBC.SQLDBC_Connection_getKernelVersion(connHandler);
+				int version = SQLDBC.SQLDBC_Connection_getKernelVersion(m_connHandler);
 				int correction_level = version % 100; 
 				int minor_release  = ((version - correction_level) % 10000)/ 100;
 				int mayor_release = (version - minor_release * 100 - correction_level) / 10000;
@@ -262,34 +346,32 @@ namespace MaxDBDataProvider
 			return new MaxDBTransaction(this);
 		}
 
-		private void SetIsolationLevel(IsolationLevel level)
+		private int MapIsolationLevel(IsolationLevel level)
 		{
-			int MaxDBLevel;
-
 			switch (level)
 			{
 				case IsolationLevel.ReadUncommitted:
-					MaxDBLevel = 0;
-					break;
+					return 0;
 				case IsolationLevel.ReadCommitted:
-					MaxDBLevel = 1;
-					break;
+					return 1;
 				case IsolationLevel.RepeatableRead:
-					MaxDBLevel = 2;
-					break;
+					return 2;
 				case IsolationLevel.Serializable:
-					MaxDBLevel = 3;
-					break;
+					return 3;
 				default:
-					MaxDBLevel = 0;
-					break;
+					return 0;
 			}
+		}
 
-			if(SQLDBC.SQLDBC_Connection_setTransactionIsolation(connHandler, MaxDBLevel) != SQLDBC_Retcode.SQLDBC_OK) 
+		private void SetIsolationLevel(IsolationLevel level)
+		{
+			m_level = MapIsolationLevel(level);
+
+			if(SQLDBC.SQLDBC_Connection_setTransactionIsolation(m_connHandler, m_level) != SQLDBC_Retcode.SQLDBC_OK) 
 				throw new MaxDBException("Can't set isolation level: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-					SQLDBC.SQLDBC_Connection_getError(connHandler)));
+					SQLDBC.SQLDBC_Connection_getError(m_connHandler)));
 
-			// "SET ISOLATION LEVEL " + MaxDBLevel.ToString()
+			// "SET ISOLATION LEVEL " + m_level.ToString()
 		}
 
 		public void ChangeDatabase(string dbName)
@@ -313,48 +395,39 @@ namespace MaxDBDataProvider
 			 * If the provider also supports automatic enlistment in 
 			 * distributed transactions, it should enlist during Open().
 			 */
+			DoConnect();
+			return;
+
 			OpenConnection();
 
-			if (SQLDBC.SQLDBC_Connection_isUnicodeDatabase(connHandler) == 1)
-				enc = Encoding.Unicode;//little-endian unicode
+			if (SQLDBC.SQLDBC_Connection_isUnicodeDatabase(m_connHandler) == 1)
+				m_enc = Encoding.Unicode;//little-endian unicode
 			else
-				enc = Encoding.ASCII;
-		}
-
-		private string TermID
-		{
-			get
-			{
-				return ("ado.net@" + this.GetHashCode().ToString("x")).PadRight(18);
-			}
+				m_enc = Encoding.ASCII;
 		}
 
 		private unsafe void OpenConnection()
 		{
-			comm.Connect(m_ConnArgs.dbname, Ports.Default);
-			byte[] requestBuf = new byte[HeaderOffset.END + comm.MaxCmdSize];
-
-
 			byte[] errorText = new byte[256];
 			
 			fixed(byte* errorPtr = errorText)
 			{
-				runtimeHandler = SQLDBC.ClientRuntime_GetClientRuntime(new IntPtr(errorPtr), errorText.Length);
+				m_runtimeHandler = SQLDBC.ClientRuntime_GetClientRuntime(new IntPtr(errorPtr), errorText.Length);
 			}
-			if (runtimeHandler == IntPtr.Zero)
+			if (m_runtimeHandler == IntPtr.Zero)
 				throw new MaxDBException(Encoding.ASCII.GetString(errorText));
 
-			envHandler = SQLDBC.SQLDBC_Environment_new_SQLDBC_Environment(runtimeHandler);
+			m_envHandler = SQLDBC.SQLDBC_Environment_new_SQLDBC_Environment(m_runtimeHandler);
 
-			connHandler = SQLDBC.SQLDBC_Environment_createConnection(envHandler);
+			m_connHandler = SQLDBC.SQLDBC_Environment_createConnection(m_envHandler);
 
-			connPropHandler = SQLDBC.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
-			SQLDBC.SQLDBC_Connection_setSQLMode(connHandler, mode);
+			m_connPropHandler = SQLDBC.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
+			SQLDBC.SQLDBC_Connection_setSQLMode(m_connHandler, m_mode);
 
-			if (SQLDBC.SQLDBC_Connection_connectASCII(connHandler, m_ConnArgs.host, m_ConnArgs.dbname, m_ConnArgs.username, 
-				m_ConnArgs.password, connPropHandler) != SQLDBC_Retcode.SQLDBC_OK) 
+			if (SQLDBC.SQLDBC_Connection_connectASCII(m_connHandler, m_ConnArgs.host, m_ConnArgs.dbname, m_ConnArgs.username, 
+				m_ConnArgs.password, m_connPropHandler) != SQLDBC_Retcode.SQLDBC_OK) 
 				throw new MaxDBException("Connecting to the database failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-					SQLDBC.SQLDBC_Connection_getError(connHandler)));
+					SQLDBC.SQLDBC_Connection_getError(m_connHandler)));
 		}
 
 		public void Close()
@@ -364,17 +437,18 @@ namespace MaxDBDataProvider
 			 * property. If the underlying connection to the server is
 			 * being pooled, Close() will release it back to the pool.
 			 */
-			comm.Close();
+			m_comm.Close();
+			m_comm = null;
 
-			SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(connPropHandler);
-			connPropHandler = IntPtr.Zero;
+			SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(m_connPropHandler);
+			m_connPropHandler = IntPtr.Zero;
 
-			SQLDBC.SQLDBC_Connection_close(connHandler);
+			SQLDBC.SQLDBC_Connection_close(m_connHandler);
 
-			SQLDBC.SQLDBC_Environment_releaseConnection(envHandler, connHandler);
-			connHandler = IntPtr.Zero;
-			SQLDBC.SQLDBC_Environment_delete_SQLDBC_Environment(envHandler);
-			envHandler = IntPtr.Zero;
+			SQLDBC.SQLDBC_Environment_releaseConnection(m_envHandler, m_connHandler);
+			m_connHandler = IntPtr.Zero;
+			SQLDBC.SQLDBC_Environment_delete_SQLDBC_Environment(m_envHandler);
+			m_envHandler = IntPtr.Zero;
 		}
 
 		public MaxDBCommand CreateCommand()
@@ -396,6 +470,293 @@ namespace MaxDBDataProvider
 
 			System.GC.SuppressFinalize(this);
 		}
+
+		#region "Methods to support native protocol"
+
+		private string TermID
+		{
+			get
+			{
+				return ("ado.net@" + this.GetHashCode().ToString("x")).PadRight(18);
+			}
+		}
+
+		private bool initiateChallengeResponse(MaxDBRequestPacket requestPacket, string user, Auth auth)
+		{
+			if (requestPacket.initChallengeResponse(user, auth.ClientChallenge))
+			{
+				MaxDBReplyPacket replyPacket = Exec(requestPacket, this, GCMode.GC_DELAYED); 
+				auth.parseServerChallenge(replyPacket.VarDataPart);
+				return true;
+			}  
+			else 
+				return false;
+		}
+
+		public MaxDBRequestPacket RequestPacket
+		{
+			get
+			{
+				MaxDBRequestPacket packet;
+				
+				if (m_packetPool.Count == 0)
+					packet = new MaxDBRequestPacket(new byte[HeaderOffset.END + m_comm.MaxCmdSize], Consts.AppID, Consts.ApplVers);
+				else
+					packet = (MaxDBRequestPacket)m_packetPool.Pop();
+
+				packet.IsAvailable = true;
+				return packet;
+			}
+		}
+
+		private void FreeRequestPacket(MaxDBRequestPacket requestPacket) 
+		{
+			requestPacket.IsAvailable = false;
+			m_packetPool.Push(requestPacket);
+		}
+
+		public MaxDBReplyPacket	Exec(MaxDBRequestPacket requestPacket, object execObj, int gcFlags)
+		{
+			return Exec(requestPacket, false, false, execObj, gcFlags);
+		}
+
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		public MaxDBReplyPacket Exec(MaxDBRequestPacket requestPacket, bool ignoreErrors, bool isParse, object execObj, int gcFlags)
+		{
+			int requestLen;
+			MaxDBReplyPacket replyPacket = null;
+			int localWeakReturnCode = 0;
+
+			if (State != ConnectionState.Open)	
+				if (gcFlags == GCMode.GC_ALLOWED) 
+				{
+					bool spaceleft = true;
+					if (m_garbageCursors != null && m_garbageCursors.isPending) 
+						spaceleft = m_garbageCursors.emptyCan(requestPacket);
+
+					if (spaceleft && m_garbageParseids != null && m_garbageParseids.isPending) 
+						m_garbageParseids.emptyCan(requestPacket);
+				} 
+				else 
+				{
+					if(m_garbageParseids != null && m_garbageParseids.isPending) 
+						m_nonRecyclingExecutions++;
+				}
+
+			requestPacket.Close();
+
+			requestLen = requestPacket.PacketLength;
+
+			try 
+			{
+				m_execObj = execObj;
+				replyPacket = new MaxDBReplyPacket(m_comm.Exec(requestPacket, requestLen).arrayData, true);
+
+				/*get Returncode*/
+				int firstSegm = replyPacket.firstSegment;
+				localWeakReturnCode = replyPacket.weakReturnCode;
+
+				if(localWeakReturnCode != -8) 
+					FreeRequestPacket(requestPacket);
+
+				if (!m_autocommit && ! isParse) 
+					m_inTransaction = true;
+
+
+				// if it is not completely forbidden, we will send the drop
+				if(gcFlags != GCMode.GC_NONE) 
+				{
+					if (m_garbageCursors != null && m_garbageCursors.isPending && localWeakReturnCode == 0) 
+						m_garbageCursors.emptyCan(this);
+
+					if(m_nonRecyclingExecutions > 20 && localWeakReturnCode == 0) 
+					{
+						m_nonRecyclingExecutions=0;
+						if (m_garbageParseids != null && m_garbageParseids.isPending) 
+							m_garbageParseids.emptyCan(this);
+						m_nonRecyclingExecutions = 0;
+					}
+				}
+
+			}
+			catch (MaxDBException ex) 
+			{
+				// if a reconnect is forbidden or we are in the process of a
+				// reconnect or we are in a (now rolled back) transaction
+				if (m_inReconnect || m_inTransaction) 
+					throw;
+				else 
+				{
+					TryReconnect(ex);
+					m_inTransaction = false;
+				}
+			}
+			finally 
+			{
+				m_execObj = null;
+			}
+			if (!ignoreErrors && localWeakReturnCode != 0) 
+				throw replyPacket.createException();
+			return replyPacket;
+		}
+
+		private string stripString(string str)
+		{
+			if (!(str.StartsWith("\"") && str.EndsWith("\"")))
+				return str.ToUpper();
+			else
+				return str.Substring(1, str.Length - 2);
+		}
+
+		private void DoConnect()
+		{
+			string username = m_ConnArgs.username;
+			if (username == null)
+				throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_NOUSER));
+
+			username = stripString(username);
+
+			string password = m_ConnArgs.password;
+			if (password == null)
+				throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_NOPASSWORD));
+
+			password = stripString(password);
+
+			byte[] passwordBytes = m_enc.GetBytes(password);
+ 
+			m_comm.Connect(m_ConnArgs.dbname, m_ConnArgs.port);
+
+			string connectCmd;
+			byte [] crypted;
+			MaxDBRequestPacket requestPacket = RequestPacket;
+			Auth auth = null;
+			bool isChallengeResponseSupported = false;
+			if (m_comm.IsAuthAllowed)
+			{
+				try
+				{
+					auth = new Auth();
+					isChallengeResponseSupported = initiateChallengeResponse(requestPacket, username, auth);
+					if (password.Length > auth.MaxPasswordLength && auth.MaxPasswordLength > 0)
+						password = password.Substring(0, auth.MaxPasswordLength);
+				}
+				catch(MaxDBSQLException ex)
+				{
+					isChallengeResponseSupported = false;
+					if (ex.VendorCode == -5015)
+						try
+						{
+							m_comm.Reconnect();
+						}
+						catch(MaxDBException exc)
+						{
+							throw new ConnectionException(exc);
+						}
+					else
+						throw;
+				}
+				catch
+				{
+					isChallengeResponseSupported = false;
+				}
+			}
+			if (m_auth && !isChallengeResponseSupported)
+				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_CONNECTION_CHALLENGERESPONSENOTSUPPORTED));
+		
+			/*
+			* build connect statement
+			*/
+			connectCmd = "CONNECT " + m_ConnArgs.username + " IDENTIFIED BY :PW SQLMODE " + SqlModeName.Value[m_mode];
+			if (m_timeout > 0) 
+				connectCmd += " TIMEOUT " + m_timeout;
+			if (m_level >= 0)
+				connectCmd += " ISOLATION LEVEL " + m_level;
+			if (m_cacheLimit > 0)
+				connectCmd += " CACHELIMIT " + m_cacheLimit;
+			if (m_spaceoption) 
+			{
+				connectCmd += " SPACE OPTION ";
+				setKernelFeatureRequest(Feature.SpaceOption);
+			}
+
+			requestPacket.initDbsCommand (false, connectCmd);
+
+			if (!isChallengeResponseSupported)
+			{
+				try 
+				{
+					crypted = Crypt.Mangle(password, false);
+				}
+				catch 
+				{
+					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_INVALIDPASSWORD));
+				}
+				requestPacket.newPart(PartKind.Data);
+				requestPacket.addBytes(crypted);
+				requestPacket.addASCII(TermID);
+				requestPacket.incrPartArguments();
+			} 
+			else 
+			{
+				requestPacket.addClientProofPart(auth.getClientProof(passwordBytes)); 
+				requestPacket.addClientIDPart(TermID);
+			}
+
+			defaultFeatureSet.CopyTo(kernelFeatures, 0);
+
+			setKernelFeatureRequest(Feature.MultipleDropParseid);
+			setKernelFeatureRequest(Feature.CheckScrollableOption);
+			requestPacket.addFeatureRequestPart(kernelFeatures);
+
+			/*
+			* execute
+			*/
+			MaxDBReplyPacket replyPacket = Exec(requestPacket, this, GCMode.GC_DELAYED);
+			m_sessionID = replyPacket.SessionID;
+			
+			m_kernelVersion = 10000 * replyPacket.KernelMajorVersion + 100 * replyPacket.KernelMinorVersion + replyPacket.KernelCorrectionLevel;
+			byte[] featureReturn = replyPacket.Features;
+
+			if (featureReturn != null)
+				kernelFeatures = featureReturn;
+			else 
+				defaultFeatureSet.CopyTo(kernelFeatures, 0);
+
+			if (m_cache != null && m_cache.Length > 0 && m_cacheSize > 0)
+				m_parseCache = new ParseInfoCache(m_cache, m_cacheSize);
+		}
+
+		private void setKernelFeatureRequest(int feature)
+		{
+			kernelFeatures[2 * (feature - 1) + 1] = 1;
+		}
+
+		private void TryReconnect(MaxDBException ex)
+		{
+			lock (syncObj)
+			{
+				if (m_parseCache != null) 
+					m_parseCache.Clear();
+				m_packetPool.Clear();
+				m_inReconnect = true;
+				try 
+				{
+					m_comm.Reconnect();
+					DoConnect();
+				}
+				catch (MaxDBException conn_ex) 
+				{
+					throw new ConnectionException(conn_ex);
+				}
+				finally 
+				{
+					m_inReconnect = false;
+				}
+				throw new TimeoutException();
+			}
+		}
+
+		#endregion
 	}
 }
 

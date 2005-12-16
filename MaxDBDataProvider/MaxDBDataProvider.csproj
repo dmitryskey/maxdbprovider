@@ -149,6 +149,11 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "MaxDBProtocol\MaxDBCache.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
                     RelPath = "MaxDBProtocol\MaxDBComm.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
@@ -164,7 +169,21 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "MaxDBProtocol\MaxDBGarbage.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "MaxDBProtocol\MaxDBMessages.resx"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
                     RelPath = "MaxDBProtocol\MaxDBPacket.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "MaxDBProtocol\MaxDBParseInfo.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />

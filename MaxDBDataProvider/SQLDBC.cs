@@ -27,15 +27,6 @@ namespace MaxDBDataProvider
 		UTF8        = 4
 	};
 
-	public enum SQLDBC_SQLMode 
-	{ 
-		SQLDBC_INTERNAL = 2, 
-		SQLDBC_ANSI = 3, 
-		SQLDBC_DB2 = 4, 
-		SQLDBC_ORACLE = 5, 
-		SQLDBC_SAPR3 = 6 
-	}; 
-
 	//commented values are deprecated
 	public enum SQLDBC_SQLType 
 	{
@@ -324,7 +315,7 @@ namespace MaxDBDataProvider
 		public extern static SQLDBC_BOOL SQLDBC_Connection_isConnected(IntPtr conn);
 
 		[DllImport("libsqldbc_c")]
-		public extern static void SQLDBC_Connection_setSQLMode(IntPtr conn, SQLDBC_SQLMode sqlmode);
+		public extern static void SQLDBC_Connection_setSQLMode(IntPtr conn, int sqlmode);
  
 		[DllImport("libsqldbc_c")]
 		public extern static void SQLDBC_Connection_setAutoCommit(IntPtr conn, SQLDBC_BOOL autocommit); 

@@ -21,7 +21,7 @@ namespace MaxDBDataProvider
 			 */
 			get 
 			{ 
-				switch (SQLDBC.SQLDBC_Connection_getTransactionIsolation(conn.connHandler))
+				switch (SQLDBC.SQLDBC_Connection_getTransactionIsolation(conn.m_connHandler))
 				{
 					case 0:
 						return IsolationLevel.ReadUncommitted;
@@ -44,9 +44,9 @@ namespace MaxDBDataProvider
 			 * not provide an implementation, it should never be 
 			 * a no-op because data corruption could result.
 			 */
-			if(SQLDBC.SQLDBC_Connection_commit(conn.connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
+			if(SQLDBC.SQLDBC_Connection_commit(conn.m_connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
 				throw new MaxDBException("COMMIT failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-					SQLDBC.SQLDBC_Connection_getError(conn.connHandler)));
+					SQLDBC.SQLDBC_Connection_getError(conn.m_connHandler)));
 		}
 
 		public void Rollback()
@@ -56,9 +56,9 @@ namespace MaxDBDataProvider
 			 * not provide an implementation, it should never be
 			 * a no-op because data corruption could result.
 			 */
-			if(SQLDBC.SQLDBC_Connection_rollback(conn.connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
+			if(SQLDBC.SQLDBC_Connection_rollback(conn.m_connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
 				throw new MaxDBException("ROLLBACK failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-					SQLDBC.SQLDBC_Connection_getError(conn.connHandler)));
+					SQLDBC.SQLDBC_Connection_getError(conn.m_connHandler)));
 		}
 
 		public IDbConnection Connection
