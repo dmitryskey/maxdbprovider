@@ -17,7 +17,7 @@ namespace MaxDBDataProvider
 		// Implement the default constructor here.
 		public MaxDBCommand()
 		{
-			stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.connHandler);
+			stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
 		}
 
 		// Implement other constructors here.
@@ -30,7 +30,7 @@ namespace MaxDBDataProvider
 		{
 			m_sCmdText    = cmdText;
 			m_connection  = connection;
-			stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.connHandler);
+			stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
 		}
 
 		public MaxDBCommand(string cmdText, MaxDBConnection connection, MaxDBTransaction txn)
@@ -38,7 +38,7 @@ namespace MaxDBDataProvider
 			m_sCmdText    = cmdText;
 			m_connection  = connection;
 			m_txn      = txn;
-			stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.connHandler);
+			stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
 		}
 
 		/****
@@ -122,7 +122,7 @@ namespace MaxDBDataProvider
 		 ****/
 		public void Cancel()
 		{
-			SQLDBC.SQLDBC_Connection_cancel(m_connection.connHandler);			
+			SQLDBC.SQLDBC_Connection_cancel(m_connection.m_connHandler);			
 		}
 
 		public IDbDataParameter CreateParameter()
@@ -529,7 +529,7 @@ namespace MaxDBDataProvider
 		void IDisposable.Dispose() 
 		{
 			if (stmt != IntPtr.Zero)
-				SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.connHandler, stmt);
+				SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.m_connHandler, stmt);
 			System.GC.SuppressFinalize(this);
 		}
 	}

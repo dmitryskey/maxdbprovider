@@ -56,14 +56,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			int argCountOffs = - PartHeaderOffset.Data + PartHeaderOffset.ArgCount;
 			origData.writeInt16(argCount, argCountOffs);
-			reqPacket.ClosePart(massExtent + extent, argCount);
+			reqPacket.closePart(massExtent + extent, argCount);
 		}
 		
 		public virtual void closeArrayPart(short rows)
 		{
 			int argCountOffs = - PartHeaderOffset.Data + PartHeaderOffset.ArgCount;
 			origData.writeInt16(rows, argCountOffs);
-			reqPacket.ClosePart(massExtent + extent * rows, rows);
+			reqPacket.closePart(massExtent + extent * rows, rows);
 		}
 		
 		public virtual bool hasRoomFor(int recordSize, int reserve)

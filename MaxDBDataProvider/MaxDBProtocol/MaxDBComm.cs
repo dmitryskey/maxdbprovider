@@ -10,12 +10,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	{
 		private ISocketIntf m_socket;
 		private string m_dbname;
+		private int m_port;
 		private int m_sender = 0;
 		private int m_receiver = 0;
 		private int m_maxSendLen = 0;
 		private int m_swapMode = SwapMode.NotSwapped;
 		private bool m_isauthallowed = false;
 		private int m_maxcmdsize = 0;
+		private bool m_session = false;
 
 		public bool IsAuthAllowed
 		{
@@ -63,11 +65,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				if (m_socket.ReopenSocketAfterInfoPacket)
 				{
 					Close();
-					m_socket = m_socket.GetNewInstance();
+					m_socket = m_socket.Clone();
 				}
 
+				m_session = true;
 				m_dbname = dbname;
-				//m_session = true;
+				m_port = port;
 
 				connData.DBName = dbname;
 				connData.Port = port;
@@ -88,8 +91,19 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 			catch(Exception ex)
 			{
-				throw new MaxDBException("Can't connect to server.", ex);
+				throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_HOST_CONNECT, m_socket.Host, m_socket.Port), ex);
 			}
+		}
+
+		public void Reconnect()
+		{
+			m_socket.Close();
+			m_socket = m_socket.Clone();
+			if (m_session)
+				Connect(m_dbname, m_port);
+			else
+				throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_ADMIN_RECONNECT, 
+					CommError.ErrorText[RTEReturnCodes.SQLTIMEOUT]));
 		}
 
 		private MaxDBConnectPacket GetConnectReply()
@@ -98,7 +112,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			int len = m_socket.Stream.Read(replyBuffer, 0, replyBuffer.Length);
 			if (len <= HeaderOffset.END)
-				throw new Exception("Receive line down");
+				throw new Exception(MessageTranslator.Translate(MessageKey.ERROR_RECV_CONNECT));
 
 			m_swapMode = replyBuffer[HeaderOffset.END + ConnectPacketOffset.MessCode + 1];
 			
@@ -106,14 +120,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			int actLen = replyPacket.ActSendLength;
 			if (actLen < 0 || actLen > 500 * 1024)
-				throw new Exception("Receive garbled reply");
+				throw new Exception(MessageTranslator.Translate(MessageKey.ERROR_REPLY_GARBLED));
 
 			while (m_socket.Stream.DataAvailable)
 			{
 				if (len < actLen)
 					len += m_socket.Stream.Read(replyPacket.arrayData, len, actLen - len);
 				else
-					throw new Exception("Chunk overflow in read");
+					throw new Exception(MessageTranslator.Translate(MessageKey.ERROR_CHUNKOVERFLOW));
 			}
 
 			m_sender = replyPacket.PacketSender;
@@ -132,31 +146,37 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public MaxDBPacket Exec(MaxDBPacket userPacket, int len)
 		{
-			userPacket.FillHeader(RSQLTypes.USER_DATA_REQUEST, m_sender, m_receiver, m_maxSendLen);
-			m_socket.Stream.Write(userPacket.arrayData, 0, len);
-			byte[] headerBuf = new byte[HeaderOffset.END];
-
-			if (m_socket.Stream.Read(headerBuf, 0, headerBuf.Length) < HeaderOffset.END)
-				throw new Exception("Receive line down");
-
-			MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf, true);
-			int returnCode = header.ReturnCode;
-			if (returnCode != 0)
-				throw new Exception(CommError.ErrorText[returnCode]);
-
-			byte[] packetBuf = new byte[HeaderOffset.END + header.MaxSendLength];
-			headerBuf.CopyTo(packetBuf, 0);
-			int replyLen = HeaderOffset.END;
-			while(m_socket.Stream.DataAvailable)
+			try
 			{
-				if (replyLen < header.ActSendLength)
-					replyLen += m_socket.Stream.Read(packetBuf, replyLen, header.ActSendLength - replyLen);
-				else
-					throw new Exception("Chunk overflow in read");
-			}
+				userPacket.FillHeader(RSQLTypes.USER_DATA_REQUEST, m_sender, m_receiver, m_maxSendLen);
+				m_socket.Stream.Write(userPacket.arrayData, 0, len);
+				byte[] headerBuf = new byte[HeaderOffset.END];
 
-			//return new MaxDBPacket(packetBuf, true);
-			return null;
+				if (m_socket.Stream.Read(headerBuf, 0, headerBuf.Length) < HeaderOffset.END)
+					throw new Exception(CommError.ErrorText[RTEReturnCodes.SQLRECEIVE_LINE_DOWN]);
+
+				MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf, true);
+				int returnCode = header.ReturnCode;
+				if (returnCode != 0)
+					throw new Exception(CommError.ErrorText[returnCode]);
+
+				byte[] packetBuf = new byte[HeaderOffset.END + header.MaxSendLength];
+				headerBuf.CopyTo(packetBuf, 0);
+				int replyLen = HeaderOffset.END;
+				while(m_socket.Stream.DataAvailable)
+				{
+					if (replyLen < header.ActSendLength)
+						replyLen += m_socket.Stream.Read(packetBuf, replyLen, header.ActSendLength - replyLen);
+					else
+						throw new Exception(MessageTranslator.Translate(MessageKey.ERROR_CHUNKOVERFLOW));
+				}
+
+				return new MaxDBReplyPacket(packetBuf, true);
+			}
+			catch(Exception ex)
+			{
+				throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED), ex);
+			}
 		}
 	}
 }
