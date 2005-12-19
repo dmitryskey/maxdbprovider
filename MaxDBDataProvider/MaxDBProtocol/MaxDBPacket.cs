@@ -22,6 +22,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
+		public MaxDBPacket(byte[] data, bool SwapMode, int offset) : base(data, SwapMode, offset)
+		{
+		}
+
 		public void FillHeader(byte msgClass, int senderRef, int receiverRef, int maxSendLen)
 		{
 			// fill out header part
@@ -238,7 +242,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		private int maxNumberOfSeg = Consts.defaultmaxNumberOfSegm;
 		private bool m_isAvailable = false;
 
-		public MaxDBRequestPacket(byte[] data, string appID, string appVer) : base(data, false)
+		public MaxDBRequestPacket(byte[] data, string appID, string appVer) : base(data, false, HeaderOffset.END)
 		{
 			writeByte(Consts.ASCIIClient, PacketHeaderOffset.MessCode);
 			writeByte(SwapMode.NotSwapped, PacketHeaderOffset.MessSwap);
@@ -613,6 +617,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
+		private int segmLength 
+		{
+			get
+			{
+				return readInt32(m_segmOffset + SegmentHeaderOffset.Len);
+			}
+		}
+
 		public string SqlState 
 		{
 			get
@@ -640,29 +652,27 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-//		public int resultCount(bool positionedAtPart)
-//		{
-//			if(m_cachedResultCount == int.MinValue) 
-//			{
-//				if (!positionedAtPart) 
-//				{
-//					try 
-//					{
-//						findPart(PartKind.ResultCount);
-//					}
-//					catch (PartNotFound) 
-//					{
-//						return --m_cachedResultCount;
-//					}
-//				}
-//				byte[] rawNumber = readBytes(m_partOffset + PartHeaderOffset.Data, partLength);
-//				return m_cachedResultCount = VDNNumber.number2int (rawNumber);
-//			} 
-//			else 
-//			{
-//				return m_cachedResultCount;
-//			}
-//		}
+		public int resultCount(bool positionedAtPart)
+		{
+			if(m_cachedResultCount == int.MinValue) 
+			{
+				if (!positionedAtPart) 
+				{
+					try 
+					{
+						findPart(PartKind.ResultCount);
+					}
+					catch (PartNotFound) 
+					{
+						return m_cachedResultCount--;
+					}
+				}
+				//??? VDNNumber
+				return m_cachedResultCount = (new BigInteger(readBytes(m_partOffset + PartHeaderOffset.Data, partLength))).IntValue;
+			} 
+			else 
+				return m_cachedResultCount;
+		}
 
 		public int SessionID
 		{
@@ -735,6 +745,15 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				else 
 					return m_cachedPartCount;
 			}
+		}
+
+		public int nextSegment () 
+		{
+			if (segmCount <= m_currentSegment++)
+				return -1;
+			m_segmOffset += segmLength;
+			ClearPartCache();
+			return m_segmOffset;
 		}
 
 		public int nextPart()
