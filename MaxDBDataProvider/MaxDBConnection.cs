@@ -493,20 +493,17 @@ namespace MaxDBDataProvider
 				return false;
 		}
 
-		public MaxDBRequestPacket RequestPacket
+		public MaxDBRequestPacket CreateRequestPacket()
 		{
-			get
-			{
-				MaxDBRequestPacket packet;
-				
-				if (m_packetPool.Count == 0)
-					packet = new MaxDBRequestPacket(new byte[HeaderOffset.END + m_comm.MaxCmdSize], Consts.AppID, Consts.ApplVers);
-				else
-					packet = (MaxDBRequestPacket)m_packetPool.Pop();
+			MaxDBRequestPacket packet;
+			
+			if (m_packetPool.Count == 0)
+				packet = new MaxDBRequestPacket(new byte[HeaderOffset.END + m_comm.MaxCmdSize], Consts.AppID, Consts.ApplVers);
+			else
+				packet = (MaxDBRequestPacket)m_packetPool.Pop();
 
-				packet.IsAvailable = true;
-				return packet;
-			}
+			packet.IsAvailable = true;
+			return packet;
 		}
 
 		private void FreeRequestPacket(MaxDBRequestPacket requestPacket) 
@@ -628,7 +625,7 @@ namespace MaxDBDataProvider
 
 			string connectCmd;
 			byte [] crypted;
-			MaxDBRequestPacket requestPacket = RequestPacket;
+			MaxDBRequestPacket requestPacket = CreateRequestPacket();
 			Auth auth = null;
 			bool isChallengeResponseSupported = false;
 			if (m_comm.IsAuthAllowed)
@@ -692,7 +689,7 @@ namespace MaxDBDataProvider
 					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_INVALIDPASSWORD));
 				}
 				requestPacket.newPart(PartKind.Data);
-				requestPacket.addBytes(crypted);
+				requestPacket.addData(crypted);
 				requestPacket.addASCII(TermID);
 				requestPacket.incrPartArguments();
 			} 
