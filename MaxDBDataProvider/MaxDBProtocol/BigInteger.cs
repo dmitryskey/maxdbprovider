@@ -360,8 +360,6 @@ public class BigInteger
 
 		while(dataLength > 1 && data[dataLength-1] == 0)
 			dataLength--;
-
-		//Console.WriteLine("Len = " + dataLength);
 	}
 
 
@@ -403,8 +401,6 @@ public class BigInteger
 
 		while(dataLength > 1 && data[dataLength-1] == 0)
 			dataLength--;
-
-		//Console.WriteLine("Len = " + dataLength);
 	}
 
 
@@ -426,8 +422,6 @@ public class BigInteger
 
 		while(dataLength > 1 && data[dataLength-1] == 0)
 			dataLength--;
-
-		//Console.WriteLine("Len = " + dataLength);
 	}
 
 
@@ -762,8 +756,6 @@ public class BigInteger
 			if(count < shiftAmount)
 				shiftAmount = count;
 
-			//Console.WriteLine("shiftAmount = {0}", shiftAmount);
-
 			ulong carry = 0;
 			for(int i = 0; i < bufLen; i++)
 			{
@@ -827,8 +819,6 @@ public class BigInteger
 		while(bufLen > 1 && buffer[bufLen-1] == 0)
 			bufLen--;
 
-		//Console.WriteLine("bufLen = " + bufLen + " buffer.Length = " + buffer.Length);
-
 		for(int count = shiftVal; count > 0;)
 		{
 			if(count < shiftAmount)
@@ -836,8 +826,6 @@ public class BigInteger
 				shiftAmount = count;
 				invShift = 32 - shiftAmount;
 			}
-
-			//Console.WriteLine("shiftAmount = {0}", shiftAmount);
 
 			ulong carry = 0;
 			for(int i = bufLen - 1; i >= 0; i--)
@@ -1008,7 +996,6 @@ public class BigInteger
 		return false;
 	}
 
-
 	public static bool operator >=(BigInteger bi1, BigInteger bi2)
 	{
 		return (bi1 == bi2 || bi1 > bi2);
@@ -1043,21 +1030,10 @@ public class BigInteger
 			shift++; mask >>= 1;
 		}
 
-		//Console.WriteLine("shift = {0}", shift);
-		//Console.WriteLine("Before bi1 Len = {0}, bi2 Len = {1}", bi1.dataLength, bi2.dataLength);
-
 		for(int i = 0; i < bi1.dataLength; i++)
 			remainder[i] = bi1.data[i];
 		shiftLeft(remainder, shift);
 		bi2 = bi2 << shift;
-
-		/*
-				Console.WriteLine("bi1 Len = {0}, bi2 Len = {1}", bi1.dataLength, bi2.dataLength);
-				Console.WriteLine("dividend = " + bi1 + "\ndivisor = " + bi2);
-				for(int q = remainderLen - 1; q >= 0; q--)
-						Console.Write("{0:x2}", remainder[q]);
-				Console.WriteLine();
-				*/
 
 		int j = remainderLen - bi2.dataLength;
 		int pos = remainderLen - 1;
@@ -1071,12 +1047,9 @@ public class BigInteger
 		while(j > 0)
 		{
 			ulong dividend = ((ulong)remainder[pos] << 32) + (ulong)remainder[pos-1];
-			//Console.WriteLine("dividend = {0}", dividend);
 
 			ulong q_hat = dividend / firstDivisorByte;
 			ulong r_hat = dividend % firstDivisorByte;
-
-			//Console.WriteLine("q_hat = {0:X}, r_hat = {1:X}", q_hat, r_hat);
 
 			bool done = false;
 			while(!done)
@@ -1100,28 +1073,15 @@ public class BigInteger
 			BigInteger kk = new BigInteger(dividendPart);
 			BigInteger ss = bi2 * (long)q_hat;
 
-			//Console.WriteLine("ss before = " + ss);
 			while(ss > kk)
 			{
 				q_hat--;
 				ss -= bi2;
-				//Console.WriteLine(ss);
 			}
 			BigInteger yy = kk - ss;
 
-			//Console.WriteLine("ss = " + ss);
-			//Console.WriteLine("kk = " + kk);
-			//Console.WriteLine("yy = " + yy);
-
 			for(int h = 0; h < divisorLen; h++)
 				remainder[pos-h] = yy.data[bi2.dataLength-h];
-
-			/*
-						Console.WriteLine("dividend = ");
-						for(int q = remainderLen - 1; q >= 0; q--)
-								Console.Write("{0:x2}", remainder[q]);
-						Console.WriteLine("\n************ q_hat = {0:X}\n", q_hat);
-						*/
 
 			result[resultPos++] = (uint)q_hat;
 
@@ -1174,9 +1134,6 @@ public class BigInteger
 		int pos = outRemainder.dataLength - 1;
 		ulong dividend = (ulong)outRemainder.data[pos];
 
-		//Console.WriteLine("divisor = " + divisor + " dividend = " + dividend);
-		//Console.WriteLine("divisor = " + bi2 + "\ndividend = " + bi1);
-
 		if(dividend >= divisor)
 		{
 			ulong quotient = dividend / divisor;
@@ -1188,15 +1145,12 @@ public class BigInteger
 
 		while(pos >= 0)
 		{
-			//Console.WriteLine(pos);
-
 			dividend = ((ulong)outRemainder.data[pos+1] << 32) + (ulong)outRemainder.data[pos];
 			ulong quotient = dividend / divisor;
 			result[resultPos++] = (uint)quotient;
 
 			outRemainder.data[pos+1] = 0;
 			outRemainder.data[pos--] = (uint)(dividend % divisor);
-			//Console.WriteLine(">>>> " + bi1);
 		}
 
 		outQuotient.dataLength = resultPos;
@@ -1376,10 +1330,10 @@ public class BigInteger
 
 
 	//***********************************************************************
-	// Returns max(this, bi)
+	// Returns Max(this, bi)
 	//***********************************************************************
 
-	public BigInteger max(BigInteger bi)
+	public BigInteger Max(BigInteger bi)
 	{
 		if(this > bi)
 			return (new BigInteger(this));
@@ -1400,7 +1354,6 @@ public class BigInteger
 
 	}
 
-
 	//***********************************************************************
 	// Returns the absolute value
 	//***********************************************************************
@@ -1413,7 +1366,6 @@ public class BigInteger
 			return (new BigInteger(this));
 	}
 
-
 	//***********************************************************************
 	// Returns a string representing the BigInteger in base 10.
 	//***********************************************************************
@@ -1422,7 +1374,6 @@ public class BigInteger
 	{
 		return ToString(10);
 	}
-
 
 	//***********************************************************************
 	// Returns a string representing the BigInteger in sign-and-magnitude
@@ -1509,8 +1460,6 @@ public class BigInteger
 		return result;
 	}
 
-
-
 	//***********************************************************************
 	// Modulo Exponentiation
 	//***********************************************************************
@@ -1550,8 +1499,6 @@ public class BigInteger
 		for(int pos = 0; pos < exp.dataLength; pos++)
 		{
 			uint mask = 0x01;
-			//Console.WriteLine("pos = " + pos);
-
 			for(int index = 0; index < 32; index++)
 			{
 				if((exp.data[pos] & mask) != 0)
@@ -1579,8 +1526,6 @@ public class BigInteger
 
 		return resultNum;
 	}
-
-
 
 	//***********************************************************************
 	// Fast calculation of modular reduction using Barrett's reduction.
@@ -1773,40 +1718,32 @@ public class BigInteger
 	// Returns the lowest 4 bytes of the BigInteger as an int.
 	//***********************************************************************
 
-	public int IntValue
+	public static explicit operator int(BigInteger bi) 
 	{
-		get
-		{
-			return (int)data[0];
-		}
+		return (int)bi.data[0];
 	}
-
 
 	//***********************************************************************
 	// Returns the lowest 8 bytes of the BigInteger as a long.
 	//***********************************************************************
 
-	public long LongValue
+	public static explicit operator long(BigInteger bi)
 	{
-		get
-		{
-			long val = 0;
+		long val = 0;
 
-			val = (long)data[0];
-			try
-			{       // exception if maxLength = 1
-				val |= (long)data[1] << 32;
-			}
-			catch(Exception)
-			{
-				if((data[0] & 0x80000000) != 0) // negative
-					val = (int)data[0];
-			}
-
-			return val;
+		val = (long)bi.data[0];
+		try
+		{       // exception if maxLength = 1
+			val |= (long)bi.data[1] << 32;
 		}
-	}
+		catch(Exception)
+		{
+			if((bi.data[0] & 0x80000000) != 0) // negative
+				val = (int)bi.data[0];
+		}
 
+		return val;
+	}
 
 	//***********************************************************************
 	// Computes the Jacobi Symbol for a and b.
@@ -1876,7 +1813,6 @@ public class BigInteger
 		while(!done)
 		{
 			result.genRandomBits(bits, rand);
-			//Console.WriteLine(result.ToString(16));
 
 			// gcd test
 			BigInteger g = result.gcd(this);
@@ -1886,7 +1822,6 @@ public class BigInteger
 
 		return result;
 	}
-
 
 	//***********************************************************************
 	// Returns the modulo inverse of this.  Throws ArithmeticException if
@@ -1920,13 +1855,6 @@ public class BigInteger
 				singleByteDivide(a, b, quotient, remainder);
 			else
 				multiByteDivide(a, b, quotient, remainder);
-
-			/*
-						Console.WriteLine(quotient.dataLength);
-						Console.WriteLine("{0} = {1}({2}) + {3}  p = {4}", a.ToString(10),
-										  b.ToString(10), quotient.ToString(10), remainder.ToString(10),
-										  p[1].ToString(10));
-						*/
 
 			q[0] = q[1];
 			r[0] = r[1];
@@ -1967,8 +1895,6 @@ public class BigInteger
 
 			byte[] result = new byte[numBytes];
 
-			//Console.WriteLine(result.Length);
-
 			int pos = 0;
 			uint tempVal, val = data[dataLength - 1];
 
@@ -1996,7 +1922,6 @@ public class BigInteger
 			return result;
 		}
 	}
-
 
 	//***********************************************************************
 	// Sets the value of the specified bit to 1
@@ -2091,193 +2016,5 @@ public class BigInteger
 			}
 			return result;
 		}
-	}
-
-
-	//***********************************************************************
-	// Returns the k_th number in the Lucas Sequence reduced modulo n.
-	//
-	// Uses index doubling to speed up the process.  For example, to calculate V(k),
-	// we maintain two numbers in the sequence V(n) and V(n+1).
-	//
-	// To obtain V(2n), we use the identity
-	//      V(2n) = (V(n) * V(n)) - (2 * Q^n)
-	// To obtain V(2n+1), we first write it as
-	//      V(2n+1) = V((n+1) + n)
-	// and use the identity
-	//      V(m+n) = V(m) * V(n) - Q * V(m-n)
-	// Hence,
-	//      V((n+1) + n) = V(n+1) * V(n) - Q^n * V((n+1) - n)
-	//                   = V(n+1) * V(n) - Q^n * V(1)
-	//                   = V(n+1) * V(n) - Q^n * P
-	//
-	// We use k in its binary expansion and perform index doubling for each
-	// bit position.  For each bit position that is set, we perform an
-	// index doubling followed by an index addition.  This means that for V(n),
-	// we need to update it to V(2n+1).  For V(n+1), we need to update it to
-	// V((2n+1)+1) = V(2*(n+1))
-	//
-	// This function returns
-	// [0] = U(k)
-	// [1] = V(k)
-	// [2] = Q^n
-	//
-	// Where U(0) = 0 % n, U(1) = 1 % n
-	//       V(0) = 2 % n, V(1) = P % n
-	//***********************************************************************
-
-	public static BigInteger[] LucasSequence(BigInteger P, BigInteger Q,
-		BigInteger k, BigInteger n)
-	{
-		if(k.dataLength == 1 && k.data[0] == 0)
-		{
-			BigInteger[] result = new BigInteger[3];
-
-			result[0] = 0; result[1] = 2 % n; result[2] = 1 % n;
-			return result;
-		}
-
-		// calculate constant = b^(2k) / m
-		// for Barrett Reduction
-		BigInteger constant = new BigInteger();
-
-		int nLen = n.dataLength << 1;
-		constant.data[nLen] = 0x00000001;
-		constant.dataLength = nLen + 1;
-
-		constant = constant / n;
-
-		// calculate values of s and t
-		int s = 0;
-
-		for(int index = 0; index < k.dataLength; index++)
-		{
-			uint mask = 0x01;
-
-			for(int i = 0; i < 32; i++)
-			{
-				if((k.data[index] & mask) != 0)
-				{
-					index = k.dataLength;      // to break the outer loop
-					break;
-				}
-				mask <<= 1;
-				s++;
-			}
-		}
-
-		BigInteger t = k >> s;
-
-		//Console.WriteLine("s = " + s + " t = " + t);
-		return LucasSequenceHelper(P, Q, t, n, constant, s);
-	}
-
-
-	//***********************************************************************
-	// Performs the calculation of the kth term in the Lucas Sequence.
-	// For details of the algorithm, see reference [9].
-	//
-	// k must be odd.  i.e LSB == 1
-	//***********************************************************************
-
-	private static BigInteger[] LucasSequenceHelper(BigInteger P, BigInteger Q,
-		BigInteger k, BigInteger n,
-		BigInteger constant, int s)
-	{
-		BigInteger[] result = new BigInteger[3];
-
-		if((k.data[0] & 0x00000001) == 0)
-			throw (new ArgumentException("Argument k must be odd."));
-
-		int numbits = k.bitCount();
-		uint mask = (uint)0x1 << ((numbits & 0x1F) - 1);
-
-		// v = v0, v1 = v1, u1 = u1, Q_k = Q^0
-
-		BigInteger v = 2 % n, Q_k = 1 % n,
-			v1 = P % n, u1 = Q_k;
-		bool flag = true;
-
-		for(int i = k.dataLength - 1; i >= 0 ; i--)     // iterate on the binary expansion of k
-		{
-			//Console.WriteLine("round");
-			while(mask != 0)
-			{
-				if(i == 0 && mask == 0x00000001)        // last bit
-					break;
-
-				if((k.data[i] & mask) != 0)             // bit is set
-				{
-					// index doubling with addition
-
-					u1 = (u1 * v1) % n;
-
-					v = ((v * v1) - (P * Q_k)) % n;
-					v1 = n.BarrettReduction(v1 * v1, n, constant);
-					v1 = (v1 - ((Q_k * Q) << 1)) % n;
-
-					if(flag)
-						flag = false;
-					else
-						Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
-
-					Q_k = (Q_k * Q) % n;
-				}
-				else
-				{
-					// index doubling
-					u1 = ((u1 * v) - Q_k) % n;
-
-					v1 = ((v * v1) - (P * Q_k)) % n;
-					v = n.BarrettReduction(v * v, n, constant);
-					v = (v - (Q_k << 1)) % n;
-
-					if(flag)
-					{
-						Q_k = Q % n;
-						flag = false;
-					}
-					else
-						Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
-				}
-
-				mask >>= 1;
-			}
-			mask = 0x80000000;
-		}
-
-		// at this point u1 = u(n+1) and v = v(n)
-		// since the last bit always 1, we need to transform u1 to u(2n+1) and v to v(2n+1)
-
-		u1 = ((u1 * v) - Q_k) % n;
-		v = ((v * v1) - (P * Q_k)) % n;
-		if(flag)
-			flag = false;
-		else
-			Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
-
-		Q_k = (Q_k * Q) % n;
-
-
-		for(int i = 0; i < s; i++)
-		{
-			// index doubling
-			u1 = (u1 * v) % n;
-			v = ((v * v) - (Q_k << 1)) % n;
-
-			if(flag)
-			{
-				Q_k = Q % n;
-				flag = false;
-			}
-			else
-				Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
-		}
-
-		result[0] = u1;
-		result[1] = v;
-		result[2] = Q_k;
-
-		return result;
 	}
 }

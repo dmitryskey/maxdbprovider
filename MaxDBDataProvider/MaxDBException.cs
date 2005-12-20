@@ -7,7 +7,7 @@ namespace MaxDBDataProvider
 	/// <summary>
 	/// Summary description for MaxDBException.
 	/// </summary>
-	public class MaxDBException : SystemException
+	public class MaxDBException : Exception
 	{
 		private int m_detailErrorCode = -708;
 
@@ -40,6 +40,13 @@ namespace MaxDBDataProvider
 	public class PartNotFound : Exception 
 	{
 		public PartNotFound() : base() 
+		{
+		}
+	}
+
+	public class CommunicationException : Exception
+	{
+		public CommunicationException(int code) : base(CommError.ErrorText[code])
 		{
 		}
 	}
@@ -156,5 +163,4 @@ namespace MaxDBDataProvider
 			}
 		}
 	}
-
 }

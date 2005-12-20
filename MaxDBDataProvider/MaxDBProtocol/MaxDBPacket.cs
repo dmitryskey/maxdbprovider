@@ -16,7 +16,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	/// <summary>
 	/// Summary description for MaxDBPacket.
 	/// </summary>
-	public abstract class MaxDBPacket : ByteArray
+	public class MaxDBPacket : ByteArray
 	{
 		public MaxDBPacket(byte[] data, bool SwapMode) : base(data, SwapMode)
 		{
@@ -597,7 +597,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			int pc = readInt16(m_segmOffset + SegmentHeaderOffset.NoOfParts);
 			m_partIndices = new int[pc];
 			int partofs = 0;
-			for(int i=0; i< pc; ++i) 
+			for(int i = 0; i < pc; i++) 
 			{
 				if(i == 0) 
 					partofs = m_partIndices[i] = m_segmOffset + SegmentHeaderOffset.Part;
@@ -613,7 +613,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return readInt16(m_segmOffset + SegmentHeaderOffset.Returncode); 
+				return readInt16(m_segmOffset + SegmentHeaderOffset.ReturnCode); 
 			}
 		}
 
@@ -668,7 +668,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					}
 				}
 				//??? VDNNumber
-				return m_cachedResultCount = (new BigInteger(readBytes(m_partOffset + PartHeaderOffset.Data, partLength))).IntValue;
+				return m_cachedResultCount = (int)(new BigInteger(readBytes(m_partOffset + PartHeaderOffset.Data, partLength)));
 			} 
 			else 
 				return m_cachedResultCount;
@@ -839,9 +839,29 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				{
 					findPart(PartKind.SessionInfoReturned);
 					//offset 2202 taken from order interface manual
-					result = int.Parse(readASCII(PartDataPos + 2201, 1));
+					result = int.Parse(readASCII(PartDataPos + 2201, 2));
 				}
 				catch(PartNotFound)  
+				{
+					result = -1;
+				}
+				return result;
+			}
+		}
+
+		public int KernelCorrectionLevel
+		{
+			get
+			{
+				int result;
+
+				try 
+				{
+					findPart(PartKind.SessionInfoReturned);
+					//offset 2204 taken from order interface manual
+					result = int.Parse(readASCII(PartDataPos + 2203, 2));
+				}
+				catch(PartNotFound) 
 				{
 					result = -1;
 				}
@@ -864,27 +884,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				}
 			}
 		}
-
-		public int KernelCorrectionLevel
-		{
-			get
-			{
-				int result;
-
-				try 
-				{
-					findPart(PartKind.SessionInfoReturned);
-					//offset 2204 taken from order interface manual
-					result = int.Parse(readASCII(PartDataPos + 2204, 1));
-				}
-				catch(PartNotFound) 
-				{
-					result = -1;
-				}
-				return result;
-			}
-		}
-
 
 		public int weakReturnCode
 		{
