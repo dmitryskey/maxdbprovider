@@ -83,7 +83,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			CommandOptions		= 22, // enum1
 			// reply segment
 			SqlState			= 13, // c5
-			Returncode			= 18, // int2
+			ReturnCode			= 18, // int2
 			ErrorPos			= 20, // int4
 			ExternWarning		= 24, // set2
 			InternWarning		= 26, // set2
@@ -1229,7 +1229,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public const int reserveForReply = SegmentHeaderOffset.Part - PartHeaderOffset.Data + 200;
 
-		public const string AppID="ODB"; //"ADO";
-		public const string ApplVers="70400"; //"10100";
+		public const string AppID = "ADO";
+		public const string ApplVers = "10100";
 	}
 }

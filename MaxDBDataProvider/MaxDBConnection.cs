@@ -438,7 +438,6 @@ namespace MaxDBDataProvider
 			 * being pooled, Close() will release it back to the pool.
 			 */
 			m_comm.Close();
-			m_comm = null;
 
 			SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(m_connPropHandler);
 			m_connPropHandler = IntPtr.Zero;
@@ -466,7 +465,10 @@ namespace MaxDBDataProvider
 		public void Dispose() 
 		{
 			if (State == ConnectionState.Open)
+			{
 				Close();
+				m_comm = null;
+			}
 
 			System.GC.SuppressFinalize(this);
 		}
@@ -547,7 +549,7 @@ namespace MaxDBDataProvider
 			try 
 			{
 				m_execObj = execObj;
-				replyPacket = new MaxDBReplyPacket(m_comm.Exec(requestPacket, requestLen).arrayData, true);
+				replyPacket = m_comm.Exec(requestPacket, requestLen);
 
 				/*get Returncode*/
 				int firstSegm = replyPacket.firstSegment;
@@ -559,7 +561,6 @@ namespace MaxDBDataProvider
 				if (!m_autocommit && ! isParse) 
 					m_inTransaction = true;
 
-
 				// if it is not completely forbidden, we will send the drop
 				if(gcFlags != GCMode.GC_NONE) 
 				{
@@ -568,7 +569,7 @@ namespace MaxDBDataProvider
 
 					if(m_nonRecyclingExecutions > 20 && localWeakReturnCode == 0) 
 					{
-						m_nonRecyclingExecutions=0;
+						m_nonRecyclingExecutions = 0;
 						if (m_garbageParseids != null && m_garbageParseids.isPending) 
 							m_garbageParseids.emptyCan(this);
 						m_nonRecyclingExecutions = 0;

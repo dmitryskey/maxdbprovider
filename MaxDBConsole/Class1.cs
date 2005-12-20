@@ -25,9 +25,10 @@ namespace MaxDBDataProvider
 			try
 			{
 				MaxDBConnection maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
-				
-				maxdbconn.Open();
 
+				maxdbconn.Open();
+				maxdbconn.Close();
+				
 				string ver = maxdbconn.ServerVersion;
 				bool auto = maxdbconn.AutoCommit;
 
