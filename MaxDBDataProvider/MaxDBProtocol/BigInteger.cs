@@ -131,6 +131,7 @@
 //************************************************************************************
 
 using System;
+using System.Globalization;
 
 public class BigInteger
 {
@@ -152,7 +153,6 @@ public class BigInteger
 		data = new uint[maxLength];
 		dataLength = 1;
 	}
-
 
 	//***********************************************************************
 	// Constructor (Default value provided by long)
@@ -216,8 +216,6 @@ public class BigInteger
 			dataLength = 1;
 	}
 
-
-
 	//***********************************************************************
 	// Constructor (Default value provided by BigInteger)
 	//***********************************************************************
@@ -231,7 +229,6 @@ public class BigInteger
 		for(int i = 0; i < dataLength; i++)
 			data[i] = bi.data[i];
 	}
-
 
 	//***********************************************************************
 	// Constructor (Default value provided by a string of digits of the
@@ -442,14 +439,13 @@ public class BigInteger
 
 	public static implicit operator BigInteger(int value)
 	{
-		return (new BigInteger((long)value));
+		return (new BigInteger(value));
 	}
 
 	public static implicit operator BigInteger(uint value)
 	{
-		return (new BigInteger((ulong)value));
+		return (new BigInteger(value));
 	}
-
 
 	//***********************************************************************
 	// Overloading of addition operator
@@ -489,7 +485,6 @@ public class BigInteger
 
 		return result;
 	}
-
 
 	//***********************************************************************
 	// Overloading of the unary ++ operator
@@ -926,12 +921,12 @@ public class BigInteger
 	{
 		BigInteger bi = (BigInteger)o;
 
-		if(this.dataLength != bi.dataLength)
+		if(dataLength != bi.dataLength)
 			return false;
 
-		for(int i = 0; i < this.dataLength; i++)
+		for(int i = 0; i < dataLength; i++)
 		{
-			if(this.data[i] != bi.data[i])
+			if(data[i] != bi.data[i])
 				return false;
 		}
 		return true;
@@ -939,7 +934,7 @@ public class BigInteger
 
 	public override int GetHashCode()
 	{
-		return this.ToString().GetHashCode();
+		return ToString().GetHashCode();
 	}
 
 	//***********************************************************************
@@ -1360,7 +1355,7 @@ public class BigInteger
 
 	public BigInteger Abs()
 	{
-		if((this.data[maxLength - 1] & 0x80000000) != 0)
+		if((data[maxLength - 1] & 0x80000000) != 0)
 			return (-this);
 		else
 			return (new BigInteger(this));
@@ -1473,7 +1468,7 @@ public class BigInteger
 		BigInteger tempNum;
 		bool thisNegative = false;
 
-		if((this.data[maxLength-1] & 0x80000000) != 0)   // negative this
+		if((data[maxLength-1] & 0x80000000) != 0)   // negative this
 		{
 			tempNum = -this % n;
 			thisNegative = true;
@@ -1934,10 +1929,10 @@ public class BigInteger
 		byte bitPos = (byte)(bitNum & 0x1F);    // get the lowest 5 bits
 
 		uint mask = (uint)1 << bitPos;
-		this.data[bytePos] |= mask;
+		data[bytePos] |= mask;
 
-		if(bytePos >= this.dataLength)
-			this.dataLength = (int)bytePos + 1;
+		if(bytePos >= dataLength)
+			dataLength = (int)bytePos + 1;
 	}
 
 
@@ -1950,17 +1945,17 @@ public class BigInteger
 	{
 		uint bytePos = bitNum >> 5;
 
-		if(bytePos < this.dataLength)
+		if(bytePos < dataLength)
 		{
 			byte bitPos = (byte)(bitNum & 0x1F);
 
 			uint mask = (uint)1 << bitPos;
 			uint mask2 = 0xFFFFFFFF ^ mask;
 
-			this.data[bytePos] &= mask2;
+			data[bytePos] &= mask2;
 
-			if(this.dataLength > 1 && this.data[this.dataLength - 1] == 0)
-				this.dataLength--;
+			if(dataLength > 1 && data[dataLength - 1] == 0)
+				dataLength--;
 		}
 	}
 
@@ -1977,7 +1972,7 @@ public class BigInteger
 	{
 		get
 		{
-			uint numBits = (uint)this.bitCount();
+			uint numBits = (uint)bitCount();
 
 			if((numBits & 0x1) != 0)        // odd number of bits
 				numBits = (numBits >> 1) + 1;
@@ -2018,3 +2013,257 @@ public class BigInteger
 		}
 	}
 }
+
+public class BigDecimal
+{
+	private BigInteger m_int;
+	private int m_scale;
+	private string m_sep = CultureInfo.CurrentCulture.NumberFormat.CurrencyDecimalSeparator;
+
+	public BigDecimal()
+	{
+		m_int = new BigInteger(0);
+		m_scale = 0;
+	}
+
+	public BigDecimal(long num)
+	{
+		m_int = new BigInteger(num);
+		m_scale = 0;
+	}
+
+	public BigDecimal(ulong num)
+	{
+		m_int = new BigInteger(num);
+		m_scale = 0;
+	}
+
+	public BigDecimal(double num) : this(num.ToString())
+	{
+	}
+
+	public BigDecimal(BigInteger num) : this(num, 0)
+	{
+	}
+
+	public BigDecimal(BigInteger num, int scale)
+	{
+		m_int = num;
+		m_scale = scale;
+	}
+
+	public BigDecimal(string num)
+	{
+		string int_part;
+		string float_part;
+		int s = 0;
+		int cur_off = 0;
+			
+		if (num.Length > 0)
+		{
+			num = num.Replace(CultureInfo.CurrentCulture.NumberFormat.CurrencyGroupSeparator, string.Empty);
+			int dot_index = num.IndexOf(m_sep, cur_off);
+
+			if (dot_index >= 0)
+			{
+				if (num.IndexOf(m_sep, dot_index + 1) >=0 )
+					throw new FormatException();
+
+				int_part = num.Substring(0, dot_index - cur_off).TrimStart('0');
+				cur_off = dot_index + 1;
+			}
+			else
+			{
+				int_part = num.TrimStart('0');
+				m_int = new BigInteger(long.Parse(int_part));
+				m_scale = 0;
+				return;
+			}
+
+			int exp_index = num.IndexOf('e', cur_off);
+			if (exp_index < 0) exp_index = num.IndexOf('E', cur_off);
+
+			if (exp_index >= 0)
+			{
+				int last_exp_index = num.IndexOf('e', exp_index + 1);
+				if (last_exp_index < 0) last_exp_index = num.IndexOf('E', exp_index + 1);
+				if (last_exp_index >= 0)
+					throw new FormatException();
+			
+				float_part = num.Substring(cur_off, exp_index - cur_off).TrimEnd('0');
+				cur_off = exp_index + 1; 
+			}
+			else
+			{
+				float_part = num.Substring(cur_off).TrimEnd('0');
+				m_int = new BigInteger(long.Parse(int_part+float_part));
+				m_scale = float_part.Length;
+				return;
+			}
+
+			if (cur_off < num.Length)
+				s = int.Parse(num.Substring(cur_off)); 
+
+			m_int = new BigInteger(long.Parse(int_part+float_part));
+			m_scale = float_part.Length - s;
+		}
+		else
+		{
+			m_int = new BigInteger(0);
+			m_scale = 0;
+		}
+	}
+
+	public int Scale
+	{
+		get
+		{
+			return m_scale;
+		}
+	}
+
+	public void setScale(int val)
+	{
+		BigInteger ten = new BigInteger(10);
+		if (val > m_scale)
+			for (int i = 0; i < val - m_scale; i++)
+				m_int *= ten;
+		else
+			for (int i = 0; i < m_scale - val; i++)
+				m_int /= ten;
+
+		m_scale = val;
+	}
+
+	public BigInteger unscaledValue
+	{
+		get
+		{
+			return m_int;
+		}
+	}
+
+	public static BigDecimal operator + (BigDecimal bd1, BigDecimal bd2)
+	{
+		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
+		BigDecimal cl1 = bd1.Clone();
+		cl1.setScale(scale);
+		BigDecimal cl2 = bd2.Clone();
+		cl2.setScale(scale);
+		return new BigDecimal(cl1.unscaledValue + cl2.unscaledValue, scale);
+	}
+
+	public static BigDecimal operator - (BigDecimal bd)
+	{
+		return new BigDecimal( - bd.unscaledValue, bd.Scale);;
+	}
+
+	public static BigDecimal operator - (BigDecimal bd1, BigDecimal bd2)
+	{
+		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
+		BigDecimal cl1 = bd1.Clone();
+		cl1.setScale(scale);
+		BigDecimal cl2 = bd2.Clone();
+		cl2.setScale(scale);
+		return new BigDecimal(cl1.unscaledValue - cl2.unscaledValue, scale);
+	}
+
+	public static BigDecimal operator * (BigDecimal bd1, BigDecimal bd2)
+	{
+		return new BigDecimal(bd1.unscaledValue * bd2.unscaledValue, bd1.Scale + bd2.Scale);
+	}
+
+	public static BigDecimal operator / (BigDecimal bd1, BigDecimal bd2)
+	{
+		throw new NotImplementedException();
+	}
+
+	public static bool operator < (BigDecimal bd1, BigDecimal bd2)
+	{
+		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
+		BigDecimal cl1 = bd1.Clone();
+		cl1.setScale(scale);
+		BigDecimal cl2 = bd2.Clone();
+		cl2.setScale(scale);
+		return cl1.unscaledValue < cl2.unscaledValue;
+	}
+
+	public static bool operator > (BigDecimal bd1, BigDecimal bd2)
+	{
+		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
+		BigDecimal cl1 = bd1.Clone();
+		cl1.setScale(scale);
+		BigDecimal cl2 = bd2.Clone();
+		cl2.setScale(scale);
+		return cl1.unscaledValue > cl2.unscaledValue;
+	}
+
+	public static bool operator <= (BigDecimal bd1, BigDecimal bd2)
+	{
+		return !(bd1 > bd2);
+	}
+
+	public static bool operator >= (BigDecimal bd1, BigDecimal bd2)
+	{
+		return !(bd1 < bd2);
+	}
+
+	public static bool operator == (BigDecimal bd1, BigDecimal bd2)
+	{
+		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
+		BigDecimal cl1 = bd1.Clone();
+		cl1.setScale(scale);
+		BigDecimal cl2 = bd2.Clone();
+		cl2.setScale(scale);
+		return cl1.unscaledValue == cl2.unscaledValue;
+	}
+
+	public static bool operator != (BigDecimal bd1, BigDecimal bd2)
+	{
+		return !(bd1 == bd2);
+	}
+
+	public static explicit operator BigInteger(BigDecimal val)
+	{
+		BigDecimal bd = val.Clone();
+		bd.setScale(0);
+		return bd.unscaledValue;
+	}
+
+	public BigDecimal Clone()
+	{
+		return new BigDecimal(m_int, m_scale);
+	}
+
+	public override string ToString()
+	{
+		string s_num = m_int.ToString();
+		int s_scale = m_scale;
+		if (m_int < 0)
+			s_num = s_num.Remove(0, 1);
+		if (s_scale < 0)
+		{
+			s_num = s_num.PadRight(s_num.Length - s_scale, '0');
+			s_scale = 0;
+		}
+		if (s_scale >= s_num.Length)
+			s_num = s_num.PadLeft(s_scale + 1, '0');
+
+		s_num = (m_int >= 0 ? string.Empty : "-") + s_num.Insert(s_num.Length - s_scale, m_sep);
+		if (s_num.EndsWith(m_sep))
+			s_num += "0";
+
+		return s_num;
+	}
+
+	public override bool Equals(object o)
+	{
+		return this == (BigDecimal)o;
+	}
+
+	public override int GetHashCode()
+	{
+		return ToString().GetHashCode();
+	}
+}
+

@@ -24,15 +24,20 @@ namespace MaxDBDataProvider
 
 		#region "SQLDBC Wrapper parameters"
 		
+#if !NATIVE
 		private IntPtr m_runtimeHandler;
 		private IntPtr m_envHandler;
-		internal IntPtr m_connHandler = IntPtr.Zero;
 		private IntPtr m_connPropHandler;
-		
+#endif
+
+		internal IntPtr m_connHandler = IntPtr.Zero;
+
 		#endregion
 
 		#region "Native implementation parameters"
 		
+#if NATIVE
+
 		private MaxDBComm m_comm = null;
 		private Stack m_packetPool = new Stack();
 		private bool m_autocommit = false;
@@ -49,15 +54,17 @@ namespace MaxDBDataProvider
 		private bool m_auth = false;
 		private bool m_spaceoption = false;
 		int m_sessionID = -1;
-		private int m_kernelVersion; // Version without patch level, e.g. 70402 or 70600.
 		private static byte[] defaultFeatureSet = {1, 0, 2, 0, 3, 0, 4, 0, 5, 0};
 		private byte[] kernelFeatures = new byte[defaultFeatureSet.Length];
+
+#endif
 
 		#endregion
 		
 		private Encoding m_enc = Encoding.ASCII;
 		private int m_mode = SqlMode.Internal;
 		private int m_level = -1;
+		private int m_kernelVersion; // Version without patch level, e.g. 70402 or 70600.
 
 		// Always have a default constructor.
 		public MaxDBConnection()
@@ -68,7 +75,6 @@ namespace MaxDBDataProvider
 		public MaxDBConnection(string sConnString) 
 		{
 			ParseConnectionString(sConnString);
-			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout));
 		}
 
 		private void ParseConnectionString(string sConnString)
@@ -100,6 +106,7 @@ namespace MaxDBDataProvider
 						case "PASSWORD":
 							m_ConnArgs.password = param.Split('=')[1].Trim();
 							break;
+#if NATIVE
 						case "TIMEOUT":
 							try
 							{
@@ -141,6 +148,7 @@ namespace MaxDBDataProvider
 							if (param.Split('=')[1].Trim().ToUpper() == "TRUE")
 								m_spaceoption = true;
 							break;
+#endif
 						case "MODE":
 							string mode = param.Split('=')[1].Trim().ToUpper();
 							if(mode == SqlModeName.Value[SqlMode.Ansi])
@@ -273,11 +281,15 @@ namespace MaxDBDataProvider
 		public ConnectionState State
 		{
 			get 
-			{ 
+			{
+#if NATIVE
+				return m_sessionID >= 0 ? ConnectionState.Open : ConnectionState.Closed;
+#else
 				if (m_connHandler != IntPtr.Zero && SQLDBC.SQLDBC_Connection_isConnected(m_connHandler) == SQLDBC_BOOL.SQLDBC_TRUE)
 					return ConnectionState.Open;
 				else
 					return ConnectionState.Closed;
+#endif
 			}
 		}
 
@@ -292,16 +304,24 @@ namespace MaxDBDataProvider
 			get
 			{
 				if (State != ConnectionState.Open)
-					throw new MaxDBException("Connection is not opened.");
+					throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_CONNECTIONNOTOPENED));
 
+#if NATIVE
+				return m_autocommit;
+#else
 				return SQLDBC.SQLDBC_Connection_getAutoCommit(m_connHandler) == SQLDBC_BOOL.SQLDBC_TRUE;
+#endif
 			}
 			set
 			{
 				if (State != ConnectionState.Open)
-					throw new MaxDBException("Connection is not opened.");
+					throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_CONNECTIONNOTOPENED));
 
+#if NATIVE
+				m_autocommit = value;
+#else
 				SQLDBC.SQLDBC_Connection_setAutoCommit(m_connHandler, value ? SQLDBC_BOOL.SQLDBC_TRUE : SQLDBC_BOOL.SQLDBC_FALSE);
+#endif
 			}
 		}
 
@@ -309,13 +329,9 @@ namespace MaxDBDataProvider
 		{
 			get
 			{
-				if (State != ConnectionState.Open)
-					throw new MaxDBException("Connection is not opened.");
-
-				int version = SQLDBC.SQLDBC_Connection_getKernelVersion(m_connHandler);
-				int correction_level = version % 100; 
-				int minor_release  = ((version - correction_level) % 10000)/ 100;
-				int mayor_release = (version - minor_release * 100 - correction_level) / 10000;
+				int correction_level = m_kernelVersion % 100; 
+				int minor_release  = ((m_kernelVersion - correction_level) % 10000)/ 100;
+				int mayor_release = (m_kernelVersion - minor_release * 100 - correction_level) / 10000;
 				return mayor_release.ToString() + "." + minor_release.ToString() + "." + correction_level.ToString();
 			}
 		}
@@ -395,17 +411,17 @@ namespace MaxDBDataProvider
 			 * If the provider also supports automatic enlistment in 
 			 * distributed transactions, it should enlist during Open().
 			 */
+#if NATIVE
+			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout));
 			DoConnect();
-			return;
-
+#else
 			OpenConnection();
-
-			if (SQLDBC.SQLDBC_Connection_isUnicodeDatabase(m_connHandler) == 1)
-				m_enc = Encoding.Unicode;//little-endian unicode
-			else
-				m_enc = Encoding.ASCII;
+			m_enc = SQLDBC.SQLDBC_Connection_isUnicodeDatabase(m_connHandler) == 1?Encoding.Unicode:Encoding.ASCII;
+			m_kernelVersion = SQLDBC.SQLDBC_Connection_getKernelVersion(m_connHandler);
+#endif
 		}
 
+#if !NATIVE
 		private unsafe void OpenConnection()
 		{
 			byte[] errorText = new byte[256];
@@ -429,6 +445,7 @@ namespace MaxDBDataProvider
 				throw new MaxDBException("Connecting to the database failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
 					SQLDBC.SQLDBC_Connection_getError(m_connHandler)));
 		}
+#endif
 
 		public void Close()
 		{
@@ -437,8 +454,11 @@ namespace MaxDBDataProvider
 			 * property. If the underlying connection to the server is
 			 * being pooled, Close() will release it back to the pool.
 			 */
+#if NATIVE
+			m_sessionID = -1;
 			m_comm.Close();
-
+			m_comm = null;
+#else
 			SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(m_connPropHandler);
 			m_connPropHandler = IntPtr.Zero;
 
@@ -448,6 +468,7 @@ namespace MaxDBDataProvider
 			m_connHandler = IntPtr.Zero;
 			SQLDBC.SQLDBC_Environment_delete_SQLDBC_Environment(m_envHandler);
 			m_envHandler = IntPtr.Zero;
+#endif
 		}
 
 		public MaxDBCommand CreateCommand()
@@ -465,16 +486,14 @@ namespace MaxDBDataProvider
 		public void Dispose() 
 		{
 			if (State == ConnectionState.Open)
-			{
 				Close();
-				m_comm = null;
-			}
 
 			System.GC.SuppressFinalize(this);
 		}
 
 		#region "Methods to support native protocol"
 
+#if NATIVE
 		private string TermID
 		{
 			get
@@ -706,11 +725,10 @@ namespace MaxDBDataProvider
 			setKernelFeatureRequest(Feature.CheckScrollableOption);
 			requestPacket.addFeatureRequestPart(kernelFeatures);
 
-			/*
-			* execute
-			*/
+			// execute
 			MaxDBReplyPacket replyPacket = Exec(requestPacket, this, GCMode.GC_DELAYED);
 			m_sessionID = replyPacket.SessionID;
+			m_enc = replyPacket.isUnicode?Encoding.Unicode:Encoding.ASCII;
 			
 			m_kernelVersion = 10000 * replyPacket.KernelMajorVersion + 100 * replyPacket.KernelMinorVersion + replyPacket.KernelCorrectionLevel;
 			byte[] featureReturn = replyPacket.Features;
@@ -753,6 +771,8 @@ namespace MaxDBDataProvider
 				throw new TimeoutException();
 			}
 		}
+
+#endif
 
 		#endregion
 	}

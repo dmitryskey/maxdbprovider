@@ -693,6 +693,25 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
+		public bool isUnicode
+		{
+			get
+			{
+				bool result;
+
+				try 
+				{
+					findPart(PartKind.SessionInfoReturned);
+					result = (readByte(PartDataPos) == 1);
+				}
+				catch(PartNotFound) 
+				{
+					result = false;
+				}
+				return result;
+			}
+		}
+
 		public int findPart(int requestedKind)
 		{
 			m_partOffset = -1;
