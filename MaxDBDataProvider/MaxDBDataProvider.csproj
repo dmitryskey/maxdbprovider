@@ -129,11 +129,6 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "ByteArray.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
                     RelPath = "MaxDBCommand.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
@@ -184,16 +179,6 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "MaxDBProtocol\BigInteger.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "MaxDBProtocol\Crypt.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
                     RelPath = "MaxDBProtocol\MaxDBCache.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
@@ -238,7 +223,32 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "MaxDBProtocol\SocketIntf.cs"
+                    RelPath = "Utils\BigNumber.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Utils\ByteArray.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Utils\Crypt.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Utils\Logger.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Utils\SocketIntf.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Utils\VDNNumber.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />

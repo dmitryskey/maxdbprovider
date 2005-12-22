@@ -668,7 +668,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					}
 				}
 				//??? VDNNumber
-				return m_cachedResultCount = (int)(new BigInteger(readBytes(m_partOffset + PartHeaderOffset.Data, partLength)));
+				return m_cachedResultCount = VDNNumber.Number2Int(readBytes(m_partOffset + PartHeaderOffset.Data, partLength));
 			} 
 			else 
 				return m_cachedResultCount;
