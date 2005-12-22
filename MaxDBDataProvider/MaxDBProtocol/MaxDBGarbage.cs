@@ -4,8 +4,10 @@ using System.Runtime.CompilerServices;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
+#if NATIVE
 
 	#region "GarbageCan Class"
+
 	/// <summary>
 	/// Summary description for MaxDBGarbage.
 	/// </summary>
@@ -217,4 +219,5 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				return false;
 		}
 	}
+#endif
 }

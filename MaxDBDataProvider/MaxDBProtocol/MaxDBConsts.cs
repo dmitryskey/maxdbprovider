@@ -118,6 +118,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			// An RTEException was thrown in a connect operation.
 			ERROR_CONNECTRTEEXCEPTION = "error.connect.rteexception",
 
+			// Connection is not opened
+			ERROR_CONNECTIONNOTOPENED = "error.connection.notopened",
+
 		/**
 		 * The transaction isolation level set as option is invalid.
 		 */
