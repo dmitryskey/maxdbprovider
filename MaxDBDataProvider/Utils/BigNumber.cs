@@ -427,24 +427,24 @@ public class BigInteger
 	// For BigInteger bi = 10;
 	//***********************************************************************
 
-	public static implicit operator BigInteger(long value)
+	public static implicit operator BigInteger(long val)
 	{
-		return (new BigInteger(value));
+		return (new BigInteger(val));
 	}
 
-	public static implicit operator BigInteger(ulong value)
+	public static implicit operator BigInteger(ulong val)
 	{
-		return (new BigInteger(value));
+		return (new BigInteger(val));
 	}
 
-	public static implicit operator BigInteger(int value)
+	public static implicit operator BigInteger(int val)
 	{
-		return (new BigInteger(value));
+		return (new BigInteger(val));
 	}
 
-	public static implicit operator BigInteger(uint value)
+	public static implicit operator BigInteger(uint val)
 	{
-		return (new BigInteger(value));
+		return (new BigInteger(val));
 	}
 
 	//***********************************************************************
@@ -1353,12 +1353,15 @@ public class BigInteger
 	// Returns the absolute value
 	//***********************************************************************
 
-	public BigInteger Abs()
+	public BigInteger Abs
 	{
-		if((data[maxLength - 1] & 0x80000000) != 0)
-			return (-this);
-		else
-			return (new BigInteger(this));
+		get
+		{
+			if((data[maxLength - 1] & 0x80000000) != 0)
+				return (-this);
+			else
+				return (new BigInteger(this));
+		}
 	}
 
 	//***********************************************************************
@@ -2122,17 +2125,18 @@ public class BigDecimal
 		}
 	}
 
-	public void setScale(int val)
+	public BigDecimal setScale(int val)
 	{
 		BigInteger ten = new BigInteger(10);
+		BigInteger num = m_int;
 		if (val > m_scale)
 			for (int i = 0; i < val - m_scale; i++)
-				m_int *= ten;
+				num *= ten;
 		else
 			for (int i = 0; i < m_scale - val; i++)
-				m_int /= ten;
+				num /= ten;
 
-		m_scale = val;
+		return new BigDecimal(num, val);
 	}
 
 	public BigInteger unscaledValue
@@ -2146,11 +2150,7 @@ public class BigDecimal
 	public static BigDecimal operator + (BigDecimal bd1, BigDecimal bd2)
 	{
 		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
-		BigDecimal cl1 = bd1.Clone();
-		cl1.setScale(scale);
-		BigDecimal cl2 = bd2.Clone();
-		cl2.setScale(scale);
-		return new BigDecimal(cl1.unscaledValue + cl2.unscaledValue, scale);
+		return new BigDecimal(bd1.Clone().setScale(scale).unscaledValue + bd2.Clone().setScale(scale).unscaledValue, scale);
 	}
 
 	public static BigDecimal operator - (BigDecimal bd)
@@ -2161,11 +2161,7 @@ public class BigDecimal
 	public static BigDecimal operator - (BigDecimal bd1, BigDecimal bd2)
 	{
 		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
-		BigDecimal cl1 = bd1.Clone();
-		cl1.setScale(scale);
-		BigDecimal cl2 = bd2.Clone();
-		cl2.setScale(scale);
-		return new BigDecimal(cl1.unscaledValue - cl2.unscaledValue, scale);
+		return new BigDecimal(bd1.Clone().setScale(scale).unscaledValue - bd2.Clone().setScale(scale).unscaledValue, scale);
 	}
 
 	public static BigDecimal operator * (BigDecimal bd1, BigDecimal bd2)
@@ -2181,21 +2177,13 @@ public class BigDecimal
 	public static bool operator < (BigDecimal bd1, BigDecimal bd2)
 	{
 		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
-		BigDecimal cl1 = bd1.Clone();
-		cl1.setScale(scale);
-		BigDecimal cl2 = bd2.Clone();
-		cl2.setScale(scale);
-		return cl1.unscaledValue < cl2.unscaledValue;
+		return bd1.Clone().setScale(scale).unscaledValue < bd2.Clone().setScale(scale).unscaledValue;
 	}
 
 	public static bool operator > (BigDecimal bd1, BigDecimal bd2)
 	{
 		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
-		BigDecimal cl1 = bd1.Clone();
-		cl1.setScale(scale);
-		BigDecimal cl2 = bd2.Clone();
-		cl2.setScale(scale);
-		return cl1.unscaledValue > cl2.unscaledValue;
+		return bd1.Clone().setScale(scale).unscaledValue > bd2.Clone().setScale(scale).unscaledValue;
 	}
 
 	public static bool operator <= (BigDecimal bd1, BigDecimal bd2)
@@ -2211,11 +2199,7 @@ public class BigDecimal
 	public static bool operator == (BigDecimal bd1, BigDecimal bd2)
 	{
 		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
-		BigDecimal cl1 = bd1.Clone();
-		cl1.setScale(scale);
-		BigDecimal cl2 = bd2.Clone();
-		cl2.setScale(scale);
-		return cl1.unscaledValue == cl2.unscaledValue;
+		return bd1.Clone().setScale(scale).unscaledValue == bd2.Clone().setScale(scale).unscaledValue;
 	}
 
 	public static bool operator != (BigDecimal bd1, BigDecimal bd2)
@@ -2225,14 +2209,70 @@ public class BigDecimal
 
 	public static explicit operator BigInteger(BigDecimal val)
 	{
-		BigDecimal bd = val.Clone();
-		bd.setScale(0);
-		return bd.unscaledValue;
+		return val.Clone().setScale(0).unscaledValue;
+	}
+
+	public static explicit operator long(BigDecimal val)
+	{
+		return (long)val.Clone().setScale(0).unscaledValue;
+	}
+
+	public static implicit operator BigDecimal(long val)
+	{
+		return (new BigDecimal(val));
+	}
+
+	public static implicit operator BigDecimal(ulong val)
+	{
+		return (new BigDecimal(val));
+	}
+
+	public static implicit operator BigDecimal(int val)
+	{
+		return (new BigDecimal(val));
+	}
+
+	public static implicit operator BigDecimal(uint val)
+	{
+		return (new BigDecimal(val));
+	}
+
+	public static implicit operator BigDecimal(double val)
+	{
+		return (new BigDecimal(val));
 	}
 
 	public BigDecimal Clone()
 	{
 		return new BigDecimal(m_int, m_scale);
+	}
+
+	public BigDecimal movePointLeft(int n)
+	{
+		if (n >= 0)
+			return new BigDecimal(m_int, m_scale + n);
+		else
+			return movePointRight(-n);
+	}
+
+	public BigDecimal movePointRight(int n)
+	{
+		if (n >= 0)
+		{
+			if (m_scale >= n)
+				return new BigDecimal(m_int, m_scale -n);
+			else
+			{
+				BigInteger ten = new BigInteger(10);
+				BigInteger num = m_int;
+				for (int i = 0; i < n - m_scale; i++)
+					num *= ten;
+
+				return new BigDecimal(num);
+			}
+		}
+		else
+			return movePointLeft(-n);
 	}
 
 	public override string ToString()

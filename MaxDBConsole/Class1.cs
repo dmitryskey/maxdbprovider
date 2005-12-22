@@ -22,6 +22,15 @@ namespace MaxDBDataProvider
 			// TODO: Add code to start application here
 			//
 
+			Console.Out.WriteLine(Logger.ToHexString(new byte[]{0,1,2,15}));
+
+			BigDecimal d = new BigDecimal("12345,e-10");
+			//d.setScale(0);
+			Console.Out.WriteLine(((BigInteger)d).ToString());
+
+
+			return;
+
 			try
 			{
 				MaxDBConnection maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);

@@ -1,7 +1,8 @@
 using System;
 using System.Security.Cryptography;
+using MaxDBDataProvider.MaxDBProtocol;
 
-namespace MaxDBDataProvider.MaxDBProtocol
+namespace MaxDBDataProvider
 {
 	#region "Sample HMACMD5 implementation"
 
@@ -275,16 +276,18 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		// Parses the serverchallenge and split it into salt and real server challenge.
 		public void parseServerChallenge(DataPartVariable vData)
 		{
-			const string WRONGSERVERCHALLENGERECEIVED = "Wrong Server Challenge Received";
 			if (!vData.nextRow() || !vData.nextField())
-				throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+				throw new MaxDBSQLException(MessageTranslator.Translate
+					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.readBytes(0, vData.Length))));
 
 			string alg = vData.readASCII(vData.CurrentOffset, vData.CurrentFieldLen);
 			if (alg.ToUpper().Trim() != Crypt.ScramMD5Name)
-				throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+				throw new MaxDBSQLException(MessageTranslator.Translate
+					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.readBytes(0, vData.Length))));
 
 			if (!vData.nextField() || vData.CurrentFieldLen < 8)
-				throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+				throw new MaxDBSQLException(MessageTranslator.Translate
+					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.readBytes(0, vData.Length))));
 
 			if (vData.CurrentFieldLen == 40)
 			{
@@ -297,11 +300,15 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				DataPartVariable vd = new DataPartVariable(new ByteArray(vData.readBytes(vData.CurrentOffset, vData.CurrentFieldLen)), 1);
 				if (!vd.nextRow() || !vd.nextField())
-					throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+					throw new MaxDBSQLException(MessageTranslator.Translate
+						(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
+							Logger.ToHexString(vData.readBytes(0, vData.Length))));
 
 				salt = vd.readBytes(vd.CurrentOffset, vd.CurrentFieldLen);
 				if (!vd.nextField())
-					throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+					throw new MaxDBSQLException(MessageTranslator.Translate
+						(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
+							Logger.ToHexString(vData.readBytes(0, vData.Length))));
 
 				serverchallenge = vd.readBytes(vd.CurrentOffset, vd.CurrentFieldLen);
 
@@ -310,14 +317,18 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				{
 					DataPartVariable mp_vd = new DataPartVariable(new ByteArray(vData.readBytes(vData.CurrentOffset, vData.CurrentFieldLen)), 1);
 					if (!mp_vd.nextRow() || !mp_vd.nextField()) 
-						throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+						throw new MaxDBSQLException(MessageTranslator.Translate
+							(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
+								Logger.ToHexString(vData.readBytes(0, vData.Length))));
 
 					do 
 					{
 						if (mp_vd.readASCII(mp_vd.CurrentOffset, mp_vd.CurrentFieldLen).ToLower().Trim() == Packet.MaxPasswordLenTag)
 						{
 							if (!mp_vd.nextField()) 
-								throw new Exception(WRONGSERVERCHALLENGERECEIVED);
+								throw new MaxDBSQLException(MessageTranslator.Translate
+									(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
+										Logger.ToHexString(vData.readBytes(0, vData.Length))));
 							else
 							{
 								try 
@@ -326,14 +337,18 @@ namespace MaxDBDataProvider.MaxDBProtocol
 								} 
 								catch
 								{
-									throw new Exception(WRONGSERVERCHALLENGERECEIVED);	
+									throw new MaxDBSQLException(MessageTranslator.Translate
+										(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
+											Logger.ToHexString(vData.readBytes(0, vData.Length))));
 								} 
 							}
 						} 
 						else 
 						{
 							if (!mp_vd.nextField()) 
-								throw new Exception(WRONGSERVERCHALLENGERECEIVED);	
+								throw new MaxDBSQLException(MessageTranslator.Translate
+									(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
+										Logger.ToHexString(vData.readBytes(0, vData.Length))));
 						}     
 					} 
 					while (mp_vd.nextField());
