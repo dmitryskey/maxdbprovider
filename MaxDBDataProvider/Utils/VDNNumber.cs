@@ -13,7 +13,7 @@ namespace MaxDBDataProvider
 		private readonly BigDecimal zero = new BigDecimal(0);
 		private const String zerostring = "0000000000000000000000000000000000000000000000000000000000000000";
 
-		public static byte [] BigDecimal2Number (BigDecimal dec) 
+		public static byte[] BigDecimal2Number(BigDecimal dec) 
 		{
 			return BigDecimal2Number(dec, numberDigits);
 		}
@@ -344,7 +344,7 @@ namespace MaxDBDataProvider
 					if ((i % 2) == 0) 
 					{
 						val &= 0xf0;
-						val >>= 4;
+						val >>= 4; 
 					}
 					else 
 						val &= 0x0f;
@@ -367,7 +367,7 @@ namespace MaxDBDataProvider
 					if ((i % 2) == 0) 
 					{
 						val &= 0xf0;
-						val >>= 4;
+						val >>= 4; 
 					}
 					else 
 						val &= 0x0f;

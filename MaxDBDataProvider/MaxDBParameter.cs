@@ -29,7 +29,7 @@ namespace MaxDBDataProvider
 			Value = value;   
 		}
 
-		public MaxDBParameter( string parameterName, MaxDBType dbType, object p_value )
+		public MaxDBParameter(string parameterName, MaxDBType dbType, object p_value )
 		{
 			m_sParamName  = parameterName;
 			m_dbType    = dbType;

@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider
 {
@@ -77,6 +78,18 @@ namespace MaxDBDataProvider
 			{
 				return offset;
 			}
+			set
+			{
+				offset = value;
+			}
+		}
+
+		public bool Swapped
+		{
+			get
+			{
+				return swapMode;
+			}
 		}
 
 		public byte[] readBytes(int offset, int len)
@@ -97,6 +110,36 @@ namespace MaxDBDataProvider
 		{
 			offset += this.offset;
 			Array.Copy(values, 0, data, offset, len);
+		}
+
+		public void writeBytes(byte[] values, int offset, int len, byte[] filler)
+		{
+			offset += this.offset;
+
+			int copyLen = values.Length;
+			int fillLen = 0;
+
+			if (copyLen > len) 
+				copyLen = len;
+			else if (copyLen <  len) 
+				fillLen = len - copyLen;
+			Array.Copy(values, 0, data, offset, copyLen);
+			
+			if (fillLen > 0)
+			{
+				int chunkLen;
+				offset += copyLen;
+
+				while (fillLen > 0) 
+				{
+					chunkLen = Math.Min(fillLen, MaxDBProtocol.Consts.fillBufSize);
+					Array.Copy(filler, 0, data, offset, chunkLen);
+					fillLen -= chunkLen;
+					offset += chunkLen;
+				}
+			}
+			
+			return;
 		}
 
 		public byte readByte(int offset)
@@ -215,8 +258,12 @@ namespace MaxDBDataProvider
 
 		public void writeASCII(string val, int offset)
 		{
-			offset += this.offset;
-			Encoding.ASCII.GetBytes(val).CopyTo(data, offset);
+			writeBytes(Encoding.ASCII.GetBytes(val), offset);
+		}
+
+		public void writeASCII(string val, int offset, int len)
+		{
+			writeBytes(Encoding.ASCII.GetBytes(val), offset, len, Consts.blankBytes);
 		}
 
 		public string readUnicode(int offset, int len)
@@ -230,11 +277,18 @@ namespace MaxDBDataProvider
 
 		public void writeUnicode(string val, int offset)
 		{
-			offset += this.offset;
 			if (swapMode)
-				Encoding.Unicode.GetBytes(val).CopyTo(data, offset);
+				writeBytes(Encoding.Unicode.GetBytes(val), offset);
 			else
-				Encoding.BigEndianUnicode.GetBytes(val).CopyTo(data, offset);
+				writeBytes(Encoding.BigEndianUnicode.GetBytes(val), offset);
+		}
+
+		public void writeUnicode(string val, int offset, int len)
+		{
+			if (swapMode)
+				writeBytes(Encoding.Unicode.GetBytes(val), offset, len, Consts.blankUnicodeBytes);
+			else
+				writeBytes(Encoding.BigEndianUnicode.GetBytes(val), offset, len, Consts.blankBigEndianUnicodeBytes);
 		}
 
 		protected void writeValue(ulong val, int offset, int bytes)

@@ -1,29 +1,53 @@
 using System;
+using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider
 {
 	/// <summary>
 	/// Summary description for MaxDBType.
 	/// </summary>
+
 	public enum MaxDBType
 	{
-		Fixed = SQLDBC_SQLType.SQLDBC_SQLTYPE_FIXED,
-		Float = SQLDBC_SQLType.SQLDBC_SQLTYPE_FLOAT,
-		CharA = SQLDBC_SQLType.SQLDBC_SQLTYPE_CHA,
-		CharB = SQLDBC_SQLType.SQLDBC_SQLTYPE_CHB,
-		StrA = SQLDBC_SQLType.SQLDBC_SQLTYPE_STRA,
-		StrB = SQLDBC_SQLType.SQLDBC_SQLTYPE_STRB,
-		Date = SQLDBC_SQLType.SQLDBC_SQLTYPE_DATE,
-		Time = SQLDBC_SQLType.SQLDBC_SQLTYPE_TIME,
-		VFloat = SQLDBC_SQLType.SQLDBC_SQLTYPE_VFLOAT,
-		TimeStamp = SQLDBC_SQLType.SQLDBC_SQLTYPE_TIMESTAMP,
-		Boolean = SQLDBC_SQLType.SQLDBC_SQLTYPE_BOOLEAN,
-		Unicode = SQLDBC_SQLType.SQLDBC_SQLTYPE_UNICODE,
-		SmallInt = SQLDBC_SQLType.SQLDBC_SQLTYPE_SMALLINT,
-		Integer = SQLDBC_SQLType.SQLDBC_SQLTYPE_INTEGER,
-		VarCharA = SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARA,
-		VarCharB = SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARB,
-		StrUni = SQLDBC_SQLType.SQLDBC_SQLTYPE_STRUNI,
-		VarCharUni = SQLDBC_SQLType.SQLDBC_SQLTYPE_VARCHARUNI
+		Fixed		= DataType.FIXED, 
+		Float		= DataType.FLOAT,            
+		CharA		= DataType.CHA,            
+		CharE		= DataType.CHE,            
+		CharB 		= DataType.CHB,            
+		RowID 		= DataType.ROWID,            
+		StrA  		= DataType.STRA,            
+		StrE  		= DataType.STRE,            
+		StrB  		= DataType.STRB,            
+		StrDB 		= DataType.STRDB,            
+		Date  		= DataType.DATE,           
+		Time  		= DataType.TIME,           
+		VFloat		= DataType.VFLOAT,           
+		TimeStamp	= DataType.TIMESTAMP,           
+		Unknown		= DataType.UNKNOWN,           
+		Number		= DataType.NUMBER,           
+		NoNumber	= DataType.NONUMBER,           
+		Duration	= DataType.DURATION,           
+		DByteEBCDIC = DataType.DBYTEEBCDIC,         
+		LongA		= DataType.LONGA,           
+		LongE		= DataType.LONGE,           
+		LongB		= DataType.LONGB,          
+		LongDB		= DataType.LONGDB,           
+		Boolean		= DataType.BOOLEAN,           
+		Unicode		= DataType.UNICODE,           
+		DTFiller1	= DataType.DTFILLER1,           
+		DTFiller2	= DataType.DTFILLER2,           
+		DTFiller3	= DataType.DTFILLER3,           
+		DTFiller4	= DataType.DTFILLER4,           
+		SmallInt	= DataType.SMALLINT,           
+		Integer		= DataType.INTEGER,           
+		VarCharA	= DataType.VARCHARA,           
+		VarCharE	= DataType.VARCHARE,           
+		VarCharB	= DataType.VARCHARB,           
+		StrUni		= DataType.STRUNI,           
+		LongUni		= DataType.LONGUNI,           
+		VarCharUni	= DataType.VARCHARUNI,          
+		UDT			= DataType.UDT,           
+		ABAPStream	= DataType.ABAPTABHANDLE,       
+		DWyde		= DataType.DWYDE,
 	}
 }

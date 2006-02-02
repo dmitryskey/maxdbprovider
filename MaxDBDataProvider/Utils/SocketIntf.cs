@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Net.Sockets;
 
 namespace MaxDBDataProvider
@@ -229,7 +230,86 @@ namespace MaxDBDataProvider
 		
 	#endregion
 
-	#region "Filter steam class reimplementation"
+	#region "Join text reader class reimplemetation"
+
+	public class JoinTextReader : TextReader
+	{
+		protected TextReader[] readers;
+		protected TextReader currentReader;
+		protected int currentIndex = -1;
+    
+		public JoinTextReader(TextReader[] readers)
+		{
+			this.readers = readers;
+			this.NextReader();
+		}
+    
+
+		protected void NextReader()
+		{
+			currentIndex++;
+			if (currentIndex >= readers.Length)
+				currentReader = null;
+			else 
+				currentReader = readers[currentIndex];
+		}
+    
+		public override int Read(char[] b, int off, int len)
+		{
+			int result = 0;
+			int chunkLen;
+        
+			while (currentReader != null && len > 0) 
+			{
+				chunkLen = currentReader.Read(b, off, len);
+				if (chunkLen == -1) 
+					NextReader();
+				else 
+				{
+					off += chunkLen;
+					len -= chunkLen;
+					result += chunkLen;
+				}
+			}
+			if (result == 0 && currentReader == null) 
+				result = -1;
+      
+			return result;
+		}
+    
+		public override int Read()    
+		{
+			int result = 0;
+			while (currentReader != null) 
+			{
+				result = currentReader.Read();
+				if (result == -1)
+					NextReader();
+			}
+			if (currentReader == null) 
+				result = -1;
+			return result;
+		}
+    
+		public override void Close()
+		{
+			foreach (TextReader reader in readers) 
+			{
+				try 
+				{
+					if (reader != null) 
+						reader.Close();
+				}
+				catch 
+				{
+					// ignore
+				}
+			}
+		}
+	}
+	#endregion
+
+	#region "Stream filter class reimplementation"
 
 	public class StreamFilter : Stream
 	{
@@ -330,9 +410,243 @@ namespace MaxDBDataProvider
 				return ips.Length;
 			}
 		}
-
-
 	}
 
+	#endregion
+
+	#region "Text reader filter class reimplementation"
+
+	public class TextReaderFilter : TextReader 
+	{
+		private int maxlength;
+		private TextReader ips;
+		private int readlength = 0;
+		private int markedlength = 0;
+	
+		public TextReaderFilter(TextReader ips, int length) 
+		{
+			this.maxlength = length;
+			this.ips = ips;
+		}
+
+		public override int Read()  
+		{
+			if (maxlength <= readlength++)
+				return -1;
+			else
+				return ips.Read();
+		}
+
+		public override int Read(char[] b, int off, int len) 
+		{
+			if (b == null) 
+				throw new NullReferenceException();
+
+			if (off < 0 || off > b.Length || len < 0 || (off + len) > b.Length || (off + len) < 0) 
+				throw new IndexOutOfRangeException();
+
+			if (readlength >= maxlength) 
+				return -1;
+			if (readlength + len > maxlength) 
+				len = maxlength - readlength;
+			if (len <= 0) 
+				return 0;
+
+			len = ips.Read(b, off, len);
+			readlength += len;
+			return len;
+		}
+
+		public override void Close()
+		{
+			ips.Close();
+		}
+	}
+
+	#endregion
+
+	#region "Raw byte stream reader class implementation"
+
+	public class RawByteReader : StreamReader
+	{
+		public RawByteReader(Stream stream) : base(stream)
+		{
+		}
+
+		public override int Read(char[] cbuf, int off, int len)
+		{
+			try 
+			{
+				byte[] bbuf = new byte[len];
+				int result = BaseStream.Read(bbuf, 0, len);
+            
+				if (result == -1) 
+					return -1; 
+
+				int off_i = off;
+				for(int i = 0; i < result; i++, off_i++) 
+				{
+					int current= bbuf[i] & 0xFF;
+					cbuf[off_i] = (char)current;
+				}
+				return result;
+			} 
+			catch(IOException ioEx) 
+			{
+				throw ioEx;
+			} 
+			catch(Exception ex) 
+			{
+				throw new IOException(ex.Message);
+			}
+		}
+	}
+
+	#endregion
+
+	#region "Stream class based on reader"
+
+	public class ReaderStream : Stream
+	{
+		private TextReader reader;
+		private char[] charBuf = new char [4096];
+		private byte [] byteBuf;
+		private int bufPos = 0;
+		private int bufExtent = 0;
+		private bool atEnd = false;
+		private bool sevenbit = false;
+
+		public ReaderStream(TextReader reader, bool sevenbit)
+		{
+			this.reader = reader;
+			this.sevenbit = sevenbit;
+		}
+
+		public override bool CanRead
+		{
+			get
+			{
+				return true;
+			}
+		}
+
+		public override bool CanSeek
+		{
+			get
+			{
+				return false;
+			}
+		}
+
+		public override bool CanWrite
+		{
+			get
+			{
+				return false;
+			}
+		}
+
+		public override long Length
+		{
+			get
+			{
+				return 0;
+			}
+		}
+
+		public override long Position
+		{
+			get
+			{
+				throw new NotSupportedException();
+			}
+			set
+			{
+				throw new NotSupportedException();
+			}
+		}
+
+		public override void Flush()
+		{
+			throw new NotSupportedException();
+		}
+
+		public override long Seek(long offset, SeekOrigin origin)
+		{
+			throw new NotSupportedException();
+		}
+
+		public override void SetLength(long value)
+		{
+			throw new NotSupportedException();
+		}
+
+		public override void Write(byte[] buffer, int offset, int count)
+		{
+			throw new NotSupportedException();
+		}
+
+		public override void Close()
+		{
+			bufPos = 0;
+			bufExtent = 0;
+			reader.Close();
+		}
+
+		public override int ReadByte()
+		{
+			int result;
+
+			if (bufPos >= bufExtent) 
+				FillBuffer();
+
+			result = byteBuf[bufPos];
+			bufPos++;
+			return result;
+		}
+
+		public override int Read(byte[] buffer, int offset, int count)
+		{
+			int bytesCopied = 0;
+			bool atEnd = false;
+
+			while ((count > 0) && !atEnd) 
+			{
+				if (bufPos >= bufExtent) 
+					FillBuffer();
+				if (bufPos >= bufExtent) 
+					break;
+
+				int copySize = Math.Min(count, bufExtent - bufPos);
+				Array.Copy(byteBuf, bufPos, buffer, offset, copySize);
+				bufPos += copySize;
+				offset += copySize;
+				count -= copySize;
+				bytesCopied += copySize;
+				atEnd = this.atEnd;
+			}
+			if (bytesCopied == 0) 
+				bytesCopied = -1;
+			return bytesCopied;
+		}
+
+		private void FillBuffer()
+		{
+			bufPos = 0;
+			bufExtent = 0;
+			int charsRead = reader.Read(charBuf, 0, charBuf.Length);
+			if (charsRead < charBuf.Length) 
+				atEnd = true;
+			
+			if (charsRead < 0) 
+				return;
+
+			if (sevenbit)
+				byteBuf = Encoding.ASCII.GetBytes(charBuf, 0, charsRead);
+			else
+				byteBuf = Encoding.GetEncoding(1252).GetBytes(charBuf, 0, charsRead);
+			bufExtent = byteBuf.Length;
+		}
+	}
 	#endregion
 }

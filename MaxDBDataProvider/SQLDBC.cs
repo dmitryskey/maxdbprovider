@@ -7,15 +7,14 @@ namespace MaxDBDataProvider
 
 	public enum SQLDBC_Retcode 
 	{
-		SQLDBC_INVALID_OBJECT           =-10909,    /*!< Application tries to use an invalid object reference. */
-		SQLDBC_OK                       = 0,     /*!< Function call successful. */
-		SQLDBC_NOT_OK                   = 1,     /*!< Function call not successful. Further information 
-                                                can be found in the corresponding error object. */
-		SQLDBC_DATA_TRUNC               = 2,      /*!< Data was truncated during the call. */
-		SQLDBC_OVERFLOW                 = 3,      /*!< Signalizes a numeric overflow. */
-		SQLDBC_SUCCESS_WITH_INFO        = 4,      /*!< The method succeeded with warnings. */
-		SQLDBC_NO_DATA_FOUND            = 100,    /*!< Data was not found. */
-		SQLDBC_NEED_DATA                = 99      /*!< Late binding, data is needed for execution. */
+		SQLDBC_INVALID_OBJECT           =-10909, // Application tries to use an invalid object reference. 
+		SQLDBC_OK                       = 0,	 // Function call successful. 
+		SQLDBC_NOT_OK                   = 1,     // Function call not successful. Further information can be found in the corresponding error object.
+		SQLDBC_DATA_TRUNC               = 2,     // Data was truncated during the call. 
+		SQLDBC_OVERFLOW                 = 3,     // Signalizes a numeric overflow. 
+		SQLDBC_SUCCESS_WITH_INFO        = 4,     // The method succeeded with warnings. 
+		SQLDBC_NO_DATA_FOUND            = 100,   // Data was not found. 
+		SQLDBC_NEED_DATA                = 99     // Late binding, data is needed for execution. 
 	}
 
 	public enum StringEncodingType 
@@ -25,53 +24,6 @@ namespace MaxDBDataProvider
 		UCS2        = 2,
 		UCS2Swapped = 3,
 		UTF8        = 4
-	};
-
-	//commented values are deprecated
-	public enum SQLDBC_SQLType 
-	{
-		SQLDBC_SQLTYPE_MIN       = 0,            
-		SQLDBC_SQLTYPE_FIXED     = SQLDBC_SQLTYPE_MIN, 
-		SQLDBC_SQLTYPE_FLOAT     = 1,            
-		SQLDBC_SQLTYPE_CHA       = 2,            
-//		SQLDBC_SQLTYPE_CHE       = 3,            
-		SQLDBC_SQLTYPE_CHB       = 4,            
-//		SQLDBC_SQLTYPE_ROWID     = 5,            
-		SQLDBC_SQLTYPE_STRA      = 6,            
-//		SQLDBC_SQLTYPE_STRE      = 7,            
-		SQLDBC_SQLTYPE_STRB      = 8,            
-//		SQLDBC_SQLTYPE_STRDB     = 9,            
-		SQLDBC_SQLTYPE_DATE      = 10,           
-		SQLDBC_SQLTYPE_TIME      = 11,           
-		SQLDBC_SQLTYPE_VFLOAT    = 12,           
-		SQLDBC_SQLTYPE_TIMESTAMP = 13,           
-//		SQLDBC_SQLTYPE_UNKNOWN   = 14,           
-//		SQLDBC_SQLTYPE_NUMBER    = 15,           
-//		SQLDBC_SQLTYPE_NONUMBER  = 16,           
-//		SQLDBC_SQLTYPE_DURATION  = 17,           
-//		SQLDBC_SQLTYPE_DBYTEEBCDIC = 18,         
-//		SQLDBC_SQLTYPE_LONGA     = 19,           
-//		SQLDBC_SQLTYPE_LONGE     = 20,           
-//		SQLDBC_SQLTYPE_LONGB     = 21,           
-//		SQLDBC_SQLTYPE_LONGDB    = 22,           
-		SQLDBC_SQLTYPE_BOOLEAN   = 23,           
-		SQLDBC_SQLTYPE_UNICODE   = 24,           
-//		SQLDBC_SQLTYPE_DTFILLER1 = 25,           
-//		SQLDBC_SQLTYPE_DTFILLER2 = 26,           
-//		SQLDBC_SQLTYPE_DTFILLER3 = 27,           
-//		SQLDBC_SQLTYPE_DTFILLER4 = 28,           
-		SQLDBC_SQLTYPE_SMALLINT  = 29,           
-		SQLDBC_SQLTYPE_INTEGER   = 30,           
-		SQLDBC_SQLTYPE_VARCHARA  = 31,           
-//		SQLDBC_SQLTYPE_VARCHARE  = 32,           
-		SQLDBC_SQLTYPE_VARCHARB  = 33,           
-		SQLDBC_SQLTYPE_STRUNI    = 34,           
-//		SQLDBC_SQLTYPE_LONGUNI   = 35,           
-		SQLDBC_SQLTYPE_VARCHARUNI = 36,          
-		SQLDBC_SQLTYPE_UDT       = 37,           
-		SQLDBC_SQLTYPE_ABAPTABHANDLE = 38,       
-		SQLDBC_SQLTYPE_DWYDE     = 39,           
-		SQLDBC_SQLTYPE_MAX = SQLDBC_SQLTYPE_DWYDE            
 	};
 
 	public enum SQLDBC_HostType 
@@ -447,7 +399,7 @@ namespace MaxDBDataProvider
 			StringEncodingType encoding, int size, ref int length); 
 
 		[DllImport("libsqldbc_c")]
-		public extern static SQLDBC_SQLType SQLDBC_ResultSetMetaData_getColumnType(IntPtr hdl, short column);
+		public extern static int SQLDBC_ResultSetMetaData_getColumnType(IntPtr hdl, short column);
 
 		[DllImport("libsqldbc_c")]
 		public extern static int SQLDBC_ResultSetMetaData_getColumnLength(IntPtr hdl, short column); 

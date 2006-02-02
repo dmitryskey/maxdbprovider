@@ -666,4 +666,7 @@
 	<data name="error.exec.failed">
 		<value>Packet execution failed </value>
 	</data>
+	<data name="error.dbnull.unknown">
+		<value>Column nullable unknown</value>
+	</data>
 </root>

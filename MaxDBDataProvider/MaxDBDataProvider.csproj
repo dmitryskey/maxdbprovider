@@ -204,6 +204,11 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "MaxDBProtocol\MaxDBInfo.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
                     RelPath = "MaxDBProtocol\MaxDBMessages.resx"
                     BuildAction = "EmbeddedResource"
                 />
@@ -213,12 +218,12 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "MaxDBProtocol\MaxDBParseInfo.cs"
+                    RelPath = "MaxDBProtocol\MaxDBTranslators.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "MaxDBProtocol\MaxDBTranslators.cs"
+                    RelPath = "MaxDBProtocol\MaxDBValue.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
