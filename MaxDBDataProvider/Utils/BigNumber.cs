@@ -2015,6 +2015,21 @@ public class BigInteger
 			return result;
 		}
 	}
+
+	public BigInteger Pow(int exp)
+	{
+		if (exp < 0)
+			throw new FormatException("Exponent is negative");
+ 
+		if (exp == 0)
+			return new BigInteger(0);
+
+		BigInteger result = new BigInteger(this);
+		for (int i = 0; i < exp - 1; i++)
+			result *= this;
+
+		return result;
+	}
 }
 
 public class BigDecimal
@@ -2099,7 +2114,7 @@ public class BigDecimal
 			else
 			{
 				float_part = num.Substring(cur_off).TrimEnd('0');
-				m_int = new BigInteger(long.Parse(int_part+float_part));
+				m_int = new BigInteger(long.Parse(int_part + float_part));
 				m_scale = float_part.Length;
 				return;
 			}
@@ -2150,7 +2165,7 @@ public class BigDecimal
 	public static BigDecimal operator + (BigDecimal bd1, BigDecimal bd2)
 	{
 		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
-		return new BigDecimal(bd1.Clone().setScale(scale).unscaledValue + bd2.Clone().setScale(scale).unscaledValue, scale);
+		return new BigDecimal(bd1.setScale(scale).unscaledValue + bd2.setScale(scale).unscaledValue, scale);
 	}
 
 	public static BigDecimal operator - (BigDecimal bd)
@@ -2161,7 +2176,7 @@ public class BigDecimal
 	public static BigDecimal operator - (BigDecimal bd1, BigDecimal bd2)
 	{
 		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
-		return new BigDecimal(bd1.Clone().setScale(scale).unscaledValue - bd2.Clone().setScale(scale).unscaledValue, scale);
+		return new BigDecimal(bd1.setScale(scale).unscaledValue - bd2.setScale(scale).unscaledValue, scale);
 	}
 
 	public static BigDecimal operator * (BigDecimal bd1, BigDecimal bd2)
@@ -2177,13 +2192,13 @@ public class BigDecimal
 	public static bool operator < (BigDecimal bd1, BigDecimal bd2)
 	{
 		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
-		return bd1.Clone().setScale(scale).unscaledValue < bd2.Clone().setScale(scale).unscaledValue;
+		return bd1.setScale(scale).unscaledValue < bd2.setScale(scale).unscaledValue;
 	}
 
 	public static bool operator > (BigDecimal bd1, BigDecimal bd2)
 	{
 		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
-		return bd1.Clone().setScale(scale).unscaledValue > bd2.Clone().setScale(scale).unscaledValue;
+		return bd1.setScale(scale).unscaledValue > bd2.setScale(scale).unscaledValue;
 	}
 
 	public static bool operator <= (BigDecimal bd1, BigDecimal bd2)
@@ -2199,7 +2214,7 @@ public class BigDecimal
 	public static bool operator == (BigDecimal bd1, BigDecimal bd2)
 	{
 		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
-		return bd1.Clone().setScale(scale).unscaledValue == bd2.Clone().setScale(scale).unscaledValue;
+		return bd1.setScale(scale).unscaledValue == bd2.setScale(scale).unscaledValue;
 	}
 
 	public static bool operator != (BigDecimal bd1, BigDecimal bd2)
@@ -2209,12 +2224,22 @@ public class BigDecimal
 
 	public static explicit operator BigInteger(BigDecimal val)
 	{
-		return val.Clone().setScale(0).unscaledValue;
+		return val.setScale(0).unscaledValue;
 	}
 
 	public static explicit operator long(BigDecimal val)
 	{
-		return (long)val.Clone().setScale(0).unscaledValue;
+		return (long)val.setScale(0).unscaledValue;
+	}
+
+	public static explicit operator double(BigDecimal val)
+	{
+		return double.Parse(val.ToString());
+	}
+
+	public static explicit operator decimal(BigDecimal val)
+	{
+		return decimal.Parse(val.ToString());
 	}
 
 	public static implicit operator BigDecimal(long val)
@@ -2306,4 +2331,3 @@ public class BigDecimal
 		return ToString().GetHashCode();
 	}
 }
-

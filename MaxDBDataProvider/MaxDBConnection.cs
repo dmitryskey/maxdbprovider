@@ -38,11 +38,10 @@ namespace MaxDBDataProvider
 		
 #if NATIVE
 
-		private MaxDBComm m_comm = null;
+		internal MaxDBComm m_comm = null;
 		private Stack m_packetPool = new Stack();
-		private bool m_autocommit = false;
+		internal bool m_autocommit = false;
 		private GarbageParseid m_garbageParseids = null;
-		private GarbageCursor  m_garbageCursors  = null;
 		private object m_execObj;
 		private static string syncObj = string.Empty;
 		private int m_nonRecyclingExecutions = 0;
@@ -52,8 +51,8 @@ namespace MaxDBDataProvider
 		private int m_timeout, m_cacheLimit, m_cacheSize;
 		private ParseInfoCache m_parseCache = null;
 		private bool m_auth = false;
-		private bool m_spaceoption = false;
-		int m_sessionID = -1;
+		internal bool m_spaceOption = false;
+		private int m_sessionID = -1;
 		private static byte[] defaultFeatureSet = {1, 0, 2, 0, 3, 0, 4, 0, 5, 0};
 		private byte[] kernelFeatures = new byte[defaultFeatureSet.Length];
 
@@ -146,7 +145,7 @@ namespace MaxDBDataProvider
 							break;
 						case "SPACE":
 							if (param.Split('=')[1].Trim().ToUpper() == "TRUE")
-								m_spaceoption = true;
+								m_spaceOption = true;
 							break;
 #endif
 						case "MODE":
@@ -447,6 +446,7 @@ namespace MaxDBDataProvider
 		}
 #endif
 
+		[MethodImpl(MethodImplOptions.Synchronized)]
 		public void Close()
 		{
 			/*
@@ -456,8 +456,24 @@ namespace MaxDBDataProvider
 			 */
 #if NATIVE
 			m_sessionID = -1;
-			m_comm.Close();
-			m_comm = null;
+			if (m_comm != null)
+			{
+				try 
+				{
+					if (m_garbageParseids != null)
+						m_garbageParseids.emptyCan();
+					execSQLString ("ROLLBACK WORK RELEASE", GCMode.GC_NONE);
+				}
+				catch(Exception) 
+				{
+					// ignore
+				}
+				finally
+				{
+					m_comm.Close();
+					m_comm = null;
+				}
+			}
 #else
 			SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(m_connPropHandler);
 			m_connPropHandler = IntPtr.Zero;
@@ -514,12 +530,18 @@ namespace MaxDBDataProvider
 				return false;
 		}
 
+		[MethodImpl(MethodImplOptions.Synchronized)]
 		public MaxDBRequestPacket CreateRequestPacket()
 		{
 			MaxDBRequestPacket packet;
 			
 			if (m_packetPool.Count == 0)
-				packet = new MaxDBRequestPacket(new byte[HeaderOffset.END + m_comm.MaxCmdSize], Consts.AppID, Consts.ApplVers);
+			{
+				if (m_enc == Encoding.ASCII)
+					packet = new MaxDBRequestPacket(new byte[HeaderOffset.END + m_comm.MaxCmdSize], Consts.AppID, Consts.ApplVers);
+				else
+					packet = new MaxDBRequestPacketUnicode(new byte[HeaderOffset.END + m_comm.MaxCmdSize], Consts.AppID, Consts.ApplVers);
+			}
 			else
 				packet = (MaxDBRequestPacket)m_packetPool.Pop();
 
@@ -548,11 +570,7 @@ namespace MaxDBDataProvider
 			if (State != ConnectionState.Open)	
 				if (gcFlags == GCMode.GC_ALLOWED) 
 				{
-					bool spaceleft = true;
-					if (m_garbageCursors != null && m_garbageCursors.isPending) 
-						spaceleft = m_garbageCursors.emptyCan(requestPacket);
-
-					if (spaceleft && m_garbageParseids != null && m_garbageParseids.isPending) 
+					if (m_garbageParseids != null && m_garbageParseids.isPending) 
 						m_garbageParseids.emptyCan(requestPacket);
 				} 
 				else 
@@ -583,9 +601,6 @@ namespace MaxDBDataProvider
 				// if it is not completely forbidden, we will send the drop
 				if(gcFlags != GCMode.GC_NONE) 
 				{
-					if (m_garbageCursors != null && m_garbageCursors.isPending && localWeakReturnCode == 0) 
-						m_garbageCursors.emptyCan(this);
-
 					if(m_nonRecyclingExecutions > 20 && localWeakReturnCode == 0) 
 					{
 						m_nonRecyclingExecutions = 0;
@@ -690,7 +705,7 @@ namespace MaxDBDataProvider
 				connectCmd += " ISOLATION LEVEL " + m_level;
 			if (m_cacheLimit > 0)
 				connectCmd += " CACHELIMIT " + m_cacheLimit;
-			if (m_spaceoption) 
+			if (m_spaceOption) 
 			{
 				connectCmd += " SPACE OPTION ";
 				setKernelFeatureRequest(Feature.SpaceOption);
@@ -709,8 +724,8 @@ namespace MaxDBDataProvider
 					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_INVALIDPASSWORD));
 				}
 				requestPacket.newPart(PartKind.Data);
-				requestPacket.addData(crypted);
-				requestPacket.addASCII(TermID);
+				requestPacket.AddData(crypted);
+				requestPacket.AddDataString(TermID);
 				requestPacket.incrPartArguments();
 			} 
 			else 
@@ -728,7 +743,7 @@ namespace MaxDBDataProvider
 			// execute
 			MaxDBReplyPacket replyPacket = Exec(requestPacket, this, GCMode.GC_DELAYED);
 			m_sessionID = replyPacket.SessionID;
-			m_enc = replyPacket.isUnicode?Encoding.Unicode:Encoding.ASCII;
+			m_enc = replyPacket.IsUnicode ? Encoding.Unicode : Encoding.ASCII;
 			
 			m_kernelVersion = 10000 * replyPacket.KernelMajorVersion + 100 * replyPacket.KernelMinorVersion + replyPacket.KernelCorrectionLevel;
 			byte[] featureReturn = replyPacket.Features;
@@ -769,6 +784,29 @@ namespace MaxDBDataProvider
 					m_inReconnect = false;
 				}
 				throw new TimeoutException();
+			}
+		}
+
+		private void execSQLString(string cmd, int gcFlags)
+		{
+			MaxDBRequestPacket requestPacket = CreateRequestPacket();
+			requestPacket.initDbs (m_autocommit);
+			requestPacket.AddString(cmd);
+			try 
+			{
+				Exec(requestPacket, this, gcFlags);
+			}
+			catch (TimeoutException) 
+			{
+				//ignore
+			}
+		}
+
+		internal bool IsInTransaction
+		{
+			get
+			{
+				return (!m_autocommit && m_inTransaction);
 			}
 		}
 

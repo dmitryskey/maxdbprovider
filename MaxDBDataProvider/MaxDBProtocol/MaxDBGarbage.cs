@@ -6,25 +6,19 @@ namespace MaxDBDataProvider.MaxDBProtocol
 {
 #if NATIVE
 
-	#region "GarbageCan Class"
-
-	/// <summary>
-	/// Summary description for MaxDBGarbage.
-	/// </summary>
-	public abstract class GarbageCan 
+	public class GarbageParseid 
 	{
 		protected int canTreshold = 20;
 		protected bool objPending = false;
 		protected bool currentEmptyRun = false;
 		protected bool currentEmptyRun2 = false;
-		
-		public GarbageCan() : this(20)
-		{
-		}
+		private ArrayList m_garbage;
+		private bool supportsMultipleDropParseIDs;
 
-		public GarbageCan (int aTreshhold) 
+		public GarbageParseid(bool asupportsMultipleDropParseIDs) : base() 
 		{
-			canTreshold = aTreshhold;
+			supportsMultipleDropParseIDs = asupportsMultipleDropParseIDs;
+			m_garbage = new ArrayList(canTreshold);
 		}
 
 		public bool isPending 
@@ -35,7 +29,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				return objPending;
 			}
 		}
-
 
 		public void forceGarbageCollection()
 		{
@@ -67,30 +60,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			currentEmptyRun = false;
 		}
 
-		public abstract void emptyCan();
-		public abstract void throwIntoGarbageCan(object obj);
-		public abstract bool emptyCan(MaxDBRequestPacket requestPacket);
-		protected abstract int GarbageSize{get;}
-	}
-	#endregion
 
-	public class GarbageParseid : GarbageCan 
-	{
-		private ArrayList m_garbage;
-		private bool supportsMultipleDropParseIDs;
-
-		public GarbageParseid(bool asupportsMultipleDropParseIDs) : base() 
-		{
-			supportsMultipleDropParseIDs = asupportsMultipleDropParseIDs;
-			m_garbage = new ArrayList(canTreshold);
-		}
-
-		public override void throwIntoGarbageCan (object obj)
+		public void throwIntoGarbageCan (object obj)
 		{
 			m_garbage.Add(obj);
 		}
 
-		protected override int GarbageSize
+		protected int GarbageSize
 		{
 			get
 			{
@@ -99,7 +75,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		}
 
 		[MethodImpl(MethodImplOptions.Synchronized)]
-		public override bool emptyCan(MaxDBRequestPacket requestPacket)
+		public bool emptyCan(MaxDBRequestPacket requestPacket)
 		{
 			if (currentEmptyRun2)
 				return false;
@@ -148,75 +124,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return !packetActionFailed;
 		}
 
-		public override void emptyCan () 
+		public void emptyCan() 
 		{
 			m_garbage.Clear();
-		}
-	}
-
-	public class GarbageCursor : GarbageCan 
-	{
-		private ArrayList m_garbage;
-
-		public GarbageCursor() : base(1)
-		{
-			m_garbage = new ArrayList();
-		}
-
-		public override void throwIntoGarbageCan (object obj) 
-		{
-			m_garbage.Add(obj);
-		}
-
-		protected override int GarbageSize
-		{
-			get
-			{
-				return m_garbage.Count;
-			}
-		}
-
-		[MethodImpl(MethodImplOptions.Synchronized)]
-		public override bool emptyCan(MaxDBRequestPacket requestPacket)
-		{
-			if(currentEmptyRun2)
-				return false;
-			currentEmptyRun2=true;
-
-			bool packetActionFailed = false;
-			while(m_garbage.Count > 0 && !packetActionFailed) 
-			{
-				object obj = m_garbage[0];
-				m_garbage.Remove(obj);
-				packetActionFailed = !packetAction(requestPacket, obj);
-			
-				if(packetActionFailed) 
-					m_garbage.Add(obj);
-			}
-
-			currentEmptyRun2 = false;
-			return !packetActionFailed;
-		}
-
-		public override void emptyCan () 
-		{
-			m_garbage.Clear();
-		}
-
-		public bool packetAction(MaxDBRequestPacket requestPacket, object obj)
-		{
-			return requestPacket.initDbsCommand("CLOSE \"" + ((string)obj) + "\"", false, false);
-		}
-
-		public bool restoreFromGarbageCan(object obj)
-		{
-			if (m_garbage.Contains(obj))
-			{
-				m_garbage.Remove(obj);
-				return true;
-			}
-			else
-				return false;
 		}
 	}
 #endif

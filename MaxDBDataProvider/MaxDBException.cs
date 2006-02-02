@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.IO;
 using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider
@@ -7,7 +8,7 @@ namespace MaxDBDataProvider
 	/// <summary>
 	/// Summary description for MaxDBException.
 	/// </summary>
-	public class MaxDBException : Exception
+	public class MaxDBException : DataException
 	{
 		private int m_detailErrorCode = -708;
 
@@ -44,7 +45,7 @@ namespace MaxDBDataProvider
 		}
 	}
 
-	public class CommunicationException : Exception
+	public class CommunicationException : DataException
 	{
 		public CommunicationException(int code) : base(CommError.ErrorText[code])
 		{
@@ -160,6 +161,45 @@ namespace MaxDBDataProvider
 			get
 			{
 				return true;
+			}
+		}
+	}
+
+	public class ObjectIsClosedException : DataException 
+	{
+		public ObjectIsClosedException() : base(MessageTranslator.Translate(MessageKey.ERROR_OBJECTISCLOSED)) 
+		{
+		}
+	}
+
+	public class MaxDBConversionException : MaxDBSQLException
+	{
+		public MaxDBConversionException(string msg) : base(msg)
+		{
+		}
+	}
+
+	public class MaxDBValueOverflowException : MaxDBException
+	{
+		public MaxDBValueOverflowException(string typeName, int colIndex) : base(MessageTranslator.Translate(MessageKey.ERROR_VALUEOVERFLOW, colIndex.ToString()))
+		{
+		}
+	}
+
+	public class StreamIOException : IOException 
+	{
+		private DataException sqlException;
+
+		public StreamIOException(DataException sqlEx) : base()
+		{
+			this.sqlException = sqlEx;
+		}
+
+		public DataException SqlException 
+		{
+			get
+			{
+				return sqlException;
 			}
 		}
 	}

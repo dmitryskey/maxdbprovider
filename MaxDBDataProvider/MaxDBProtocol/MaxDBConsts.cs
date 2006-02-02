@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
@@ -121,526 +122,529 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			// Connection is not opened
 			ERROR_CONNECTIONNOTOPENED = "error.connection.notopened",
 
-		/**
-		 * The transaction isolation level set as option is invalid.
-		 */
+			/**
+			 * The transaction isolation level set as option is invalid.
+			 */
 			ERROR_INVALIDTRANSACTIONISOLATION = "error.invalid.transactionisolation",
 
-		/*
-		 * The transport option was set to an invalid value.
-		 */
+			/*
+			 * The transport option was set to an invalid value.
+			 */
 			ERROR_INVALIDTRANSPORT = "error.invalid.transport",
 
-		/**
-		 * Native support library was not initialised.
-		 */
+			/**
+			 * Native support library was not initialised.
+			 */
 			ERROR_LIBRARYNOTLOADED = "error.library.notloaded",
 
-		/**
-		 * Value overflow.
-		 */
+			/**
+			 * Value overflow.
+			 */
 			ERROR_VALUEOVERFLOW = "error.valueoverflow",
 
-		/**
-		 * Database exception (with error position).
-		 */
+			/**
+			 * Database exception (with error position).
+			 */
 			ERROR_DATABASEEXCEPTION = "error.databaseexception",
 
-		/**
-		 * Database exception (without error position).
-		 */
+			/**
+			 * Database exception (without error position).
+			 */
 			ERROR_DATABASEEXCEPTION_WOERRPOS = "error.databaseexception.woerrpos",
 
-		/**
-		 * Invalid argument value.
-		 */
+			/**
+			 * Invalid argument value.
+			 */
 			ERROR_INVALIDARGUMENTVALUE = "error.invalid.argumentvalue",
 
-		/**
-		 * Invalid argument value, correct examples are given.
-		 */
+			/**
+			 * Invalid argument value, correct examples are given.
+			 */
 			ERROR_INVALIDARGUMENTVALUE_WEXAMPLE = "error.invalid.argumentvalue.wexample",
 
-		/**
-		 * Invalid column index.
-		 */
+			/**
+			 * Invalid column index.
+			 */
 			ERROR_INVALIDCOLUMNINDEX = "error.invalidcolumnindex",
 
-		/**
-		 * Invalid column name.
-		 */
+			/**
+			 * Invalid column name.
+			 */
 			ERROR_INVALIDCOLUMNNAME = "error.invalidcolumnname",
 
-		/**
-		 * Something is not yet there.
-		 */
+			/**
+			 * Something is not yet there.
+			 */
 			ERROR_NOTIMPLEMENTED = "error.notimplemented",
 
-		/**
-		 * Stream for LONG input could not be resetted.
-		 */
+			/**
+			 * Stream for LONG input could not be resetted.
+			 */
 			ERROR_RESET_STREAM = "error.reset.stream",
 
-		/**
-		* An object is closed but shouldn't.
-		*/
+			/**
+			* An object is closed but shouldn't.
+			*/
 			ERROR_OBJECTISCLOSED = "error.objectisclosed",
 
-		/**
-		 * A time out.
-		 */
+			/**
+			 * A time out.
+			 */
 			ERROR_TIMEOUT = "error.timeout",
 
-		/**
-		 * Restart required.
-		 */
+			/**
+			 * Restart required.
+			 */
 			ERROR_RESTARTREQUIRED = "error.restart.required",
 
-		/**
-		 * Invariant: messswap <= 0
-		 */
+			/**
+			 * Invariant: messswap <= 0
+			 */
 			ERROR_INVARIANT_MESSSWAP = "error.invariant.messswap",
 
-		/**
-		 * No longdata packet.
-		 */
+			/**
+			 * No longdata packet.
+			 */
 			ERROR_LONGDATAEXPECTED = "error.longdata.expected",
 
-		/**
-		 * Invalid startposition for long data. 
-		 */
+			/**
+			 * Invalid startposition for long data. 
+			 */
 			ERROR_INVALID_STARTPOSITION = "error.invalid.startposition",
 
-		/**
-		 * SQL -> .NET type conversion.
-		 */
+			/**
+			 * SQL -> .NET type conversion.
+			 */
 			ERROR_CONVERSIONSQLNET = "error.conversion.sqlnet",
 
-		/**
-		 * .NET -> SQL type conversion.
-		 */
+			/**
+			 * .NET -> SQL type conversion.
+			 */
 			ERROR_CONVERSIONNETSQL = "error.conversion.netsql",
 
-		/**
-		 * Data -> any type conversion.
-		 */
+			/**
+			 * Data -> any type conversion.
+			 */
 			ERROR_CONVERSIONDATA = "error.conversion.data",
 
-		/**
-		 * VDN Number -> BigDecimal conversion.
-		 */
+			/**
+			 * VDN Number -> BigDecimal conversion.
+			 */
 			ERROR_CONVERSIONVDNnumber = "error.conversion.VDNnumber",
 
-		/**
-		 * VDN Number -> Special Null value.
-		 */
+			/**
+			 * VDN Number -> Special Null value.
+			 */
 			ERROR_CONVERSIONSpecialNullValue = "error.conversion.SpecialNullValue",
 
-		/**
-		 * Unsupported blob navigation.
-		 */
+			/**
+			 * Unsupported blob navigation.
+			 */
 			ERROR_MOVEBACKWARDINBLOB = "error.movebackwardinblob",
 
-		/**
-		 * Try to read ASCII data from LONG column.
-		 */
+			/**
+			 * Try to read ASCII data from LONG column.
+			 */
 			ERROR_ASCIIREADFROMLONG = "error.asciireadfromlong",
 
-		/**
-		 * Try to read binary data from LONG column.
-		 */
+			/**
+			 * Try to read binary data from LONG column.
+			 */
 			ERROR_BINARYREADFROMLONG = "error.binaryreadfromlong",
 
-		/**
-		 * Try to put ASCII data into LONG column.
-		 */
+			/**
+			 * Try to put ASCII data into LONG column.
+			 */
 			ERROR_ASCIIPUTTOLONG = "error.asciiputtolong",
 
 
-		/**
-		 * No data type translator.
-		 */
+			/**
+			 * No data type translator.
+			 */
 			ERROR_NOTRANSLATOR = "error.notranslator",
 
-		/**
-		 * Try to put binary data into LONG column.
-		 */
+			/**
+			 * Try to put binary data into LONG column.
+			 */
 			ERROR_BINARYPUTTOLONG = "error.binaryputtolong",
 
-		/**
-		 * Call of addBatch on prepared statement (not ok).
-		 */
+			/**
+			 * Call of addBatch on prepared statement (not ok).
+			 */
 			ERROR_PREPAREDSTATEMENT_ADDBATCH = "error.addbatch.preparedstatement",
 
-		/**
-		 * Try to execute null statement.
-		 */
+			/**
+			 * Try to execute null statement.
+			 */
 			ERROR_SQLSTATEMENT_NULL = "error.sqlstatement.null",
 
-		/**
-		 * Try to execute too long statement.
-		 */
+			/**
+			 * Try to execute too long statement.
+			 */
 			ERROR_SQLSTATEMENT_TOOLONG = "error.sqlstatement.toolong",
 
-		/**
-		 * IN or OUT param missing.
-		 */
+			/**
+			 * IN or OUT param missing.
+			 */
 			ERROR_MISSINGINOUT = "error.missinginout",
 
-		/**
-		 * Statement in batch generated result set.
-		 */
+			/**
+			 * Statement in batch generated result set.
+			 */
 			ERROR_BATCHRESULTSET = "error.batchresultset",
 
-		/**
-		 * Statement in batch generated result set.
-		 */
+			/**
+			 * Statement in batch generated result set.
+			 */
 			ERROR_BATCHRESULTSET_WITHNUMBER = "error.batchresultset.withnumber",
 
-		/**
-		 * Procedure call in batch contained OUT/INOUT.
-		 */
+			/**
+			 * Procedure call in batch contained OUT/INOUT.
+			 */
 			ERROR_BATCHPROCOUT = "error.batchprocout",
 
-		/**
-		 * Procedure call in batch contained OUT/INOUT.
-		 */
+			/**
+			 * Procedure call in batch contained OUT/INOUT.
+			 */
 			ERROR_BATCHMISSINGIN = "error.batchmissingin",
 
-		/**
-		 * A statement executed as query delivered a row count.
-		 */
+			/**
+			 * A statement executed as query delivered a row count.
+			 */
 			ERROR_SQLSTATEMENT_ROWCOUNT = "error.sqlstatement.rowcount",
 
-		/**
-		 * A statement executed as update delivered a result set.
-		 */
+			/**
+			 * A statement executed as update delivered a result set.
+			 */
 			ERROR_SQLSTATEMENT_RESULTSET = "error.sqlstatement.resultset",
 
-		/**
-		 * A statement assumed to be a procedure call is not one.
-		 */
+			/**
+			 * A statement assumed to be a procedure call is not one.
+			 */
 			ERROR_SQLSTATEMENT_NOPROCEDURE = "error.sqlstatement.noprocedure",
 
-		/**
-		 * Column index not found.
-		 */
+			/**
+			 * Column index not found.
+			 */
 			ERROR_COLINDEX_NOTFOUND = "error.colindex.notfound",
 
-		/**
-		 * User name missing.
-		 */
+			/**
+			 * User name missing.
+			 */
 			ERROR_NOUSER = "error.nouser",
 
-		/**
-		 * Password missing.
-		 */
+			/**
+			 * Password missing.
+			 */
 			ERROR_NOPASSWORD = "error.nopassword",
 
-		/**
-		 * Password invalid.
-		 */
+			/**
+			 * Password invalid.
+			 */
 			ERROR_INVALIDPASSWORD = "error.invalidpassword",
 
-		/**
-		 * Savepoint for auto-commit mode session.
-		 */
+			/**
+			 * Savepoint for auto-commit mode session.
+			 */
 			ERROR_CONNECTION_AUTOCOMMIT = "error.connection.autocommit",
 
-		/**
-		 * Argument to row is 0.
-		 */
+			/**
+			 * Argument to row is 0.
+			 */
 			ERROR_ROW_ISNULL = "error.row.isnull",
 
-		/**
-		 * Try to get record at position < first.
-		 */
+			/**
+			 * Try to get record at position < first.
+			 */
 			ERROR_RESULTSET_BEFOREFIRST = "error.resultset.beforefirst",
 
-		/**
-		 * Try to get record at position > last.
-		 */
+			/**
+			 * Try to get record at position > last.
+			 */
 			ERROR_RESULTSET_AFTERLAST = "error.resultset.afterlast",
 
-		/**
-		 * Try to fetch <0 or >maxrows items
-		 */
+			/**
+			 * Try to fetch <0 or >maxrows items
+			 */
 			ERROR_INVALID_FETCHSIZE = "error.invalid.fetchsize",
 
-		/**
-		 * Try to set a field size of too less or to much
-		 */
+			/**
+			 * Try to set a field size of too less or to much
+			 */
 			ERROR_INVALID_MAXFIELDSIZE = "error.invalid.maxfieldsize",
 
-		/**
-		 * Try to set maxrows to less than 0.
-		 */
+			/**
+			 * Try to set maxrows to less than 0.
+			 */
 			ERROR_INVALID_MAXROWS = "error.invalid.maxrows",
 
-		/**
-		 * Try to set query timeout < 0.
-		 */
+			/**
+			 * Try to set query timeout < 0.
+			 */
 			ERROR_INVALID_QUERYTIMEOUT = "error.invalid.querytimeout",
 
-		/**
-		 * Try to update r/o result set.
-		 */
+			/**
+			 * Try to update r/o result set.
+			 */
 			ERROR_RESULTSET_NOTUPDATABLE = "error.resultset.notupdatable",
 
-		/**
-		 * Try to retrieve named savepoint by index.
-		 */
+			/**
+			 * Try to retrieve named savepoint by index.
+			 */
 			ERROR_NAMED_SAVEPOINT = "error.named.savepoint",
 
-		/**
-		 * Try to retrieve unnamed savepoint by name.
-		 */
+			/**
+			 * Try to retrieve unnamed savepoint by name.
+			 */
 			ERROR_UNNAMED_SAVEPOINT = "error.unnamed.savepoint",
 
-		/**
-		 * Try to use something as save point.
-		 */
+			/**
+			 * Try to use something as save point.
+			 */
 			ERROR_NO_SAVEPOINTSAPDB = "error.nosavepointsapdb",
 
-		/**
-		 * Try to use released savepoint
-		 */
+			/**
+			 * Try to use released savepoint
+			 */
 			ERROR_SAVEPOINT_RELEASED = "error.savepoint.released",
 
-		/**
-		 * Parse id part not found.
-		 */
+			/**
+			 * Parse id part not found.
+			 */
 			ERROR_PARSE_NOPARSEID = "error.parse.noparseid",
 
-		/**
-		 * No column names delivered from kernel.
-		 */
+			/**
+			 * No column names delivered from kernel.
+			 */
 			ERROR_NO_COLUMNNAMES = "error.no.columnnames",
 
-		/**
-		 * Fieldinfo part not found.
-		 */
+			/**
+			 * Fieldinfo part not found.
+			 */
 			ERROR_PARSE_NOFIELDINFO = "error.parse.nofieldinfo",
 
-		/**
-		 * Data part not found after execute.
-		 */
+			/**
+			 * Data part not found after execute.
+			 */
 			ERROR_NODATAPART = "error.nodatapart",
 
-		/**
-		 * Statement assigned for updatable is not
-		 */
+			/**
+			 * Statement assigned for updatable is not
+			 */
 			ERROR_NOTUPDATABLE = "error.notupdatable",
 
-		/**
-		 * Call statement did not deliver output data (DB Procedure stopped).
-		 */
+			/**
+			 * Call statement did not deliver output data (DB Procedure stopped).
+			 */
 			ERROR_NOOUTPARAMDATA = "error.nooutparamdata",
 
-		/**
-		 * Unknown kind of part.
-		 */
+			/**
+			 * Unknown kind of part.
+			 */
 			WARNING_PART_NOTHANDLED="warning.part.nothandled",
 
-		/**
-		 * SQL Exception while updating result set.
-		 */
+			/**
+			 * SQL Exception while updating result set.
+			 */
 			ERROR_INTERNAL_PREPAREHELPER = "error.internal.preparehelper",
 
-		/**
-		 * Connection field is null.
-		 */
+			/**
+			 * Connection field is null.
+			 */
 			ERROR_INTERNAL_CONNECTIONNULL = "error.internal.connectionnull",
 
-		/**
-		 * No more input expected at this place.
-		 */
+			/**
+			 * No more input expected at this place.
+			 */
 			ERROR_INTERNAL_UNEXPECTEDINPUT = "error.internal.unexpectedinput",
 
-		/**
-		 * No more output expected at this place.
-		 */
+			/**
+			 * No more output expected at this place.
+			 */
 			ERROR_INTERNAL_UNEXPECTEDOUTPUT = "error.internal.unexpectedoutput",
 
-		/**
-		 * Internal JDBC error: parse id is null.
-		 */
+			/**
+			 * Internal JDBC error: parse id is null.
+			 */
 			ERROR_INTERNAL_INVALIDPARSEID = "error.internal.invalidParseid",
 
-		/**
-		 * No updatable columns found.
-		 */
+			/**
+			 * No updatable columns found.
+			 */
 			ERROR_NOCOLUMNS_UPDATABLE = "error.nocolumns.updatable",
 
-		/**
-		 * Runtime: unknown host.
-		 */
+			/**
+			 * Runtime: unknown host.
+			 */
 			ERROR_UNKNOWN_HOST = "error.unknown.host",
 
-		/**
-		 * Runtime: connect to host failed.
-		 */
+			/**
+			 * Runtime: connect to host failed.
+			 */
 			ERROR_HOST_CONNECT = "error.host.connect",
 
-		/**
-		 * Runtime: execution failed.
-		 */
+			/**
+			 * Runtime: execution failed.
+			 */
 			ERROR_EXEC_FAILED = "error.exec.failed",
     
-		/**
-		 * Runtime: connect to host failed.
-		 */
+			/**
+			 * Runtime: connect to host failed.
+			 */
 			ERROR_HOST_NICONNECT = "error.host.niconnect",
        
-		/**
-		 * Runtime: connect to host failed.
-		 */
+			/**
+			 * Runtime: connect to host failed.
+			 */
 			ERROR_WRONG_CONNECT_URL = "error.host.wrongconnecturl",
-		/**
-		 * Runtime: load ni libraries failed.
-		 */
+			/**
+			 * Runtime: load ni libraries failed.
+			 */
 			ERROR_LOAD_NILIBRARY = "error.host.niloadlibrary",
-		/**
-		 * Runtime: receive of connect failed.
-		 */
+			/**
+			 * Runtime: receive of connect failed.
+			 */
 			ERROR_RECV_CONNECT = "error.recv.connect",
 
-		/**
-		 * Runtime: receive garbled reply
-		 */
+			/**
+			 * Runtime: receive garbled reply
+			 */
 			ERROR_REPLY_GARBLED = "error.connectreply.garbled",
 
-		/**
-		 * Runtime: connect reply receive failed
-		 */
+			/**
+			 * Runtime: connect reply receive failed
+			 */
 			ERROR_CONNECT_RECVFAILED = "error.connect.receivefailed",
 
-		/**
-		 * Runtime: data receive failed
-		 */
+			/**
+			 * Runtime: data receive failed
+			 */
 			ERROR_DATA_RECVFAILED = "error.data.receivefailed",
 
-		/**
-		 * Runtime: data receive failed (w reason)
-		 */
+			/**
+			 * Runtime: data receive failed (w reason)
+			 */
 			ERROR_DATA_RECVFAILED_REASON = "error.data.receivefailed.reason",
 
-		/**
-		 * Runtime: reconnect on admin session unsupported
-		 */
+			/**
+			 * Runtime: reconnect on admin session unsupported
+			 */
 			ERROR_ADMIN_RECONNECT = "error.admin.reconnect",
 
-		/**
-		 * Runtime: invalid swapping
-		 */
+			/**
+			 * Runtime: invalid swapping
+			 */
 			ERROR_INVALID_SWAPPING = "error.invalid.swapping",
 
-		/**
-		 * Runtime: send: getoutputstream failed (IO exception)
-		 */
+			/**
+			 * Runtime: send: getoutputstream failed (IO exception)
+			 */
 			ERROR_SEND_GETOUTPUTSTREAM = "error.send.getoutputstream",
 
-		/**
-		 * Runtime: send: write failed (IO exception)
-		 */
+			/**
+			 * Runtime: send: write failed (IO exception)
+			 */
 			ERROR_SEND_WRITE = "error.send.write",
 
-		/**
-		 * Runtime: chunk overflow in read
-		 */
+			/**
+			 * Runtime: chunk overflow in read
+			 */
 			ERROR_CHUNKOVERFLOW = "error.chunkoverflow",
 
-		/**
-		 * Util/printf: too few arguments for formatting.
-		 */
+			/**
+			 * Util/printf: too few arguments for formatting.
+			 */
 			ERROR_FORMAT_TOFEWARGS = "error.format.toofewargs",
 
-		/**
-		 * Util/printf: format string must start with '%'
-		 */
+			/**
+			 * Util/printf: format string must start with '%'
+			 */
 			ERROR_FORMAT_PERCENT = "error.format.percent",
 
-		/**
-		 * Util/printf: number object is not a number
-		 */
+			/**
+			 * Util/printf: number object is not a number
+			 */
 			ERROR_FORMAT_NOTANUMBER = "error.format.notanumber",
 
-		/**
-		 * Util/printf: unknown format spec
-		 */
+			/**
+			 * Util/printf: unknown format spec
+			 */
 			ERROR_FORMAT_UNKNOWN = "error.format.unknown",
 
-		/**
-		 * Util/printf: number object is not a number
-		 */
+			/**
+			 * Util/printf: number object is not a number
+			 */
 			ERROR_FORMAT_TOOMANYARGS = "error.format.toomanyargs",
 
-		/**
-		 * No result set.
-		 */
+			/**
+			 * No result set.
+			 */
 			WARNING_EMPTY_RESULTSET="warning.emptyresultset",
 
-		/**
-		 * <code>executeQuery(String)</code> called on <code>PreparedStatement</code>.
-		 */
+			/**
+			 * <code>executeQuery(String)</code> called on <code>PreparedStatement</code>.
+			 */
 			ERROR_EXECUTEQUERY_PREPAREDSTATEMENT = "error.executequery.preparedstatement",
 
-		/**
-		 * <code>executeUpdate(String)</code> called on <code>PreparedStatement</code>.
-		 */
+			/**
+			 * <code>executeUpdate(String)</code> called on <code>PreparedStatement</code>.
+			 */
 			ERROR_EXECUTEUPDATE_PREPAREDSTATEMENT = "error.executeupdate.preparedstatement",
 
-		/**
-		 * Internal: <code>maxRows</code> inside result but end of result unknown (should not happen).
-		 */
+			/**
+			 * Internal: <code>maxRows</code> inside result but end of result unknown (should not happen).
+			 */
 			ERROR_ASSERTION_MAXROWS_IN_RESULT = "error.assertion.maxrowsinresult",
 
-		/**
-		 * An illegal operation for a FORWARD_ONLY result set.
-		 */
+			/**
+			 * An illegal operation for a FORWARD_ONLY result set.
+			 */
 			ERROR_RESULTSET_FORWARDONLY = "error.resultset.forwardonly",
 
-		/**
-		 * <code>cancelRowUpdates</code> called while on insert row.
-		 */
+			/**
+			 * <code>cancelRowUpdates</code> called while on insert row.
+			 */
 			ERROR_CANCELUPDATES_INSERTROW = "error.cancelupdates.insertrow",
 
-		/**
-		 * <code>deleteRow</code> called while on insert row.
-		 */
+			/**
+			 * <code>deleteRow</code> called while on insert row.
+			 */
 			ERROR_DELETEROW_INSERTROW = "error.deleterow.insertrow",
 
-		/**
-		 * <code>deleteRow</code> called while on insert row.
-		 */
+			/**
+			 * <code>deleteRow</code> called while on insert row.
+			 */
 			ERROR_UPDATEROW_INSERTROW = "error.updaterow.insertrow",
 
-		/**
-		 * <code>insertRow</code> called while not on insert row.
-		 */
+			/**
+			 * <code>insertRow</code> called while not on insert row.
+			 */
 			ERROR_INSERTROW_INSERTROW = "error.insertrow.insertrow",
 
-		/**
-		 * <code>deleteRow</code> called while not positioned at a row
-		 */
+			/**
+			 * <code>deleteRow</code> called while not positioned at a row
+			 */
 			ERROR_DELETEROW_NOROW = "error.deleterow.norow",
 
-		/**
-		 * <code>updateRow</code> called while not positioned at a row
-		 */
+			/**
+			 * <code>updateRow</code> called while not positioned at a row
+			 */
 			ERROR_UPDATEROW_NOROW = "error.updaterow.norow",
 
-		/**
-		 * Reading from a stream resulted in an IOException
-		 */
+			/**
+			 * Reading from a stream resulted in an IOException
+			 */
 			ERROR_STREAM_IOEXCEPTION = "error.stream.ioexception",
 
-		/**
-		 * Problem in access to DatabaseMetaData.
-		 */
+			/**
+			 * Problem in access to DatabaseMetaData.
+			 */
 			ERROR_NOMETADATA = "error.nometadata",
 
-		// jdbcext messages
+			// Column nullable unknown
+			ERROR_DBNULL_UNKNOWN = "error.dbnull.unknown",
+
+			// jdbcext messages
 			ERROR_DATABASE_NOT_SET = "error.database.notset",
 			ERROR_CONNECTION_INVALIDATED = "error.connection.invalidated",
 			ERROR_COMMIT_XASESSION = "error.commit.xasession",
@@ -654,7 +658,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			ERROR_JNDILOOKUP_FAILED = "error.connection.JNDILookup",
 
-		// unsupported database features
+			// unsupported database features
 			ERROR_ARRAY_UNSUPPORTED = "error.array.unsupported",
 			ERROR_TIMEZONE_UNSUPPORTED = "error.timezone.unsupported",
 			ERROR_REF_UNSUPPORTED = "error.ref.unsupported",
@@ -663,7 +667,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			ERROR_AUTOGENKEYS_RETRIEVAL_UNSUPPORTED = "error.autogenkeys.retrieval.unsupported",
 			ERROR_SPECIAL_NUMBER_UNSUPPORTED = "error.special.number.unsupported",
 
-		// unimplemented todos
+			// unimplemented todos
 			ERROR_SETBYTES_NOTIMPLEMENTED = "error.setbytes.notimplemented",
 			ERROR_SETBINARYSTREAM_NOTIMPLEMENTED = "error.setbinarystream.notimplemented",
 			ERROR_TRUNCATE_NOTIMPLEMENTED = "error.truncate.notimplemented",
@@ -679,7 +683,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			ERROR_MEMORYRESULT_METHOD_NOTIMPLEMENTED = "error.memoryresult.method.notimplemented",
 			ERROR_CODESET_UNSUPPORTED = "error.codeset.unsupported",
 	
-		// communication errors
+			// communication errors
 			COMMERROR_OK="commerror.ok",
 			COMMERROR_CONNECTDOWN="commerror.connectiondown",
 			COMMERROR_TASKLIMIT="commerror.tasklimit",
@@ -695,7 +699,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			COMMERROR_UNKNOWNREQUEST="commerror.unknownrequest",
 			COMMERROR_SERVERDBUNKNOWN="commerror.serverdbunknown",
 
-		// OMS Streams
+			// OMS Streams
 			ERROR_STREAM_ODDSIZE = "error.stream.oddsize",
 			ERROR_CONVERSION_STRINGSTREAM  = "error.stream.conversion.string",
 			ERROR_STREAM_SOURCEREAD = "error.stream.sourceread",
@@ -713,14 +717,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			ERROR_STRUCT_ELEMENT_OVERFLOW = "error.structure.element.overflow",
 			ERROR_STREAM_BLOB_UNSUPPORTED = "error.stream.blob.unsupported",
 			ERROR_INVALID_BLOB_POSITION = "error.invalid.blob.position",	
-		// LONG in DBPROCs
+			// LONG in DBPROCs
 			ERROR_UNKNOWN_PROCEDURELONG = "error.unknown.procedurelong",
 			ERROR_MESSAGE_NOT_AVAILABLE = "error.message.notavailable",
 
-		// Connection
+			// Connection
 			ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED = "error.connection.wrongserverchallengereceived",
 			ERROR_CONNECTION_CHALLENGERESPONSENOTSUPPORTED = "error.connection.challengeresponsenotsupported",
-		// the rest
+			// the rest
 			ERROR="error",
 			UNKNOWNTYPE="unknowntype",
 			COMMERROR="commerror",
@@ -865,7 +869,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			Command                 =   3,
 			ConvTablesReturned      =   4,
 			Data                    =   5,
-			Errortext               =   6,
+			ErrorText               =   6,
 			GetInfo                 =   7,
 			Modulname               =   8,
 			Page                    =   9,
@@ -878,7 +882,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			Surrogate               =  16,
 			Bdinfo                  =  17,
 			Longdata                =  18,
-			Tablename               =  19,
+			TableName               =  19,
 			SessionInfoReturned     =  20,
 			OutputColsNoParameter   =  21,
 			Key                     =  22,
@@ -925,7 +929,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			Fill7                   =   7,
 			LastPacket_Ext          =   1,
 			NextPacket_Ext          =   2,
-			FirstPacket_Etx         =   4;
+			FirstPacket_Ext         =   4;
 	}
 
 	//
@@ -940,7 +944,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			UseToAscii = 2,
 			UseUCS2_Swap = 3,
 
-		// tsp00_ValMode
+			// tsp00_ValMode
 			DataPart = 0,
 			AllData = 1,
 			LastData = 2,
@@ -952,7 +956,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			Error = 8,
 			StartposInvalid = 9,
 
-		// infoset
+			// infoset
 			ExTrigger = 1,
 			WithLock = 2,
 			NoCLose = 4,
@@ -961,7 +965,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			IsCatalog = 32,
 			Unicode = 64,
 
-		// state
+			// state
 			StateUseTermChar   = 1, 
 			StateStream        = 1, 
 			StateUseConversion = 2,
@@ -972,13 +976,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			StateCopy          = 64,
 			StateFirstCall     = 128,
     
-		// tsp00_LongDescBlock = RECORD
+			// tsp00_LongDescBlock = RECORD
 			Descriptor = 0,   // c8
 			Tabid = 8,        // c8
 			MaxLen = 16,      // c4
 			InternPos = 20,   // i4
 			Infoset = 24,     // set1
-			State = 25,		// bool
+			State = 25,		  // bool
 			unused1 = 26,     // c1
 			Valmode = 27,     // i1
 			Valind = 28,      // i2
@@ -1011,25 +1015,25 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	internal class GCMode
 	{
 		public const int 
-		/**
-		 * Control flag for garbage collection on execute. If this is
-		 * set, old cursors/parse ids are sent <i>together with</i> the current
-		 * statement for being dropped.
-		 */
-		GC_ALLOWED = 1,
+			/**
+			 * Control flag for garbage collection on execute. If this is
+			 * set, old cursors/parse ids are sent <i>together with</i> the current
+			 * statement for being dropped.
+			 */
+			GC_ALLOWED = 1,
 
-		/**
-		 * Control flag for garbage collection on execute. If this is
-		 * set, old cursors/parse ids are sent <i>after</i> the current
-		 * statement for being dropped.
-		 */
-		GC_DELAYED = 2,
+			/**
+			 * Control flag for garbage collection on execute. If this is
+			 * set, old cursors/parse ids are sent <i>after</i> the current
+			 * statement for being dropped.
+			 */
+			GC_DELAYED = 2,
 
-		/**
-		 * Control flag for garbage collection on execute. If this is
-		 * set, nothing is done to drop cursors or parse ids.
-		 */
-		GC_NONE    = 3;
+			/**
+			 * Control flag for garbage collection on execute. If this is
+			 * set, nothing is done to drop cursors or parse ids.
+			 */
+			GC_NONE    = 3;
 	}
 
 	public class FunctionCode 
@@ -1209,6 +1213,181 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			OMIT_REPLY_PART = 	0x72;   // = r
 	}
 
+	internal class DataType 
+	{
+		public const byte
+			MIN       		= 0,            
+			FIXED     		= MIN, 
+			FLOAT     		= 1,            
+			CHA       		= 2,            
+			CHE       		= 3,            
+			CHB       		= 4,            
+			ROWID     		= 5,            
+			STRA      		= 6,            
+			STRE      		= 7,            
+			STRB      		= 8,            
+			STRDB     		= 9,            
+			DATE      		= 10,           
+			TIME      		= 11,           
+			VFLOAT    		= 12,           
+			TIMESTAMP 		= 13,           
+			UNKNOWN   		= 14,           
+			NUMBER    		= 15,           
+			NONUMBER  		= 16,           
+			DURATION  		= 17,           
+			DBYTEEBCDIC		= 18,         
+			LONGA     		= 19,           
+			LONGE     		= 20,           
+			LONGB     		= 21,           
+			LONGDB    		= 22,           
+			BOOLEAN   		= 23,           
+			UNICODE   		= 24,           
+			DTFILLER1 		= 25,           
+			DTFILLER2 		= 26,           
+			DTFILLER3 		= 27,           
+			DTFILLER4 		= 28,           
+			SMALLINT  		= 29,           
+			INTEGER   		= 30,           
+			VARCHARA  		= 31,           
+			VARCHARE  		= 32,           
+			VARCHARB  		= 33,           
+			STRUNI    		= 34,           
+			LONGUNI   		= 35,           
+			VARCHARUNI		= 36,          
+			UDT				= 37,           
+			ABAPTABHANDLE	= 38,       
+			DWYDE			= 39,           
+			MAX				= DWYDE;
+
+		public static readonly string[] stringValues = 
+		{
+			"FIXED",
+			"FLOAT",
+			"CHAR ASCII",
+			"CHAR EBCDIC",
+			"CHAR BYTE",
+			"ROWID",
+			"STRA",
+			"STRE",
+			"STRB",
+			"STRDB",
+			"DATE",
+			"TIME",
+			"VFLOAT",
+			"TIMESTAMP",
+			"UNKNOWN",
+			"NUMBER",
+			"NONUMBER",
+			"DURATION",
+			"DBYTEEBCDIC",
+			"LONG ASCII",
+			"LONG EBCDIC",
+			"LONG BYTE",
+			"LONGDB",
+			"BOOLEAN",
+			"UNICODE",
+			"DTFILLER1",
+			"DTFILLER2",
+			"DTFILLER3",
+			"DTFILLER4",
+			"SMALLINT",
+			"INTEGER",
+			"VARCHAR ASCII",
+			"VARCHAR EBCDIC",
+			"VARCHAR BYTE",
+			"STRUNI",
+			"LONG UNICODE",
+			"VARCHAR UNICODE",
+			"UDT",
+			"ABAP STREAM",
+			"DWYDE"
+		};
+	}
+
+	//copies of tsp1_param_opt_type, tsp1_param_io_type, tsp1_param_info
+	internal class ParamInfo 
+	{
+		// param modes, declared as set values
+		public const int Mandatory = 1;
+		public const int Optional = 2;
+		public const int Default = 4;
+		public const int EscapeChar = 8;
+		// param io types
+		public const int Input = 0;
+		public const int Output = 1;
+		public const int InOut = 2;
+		// layout of tsp1_param_info
+		public const int ModeOffset = 0;     // Set 1
+		public const int IOTypeOffset = 1;   // enum 1
+		public const int DataTypeOffset = 2; // enum1
+		public const int FracOffset = 3;     // int1
+		public const int LengthOffset = 4;   // int2
+		public const int InOutLenOffset = 6; // int2
+		public const int BufPosOffset = 8;   // int4
+		public const int ParamNoOffset  = 8;    // int2
+		public const int ReadOnlyOffset = 10;   // int1
+		public const int SerialOffset    = 11;   // int1
+		// The size of tsp1_param_info 
+		public const int ParamInfo_END = 12;
+	}
+
+	internal class Vsp00Consts
+	{
+		public const int KnlIdentifier   = 32;
+		public const byte DefinedBinary  = 0;
+		public const byte DefinedUnicode = 1;
+		public const byte DefinedAscii   = (byte) ' ';
+		public const byte UndefByte      = (byte) 0xff;
+		public const byte NormalSwap     = 1;
+		public const byte FullSwap       = 2;
+	}
+
+	internal class StreamHandle 
+	{
+		public const int Header_Length = 20;	
+		public const int RowDef    = 0;
+		public const int TabHandle = 4;
+	
+		public const int TabHandle_Reserved  =  4;
+		public const int TabHandle_Rowsize   =  8;
+		public const int TabHandle_ColCount  = 10;
+		public const int TabHandle_RowCount  = 12;
+		public const int TabHandle_ABAPTabID = 16;
+		public const int TabHandle_ColDesc_0 = 20;
+	
+		public const int ColDesc_InOut     = 0;
+		public const int ColDesc_ABAPType  = 1;
+		public const int ColDesc_Dec       = 2;
+		public const int ColDesc_Length    = 4;
+		public const int ColDesc_Offset    = 6;
+	
+		public const int ColDesc_Size      = 8;	
+	
+		public const int StreamType_Bool   = 0;
+		public const int StreamType_Int1   = 1;
+		public const int StreamType_UInt1  = 2;
+		public const int StreamType_Int2   = 3;
+		public const int StreamType_UInt2  = 4;
+		public const int StreamType_Int4   = 5;
+		public const int StreamType_UInt4  = 6;
+		public const int StreamType_Int8   = 7;
+		public const int StreamType_UInt8  = 8;
+		public const int StreamType_Float  = 9;
+		public const int StreamType_Double = 10;
+		public const int StreamType_Int    = 12;
+		public const int StreamType_UInt   = 13;
+		public const int StreamType_Char   = 14;
+		public const int StreamType_WChar  = 15;
+		public const int StreamType_UDT    = 16;
+		public const int StreamType_WYDE   = 17;
+	
+		public const int Stream_IN    = 0;
+		public const int Stream_OUT   = 1;
+		public const int Stream_INOUT = 2;
+	
+	}
+
+
 	/// <summary>
 	/// Summary description for Consts.
 	/// </summary>
@@ -1217,8 +1396,16 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		// some constants
 		public const byte ASCIIClient              =      0;
 		public const byte UnicodeSwapClient        =     19;
-		public const byte RSQL_WIN32               =     13;
-		public const byte RSQL_JAVA                = RSQL_WIN32;
+		public const byte UnicodeClient			   =     20;
+		public const byte RSQL_DOTNET              =     13;
+
+		public static readonly int unicodeWidth = System.Text.Encoding.Unicode.GetByteCount(" ");
+		public const int fillBufSize = 1024;
+		public const string blankChar = " ";
+		public static readonly byte[] zeroBytes = new byte [fillBufSize];
+		public static readonly byte[] blankBytes = new byte[fillBufSize];
+		public static readonly byte[] blankUnicodeBytes = new byte[fillBufSize * unicodeWidth];
+		public static readonly byte[] blankBigEndianUnicodeBytes = new byte[fillBufSize * unicodeWidth];
 
 		public const int AlignValue				   = 8;
 
@@ -1234,5 +1421,16 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public const string AppID = "ADO";
 		public const string ApplVers = "10100";
+
+		static Consts()
+		{
+			for (int i = 0; i < fillBufSize; i += unicodeWidth) 
+			{
+				zeroBytes[i] = zeroBytes [i + 1] = 0;
+				blankBytes[i] = blankBytes[i + 1] = Encoding.ASCII.GetBytes(blankChar)[0];
+				Encoding.Unicode.GetBytes(blankChar).CopyTo(blankUnicodeBytes, 0);
+				Encoding.BigEndianUnicode.GetBytes(blankChar).CopyTo(blankBigEndianUnicodeBytes, 0);
+			}
+		}
 	}
 }

@@ -1,6 +1,9 @@
 using System;
 using System.Data;
 using System.Text;
+using System.Collections;
+using System.ComponentModel;
+using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider
 {
@@ -8,16 +11,23 @@ namespace MaxDBDataProvider
 	{
 		MaxDBConnection  m_connection;
 		MaxDBTransaction  m_txn;
-		string      m_sCmdText;
+		string m_sCmdText;
 		UpdateRowSource m_updatedRowSource = UpdateRowSource.None;
 		MaxDBParameterCollection m_parameters = new MaxDBParameterCollection();
 		CommandType m_sCmdType = CommandType.Text;
-		IntPtr stmt = IntPtr.Zero;
+		
+		IntPtr m_stmt = IntPtr.Zero;
+
+		private bool m_setWithInfo = false;
+		private string m_cursorName;
+		private int m_rowsAffected = -1;
+		private bool m_hasRowCount = false;
+		private ArrayList m_warnings = new ArrayList();
 
 		// Implement the default constructor here.
 		public MaxDBCommand()
 		{
-			stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
+			m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
 		}
 
 		// Implement other constructors here.
@@ -30,7 +40,7 @@ namespace MaxDBDataProvider
 		{
 			m_sCmdText    = cmdText;
 			m_connection  = connection;
-			stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
+			m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
 		}
 
 		public MaxDBCommand(string cmdText, MaxDBConnection connection, MaxDBTransaction txn)
@@ -38,7 +48,7 @@ namespace MaxDBDataProvider
 			m_sCmdText    = cmdText;
 			m_connection  = connection;
 			m_txn      = txn;
-			stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
+			m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
 		}
 
 		/****
@@ -149,15 +159,15 @@ namespace MaxDBDataProvider
 			try
 			{
 				if (m_connection.DatabaseEncoding is UnicodeEncoding)
-					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(stmt, m_connection.DatabaseEncoding.GetBytes(m_sCmdText), StringEncodingType.UCS2Swapped);
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(m_stmt, m_connection.DatabaseEncoding.GetBytes(m_sCmdText), StringEncodingType.UCS2Swapped);
 				else
-					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, m_sCmdText);
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(m_stmt, m_sCmdText);
 			
 				if(rc != SQLDBC_Retcode.SQLDBC_OK) 
 					throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-						SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+						SQLDBC.SQLDBC_PreparedStatement_getError(m_stmt)));
 
-				BindAndExecute(stmt, m_parameters);
+				BindAndExecute(m_stmt, m_parameters);
 			}
 			catch
 			{
@@ -197,23 +207,23 @@ namespace MaxDBDataProvider
 			try
 			{
 				if (m_connection.DatabaseEncoding is UnicodeEncoding)
-					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(stmt, m_connection.DatabaseEncoding.GetBytes(m_sCmdText), StringEncodingType.UCS2Swapped);
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(m_stmt, m_connection.DatabaseEncoding.GetBytes(m_sCmdText), StringEncodingType.UCS2Swapped);
 				else
-					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(stmt, m_sCmdText);
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(m_stmt, m_sCmdText);
 			
 				if(rc != SQLDBC_Retcode.SQLDBC_OK) 
 					throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-						SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+						SQLDBC.SQLDBC_PreparedStatement_getError(m_stmt)));
 
-				BindAndExecute(stmt, m_parameters);
+				BindAndExecute(m_stmt, m_parameters);
 
 				/*
 				* Check if the SQL command return a resultset and get a result set object.
 				*/  
-				IntPtr result = SQLDBC.SQLDBC_PreparedStatement_getResultSet(stmt);
+				IntPtr result = SQLDBC.SQLDBC_PreparedStatement_getResultSet(m_stmt);
 				if(result == IntPtr.Zero) 
 					throw new Exception("SQL command doesn't return a result set " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-						SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+						SQLDBC.SQLDBC_PreparedStatement_getError(m_stmt)));
 
 				return new MaxDBDataReader(result);				
 			}
@@ -528,10 +538,231 @@ namespace MaxDBDataProvider
 
 		void IDisposable.Dispose() 
 		{
-			if (stmt != IntPtr.Zero)
-				SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.m_connHandler, stmt);
+			if (m_stmt != IntPtr.Zero)
+				SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.m_connHandler, m_stmt);
 			System.GC.SuppressFinalize(this);
 		}
+
+		#region "Methods to support native protocol"
+
+		private MaxDBReplyPacket sendCommand(MaxDBRequestPacket requestPacket, string sqlCmd, int gcFlags, bool parseAgain)
+		{
+			MaxDBReplyPacket replyPacket;
+			requestPacket.initDbsCommand(m_connection.m_autocommit, sqlCmd);
+			if (m_setWithInfo)
+				requestPacket.setWithInfo();
+			requestPacket.addCursorPart(m_cursorName);
+			replyPacket = m_connection.Exec(requestPacket, this, gcFlags);
+			return replyPacket;
+		}
+
+		private MaxDBReplyPacket sendSQL(string sql, bool parseAgain)
+		{
+			MaxDBRequestPacket requestPacket;
+			MaxDBReplyPacket replyPacket;
+			string actualSQL = sql;
+
+			try
+			{
+
+				requestPacket = m_connection.CreateRequestPacket();
+				replyPacket = sendCommand(requestPacket, sql, GCMode.GC_ALLOWED, parseAgain);
+			}
+			catch (IndexOutOfRangeException) 
+			{
+				// tbd: info about current length?
+				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_SQLSTATEMENT_TOOLONG), "42000");
+			}
+
+			return replyPacket;
+		}
+
+		public bool Exec(string sql)
+		{
+			m_setWithInfo = true;
+			return Exec(sql, false);
+		}
+
+		private bool Exec(string sql, bool forQuery)
+		{
+			ClearWarnings();
+
+			assertOpen();
+			MaxDBRequestPacket requestPacket;
+			MaxDBReplyPacket replyPacket;
+			bool isQuery;
+			string actualSQL = sql;
+			bool inTrans = m_connection.IsInTransaction;
+
+			if (sql == null) 
+				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_SQLSTATEMENT_NULL), "42000");
+
+			try 
+			{
+				//CloseResultSet(true);
+
+				replyPacket = sendSQL(sql, false);
+				isQuery = ParseResult(replyPacket, sql, null, null);
+			}
+			catch (TimeoutException) 
+			{
+				if (inTrans) 
+					throw;
+				else 
+					isQuery = Exec(sql, forQuery);
+			}
+			return isQuery;
+		}
+
+		private void assertOpen() 
+		{
+			if (m_connection == null || m_connection.m_comm == null) 
+				throw new ObjectIsClosedException();
+		}
+
+		protected bool ParseResult(MaxDBReplyPacket replyPacket, string sqlCmd, DBTechTranslator[] infos, string[] columnNames)
+		{
+			string tableName = null;
+			bool isQuery = false;
+			bool rowNotFound = false;
+			bool dataPartFound = false;
+			
+			m_rowsAffected = -1;
+			m_hasRowCount  = false;
+			int functionCode = replyPacket.funcCode;
+			if (functionCode == FunctionCode.Select || functionCode == FunctionCode.Show || 
+				functionCode == FunctionCode.DBProcWithResultSetExecute || functionCode == FunctionCode.Explain) 
+				isQuery = true;
+
+			replyPacket.ClearPartOffset();
+			for(int i = 0; i < replyPacket.partCount; i++) 
+			{
+				replyPacket.nextPart();
+				switch (replyPacket.partKind) 
+				{
+					case PartKind.ColumnNames:
+					{
+						if (columnNames == null)
+							columnNames = replyPacket.parseColumnNames();
+						break;
+					}
+					case PartKind.ShortInfo:
+					{
+						if (infos==null)
+							infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, false);
+						break;
+					}
+					case PartKind.Vardata_Shortinfo:
+					{
+						if (infos == null)
+							infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, true);
+						break;
+					}
+					case PartKind.ResultCount:
+						// only if this is not a query
+						if(!isQuery) 
+						{
+							m_rowsAffected = replyPacket.ResultCount(true);
+							m_hasRowCount = true;
+						}
+						break;
+					case PartKind.ResultTableName: 
+					{
+						string cname = replyPacket.readASCII(replyPacket.PartDataPos, replyPacket.partLength);
+						if (cname.Length > 0) m_cursorName = cname;
+						break;
+					}
+					case PartKind.Data: 
+					{
+						dataPartFound = true;
+						break;
+					}
+					case PartKind.ErrorText:
+					{
+						if (replyPacket.ReturnCode == 100) 
+						{
+							m_rowsAffected = -1;
+							rowNotFound = true;
+							if(!isQuery) m_rowsAffected = 0;// for any select update count must be -1
+						}
+						break;
+					}
+					case PartKind.TableName:
+						tableName = replyPacket.readASCII(replyPacket.PartDataPos, replyPacket.partLength);
+						break;
+					case PartKind.ParsidOfSelect:
+						// ignore
+						break;
+					default:
+						break;
+				}
+			}
+
+			if (isQuery)
+			{
+				if (replyPacket.nextSegment() != -1 && replyPacket.funcCode == FunctionCode.Describe)
+				{
+					bool newSFI = true;
+					replyPacket.ClearPartOffset();
+					for (int i = 0; i < replyPacket.partCount; i++) 
+					{
+						replyPacket.nextPart();
+						switch (replyPacket.partKind) 
+						{
+							case PartKind.ColumnNames:
+							{
+								if (columnNames == null)
+									columnNames = replyPacket.parseColumnNames();
+								break;
+							}
+							case PartKind.ShortInfo:
+							{
+								if (infos == null)
+									infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, false);
+								break;
+							}
+							case PartKind.Vardata_Shortinfo:
+							{
+								if (infos==null)
+									infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, true);
+								break;
+							}
+							case PartKind.ErrorText:
+							{
+								newSFI = false;
+								break;
+							}
+							default:
+								break;
+						}
+					}
+					
+					//if (newSFI)
+						//UpdateFetchInfo(infos, columnNames);
+					
+				}
+				
+				//if (dataPartFound)
+					//CreateResultSet (sqlCmd, tableName, m_cursorName, infos, columnNames, rowNotFound, replyPacket);
+				//else
+					//CreateResultSet (sqlCmd, tableName, m_cursorName, infos, columnNames, rowNotFound, null);
+				
+			} 
+			
+			return isQuery;
+		}
+
+		private void ClearWarnings() 
+		{
+			m_warnings.Clear();
+		}
+
+		private void AddWarning(WarningException warning)
+		{
+			m_warnings.Add(warning);
+		}
+
+		#endregion
 	}
 }
 
