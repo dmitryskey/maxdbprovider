@@ -1557,7 +1557,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 				int hour = ((int)raw[0]-'0')*10 + ((int)raw[1]-'0');
 				int min = ((int)raw[3]-'0')*10 + ((int)raw[4]-'0');
-				int sec = ((int)raw[3]-'0')*10 + ((int)raw[4]-'0');
+				int sec = ((int)raw[6]-'0')*10 + ((int)raw[7]-'0');
 
 				return new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, hour, min, sec);
 			}
@@ -1573,7 +1573,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public object TransTimeForInput(DateTime dt)
+		public virtual object TransTimeForInput(DateTime dt)
 		{
 			byte[] formattedTime = new byte[TimeSize];
 
@@ -1619,6 +1619,56 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				throw new MaxDBValueOverflowException(DataType.stringValues[dataType], -1);
 			dataPart.writeDefineByte((byte) ' ', bufpos - 1);
 			dataPart.writeASCIIBytes(bytes, bufpos, physicalLength - 1);
+		}
+	}
+
+	#endregion
+
+	#region "Unicode time data translator"
+
+	public class UnicodeTimeTranslator : TimeTranslator 
+	{
+		public UnicodeTimeTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos) 
+			: base(mode, ioType, dataType, len, ioLen, bufpos)
+		{
+		}
+
+		public override string GetString(SQLParamController controller, ByteArray mem)
+		{
+			return (!IsDBNull(mem) ? mem.readUnicode(bufpos, physicalLength - 1) : null);
+		}
+
+		public override DateTime GetDateTime(ByteArray mem)
+		{
+			if (!IsDBNull(mem)) 
+			{
+				byte[] raw = mem.readBytes(bufpos, physicalLength - 1);
+
+				int hour = ((int)raw[1]-'0')*10 + ((int)raw[3]-'0');
+				int min = ((int)raw[7]-'0')*10 + ((int)raw[9]-'0');
+				int sec = ((int)raw[13]-'0')*10 + ((int)raw[15]-'0');
+
+				return new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, hour, min, sec);
+			}
+			else
+				return DateTime.MinValue;
+		}
+
+		protected override void putSpecific(DataPart dataPart, object data)
+		{
+			byte[] bytes = (byte[])data;
+			if (bytes.Length > physicalLength - 1) 
+				throw new MaxDBValueOverflowException(DataType.stringValues[dataType], -1);
+			dataPart.writeDefineByte ((byte) 1, bufpos - 1);
+			dataPart.writeUnicodeBytes(bytes, bufpos, physicalLength - 1);
+		}
+
+		public override object TransTimeForInput(DateTime dt)
+		{
+			byte[] chars = (byte[])base.TransTimeForInput(dt);
+			byte[] bytes = Encoding.Unicode.GetBytes(Encoding.ASCII.GetString(chars));
+			CheckFieldLimits(bytes.Length);
+			return bytes;
 		}
 	}
 
@@ -1674,7 +1724,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public object TransTimestampForInput(DateTime dt)
+		public virtual object TransTimestampForInput(DateTime dt)
 		{
 			byte [] formattedTimestamp = new byte [TimestampSize];
 
@@ -1763,6 +1813,62 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#endregion
 
+	#region "Unicode timestamp data translator"
+
+	public class UnicodeTimestampTranslator : TimestampTranslator 
+	{
+		public UnicodeTimestampTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos) 
+			: base(mode, ioType, dataType, len, ioLen, bufpos)
+		{
+		}
+
+		public override string GetString(SQLParamController controller, ByteArray mem)
+		{
+			return (!IsDBNull(mem) ? mem.readUnicode(bufpos, physicalLength - 1) : null);
+		}
+
+		public override DateTime GetDateTime(ByteArray mem)
+		{
+			if (!IsDBNull(mem)) 
+			{
+				byte[] raw = mem.readBytes(bufpos, physicalLength - 1);
+
+				int year = ((int)raw[1]-'0')*1000 + ((int)raw[3]-'0')*100 + ((int)raw[5]-'0')*10 +((int)raw[7]-'0');
+				int month = ((int)raw[11]-'0')*10 + ((int)raw[13]-'0');
+				int day = ((int)raw[17]-'0')*10 + ((int)raw[19]-'0');
+				int hour = ((int)raw[23]-'0')*10 + ((int)raw[25]-'0');
+				int min = ((int)raw[29]-'0')*10 + ((int)raw[31]-'0');
+				int sec = ((int)raw[35]-'0')*10 + ((int)raw[37]-'0');
+				int milli = ((int)raw[41]-'0')*100 + ((int)raw[43]-'0')*10 + ((int)raw[45]-'0');
+				int tick = ((int)raw[49]-'0');
+
+				return new DateTime(year, month, day, hour, min, sec, milli).AddTicks(tick);
+			}
+			else
+				return DateTime.MinValue;
+		}
+
+		protected override void putSpecific(DataPart dataPart, object data)
+		{
+			byte[] bytes = (byte[])data;
+			if (bytes.Length > physicalLength - 1) 
+				throw new MaxDBValueOverflowException(DataType.stringValues[dataType], -1);
+			dataPart.writeDefineByte ((byte) 1, bufpos - 1);
+			dataPart.writeUnicodeBytes(bytes, bufpos, physicalLength - 1);
+		}
+
+		public override object TransTimestampForInput(DateTime dt)
+		{
+			byte[] chars = (byte[])base.TransTimestampForInput(dt);
+			byte[] bytes = Encoding.Unicode.GetBytes(Encoding.ASCII.GetString(chars));
+			CheckFieldLimits(bytes.Length);
+			return bytes;
+		}
+	}
+
+	#endregion
+
+
 	#region "Date data translator"
 
 	public class DateTranslator : CharDataTranslator 
@@ -1808,7 +1914,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public object TransDateForInput(DateTime dt)
+		public virtual object TransDateForInput(DateTime dt)
 		{
 			int year = dt.Year;
 			int month = dt.Month;
@@ -1863,6 +1969,57 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			dataPart.writeDefineByte((byte) ' ', bufpos - 1);
 			dataPart.writeASCIIBytes(bytes, bufpos, physicalLength - 1);
 		}
+	}
+
+	#endregion
+
+	#region "Unicode date data translator"
+
+	public class UnicodeDateTranslator : DateTranslator 
+	{
+		public UnicodeDateTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos) :
+			base(mode, ioType, dataType, len, ioLen, bufpos)
+	{
+	}
+
+		public override string GetString(SQLParamController controller, ByteArray mem)
+		{
+			return (!IsDBNull(mem) ? mem.readUnicode(bufpos, physicalLength - 1) : null);
+		}
+
+		public override DateTime GetDateTime(ByteArray mem)
+		{
+			if (!IsDBNull(mem)) 
+			{
+				byte[] raw = mem.readBytes(bufpos, physicalLength - 1);
+
+				int year = ((int)raw[1]-'0')*1000 + ((int)raw[3]-'0')*100 + ((int)raw[5]-'0')*10 + ((int)raw[7]-'0');
+				int month = ((int)raw[11]-'0')*10 + ((int)raw[13]-'0');
+				int day = ((int)raw[17]-'0')*10 + ((int)raw[19]-'0');
+
+				return new DateTime(year - 1900, month - 1, day);
+			}
+			else
+				return DateTime.MinValue;
+		}
+
+		protected override void putSpecific(DataPart dataPart, object data)
+		{
+			byte [] bytes = (byte[])data;
+			if (bytes.Length > physicalLength - 1) 
+				throw new MaxDBValueOverflowException(DataType.stringValues[dataType], -1);
+			dataPart.writeDefineByte((byte) ' ', bufpos - 1);
+			dataPart.writeUnicodeBytes(bytes, bufpos, physicalLength - 1);
+		}
+
+		public override object TransDateForInput(DateTime dt)
+		{
+			byte[] chars = (byte[])base.TransDateForInput(dt);
+			byte[] bytes = Encoding.Unicode.GetBytes(Encoding.ASCII.GetString(chars));
+			CheckFieldLimits(bytes.Length);
+			return bytes;
+		}
+
 	}
 
 	#endregion
@@ -3073,67 +3230,67 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	#region "UNICODE stream translator"
 
 	public class UnicodeStreamTranslator : StreamTranslator
-{
-    public UnicodeStreamTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos) :
-		base(mode, ioType, dataType, len, ioLen, bufpos)
 	{
-        characterDatatypePostfix = " UNICODE";
-    }
-
-    public override Stream GetASCIIStream(SQLParamController controller, ByteArray mem, ByteArray longData)
-    {
-        TextReader reader = GetCharacterStream(controller, mem, longData);
-        if (reader == null) 
-            return null;
-        
-        return new ReaderStream(reader, false);
-    }
-
-    public object GetObject(SQLParamController controller, ByteArray mem)
-    {
-        return GetString(controller, mem);
-    }
-
-    public override TextReader GetCharacterStream(SQLParamController controller, ByteArray mem, ByteArray longData)
-    {
-        TextReader result = null;
-        AbstractGetValue getval;
-        byte[] descriptor;
-
-        if (!IsDBNull(mem)) 
+		public UnicodeStreamTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos) :
+			base(mode, ioType, dataType, len, ioLen, bufpos)
 		{
-            descriptor = mem.readBytes(bufpos, logicalLength);
-            getval = new GetUnicodeLOBValue(controller.Connection, descriptor, longData, IsUnicodeColumn);
-            result = getval.CharacterStream;
-        }
-        return result;
-    }
+			characterDatatypePostfix = " UNICODE";
+		}
 
-	public override object TransASCIIStreamForInput(Stream stream, int length)
-    {
-        if (stream == null)
-            return null;
+		public override Stream GetASCIIStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		{
+			TextReader reader = GetCharacterStream(controller, mem, longData);
+			if (reader == null) 
+				return null;
         
-        TextReader reader = new StreamReader(stream);
-        return TransCharacterStreamForInput(reader, length);
-    }
+			return new ReaderStream(reader, false);
+		}
 
-    public object TransCharacterStreamForInput(TextReader reader, int length)
-    {
-        if (reader == null) 
-            return null;
-        
-        return new PutUnicodeValue(reader, length, bufpos);
-    }
+		public object GetObject(SQLParamController controller, ByteArray mem)
+		{
+			return GetString(controller, mem);
+		}
 
-    public override object TransStringForInput(string val)
-    {
-        if (val == null) 
-            return null;
+		public override TextReader GetCharacterStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		{
+			TextReader result = null;
+			AbstractGetValue getval;
+			byte[] descriptor;
+
+			if (!IsDBNull(mem)) 
+			{
+				descriptor = mem.readBytes(bufpos, logicalLength);
+				getval = new GetUnicodeLOBValue(controller.Connection, descriptor, longData, IsUnicodeColumn);
+				result = getval.CharacterStream;
+			}
+			return result;
+		}
+
+		public override object TransASCIIStreamForInput(Stream stream, int length)
+		{
+			if (stream == null)
+				return null;
         
-		return new PutUnicodeValue(val.ToCharArray(), bufpos);               
-    }
-}
+			TextReader reader = new StreamReader(stream);
+			return TransCharacterStreamForInput(reader, length);
+		}
+
+		public object TransCharacterStreamForInput(TextReader reader, int length)
+		{
+			if (reader == null) 
+				return null;
+        
+			return new PutUnicodeValue(reader, length, bufpos);
+		}
+
+		public override object TransStringForInput(string val)
+		{
+			if (val == null) 
+				return null;
+        
+			return new PutUnicodeValue(val.ToCharArray(), bufpos);               
+		}
+	}
 
 	#endregion
 	
