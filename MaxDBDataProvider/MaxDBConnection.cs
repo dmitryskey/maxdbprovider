@@ -52,7 +52,8 @@ namespace MaxDBDataProvider
 		private ParseInfoCache m_parseCache = null;
 		private bool m_auth = false;
 		internal bool m_spaceOption = false;
-		private int m_sessionID = -1;
+		private bool m_keepGarbage = false;
+		internal int m_sessionID = -1;
 		private static byte[] defaultFeatureSet = {1, 0, 2, 0, 3, 0, 4, 0, 5, 0};
 		private byte[] kernelFeatures = new byte[defaultFeatureSet.Length];
 
@@ -723,7 +724,7 @@ namespace MaxDBDataProvider
 				{
 					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_INVALIDPASSWORD));
 				}
-				requestPacket.newPart(PartKind.Data);
+				requestPacket.NewPart(PartKind.Data);
 				requestPacket.AddData(crypted);
 				requestPacket.AddDataString(TermID);
 				requestPacket.incrPartArguments();
@@ -762,6 +763,11 @@ namespace MaxDBDataProvider
 			kernelFeatures[2 * (feature - 1) + 1] = 1;
 		}
 
+		private bool IsKernelFeatureSupported(int feature)
+		{
+			return (kernelFeatures[2 * (feature - 1) + 1] == 1)? true : false;
+		}
+
 		private void TryReconnect(MaxDBException ex)
 		{
 			lock (syncObj)
@@ -784,6 +790,18 @@ namespace MaxDBDataProvider
 					m_inReconnect = false;
 				}
 				throw new TimeoutException();
+			}
+		}
+
+		internal void DropParseID(byte[] pid)
+		{
+			if (!m_keepGarbage) 
+			{
+				if (pid == null) 
+					return;
+				if (m_garbageParseids == null) 
+					m_garbageParseids = new GarbageParseid(IsKernelFeatureSupported(Feature.MultipleDropParseid));
+				m_garbageParseids.throwIntoGarbageCan(pid);
 			}
 		}
 

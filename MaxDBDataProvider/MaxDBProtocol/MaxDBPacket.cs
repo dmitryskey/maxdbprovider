@@ -337,10 +337,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 
 			newSegment(CmdMessType.Dbs, false, false);
-			newPart(PartKind.Command);
+			NewPart(PartKind.Command);
 			m_partArgs = 1;
 			AddString("Drop Parseid");
-			newPart(PartKind.Parsid);
+			NewPart(PartKind.Parsid);
 			m_partArgs = 1;
 			AddBytes(pid);
 			return true;
@@ -416,14 +416,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				Reset();
 		
 			newSegment(CmdMessType.Dbs, autocommit, false);
-			newPart(PartKind.Command);
+			NewPart(PartKind.Command);
 			m_partArgs = 1;
 		}
 
 		public bool initChallengeResponse(string user, byte[] challenge)
 		{
 			initDbsCommand(false, "CONNECT " + user + "  AUTHENTICATION");
-			closePart();
+			ClosePart();
 			DataPartVariable data = this.newVarDataPart();
 			data.AddRow(2);
 			data.writeBytes(Encoding.ASCII.GetBytes(Crypt.ScramMD5Name), data.extent);
@@ -444,7 +444,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		private DataPartVariable newVarDataPart() 
 		{
 			int partDataOffs;
-			newPart(PartKind.Vardata);
+			NewPart(PartKind.Vardata);
 			partDataOffs = m_partOffset + PartHeaderOffset.Data;
 			return new DataPartVariable(new ByteArray(data, swapMode, partDataOffs), this);
 		}
@@ -464,7 +464,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public DataPart newDataPart(byte partKind) 
 		{
-			newPart(partKind);
+			NewPart(partKind);
 			return new DataPartFixed(Clone(m_partOffset + PartHeaderOffset.Data), this);
 		}
 
@@ -485,9 +485,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		#region "Part operations"
 
-		public void newPart (byte kind) 
+		public void NewPart (byte kind) 
 		{
-			closePart();
+			ClosePart();
 			initPart(kind);
 		}
 
@@ -509,11 +509,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			if (features != null)
 			{
-				newPart(PartKind.Feature);
+				NewPart(PartKind.Feature);
 				writeBytes(features, DataPos);
 				m_partLength += features.Length;
 				m_partArgs += (short)(features.Length / 2);
-				closePart();
+				ClosePart();
 			}
 		}
 
@@ -536,7 +536,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public void addClientIDPart(string clientID)
 		{
-			newPart(PartKind.Clientid);
+			NewPart(PartKind.Clientid);
 			AddDataString(clientID);
 			m_partArgs = 1;
 		}
@@ -545,10 +545,25 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			if ((features != null) && (features.Length != 0)) 
 			{
-				newPart (PartKind.Feature);
+				NewPart (PartKind.Feature);
 				AddBytes(features);
 				incrPartArguments((short)(features.Length/2));
-				closePart();
+				ClosePart();
+			}
+		}
+
+		public void addParseidPart(byte[] parseID) 
+		{
+			if (parseID != null) 
+			{
+				NewPart(PartKind.Parsid);
+				AddBytes(parseID);
+				m_partArgs = 1;
+				ClosePart();
+			}
+			else
+			{
+				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_INTERNAL_INVALIDPARSEID));
 			}
 		}
 
@@ -556,19 +571,19 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			if (cursorName != null && cursorName.Length != 0) 
 			{
-				newPart(PartKind.ResultTableName);
+				NewPart(PartKind.ResultTableName);
 				AddString(cursorName);
 				m_partArgs++;
-				closePart();
+				ClosePart();
 			}
 		}
 
-		private void closePart() 
+		private void ClosePart() 
 		{
-			closePart(m_partLength, m_partArgs);
+			ClosePart(m_partLength, m_partArgs);
 		}
 
-		public void closePart(int extent, short args)
+		public void ClosePart(int extent, short args)
 		{
 			if (m_partOffset == -1) 
 				return;
@@ -618,7 +633,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if (m_segOffset == -1) 
 				return;
 
-			closePart();
+			ClosePart();
 			writeInt32(m_segLength, m_segOffset + SegmentHeaderOffset.Len);
 			writeInt16(m_segParts, m_segOffset + SegmentHeaderOffset.NoOfParts);
 			m_length += m_segLength;

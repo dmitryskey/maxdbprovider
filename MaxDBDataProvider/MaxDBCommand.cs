@@ -564,7 +564,6 @@ namespace MaxDBDataProvider
 
 			try
 			{
-
 				requestPacket = m_connection.CreateRequestPacket();
 				replyPacket = sendCommand(requestPacket, sql, GCMode.GC_ALLOWED, parseAgain);
 			}
@@ -652,7 +651,7 @@ namespace MaxDBDataProvider
 							infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, false);
 						break;
 					}
-					case PartKind.Vardata_Shortinfo:
+					case PartKind.Vardata_ShortInfo:
 					{
 						if (infos == null)
 							infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, true);
@@ -710,28 +709,20 @@ namespace MaxDBDataProvider
 						switch (replyPacket.partKind) 
 						{
 							case PartKind.ColumnNames:
-							{
 								if (columnNames == null)
 									columnNames = replyPacket.parseColumnNames();
 								break;
-							}
 							case PartKind.ShortInfo:
-							{
 								if (infos == null)
 									infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, false);
 								break;
-							}
-							case PartKind.Vardata_Shortinfo:
-							{
+							case PartKind.Vardata_ShortInfo:
 								if (infos==null)
 									infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, true);
 								break;
-							}
 							case PartKind.ErrorText:
-							{
 								newSFI = false;
 								break;
-							}
 							default:
 								break;
 						}

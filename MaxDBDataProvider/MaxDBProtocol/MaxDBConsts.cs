@@ -895,7 +895,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			Procid                  =  29,
 			Long_Demand             =  30,
 			MessageList             =  31,
-			Vardata_Shortinfo       =  32,
+			Vardata_ShortInfo       =  32,
 			Vardata                 =  33,
 			Feature                 =  34,
 			Clientid                =  35;

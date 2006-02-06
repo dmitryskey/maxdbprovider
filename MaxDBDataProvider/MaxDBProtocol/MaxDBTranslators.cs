@@ -467,6 +467,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
+		public bool IsStreamKind
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public void Put(DataPart dataPart, object data)
 		{
 			if (ioType != ParamInfo.Output) 
@@ -640,6 +648,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public long BigDecimal2Int64(BigDecimal bd)
 		{
 			return (bd == null ? 0 : (long)bd); 
+		}
+
+		public virtual void SetProcParamInfo(DBProcParameterInfo info)
+		{
 		}
 	}
 
@@ -2186,7 +2198,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return new MemoryStream(asBytes);
 		}
 
-		public void SetProcParamInfo(DBProcParameterInfo info) 
+		public override void SetProcParamInfo(DBProcParameterInfo info) 
 		{
 			parameterStructure = info;
 			structConverter = StructMemberTranslator.createStructMemberTranslators(info, unicode);
