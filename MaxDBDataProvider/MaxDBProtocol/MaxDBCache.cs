@@ -303,7 +303,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			result = (MaxDBParseInfo)this[sqlCmd];
 			if (keepStats && result != null) 
-					stats[result.functionCode].addHit();
+				stats[result.FuncCode].addHit();
 
 			return result;
 		}
@@ -312,11 +312,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		 */
 		public void addParseinfo(MaxDBParseInfo parseinfo)
 		{
-			int functionCode = mapFunctionCode(parseinfo.functionCode);
+			int functionCode = mapFunctionCode(parseinfo.FuncCode);
 			if (kindFilter[functionCode]) 
 			{
 				this[parseinfo.sqlCmd] = parseinfo;
-				parseinfo.cached = true;
+				parseinfo.IsCached = true;
 				if (keepStats) 
 					stats[functionCode].addMiss();
 			}
