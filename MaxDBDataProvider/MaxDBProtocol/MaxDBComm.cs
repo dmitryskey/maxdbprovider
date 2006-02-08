@@ -116,7 +116,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			m_swapMode = replyBuffer[HeaderOffset.END + ConnectPacketOffset.MessCode + 1];
 			
-			MaxDBConnectPacket replyPacket = new MaxDBConnectPacket(replyBuffer, m_swapMode == SwapMode.Swapped);
+			MaxDBConnectPacket replyPacket = new MaxDBConnectPacket(replyBuffer, 
+				replyBuffer[HeaderOffset.END + ConnectPacketOffset.MessCode + 1] == SwapMode.Swapped);
 
 			int actLen = replyPacket.ActSendLength;
 			if (actLen < 0 || actLen > 500 * 1024)
@@ -137,7 +138,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public void Close()
 		{
-			MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END], true);
+			MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END]);
 			request.FillHeader(RSQLTypes.USER_RELEASE_REQUEST, m_sender, m_receiver, m_maxSendLen);
 			request.SetSendLength(0);
 			m_socket.Stream.Write(request.arrayData, 0, request.Length);
@@ -148,7 +149,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			try
 			{
-				MaxDBPacket rawPacket = new MaxDBPacket(userPacket.arrayData, false);
+				MaxDBPacket rawPacket = new MaxDBPacket(userPacket.arrayData);
 				rawPacket.FillHeader(RSQLTypes.USER_DATA_REQUEST, m_sender, m_receiver, m_maxSendLen);
 				rawPacket.SetSendLength(len + HeaderOffset.END);
 				m_socket.Stream.Write(rawPacket.arrayData, 0, len + HeaderOffset.END);
@@ -157,7 +158,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				if (m_socket.Stream.Read(headerBuf, 0, headerBuf.Length) != HeaderOffset.END)
 					throw new CommunicationException(RTEReturnCodes.SQLRECEIVE_LINE_DOWN);
 
-				MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf, true);
+				MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf);
 				int returnCode = header.ReturnCode;
 				if (returnCode != 0)
 					throw new CommunicationException(returnCode);
@@ -174,7 +175,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	
 				}
 
-				return new MaxDBReplyPacket(packetBuf, packetBuf[PacketHeaderOffset.MessSwap] == SwapMode.Swapped);
+				return new MaxDBReplyPacket(packetBuf);
 			}
 			catch(Exception ex)
 			{

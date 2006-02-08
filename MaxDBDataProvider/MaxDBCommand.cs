@@ -19,10 +19,11 @@ namespace MaxDBDataProvider
 		IntPtr m_stmt = IntPtr.Zero;
 
 		private bool m_setWithInfo = false;
-		private string m_cursorName;
 		private int m_rowsAffected = -1;
 		private bool m_hasRowCount = false;
 		private ArrayList m_warnings = new ArrayList();
+		private MaxDBParseInfo m_parseinfo;
+		private MaxDBDataReader m_currentDataReader;
 
 		// Implement the default constructor here.
 		public MaxDBCommand()
@@ -299,7 +300,7 @@ namespace MaxDBDataProvider
 					switch(param.m_dbType)
 					{
 						case MaxDBType.Boolean:
-							paramArr.writeByte((byte)((bool)param.Value ? 1 : 0), buffer_offset);
+							paramArr.WriteByte((byte)((bool)param.Value ? 1 : 0), buffer_offset);
 							val_length = sizeof(byte);
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_UINT1, 
@@ -322,7 +323,7 @@ namespace MaxDBDataProvider
 							break;
 						case MaxDBType.CharB: case MaxDBType.StrB: case MaxDBType.VarCharB:
 							val_length = ((byte[])param.Value).Length * sizeof(byte);
-							paramArr.writeBytes((byte[])param.Value, buffer_offset);
+							paramArr.WriteBytes((byte[])param.Value, buffer_offset);
 							//Array.Copy((byte[])param.Value, 0 , param_buffer, buffer_offset, val_length); 
 							
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY, 
@@ -340,7 +341,7 @@ namespace MaxDBDataProvider
 							dt_odbc.day = (ushort)(dt.Day % 0x10000);
 
 							val_length = sizeof(ODBCDATE);
-							paramArr.writeBytes(ODBCConverter.GetBytes(dt_odbc), buffer_offset); 
+							paramArr.WriteBytes(ODBCConverter.GetBytes(dt_odbc), buffer_offset); 
 							//Array.Copy(ODBCConverter.GetBytes(dt_odbc), 0, param_buffer, buffer_offset, val_length);
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, 
@@ -362,7 +363,7 @@ namespace MaxDBDataProvider
 							buffer_offset += val_length;
 							break;
 						case MaxDBType.Integer:
-							paramArr.writeInt32((int)param.Value, buffer_offset);
+							paramArr.WriteInt32((int)param.Value, buffer_offset);
 							//Array.Copy(BitConverter.GetBytes((int)param.Value), 0, param_buffer, buffer_offset, sizeof(int));
 							val_length = sizeof(int);
 
@@ -393,7 +394,7 @@ namespace MaxDBDataProvider
 
 							val_length = sizeof(ODBCTIME);
 							
-							paramArr.writeBytes(ODBCConverter.GetBytes(tm_odbc), buffer_offset);
+							paramArr.WriteBytes(ODBCConverter.GetBytes(tm_odbc), buffer_offset);
 							//Array.Copy(ODBCConverter.GetBytes(tm_odbc), 0, param_buffer, buffer_offset, val_length);
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, 
@@ -416,7 +417,7 @@ namespace MaxDBDataProvider
 
 							val_length = sizeof(ODBCTIMESTAMP);
 
-							paramArr.writeBytes(ODBCConverter.GetBytes(ts_odbc), buffer_offset);
+							paramArr.WriteBytes(ODBCConverter.GetBytes(ts_odbc), buffer_offset);
 							//Array.Copy(ODBCConverter.GetBytes(ts_odbc), 0, param_buffer, buffer_offset, val_length);
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, 
@@ -453,7 +454,7 @@ namespace MaxDBDataProvider
 					{
 						case MaxDBType.Boolean:
 							if (set_val)
-								param.Value = (paramArr.readByte(buffer_offset) == 1 );
+								param.Value = (paramArr.ReadByte(buffer_offset) == 1 );
 							buffer_offset += sizeof(byte);
 							break;
 						case MaxDBType.CharA: case MaxDBType.StrA: case MaxDBType.VarCharA: 
@@ -465,7 +466,7 @@ namespace MaxDBDataProvider
 						case MaxDBType.CharB: case MaxDBType.StrB: case MaxDBType.VarCharB:
 							val_length = ((byte[])param.Value).Length * sizeof(byte);
 							if (set_val)
-								param.Value = paramArr.readBytes(buffer_offset, val_length);
+								param.Value = paramArr.ReadBytes(buffer_offset, val_length);
 							buffer_offset += val_length;
 							break;
 						case MaxDBType.Date:
@@ -473,7 +474,7 @@ namespace MaxDBDataProvider
 							val_length = sizeof(ODBCDATE);
 							if (set_val)
 							{
-								ODBCDATE dt_odbc = ODBCConverter.GetDate(paramArr.readBytes(buffer_offset, val_length));
+								ODBCDATE dt_odbc = ODBCConverter.GetDate(paramArr.ReadBytes(buffer_offset, val_length));
 								param.Value = new DateTime(dt_odbc.year, dt_odbc.month, dt_odbc.day);
 							}
 							buffer_offset += val_length;
@@ -487,7 +488,7 @@ namespace MaxDBDataProvider
 						case MaxDBType.Integer:
 							val_length = sizeof(int);
 							if (set_val)
-								param.Value = paramArr.readInt32(buffer_offset);
+								param.Value = paramArr.ReadInt32(buffer_offset);
 							buffer_offset += val_length;
 							break;
 						case MaxDBType.SmallInt:
@@ -500,7 +501,7 @@ namespace MaxDBDataProvider
 							val_length = sizeof(ODBCTIME);
 							if (set_val)
 							{
-								ODBCTIME tm_odbc = ODBCConverter.GetTime(paramArr.readBytes(buffer_offset, val_length));
+								ODBCTIME tm_odbc = ODBCConverter.GetTime(paramArr.ReadBytes(buffer_offset, val_length));
 								param.Value = new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, 
 									tm_odbc.hour, tm_odbc.minute, tm_odbc.second);
 							}
@@ -510,7 +511,7 @@ namespace MaxDBDataProvider
 							val_length = sizeof(ODBCTIMESTAMP);
 							if (set_val)
 							{
-								ODBCTIMESTAMP ts_odbc = ODBCConverter.GetTimeStamp(paramArr.readBytes(buffer_offset, val_length));
+								ODBCTIMESTAMP ts_odbc = ODBCConverter.GetTimeStamp(paramArr.ReadBytes(buffer_offset, val_length));
 								param.Value = new DateTime(ts_odbc.year, ts_odbc.month, ts_odbc.day, 
 									ts_odbc.hour, ts_odbc.minute, ts_odbc.second, (int)(ts_odbc.fraction / 1000000));
 							}
@@ -551,7 +552,6 @@ namespace MaxDBDataProvider
 			requestPacket.initDbsCommand(m_connection.m_autocommit, sqlCmd);
 			if (m_setWithInfo)
 				requestPacket.setWithInfo();
-			requestPacket.addCursorPart(m_cursorName);
 			replyPacket = m_connection.Exec(requestPacket, this, gcFlags);
 			return replyPacket;
 		}
@@ -587,7 +587,6 @@ namespace MaxDBDataProvider
 			ClearWarnings();
 
 			assertOpen();
-			MaxDBRequestPacket requestPacket;
 			MaxDBReplyPacket replyPacket;
 			bool isQuery;
 			string actualSQL = sql;
@@ -640,23 +639,17 @@ namespace MaxDBDataProvider
 				switch (replyPacket.partKind) 
 				{
 					case PartKind.ColumnNames:
-					{
 						if (columnNames == null)
 							columnNames = replyPacket.parseColumnNames();
 						break;
-					}
 					case PartKind.ShortInfo:
-					{
 						if (infos==null)
 							infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, false);
 						break;
-					}
 					case PartKind.Vardata_ShortInfo:
-					{
 						if (infos == null)
 							infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, true);
 						break;
-					}
 					case PartKind.ResultCount:
 						// only if this is not a query
 						if(!isQuery) 
@@ -666,18 +659,11 @@ namespace MaxDBDataProvider
 						}
 						break;
 					case PartKind.ResultTableName: 
-					{
-						string cname = replyPacket.readASCII(replyPacket.PartDataPos, replyPacket.partLength);
-						if (cname.Length > 0) m_cursorName = cname;
 						break;
-					}
 					case PartKind.Data: 
-					{
 						dataPartFound = true;
 						break;
-					}
 					case PartKind.ErrorText:
-					{
 						if (replyPacket.ReturnCode == 100) 
 						{
 							m_rowsAffected = -1;
@@ -685,7 +671,6 @@ namespace MaxDBDataProvider
 							if(!isQuery) m_rowsAffected = 0;// for any select update count must be -1
 						}
 						break;
-					}
 					case PartKind.TableName:
 						tableName = replyPacket.readASCII(replyPacket.PartDataPos, replyPacket.partLength);
 						break;
@@ -717,7 +702,7 @@ namespace MaxDBDataProvider
 									infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, false);
 								break;
 							case PartKind.Vardata_ShortInfo:
-								if (infos==null)
+								if (infos == null)
 									infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, true);
 								break;
 							case PartKind.ErrorText:
@@ -728,16 +713,15 @@ namespace MaxDBDataProvider
 						}
 					}
 					
-					//if (newSFI)
-						//UpdateFetchInfo(infos, columnNames);
+					if (newSFI)
+						m_parseinfo.SetMetaData(infos, columnNames);
 					
 				}
 				
-				//if (dataPartFound)
-					//CreateResultSet (sqlCmd, tableName, m_cursorName, infos, columnNames, rowNotFound, replyPacket);
-				//else
-					//CreateResultSet (sqlCmd, tableName, m_cursorName, infos, columnNames, rowNotFound, null);
-				
+//				if (dataPartFound)
+//					CreateDataReader(sqlCmd, tableName, infos, columnNames, rowNotFound, replyPacket);
+//				else
+//					CreateDataReader(sqlCmd, tableName, infos, columnNames, rowNotFound, null);
 			} 
 			
 			return isQuery;

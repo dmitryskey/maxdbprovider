@@ -257,21 +257,21 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if (ownerName == null) 
 			{
 				sql = "SELECT PARAM_NO, "
-						+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
-						+ "UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER=USER AND "
-						+ "DBPROCEDURE=? ORDER BY PARAM_NO, ASCII_OFFSET";
+					+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
+					+ "UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER=USER AND "
+					+ "DBPROCEDURE=? ORDER BY PARAM_NO, ASCII_OFFSET";
 				cmd = new MaxDBCommand(sql, connection);
 				cmd.Parameters.Add("DBPROCEDURE", procedureName);
 			} 
 			else 
 			{
 				sql = "SELECT PARAM_NO, "
-						+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
-						+ "UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER=? AND "
-						+ "DBPROCEDURE = ? ORDER BY PARAM_NO, ASCII_OFFSET";
+					+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
+					+ "UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER=? AND "
+					+ "DBPROCEDURE = ? ORDER BY PARAM_NO, ASCII_OFFSET";
 				cmd = new MaxDBCommand(sql, connection);
 				cmd.Parameters.Add("OWNER", ownerName);
-                cmd.Parameters.Add("DBPROCEDURE", procedureName);
+				cmd.Parameters.Add("DBPROCEDURE", procedureName);
 			}
 
 			// We have a result set and can now create a parameter info.
@@ -660,14 +660,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 						break;
 				}
 			}
-			this.setMetaData(infos, columnNames);
+			SetMetaData(infos, columnNames);
 		}
 
-		void setMetaData(DBTechTranslator[] info, String[] colName)
+		public void SetMetaData(DBTechTranslator[] info, string[] colName)
 		{
 			int colCount = info.Length;
 			DBTechTranslator currentInfo;
-			String currentName;
+			string currentName;
 			this.columnNames = colName;
 
 			if (colCount == colName.Length) 
@@ -917,6 +917,176 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		ByteArray ReplyData{get;}
 	}
 	
+	#endregion
+
+	#region "Fetch information class"
+
+	public class FetchInfo
+	{
+		private MaxDBConnection     connection;            // current connection
+		private String              cursorName;            // cursor
+		private DBTechTranslator[]  columnInfo;            // short info of all columns
+		private int                 recordSize;            // physical row size
+		private Hashtable           columnMapping = null;  // mapping from column names to short infos
+		private string _fetchparamstring;     // cache for fetch parameters
+
+		public FetchInfo(MaxDBConnection connection, string cursorName, DBTechTranslator[] infos, string[] columnNames)
+		{
+			this.connection = connection;
+			this.cursorName = cursorName;
+			if(infos==null || columnNames==null) 
+				this.columnInfo = null;
+			else 
+				SetMetaData(infos, columnNames);
+		}
+
+		private void SetMetaData(DBTechTranslator[] info, string[] colName)
+		{
+			int colCount = info.Length;
+			DBTechTranslator currentInfo;
+			int currentFieldEnd;
+
+			recordSize = 0;
+
+			if (colCount == colName.Length) 
+			{
+				columnInfo = info;
+				for (int i = 0; i < colCount; ++i) 
+				{
+					currentInfo = info[i];
+					currentInfo.ColumnName = colName[i];
+					currentInfo.ColumnIndex = i;
+					currentFieldEnd = currentInfo.PhysicalLength + currentInfo.BufPos - 1;
+					recordSize = Math.Max(recordSize, currentFieldEnd);
+				}
+			}
+			else 
+			{
+				int outputColCnt = 0;
+				columnInfo = new DBTechTranslator[colName.Length];
+				for (int i = 0; i < colCount; ++i) 
+				{
+					if (info [i].IsOutput)
+					{
+						currentInfo = columnInfo[outputColCnt] = info [i];
+						currentInfo.ColumnName = colName [outputColCnt];
+						currentInfo.ColumnIndex = outputColCnt++;
+						currentFieldEnd = currentInfo.PhysicalLength + currentInfo.BufPos - 1;
+						recordSize = Math.Max(recordSize, currentFieldEnd);
+					}
+				}
+			}
+		}
+
+		private void SetColMapping ()
+		{
+			int colCnt = columnInfo.Length;
+			columnMapping = new Hashtable(2 * colCnt);
+			DBTechTranslator currentInfo;
+
+			for (int i = 0; i < colCnt; i++) 
+			{
+				currentInfo = columnInfo[i];
+				columnMapping[currentInfo.ColumnName] = currentInfo;
+			}
+		}
+
+		private void Describe()
+		{
+			MaxDBConnection c = connection;
+			DBTechTranslator[] infos = null;
+			string[] columnNames = null;
+
+			MaxDBRequestPacket request = c.CreateRequestPacket();
+			request.initDbsCommand(false, "DESCRIBE \"" + cursorName + "\"");
+			MaxDBReplyPacket reply = c.Exec(request, this, GCMode.GC_ALLOWED);
+			reply.ClearPartOffset();
+			for(int i = 0; i < reply.partCount; i++) 
+			{
+				reply.nextPart();
+
+				int partKind=reply.partKind;
+
+				if(partKind==PartKind.ColumnNames) 
+					columnNames=reply.parseColumnNames();
+				else if(partKind == PartKind.ShortInfo) 
+					infos = reply.ParseShortFields(connection.m_spaceOption, false, null, false);
+				else if(partKind == PartKind.Vardata_ShortInfo) 
+					infos = reply.ParseShortFields(this.connection.m_spaceOption, false, null, true);
+			}
+			SetMetaData(infos, columnNames);
+		}
+
+		public MaxDBReplyPacket ExecFetchNext(int fetchSize)
+		{
+			if (columnInfo == null)
+				Describe();
+				
+			if(_fetchparamstring == null) 
+			{
+				StringBuilder tmp = new StringBuilder("?");
+				for(int i = 1; i < columnInfo.Length; i++) 
+					tmp.Append(", ?");
+				_fetchparamstring = tmp.ToString();
+			}
+
+			string cmd="FETCH NEXT \"" + cursorName + "\" INTO " + _fetchparamstring;
+			
+			MaxDBRequestPacket request = connection.CreateRequestPacket();
+			byte currentSQLMode = request.switchSqlMode(SqlMode.Internal);
+			request.initDbsCommand(connection.AutoCommit, cmd);
+			if(fetchSize > 1) 
+				request.setMassCommand();
+			else 
+				fetchSize = 1;
+
+			request.AddResultCount(fetchSize);
+			try 
+			{
+				return connection.Exec(request, this, GCMode.GC_DELAYED);
+			} 
+			finally 
+			{
+				request.switchSqlMode(currentSQLMode);
+			}
+		}
+
+		public DBTechTranslator GetColumnInfo(string name)
+		{
+			if (columnInfo == null)
+				Describe();
+			
+			if (columnMapping == null)
+				SetColMapping();
+			
+			object obj = columnMapping[name];
+			if(obj == null) 
+			{
+				string uc = name.ToUpper();
+				obj = columnMapping[uc];
+				if(obj != null) 
+					columnMapping[uc] = obj;
+			}
+			return (DBTechTranslator)obj;
+		}
+
+		int NumberOfColumns
+		{
+			get
+			{
+				return columnInfo.Length;
+			}
+		}
+
+		int RecordSize
+		{
+			get
+			{
+				return recordSize;
+			}
+		}
+	}
+
 	#endregion
 }
 

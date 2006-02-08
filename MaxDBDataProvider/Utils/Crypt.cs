@@ -199,7 +199,7 @@ namespace MaxDBDataProvider
 			ByteArray result;
 
 			for (int i = 1; i <= 6; ++i) 
-				crypt[i - 1] = passwdBytes.readByte(3 * i - 3) * vp3 + passwdBytes.readByte(3 * i - 2) * vp2 + passwdBytes.readByte(3 * i - 1) * vp1;
+				crypt[i - 1] = passwdBytes.ReadByte(3 * i - 3) * vp3 + passwdBytes.ReadByte(3 * i - 2) * vp2 + passwdBytes.ReadByte(3 * i - 1) * vp1;
 
 			for (int i = 1; i <= 6; ++i) 
 			{
@@ -226,7 +226,7 @@ namespace MaxDBDataProvider
 			result = new ByteArray(6 * 4, false);
 			
 			for (int i = 0; i < 6; ++i) 
-				result.writeInt32(crypt [i], i * 4);
+				result.WriteInt32(crypt [i], i * 4);
 
 			return result.arrayData;
 		}
@@ -278,48 +278,48 @@ namespace MaxDBDataProvider
 		{
 			if (!vData.nextRow() || !vData.nextField())
 				throw new MaxDBSQLException(MessageTranslator.Translate
-					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.readBytes(0, vData.Length))));
+					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 
 			string alg = vData.readASCII(vData.CurrentOffset, vData.CurrentFieldLen);
 			if (alg.ToUpper().Trim() != Crypt.ScramMD5Name)
 				throw new MaxDBSQLException(MessageTranslator.Translate
-					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.readBytes(0, vData.Length))));
+					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 
 			if (!vData.nextField() || vData.CurrentFieldLen < 8)
 				throw new MaxDBSQLException(MessageTranslator.Translate
-					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.readBytes(0, vData.Length))));
+					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 
 			if (vData.CurrentFieldLen == 40)
 			{
 				/*first version of challenge response 
 				 *should only occurs with database version 7.6.0.0 <= kernel <= 7.6.0.7*/
-				salt = vData.readBytes(vData.CurrentOffset, 8);
-				serverchallenge = vData.readBytes(vData.CurrentOffset + 8, vData.CurrentFieldLen - 8);
+				salt = vData.ReadBytes(vData.CurrentOffset, 8);
+				serverchallenge = vData.ReadBytes(vData.CurrentOffset + 8, vData.CurrentFieldLen - 8);
 			}
 			else
 			{
-				DataPartVariable vd = new DataPartVariable(new ByteArray(vData.readBytes(vData.CurrentOffset, vData.CurrentFieldLen)), 1);
+				DataPartVariable vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen)), 1);
 				if (!vd.nextRow() || !vd.nextField())
 					throw new MaxDBSQLException(MessageTranslator.Translate
 						(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
-							Logger.ToHexString(vData.readBytes(0, vData.Length))));
+							Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 
-				salt = vd.readBytes(vd.CurrentOffset, vd.CurrentFieldLen);
+				salt = vd.ReadBytes(vd.CurrentOffset, vd.CurrentFieldLen);
 				if (!vd.nextField())
 					throw new MaxDBSQLException(MessageTranslator.Translate
 						(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
-							Logger.ToHexString(vData.readBytes(0, vData.Length))));
+							Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 
-				serverchallenge = vd.readBytes(vd.CurrentOffset, vd.CurrentFieldLen);
+				serverchallenge = vd.ReadBytes(vd.CurrentOffset, vd.CurrentFieldLen);
 
 				/*from Version 7.6.0.10 on also the max password length will be delivered*/
 				if (vData.nextField())
 				{
-					DataPartVariable mp_vd = new DataPartVariable(new ByteArray(vData.readBytes(vData.CurrentOffset, vData.CurrentFieldLen)), 1);
+					DataPartVariable mp_vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen)), 1);
 					if (!mp_vd.nextRow() || !mp_vd.nextField()) 
 						throw new MaxDBSQLException(MessageTranslator.Translate
 							(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
-								Logger.ToHexString(vData.readBytes(0, vData.Length))));
+								Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 
 					do 
 					{
@@ -328,7 +328,7 @@ namespace MaxDBDataProvider
 							if (!mp_vd.nextField()) 
 								throw new MaxDBSQLException(MessageTranslator.Translate
 									(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
-										Logger.ToHexString(vData.readBytes(0, vData.Length))));
+										Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 							else
 							{
 								try 
@@ -339,7 +339,7 @@ namespace MaxDBDataProvider
 								{
 									throw new MaxDBSQLException(MessageTranslator.Translate
 										(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
-											Logger.ToHexString(vData.readBytes(0, vData.Length))));
+											Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 								} 
 							}
 						} 
@@ -348,7 +348,7 @@ namespace MaxDBDataProvider
 							if (!mp_vd.nextField()) 
 								throw new MaxDBSQLException(MessageTranslator.Translate
 									(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
-										Logger.ToHexString(vData.readBytes(0, vData.Length))));
+										Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 						}     
 					} 
 					while (mp_vd.nextField());

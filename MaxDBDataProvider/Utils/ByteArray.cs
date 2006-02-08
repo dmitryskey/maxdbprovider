@@ -19,17 +19,18 @@ namespace MaxDBDataProvider
 			this.swapMode = BitConverter.IsLittleEndian;
 		}
 
-		public ByteArray(byte[] data, bool swapMode)
+		public ByteArray(byte[] data, int offset)
 		{
 			this.data = data;
-			this.swapMode = swapMode;
+			this.offset = offset; 
+			this.swapMode = BitConverter.IsLittleEndian;
 		}
 
-		public ByteArray(byte[] data, bool swapMode, int offset)
+		public ByteArray(byte[] data, int offset, bool swapMode)
 		{
 			this.data = data;
-			this.swapMode = swapMode;
 			this.offset = offset; 
+			this.swapMode = swapMode;
 		}
 
 		public ByteArray(int size)
@@ -53,7 +54,7 @@ namespace MaxDBDataProvider
 
 		public ByteArray Clone(int offset)
 		{
-			return new ByteArray(this.data, this.swapMode, this.offset + offset); 
+			return new ByteArray(this.data, this.offset + offset, this.swapMode); 
 		}
 
 		public byte[] arrayData
@@ -92,7 +93,7 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		public byte[] readBytes(int offset, int len)
+		public byte[] ReadBytes(int offset, int len)
 		{
 			offset += this.offset;
 			byte[] res = new byte[len];
@@ -100,19 +101,19 @@ namespace MaxDBDataProvider
 			return res;
 		}
 
-		public void writeBytes(byte[] values, int offset)
+		public void WriteBytes(byte[] values, int offset)
 		{
 			offset += this.offset;
 			values.CopyTo(data, offset);
 		}
 
-		public void writeBytes(byte[] values, int offset, int len)
+		public void WriteBytes(byte[] values, int offset, int len)
 		{
 			offset += this.offset;
 			Array.Copy(values, 0, data, offset, len);
 		}
 
-		public void writeBytes(byte[] values, int offset, int len, byte[] filler)
+		public void WriteBytes(byte[] values, int offset, int len, byte[] filler)
 		{
 			offset += this.offset;
 
@@ -142,19 +143,19 @@ namespace MaxDBDataProvider
 			return;
 		}
 
-		public byte readByte(int offset)
+		public byte ReadByte(int offset)
 		{
 			offset += this.offset;
 			return data[offset];
 		}
 
-		public void writeByte(byte val, int offset)
+		public void WriteByte(byte val, int offset)
 		{
 			offset += this.offset;
 			data[offset] = val;
 		}
 
-		public ushort readUInt16(int offset)
+		public ushort ReadUInt16(int offset)
 		{
 			offset += this.offset;
 			if (swapMode)
@@ -171,7 +172,7 @@ namespace MaxDBDataProvider
 		public short readInt16(int offset)
 		{
 			offset += this.offset;
-			return (short)readUInt16(offset);
+			return (short)ReadUInt16(offset);
 		}
 
 		public void writeInt16(short val, int offset)
@@ -183,9 +184,9 @@ namespace MaxDBDataProvider
 		{
 			offset += this.offset;
 			if (swapMode)
-				return (uint)(readUInt16(offset + 2) * 0x10000 + readUInt16(offset));
+				return (uint)(ReadUInt16(offset + 2) * 0x10000 + ReadUInt16(offset));
 			else
-				return (uint)(readUInt16(offset) * 0x10000 + readUInt16(offset + 2));
+				return (uint)(ReadUInt16(offset) * 0x10000 + ReadUInt16(offset + 2));
 		}
 
 		public void writeUInt32(uint val, int offset)
@@ -193,13 +194,13 @@ namespace MaxDBDataProvider
 			writeValue(val, offset, 4);
 		}
 
-		public int readInt32(int offset)
+		public int ReadInt32(int offset)
 		{
 			offset += this.offset;
 			return (int)readUInt32(offset);
 		}
 
-		public void writeInt32(int val, int offset)
+		public void WriteInt32(int val, int offset)
 		{
 			writeValue(val, offset, 4);
 		}
@@ -236,7 +237,7 @@ namespace MaxDBDataProvider
 
 		public void writeFloat(float val, int offset)
 		{
-			writeBytes(BitConverter.GetBytes(val), offset);
+			WriteBytes(BitConverter.GetBytes(val), offset);
 		}
 
 		public double readDouble(int offset)
@@ -247,7 +248,7 @@ namespace MaxDBDataProvider
 
 		public void writeDouble(double val, int offset)
 		{
-			writeBytes(BitConverter.GetBytes(val), offset);
+			WriteBytes(BitConverter.GetBytes(val), offset);
 		}
 
 		public string readASCII(int offset, int len)
@@ -258,12 +259,12 @@ namespace MaxDBDataProvider
 
 		public void writeASCII(string val, int offset)
 		{
-			writeBytes(Encoding.ASCII.GetBytes(val), offset);
+			WriteBytes(Encoding.ASCII.GetBytes(val), offset);
 		}
 
 		public void writeASCII(string val, int offset, int len)
 		{
-			writeBytes(Encoding.ASCII.GetBytes(val), offset, len, Consts.blankBytes);
+			WriteBytes(Encoding.ASCII.GetBytes(val), offset, len, Consts.blankBytes);
 		}
 
 		public string readUnicode(int offset, int len)
@@ -278,17 +279,17 @@ namespace MaxDBDataProvider
 		public void writeUnicode(string val, int offset)
 		{
 			if (swapMode)
-				writeBytes(Encoding.Unicode.GetBytes(val), offset);
+				WriteBytes(Encoding.Unicode.GetBytes(val), offset);
 			else
-				writeBytes(Encoding.BigEndianUnicode.GetBytes(val), offset);
+				WriteBytes(Encoding.BigEndianUnicode.GetBytes(val), offset);
 		}
 
 		public void writeUnicode(string val, int offset, int len)
 		{
 			if (swapMode)
-				writeBytes(Encoding.Unicode.GetBytes(val), offset, len, Consts.blankUnicodeBytes);
+				WriteBytes(Encoding.Unicode.GetBytes(val), offset, len, Consts.blankUnicodeBytes);
 			else
-				writeBytes(Encoding.BigEndianUnicode.GetBytes(val), offset, len, Consts.blankBigEndianUnicodeBytes);
+				WriteBytes(Encoding.BigEndianUnicode.GetBytes(val), offset, len, Consts.blankBigEndianUnicodeBytes);
 		}
 
 		protected void writeValue(ulong val, int offset, int bytes)

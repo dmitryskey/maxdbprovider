@@ -49,7 +49,10 @@ namespace MaxDBDataProvider
 			 * Keep track of the reader state - some methods should be
 			 * disallowed if the reader is closed.
 			 */
-			get  { return !m_fOpen; }
+			get
+			{ 
+				return !m_fOpen; 
+			}
 		}
 
 		public int RecordsAffected 
