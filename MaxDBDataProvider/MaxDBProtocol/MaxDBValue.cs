@@ -125,7 +125,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			int descriptorPos = dataPart.Extent;
 			writeDescriptor(dataPart, descriptorPos);
 			dataPart.AddArg(descriptorPos, LongDesc.Size + 1);
-			descMark.writeByte(LongDesc.LastPutval, LongDesc.Valmode);
+			descMark.WriteByte(LongDesc.LastPutval, LongDesc.Valmode);
 		}
 
 		public void markRequestedChunk(ByteArray reqData, int reqLength)
@@ -138,7 +138,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			if (reqData != null) 			
 			{
-				byte[] data = reqData.readBytes(0, reqLength);
+				byte[] data = reqData.ReadBytes(0, reqLength);
 				Stream firstChunk = new MemoryStream(data);
 				if (stream == null) 
 					stream = firstChunk;
@@ -225,7 +225,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{	    
 			this.translator = translator;
 			this.descriptor = new ByteArray(LongDesc.Size);
-			this.descriptor.writeByte(LongDesc.StateStream, LongDesc.State);		
+			this.descriptor.WriteByte(LongDesc.StateStream, LongDesc.State);		
 		}
 
 		public void updateIndex(int index)
@@ -236,7 +236,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public void putDescriptor(DataPart memory)
 		{
 			memory.writeDefineByte (0, translator.BufPos - 1);
-			memory.writeBytes(descriptor.arrayData, translator.BufPos);
+			memory.WriteBytes(descriptor.arrayData, translator.BufPos);
 			descriptorMark = memory.origData.Clone(translator.BufPos);       
 		}
 
@@ -401,10 +401,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				MaxDBRequestPacket requestPacket = connection.CreateRequestPacket();
 				MaxDBReplyPacket replyPacket;
 				DataPart longpart = requestPacket.initGetValue(connection.AutoCommit);
-				longpart.writeByte(0, 0);
-				longpart.writeBytes(descriptor, 1);
+				longpart.WriteByte(0, 0);
+				longpart.WriteBytes(descriptor, 1);
 				int maxval = int.MaxValue - 1;
-				longpart.writeInt32(maxval, 1 + LongDesc.Vallen);
+				longpart.WriteInt32(maxval, 1 + LongDesc.Vallen);
 				longpart.AddArg(1, LongDesc.Size);
 				longpart.Close();
 				try 
@@ -439,9 +439,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			MaxDBRequestPacket requestPacket = connection.CreateRequestPacket();
 			DataPart longpart = requestPacket.initGetValue(connection.AutoCommit);
-			longpart.writeByte(0, 0);
-			longpart.writeBytes(descriptor, 1);
-			longpart.writeInt32(int.MaxValue - 1, 1 + LongDesc.Vallen);
+			longpart.WriteByte(0, 0);
+			longpart.WriteBytes(descriptor, 1);
+			longpart.WriteInt32(int.MaxValue - 1, 1 + LongDesc.Vallen);
 			longpart.AddArg(1, LongDesc.Size);
 			longpart.Close();
 			return connection.Exec(requestPacket, this, GCMode.GC_DELAYED);
@@ -452,8 +452,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			ByteArray desc = new ByteArray(descriptor);//??? swapMode? 
 			int dataStart;
 
-			dataStart = desc.readInt32(LongDesc.Valpos) - 1;
-			itemsInBuffer = desc.readInt32(LongDesc.Vallen) / itemSize;
+			dataStart = desc.ReadInt32(LongDesc.Valpos) - 1;
+			itemsInBuffer = desc.ReadInt32(LongDesc.Vallen) / itemSize;
 			streamBuffer = dataPart.Clone(dataStart);
 			this.descriptor = descriptor;
 			if(descriptor[LongDesc.InternPos] == 0 && descriptor[LongDesc.InternPos + 1] == 0 &&
@@ -469,7 +469,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					return longSize;
 
 				ByteArray desc = new ByteArray(descriptor);//??? swapMode
-				longSize = desc.readInt32(LongDesc.MaxLen);
+				longSize = desc.ReadInt32(LongDesc.MaxLen);
 				if (longSize > 0)
 					return longSize;
 
@@ -507,7 +507,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				ByteArray descBytes = new ByteArray(resultDescriptor);
 
 				// The result is the Pascal index of the append position, so 1 has to be subtracted
-				return descBytes.readInt32(LongDesc.MaxLen);
+				return descBytes.ReadInt32(LongDesc.MaxLen);
 			}
 		}
 
@@ -620,7 +620,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		class GetValueStream : Stream
 		{
-			string cachedString = null;
 			GetValue m_value;
 
 			public GetValueStream(GetValue val)
@@ -688,7 +687,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				if (m_value.atEnd) 
 					return -1;
             
-				result = m_value.streamBuffer.readByte(0);
+				result = m_value.streamBuffer.ReadByte(0);
 				m_value.streamBuffer.Offset++;
 				m_value.itemsInBuffer--;
 				m_value.longPosition++;
@@ -710,7 +709,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					{
 						// copy bytes in buffer
 						chunkSize = Math.Min(len, m_value.itemsInBuffer);
-						chunk = m_value.streamBuffer.readBytes(0, chunkSize);
+						chunk = m_value.streamBuffer.ReadBytes(0, chunkSize);
 						Array.Copy(chunk, 0, b, off, chunkSize);
 						len -= chunkSize;
 						off += chunkSize;
@@ -859,7 +858,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public class GetUnicodeValueReader : TextReader
 		{
-			private string cachedValue = null;
 			private GetUnicodeValue m_value;
 
 			public GetUnicodeValueReader(GetUnicodeValue val)

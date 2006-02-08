@@ -78,39 +78,39 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		
 		public virtual void setFirstPart()
 		{
-			reqPacket.addPartAttr(PartAttributes.FirstPacket);
+			reqPacket.AddPartAttr(PartAttributes.FirstPacket);
 		}
 		
 		public virtual void SetLastPart()
 		{
-			reqPacket.addPartAttr(PartAttributes.LastPacket);
+			reqPacket.AddPartAttr(PartAttributes.LastPacket);
 		}
 		
 		public abstract void writeDefineByte(byte val, int offset);
 
-		public virtual void writeByte(byte val, int offset) 
+		public virtual void WriteByte(byte val, int offset) 
 		{
-			origData.writeByte(val, offset);
+			origData.WriteByte(val, offset);
 		}
 
-		public virtual void writeBytes(byte[] val, int offset, int len)
+		public virtual void WriteBytes(byte[] val, int offset, int len)
 		{
-			origData.writeBytes(val, offset, len, Consts.zeroBytes);
+			origData.WriteBytes(val, offset, len, Consts.zeroBytes);
 		}
 
-		public virtual void writeBytes(byte[] val, int offset)
+		public virtual void WriteBytes(byte[] val, int offset)
 		{
-			origData.writeBytes(val, offset);
+			origData.WriteBytes(val, offset);
 		}
 
 		public void writeASCIIBytes(byte[] val, int offset, int len)
 		{
-			origData.writeBytes(val, offset, len, Consts.blankBytes);
+			origData.WriteBytes(val, offset, len, Consts.blankBytes);
 		}
 
 		public void writeUnicodeBytes(byte[] val, int offset, int len)
 		{
-			origData.writeBytes(val, offset, len, Consts.blankUnicodeBytes);
+			origData.WriteBytes(val, offset, len, Consts.blankUnicodeBytes);
 		}
 
 		public virtual void writeInt16(short val, int offset) 
@@ -118,9 +118,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			origData.writeInt16(val, offset);
 		}
 
-		public virtual void writeInt32(int val, int offset) 
+		public virtual void WriteInt32(int val, int offset) 
 		{
-			origData.writeInt32(val, offset);
+			origData.WriteInt32(val, offset);
 		}
 
 		public virtual void writeInt64(long val, int offset) 
@@ -138,14 +138,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			origData.writeASCII(val, offset, len);
 		}
 
-		public byte[] readBytes(int offset, int len)
+		public byte[] ReadBytes(int offset, int len)
 		{
-			return origData.readBytes(offset, len);
+			return origData.ReadBytes(offset, len);
 		}
 
-		public byte readByte(int offset)
+		public byte ReadByte(int offset)
 		{
-			return origData.readByte(offset);
+			return origData.ReadByte(offset);
 		}
 
 		public short readInt16(int offset)
@@ -153,9 +153,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return origData.readInt16(offset);
 		}
 
-		public int readInt32(int offset)
+		public int ReadInt32(int offset)
 		{
-			return origData.readInt32(offset);
+			return origData.ReadInt32(offset);
 		}
 
 		public long readInt64(int offset)
@@ -175,9 +175,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		
 		public virtual void markEmptyStream(ByteArray descMark)
 		{
-			descMark.writeByte(LongDesc.LastData, LongDesc.Valmode);
-			descMark.writeInt32(massExtent + extent + 1, LongDesc.Valpos);
-			descMark.writeInt32(0, LongDesc.Vallen);
+			descMark.WriteByte(LongDesc.LastData, LongDesc.Valmode);
+			descMark.WriteInt32(massExtent + extent + 1, LongDesc.Valpos);
+			descMark.WriteInt32(0, LongDesc.Vallen);
 		}
 		
 		public abstract bool FillWithOMSReader(TextReader reader, int rowSize);
@@ -205,7 +205,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			
 			if (maxDataSize <= 1)
 			{
-				descMark.writeByte(LongDesc.NoData, LongDesc.Valmode);
+				descMark.WriteByte(LongDesc.NoData, LongDesc.Valmode);
 				return false;
 			}
 			int dataStart = this.extent;
@@ -219,7 +219,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					bytesRead = stream.Read(readBuf, 0, Math.Min(maxDataSize, 4096));
 					if (bytesRead > 0)
 					{
-						origData.writeBytes(readBuf, this.extent);
+						origData.WriteBytes(readBuf, this.extent);
 						extent += bytesRead;
 						maxDataSize -= bytesRead;
 					}
@@ -235,12 +235,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			* patch pos, length and kind
 			*/
 			if (streamExhausted)
-				descMark.writeByte(LongDesc.LastData, LongDesc.Valmode);
+				descMark.WriteByte(LongDesc.LastData, LongDesc.Valmode);
 			else
-				descMark.writeByte(LongDesc.DataPart, LongDesc.Valmode);
+				descMark.WriteByte(LongDesc.DataPart, LongDesc.Valmode);
 
-			descMark.writeInt32(massExtent + dataStart + 1, LongDesc.Valpos);
-			descMark.writeInt32(extent - dataStart, LongDesc.Vallen);
+			descMark.WriteInt32(massExtent + dataStart + 1, LongDesc.Valpos);
+			descMark.WriteInt32(extent - dataStart, LongDesc.Vallen);
 			putval.markRequestedChunk(origData.Clone(dataStart), extent - dataStart);
 			return streamExhausted;
 		}
@@ -254,7 +254,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			int maxDataSize = (origData.Length - extent - 8) / unicodeWidthC;
 			if (maxDataSize <= 1)
 			{
-				descMark.writeByte(LongDesc.NoData, LongDesc.Valmode);
+				descMark.WriteByte(LongDesc.NoData, LongDesc.Valmode);
 				return false;
 			}
 			
@@ -285,12 +285,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			* patch pos, length and kind
 			*/
 			if (streamExhausted)
-				descMark.writeByte(LongDesc.LastData, LongDesc.Valmode);
+				descMark.WriteByte(LongDesc.LastData, LongDesc.Valmode);
 			else
-				descMark.writeByte(LongDesc.DataPart, LongDesc.Valmode);
+				descMark.WriteByte(LongDesc.DataPart, LongDesc.Valmode);
 
-			descMark.writeInt32(massExtent + dataStart + 1, LongDesc.Valpos);
-			descMark.writeInt32(extent - dataStart, LongDesc.Vallen);
+			descMark.WriteInt32(massExtent + dataStart + 1, LongDesc.Valpos);
+			descMark.WriteInt32(extent - dataStart, LongDesc.Vallen);
 			putval.markRequestedChunk(origData.Clone(dataStart), extent - dataStart);
 			return streamExhausted;
 		}
@@ -373,7 +373,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public int readFieldLength(int offset) 
 		{
-			int erg = origData.readByte(offset);
+			int erg = origData.ReadByte(offset);
 			if (erg <= 250) 
 				return erg;
 			else 
@@ -384,12 +384,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			if (val <= 250) 
 			{
-				origData.writeByte((byte)val, offset);
+				origData.WriteByte((byte)val, offset);
 				return 1;
 			} 
 			else 
 			{
-				origData.writeByte(255, offset);
+				origData.WriteByte(255, offset);
 				origData.writeInt16((short)val, offset + 1);
 				return 3;
 			}
@@ -417,23 +417,23 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			extent += vallen;
 		}
 
-		public override void writeBytes(byte[] val, int offset, int len) 
+		public override void WriteBytes(byte[] val, int offset, int len) 
 		{
 			extent += writeFieldLength(len, extent);
-			origData.writeBytes(val, extent, len);
+			origData.WriteBytes(val, extent, len);
 			extent += len;
 		}
 
-		public override void writeBytes(byte[] val, int offset) 
+		public override void WriteBytes(byte[] val, int offset) 
 		{
-			writeBytes(val, offset, val.Length);
+			WriteBytes(val, offset, val.Length);
 		}
 
-		public override void writeByte(byte val, int offset) 
+		public override void WriteByte(byte val, int offset) 
 		{
 			int len = 1;
 			extent += writeFieldLength(len, extent);
-			origData.writeByte(val, extent);
+			origData.WriteByte(val, extent);
 			extent += len;
 		}
 
@@ -445,11 +445,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			extent += len;
 		}
 
-		public override void writeInt32(int val, int offset) 
+		public override void WriteInt32(int val, int offset) 
 		{
 			int len = 4;
 			extent += writeFieldLength(len, extent);
-			origData.writeInt32(val, extent);
+			origData.WriteInt32(val, extent);
 			extent += len;
 		}
 
@@ -463,7 +463,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
     
 		public override void WriteNull(int pos, int len) 
 		{
-			origData.writeByte(Packet.NullValue, extent);
+			origData.WriteByte(Packet.NullValue, extent);
 			extent++; 
 			AddArg(pos, len);
 		}
@@ -471,7 +471,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public override ByteArray writeDescriptor(int pos, byte[] descriptor)
 		{
 			int offset = extent + 1;
-			origData.writeBytes(descriptor, extent);
+			origData.WriteBytes(descriptor, extent);
 			return origData.Clone(offset);
 		}
 
@@ -513,7 +513,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
     public override void writeDefineByte(byte val, int offset) 
 	{
-        writeByte(val, offset);
+        WriteByte(val, offset);
     }
 
     public override void AddRow(short fieldCount) 
@@ -529,22 +529,22 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
     public override void WriteNull(int pos, int len) 
 	{
-        writeByte((byte)255, pos - 1);
-        writeBytes(new byte[len], pos);
+        WriteByte((byte)255, pos - 1);
+        WriteBytes(new byte[len], pos);
         AddArg(pos, len);
     }
 
     public void writeDefault(int pos, int len) 
 	{
-        writeByte(253, pos - 1);
-        writeBytes(new byte[len], pos);
+        WriteByte(253, pos - 1);
+        WriteBytes(new byte[len], pos);
         AddArg(pos, len);
     }
 
     public override ByteArray writeDescriptor(int pos, byte[] descriptor) 
 	{
         writeDefineByte(0, pos++);
-        writeBytes(descriptor, pos);
+        WriteBytes(descriptor, pos);
         return origData.Clone(pos);
     }
 
@@ -685,7 +685,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
     public override void FillWithOMSReturnCode(int returncode)
 	{
-        writeInt32(returncode, extent);
+        WriteInt32(returncode, extent);
         extent += 4;
         argCount++;
     }
@@ -742,14 +742,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
                     expandbuf[i * 2] = 0;
                     expandbuf[i * 2 + 1] = readBuf[i];
                 }
-                writeBytes(expandbuf, extent, bytesRead * 2);
+                WriteBytes(expandbuf, extent, bytesRead * 2);
                 extent += bytesRead * 2;
                 maxDataSize -= bytesRead * 2;
                 bytesWritten += bytesRead * 2;
             } 
 			else 
 			{
-                writeBytes(readBuf, extent, bytesRead);
+                WriteBytes(readBuf, extent, bytesRead);
                 extent += bytesRead;
                 maxDataSize -= bytesRead;
                 bytesWritten += bytesRead;
@@ -803,7 +803,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
                     bytesToRead = 0;
                 }
             }
-            writeBytes(readBuffer, extent, bytesRead);
+            WriteBytes(readBuffer, extent, bytesRead);
             extent += bytesRead;
             maxDataSize -= bytesRead;
             bytesWritten += bytesRead;

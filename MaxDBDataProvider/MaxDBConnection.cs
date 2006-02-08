@@ -48,6 +48,7 @@ namespace MaxDBDataProvider
 		private bool m_inTransaction = false;
 		private bool m_inReconnect = false;
 		private string m_cache;
+		private int m_cursorId = 0;
 		private int m_timeout, m_cacheLimit, m_cacheSize;
 		private ParseInfoCache m_parseCache = null;
 		private bool m_auth = false;
@@ -712,7 +713,7 @@ namespace MaxDBDataProvider
 				setKernelFeatureRequest(Feature.SpaceOption);
 			}
 
-			requestPacket.initDbsCommand (false, connectCmd);
+			requestPacket.initDbsCommand(false, connectCmd);
 
 			if (!isChallengeResponseSupported)
 			{
@@ -727,7 +728,7 @@ namespace MaxDBDataProvider
 				requestPacket.NewPart(PartKind.Data);
 				requestPacket.AddData(crypted);
 				requestPacket.AddDataString(TermID);
-				requestPacket.incrPartArguments();
+				requestPacket.PartArgs++;
 			} 
 			else 
 			{
@@ -825,6 +826,14 @@ namespace MaxDBDataProvider
 			get
 			{
 				return (!m_autocommit && m_inTransaction);
+			}
+		}
+
+		internal string NextCursorName
+		{
+			get
+			{
+				return "ADONET_CURSOR_" + m_cursorId++;
 			}
 		}
 
