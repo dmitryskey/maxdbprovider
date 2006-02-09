@@ -747,10 +747,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				nextPart();
 				--partsLeft;
-				if(partKind == requestedKind) 
-				{
+				if(PartType == requestedKind) 
 					return PartPos;
-				}
 			}
 			throw new PartNotFound();
 		}
@@ -777,7 +775,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return m_partOffset = m_partIndices[++m_partIdx];
 		}
 
-		public int partArgs 
+		public int PartArgs 
 		{
 			get
 			{
@@ -785,7 +783,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public int partKind 
+		public int PartType 
 		{
 			get
 			{
@@ -793,7 +791,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public int partLength
+		public int PartLength
 		{
 			get
 			{
@@ -824,12 +822,25 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				try 
 				{
 					findPart(PartKind.Vardata);
-					return new DataPartVariable(new ByteArray(ReadBytes(PartDataPos , partLength)), 1);
+					return new DataPartVariable(new ByteArray(ReadBytes(PartDataPos , PartLength)), 1);
 				}
 				catch (PartNotFound)
 				{
 					return null;
 				}
+			}
+		}
+
+		public bool WasLastPart 
+		{
+			get
+			{
+				int partAttributes;
+				bool result;
+
+				partAttributes = this.ReadByte(m_partOffset + PartHeaderOffset.Attributes);
+				result = (partAttributes & PartAttributes.LastPacket) != 0;
+				return result;
 			}
 		}
 
@@ -853,25 +864,22 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public int firstSegment
+		public int firstSegment()
 		{
-			get
-			{
-				int result;
+			int result;
 
-				if (segmCount > 0) 
-					result = PacketHeaderOffset.Segment;
-				else 
-					result = -1;
+			if (segmCount > 0) 
+				result = PacketHeaderOffset.Segment;
+			else 
+				result = -1;
 
-				m_segmOffset = result;
-				m_currentSegment = 1;
-				ClearPartCache();
-				return result;
-			}
+			m_segmOffset = result;
+			m_currentSegment = 1;
+			ClearPartCache();
+			return result;
 		}
 
-		public int nextSegment () 
+		public int nextSegment() 
 		{
 			if (segmCount <= m_currentSegment++)
 				return -1;
@@ -950,7 +958,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public string[] parseColumnNames() 
 		{
-			int columnCount = partArgs;
+			int columnCount = PartArgs;
 			string[] result = new string[columnCount];
 			int nameLen;
 			int pos = PartDataPos;
@@ -978,7 +986,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			int ioLen;
 			int bufpos;
         
-			columnCount = partArgs;
+			columnCount = PartArgs;
 			result = new DBTechTranslator[columnCount];
 			pos = PartDataPos;
 			// byte[] info;
@@ -1098,7 +1106,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				try 
 				{
 					findPart(PartKind.ErrorText);
-					result = readASCII(PartDataPos, partLength).Trim();
+					result = readASCII(PartDataPos, PartLength).Trim();
 				}
 				catch(PartNotFound) 
 				{
@@ -1123,7 +1131,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 						return m_cachedResultCount--;
 					}
 				}
-				return m_cachedResultCount = VDNNumber.Number2Int(ReadBytes(m_partOffset + PartHeaderOffset.Data, partLength));
+				return m_cachedResultCount = VDNNumber.Number2Int(ReadBytes(m_partOffset + PartHeaderOffset.Data, PartLength));
 			} 
 			else 
 				return m_cachedResultCount;
@@ -1190,7 +1198,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				try 
 				{
 					findPart(PartKind.Feature);
-					return ReadBytes(PartDataPos, partLength);
+					return ReadBytes(PartDataPos, PartLength);
 				}
 				catch(PartNotFound)  
 				{

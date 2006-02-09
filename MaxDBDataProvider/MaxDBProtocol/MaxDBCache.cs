@@ -3,111 +3,113 @@ using System.Collections;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
-	public class DoubleList
-	{
-		private DoubleList prevLink, nextLink;
-		private object data;
-
-		public DoubleList(object data)
-		{
-			this.data = data;
-		}
-
-		public object Data
-		{
-			get
-			{
-				return data;
-			}
-		}
-
-		public DoubleList Next
-		{
-			get
-			{
-				return nextLink;
-			}
-		}
-
-		public DoubleList Prev
-		{
-			get
-			{
-				return prevLink;
-			}
-		}
-
-		public bool	atStart
-		{
-			get
-			{
-				return prevLink == null;
-			}
-		}
-
-		public bool atEnd
-		{
-			get
-			{
-				return nextLink == null;
-			}
-		}
-
-		public void Remove()
-		{
-			if (prevLink != null) 
-				prevLink.nextLink = nextLink;
-
-			if (nextLink != null) 
-				nextLink.prevLink = prevLink;
-			
-			prevLink = null;
-			nextLink = null;
-		}
-
-		public void Prepend(DoubleList newHead)
-		{
-			newHead.nextLink = this;
-			prevLink = newHead;
-		}
-
-		public void Append(DoubleList newTail)
-		{
-			nextLink = newTail;
-			newTail.prevLink = this;
-		}
-
-		public void InsertAfter(DoubleList newHead)
-		{
-			DoubleList newTail = newHead.nextLink;
-			newHead.nextLink = this;
-			prevLink = newHead;
-			nextLink = newTail;
-			if (newTail != null) 
-				newTail.prevLink = this;
-		}
-	}
-
-	public class Association : DoubleList
-	{
-		object key;
-
-		public Association(object key, object val) : base(val)
-		{
-			this.key = key;
-		}
-
-		public object Key
-		{
-			get
-			{
-				return key;
-			}
-		}
-	}
+	#region "Least-Recently-Used cache class"
 
 	public class LRUCache
 	{
+		private class DoubleList
+		{
+			private DoubleList prevLink, nextLink;
+			private object data;
+
+			public DoubleList(object data)
+			{
+				this.data = data;
+			}
+
+			public object Data
+			{
+				get
+				{
+					return data;
+				}
+			}
+
+			public DoubleList Next
+			{
+				get
+				{
+					return nextLink;
+				}
+			}
+
+			public DoubleList Prev
+			{
+				get
+				{
+					return prevLink;
+				}
+			}
+
+			public bool	atStart
+			{
+				get
+				{
+					return prevLink == null;
+				}
+			}
+
+			public bool atEnd
+			{
+				get
+				{
+					return nextLink == null;
+				}
+			}
+
+			public void Remove()
+			{
+				if (prevLink != null) 
+					prevLink.nextLink = nextLink;
+
+				if (nextLink != null) 
+					nextLink.prevLink = prevLink;
+			
+				prevLink = null;
+				nextLink = null;
+			}
+
+			public void Prepend(DoubleList newHead)
+			{
+				newHead.nextLink = this;
+				prevLink = newHead;
+			}
+
+			public void Append(DoubleList newTail)
+			{
+				nextLink = newTail;
+				newTail.prevLink = this;
+			}
+
+			public void InsertAfter(DoubleList newHead)
+			{
+				DoubleList newTail = newHead.nextLink;
+				newHead.nextLink = this;
+				prevLink = newHead;
+				nextLink = newTail;
+				if (newTail != null) 
+					newTail.prevLink = this;
+			}
+		}
+
+		private class Association : DoubleList
+		{
+			object m_key;
+
+			public Association(object key, object val) : base(val)
+			{
+				m_key = key;
+			}
+
+			public object Key
+			{
+				get
+				{
+					return m_key;
+				}
+			}
+		}
+
 		private Hashtable lookup;
 		private Association lruTop;
 		private Association lruBottom;
@@ -196,6 +198,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		}
 	}
 
+	#endregion
+
+	#region "Cache information class"
+
 	public class CacheInfo
 	{
 		private string name;
@@ -248,6 +254,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return result;
 		}
 	}
+
+	#endregion
+
+	#region "Parse information class"
 
 	public class ParseInfoCache : LRUCache
 	{
@@ -358,6 +368,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 	}
+
+	#endregion
 }
 
 

@@ -1384,9 +1384,25 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const int Stream_IN    = 0;
 		public const int Stream_OUT   = 1;
 		public const int Stream_INOUT = 2;
-	
 	}
 
+	internal enum FetchType
+	{
+		FIRST			= 1,	// The fetch operation type of a FETCH FIRST.
+		LAST			= 2,	// The fetch operation type of a FETCH LAST.
+		ABSOLUTE_UP		= 3,	// The fetch operation type of a FETCH ABSOLUTE with an argument >1.
+		ABSOLUTE_DOWN	= 4,	// The fetch operation type of a FETCH ABSOLUTE with an argument <1.
+		RELATIVE_UP		= 5,	// The fetch operation type of a FETCH RELATIVE with an argument >1.
+		RELATIVE_DOWN	= 6		// The fetch operation type of a FETCH RELATIVE with an argument <1.
+	}
+
+	internal enum PositionType
+	{
+		BEFORE_FIRST  = 1,	// Constant indicating that the current position is <i>before the first row
+		INSIDE        =	2,	// Constant indicating that the current position is at the result set.
+		AFTER_LAST    = 3,	// Constant indicating that the current position is behind the last row.
+		NOT_AVAILABLE =	4	// Constant indicating that the current position is not available.
+	}
 
 	/// <summary>
 	/// Summary description for Consts.

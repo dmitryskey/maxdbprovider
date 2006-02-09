@@ -2,7 +2,11 @@ using System;
 using System.Data;
 using System.Text;
 using System.Globalization;
+using System.Collections;
+
+#if NATIVE
 using MaxDBDataProvider.MaxDBProtocol;
+#endif
 
 namespace MaxDBDataProvider
 {
@@ -11,26 +15,164 @@ namespace MaxDBDataProvider
 		// The DataReader should always be open when returned to the user.
 		private bool m_fOpen = true;
 
-		// Keep track of the results and position
-		// within the resultset (starts prior to first record).
+#if NATIVE
+		// The default fetch size to use if none is specified.
+		public const int DEFAULT_FETCHSIZE = 30000;
+
+		// The fetch details.
+		private FetchInfo       fetchInfo;
+
+		// The command that generated this result set.
+		private MaxDBCommand    command;
+
+		// The fetch size that is set.
+		private int             fetchSize;
+
+		// The maxRows value. This is set to -1 if no max rows are set.
+		private int             maxRows;
+
+		// The data of the last fetch operation.
+		private FetchChunk      currentChunk;
+
+		// The status of the position, i.e. one of the <code>POSITION_XXX</code> constants.
+		private PositionType	positionState;
+
+		// The status of the current chunk.
+		private PositionType    positionStateOfChunk;
+
+		private bool	        fromMetaData;          // was a metadata operation ?
+		private bool	        lastWasNull;           // was last getXXX null ?
+		private bool	        isClosed;              // is this result set closed?
+		private bool	        empty;                 // is this result set totally empty
+
+		private ArrayList       openStreams;           // a vector of all streams that went outside.
+		private int             rowsInResultSet;       // the number of rows in this result set, or -1 if not known
+
+		private int             safeFetchSize;         // The fetch size that is known to be good.
+		// This one is used when going backwards in the result set.
+		private bool			safeFetchSizeDetermined; 
+
+		private int             largestKnownAbsPos;    // largest known absolute position to be inside.
+		private int             maxRowsOutSideResult;  // flag: -1 -> maxrows is inside the result
+		//        0 -> unknown
+		//        1 -> maxrows is outside the result
+
+		protected int           modifiedKernelPos;     // contains 0 if the kernel pos is not modified
+		// or the current kernel position.
+
+		internal MaxDBDataReader(MaxDBConnection connection, FetchInfo fetchInfo, MaxDBCommand  command, int maxRows, MaxDBReplyPacket reply)
+		{
+			this.fetchInfo = fetchInfo;
+			this.command = command;
+			this.fetchSize = DEFAULT_FETCHSIZE;
+
+			this.maxRows=maxRows;
+			this.isClosed=false;
+	
+			initializeFields();
+			openStreams = new ArrayList(5);
+			if (reply != null)
+			{
+				setCurrentChunk(new FetchChunk(FetchType.FIRST, // fetch first is forward
+					1,    // absolute start position
+					reply,          // reply packet
+					fetchInfo.RecordSize, // the size for data part navigation
+					maxRows, // the current maxRows setting, for determining the last
+					// condition in that case
+					this.rowsInResultSet
+					));
+				positionState = PositionType.BEFORE_FIRST;
+			}
+		}
+
+		internal MaxDBDataReader(MaxDBConnection connection, string cursorName, DBTechTranslator[] infos, string[] columnNames, 
+			MaxDBCommand command, int maxRows, MaxDBReplyPacket reply) :
+			this(connection, new FetchInfo(connection, cursorName, infos, columnNames), command, maxRows, reply)
+		{
+		}
+
+		private void initializeFields()
+		{
+			this.currentChunk = null;
+			this.positionState = PositionType.BEFORE_FIRST;
+			this.positionStateOfChunk = PositionType.NOT_AVAILABLE;
+			this.empty = false;
+			this.safeFetchSize = 1;
+			this.safeFetchSizeDetermined = false;
+			this.largestKnownAbsPos = 1;
+			this.maxRowsOutSideResult = 0;
+			this.rowsInResultSet = -1;
+			this.modifiedKernelPos = 0;
+		}
+
+		private void setCurrentChunk(FetchChunk newChunk)
+		{
+			positionState = positionStateOfChunk = PositionType.INSIDE;
+			currentChunk = newChunk;
+			int safe_fetchsize = Math.Min(fetchSize, Math.Max(newChunk.Size, safeFetchSize));
+			if(safeFetchSize != safe_fetchsize) 
+			{
+				safeFetchSize = safe_fetchsize;
+				safeFetchSizeDetermined = false;
+			} 
+			else 
+				safeFetchSizeDetermined = safe_fetchsize != 1;
+			modifiedKernelPos = 0; // clear this out, until someone will de
+			updateRowStatistics();
+		}
+
+		private void updateRowStatistics()
+		{
+			if(!RowsInResultSetKnown) 
+			{
+				// If this is the one and only chunk, yes then we
+				// have only the records in this chunk.
+				if(currentChunk.IsLast && currentChunk.IsFirst) 
+				{
+					setRowsInResultSet(currentChunk.Size);
+					currentChunk.setRowsInResultSet(rowsInResultSet);
+				}
+					// otherwise, we may have navigated through it from start ...
+				else if(currentChunk.IsLast && currentChunk.IsForward) 
+				{
+					setRowsInResultSet(currentChunk.End);
+					currentChunk.setRowsInResultSet(rowsInResultSet);
+				}
+					// ... or from end
+				else if(currentChunk.IsFirst && !currentChunk.IsForward) 
+				{
+					setRowsInResultSet(-currentChunk.Start);
+					currentChunk.setRowsInResultSet(rowsInResultSet);
+				} 
+				else if (currentChunk.IsForward) 
+					largestKnownAbsPos = Math.Max(largestKnownAbsPos, currentChunk.End);
+			}
+		}
+
+		private bool RowsInResultSetKnown
+		{
+			get
+			{
+				return rowsInResultSet != -1;
+			}
+		}
+
+		private void setRowsInResultSet(int rows)
+		{
+			if (maxRows > 0)
+				rowsInResultSet = Math.Min(rows, this.maxRows);
+			else
+				rowsInResultSet = rows;
+		}
+
+#else
+#endif
 		private IntPtr  m_resultset = IntPtr.Zero;
-
-		/* 
-		 * Keep track of the connection in order to implement the
-		 * CommandBehavior.CloseConnection flag. A null reference means
-		 * normal behavior (do not automatically close).
-		 */
-		//private MaxDBConnection m_connection = null;
-
-		/*
-		 * Because the user should not be able to directly create a 
-		 * DataReader object, the constructors are
-		 * marked as internal.
-		 */
 		internal MaxDBDataReader(IntPtr resultset)
 		{
 			m_resultset = resultset;
 		}
+
 
 		/****
 		 * METHODS / PROPERTIES FROM IDataReader.
@@ -67,15 +209,14 @@ namespace MaxDBDataProvider
 
 		public void Close()
 		{
-			/*
-			 * Close the reader. The sample only changes the state,
-			 * but an actual implementation would also clean up any 
-			 * resources used by the operation. For example,
-			 * cleaning up any resources waiting for data to be
-			 * returned by the server.
-			 */
 			m_fOpen = false;
+#if NATIVE
+			isClosed = true;
+			currentChunk = null;
+			fetchInfo = null;
+#else
 			SQLDBC.SQLDBC_ResultSet_close(m_resultset);
+#endif
 		}
 
 		public bool NextResult()
