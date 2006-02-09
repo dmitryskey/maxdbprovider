@@ -591,7 +591,7 @@ namespace MaxDBDataProvider
 				replyPacket = m_comm.Exec(requestPacket, requestLen);
 
 				/*get Returncode*/
-				int firstSegm = replyPacket.firstSegment;
+				int firstSegm = replyPacket.firstSegment();
 				localWeakReturnCode = replyPacket.weakReturnCode;
 
 				if(localWeakReturnCode != -8) 

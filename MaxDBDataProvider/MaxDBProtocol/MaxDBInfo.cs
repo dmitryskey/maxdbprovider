@@ -642,7 +642,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			for(int i = 0; i < replyPacket.partCount; i++) 
 			{
 				replyPacket.nextPart();
-				switch (replyPacket.partKind) 
+				switch (replyPacket.PartType) 
 				{
 					case PartKind.ColumnNames:
 						columnNames = replyPacket.parseColumnNames();
@@ -1005,13 +1005,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				reply.nextPart();
 
-				int partKind=reply.partKind;
+				int partType = reply.PartType;
 
-				if(partKind==PartKind.ColumnNames) 
+				if(partType == PartKind.ColumnNames) 
 					columnNames=reply.parseColumnNames();
-				else if(partKind == PartKind.ShortInfo) 
+				else if(partType == PartKind.ShortInfo) 
 					infos = reply.ParseShortFields(connection.m_spaceOption, false, null, false);
-				else if(partKind == PartKind.Vardata_ShortInfo) 
+				else if(partType == PartKind.Vardata_ShortInfo) 
 					infos = reply.ParseShortFields(this.connection.m_spaceOption, false, null, true);
 			}
 			SetMetaData(infos, columnNames);
@@ -1070,7 +1070,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return (DBTechTranslator)obj;
 		}
 
-		int NumberOfColumns
+		public int NumberOfColumns
 		{
 			get
 			{
@@ -1078,7 +1078,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		int RecordSize
+		public int RecordSize
 		{
 			get
 			{

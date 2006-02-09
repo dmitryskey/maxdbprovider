@@ -950,4 +950,468 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	}
 
 	#endregion
+
+	#region "Fetch chunk class"
+
+	/*
+  The outcome of a particular fetch operation.  A fetch operation
+  results in one (when the fetch size is 1) or more (when the fetch
+  size is >1) data rows returned from the database server. Depending on
+  the kind of the fetch, the positioning in the result at the database
+  server and the start and end index computation does differ.
+ */
+	class FetchChunk
+	{
+		// The data packet from the fetch operation.
+		private MaxDBReplyPacket replyPacket;
+
+		// The data part of replyPacket.
+		private ByteArray replyData;
+
+		// The current record inside the data part (replyData).
+		private ByteArray currentRecord;
+
+		// The type of the fetch operation (one of the TYPE_XXX constants).
+		private FetchType type; // type of fetch chunk
+
+		// The index of the first row in this chunk.
+		private int start_index;
+
+		// The index of the last row in this chunk.
+		private int end_index;
+		
+		//The current index within this chunk, starting with 0.
+		private int currentOffset;
+
+		// A flag indicating that this chunk is the first chunk of the result set.
+		private bool first;
+
+		// A flag indicating that this chunk is the last chunk of the result set.
+		private bool last;
+
+		// The number of bytes in a row.
+		private int recordSize;
+		
+		// The number of elements in this chunk.
+		private int chunkSize;
+		
+		// The number of rows in the complete result set, or -1 if this is not known.
+		private int rowsInResultSet;
+
+		public FetchChunk(FetchType type, int absoluteStartRow, MaxDBReplyPacket replyPacket, int recordSize, int maxRows, int rowsInResultSet)
+		{
+			this.replyPacket = replyPacket;
+			this.type = type;
+			this.recordSize = recordSize;
+			this.rowsInResultSet = rowsInResultSet;
+			try 
+			{
+				replyPacket.firstSegment();
+				replyPacket.findPart(PartKind.Data);
+			} 
+			catch(PartNotFound) 
+			{
+				throw new DataException("Fetch operation delivered no data part.");
+			}
+			this.chunkSize = replyPacket.PartArgs;
+			int dataPos=replyPacket.PartDataPos;
+			this.replyData = replyPacket.Clone(dataPos);
+			currentOffset=0;
+			currentRecord = replyData.Clone(currentOffset * this.recordSize);
+			if (absoluteStartRow > 0) 
+			{
+				start_index = absoluteStartRow;
+				end_index = absoluteStartRow + chunkSize - 1;
+			} 
+			else 
+			{
+				if(rowsInResultSet != -1) 
+				{
+					if(absoluteStartRow < 0) 
+						start_index = rowsInResultSet + absoluteStartRow + 1; // - 1 is last
+					else 
+						start_index = rowsInResultSet - absoluteStartRow + chunkSize ;
+
+					end_index = start_index + chunkSize -1;
+				} 
+				else 
+				{
+					start_index = absoluteStartRow;
+					end_index = absoluteStartRow + chunkSize -1;
+				}
+			}
+			determineFlags(maxRows);
+		}
+
+		/*
+		Determines whether this chunk is the first and/or last of
+		a result set. This is done by checking the index boundaries,
+		and also the LAST PART information of the reply packet.
+		A forward chunk is also the last if it contains the record at
+		the maxRows row, as the user decided to make
+		the limit here.
+		*/
+
+		private void determineFlags(int maxRows)
+		{
+			if(replyPacket.WasLastPart) 
+			{
+				switch(this.type) 
+				{
+					case FetchType.FIRST:
+					case FetchType.LAST:
+					case FetchType.RELATIVE_DOWN:
+						first = true;
+						last = true;
+						break;
+					case FetchType.ABSOLUTE_UP:
+					case FetchType.ABSOLUTE_DOWN:
+					case FetchType.RELATIVE_UP:
+						last = true;
+						break;
+				}
+			}
+
+			if(start_index == 1) 
+				first = true;
+
+			if(end_index == -1) 
+				last=true;
+        
+			// one special last for maxRows set
+			if(maxRows!=0 && IsForward && end_index >= maxRows) 
+			{
+				// if we have fetched too much, we have to cut here ...
+				end_index = maxRows;
+				chunkSize = maxRows + 1 - start_index;
+				last = true;
+			}
+		}
+    
+		// Gets the reply packet.
+		public MaxDBReplyPacket ReplyPacket
+		{
+			get
+			{
+				return this.replyPacket;
+			}
+		}
+
+		// Gets the current record.
+		public ByteArray CurrentRecord
+		{
+			get
+			{
+				return this.currentRecord;
+			}
+		}
+
+		/*
+			Returns whether the given row is truly inside the chunk.
+			@param row the row to check. Rows <0 count from the end of the result.
+			@return true if the row is inside, false if it's not
+			or the condition could not be determined due to an unknown end of result set.
+		*/
+		public bool containsRow(int row)
+		{
+			if(start_index <= row && end_index >= row) 
+				return true;
+
+			// some tricks depending on whether we are on last/first chunk
+			if(IsForward && last && row < 0) 
+				return row >= start_index - end_index - 1;
+
+			if(!IsForward && first && row > 0) 
+				return row <= end_index - start_index + 1;
+
+			// if we know the number of rows, we can compute this anyway by inverting the row
+			if(rowsInResultSet != -1 && ((start_index<0 && row>0) || (start_index>0 && row<0))) 
+			{
+				int inverted_row = (row > 0) ? (row - rowsInResultSet - 1) : (row + rowsInResultSet + 1);
+				return start_index <= inverted_row && end_index >= inverted_row;
+			}
+
+			return false;
+		}
+
+		/*
+			Moves the position inside the chunk by a relative offset.
+			@param relativepos the relative moving offset.
+			@return true if it was moved, false otherwise.
+		*/
+		bool move(int relativepos)
+		{
+			if(currentOffset + relativepos < 0 || currentOffset + relativepos >= chunkSize )  
+				return false;
+			else 
+			{
+				unsafeMove(relativepos);
+				return true;
+			}
+		}
+
+		/*
+			Moves the position inside the chunk by a relative offset, but unchecked.
+			@param relativepos the relative moving offset.
+		*/
+		private void unsafeMove(int relativepos)
+		{
+			currentOffset += relativepos;
+			currentRecord = currentRecord.Clone(relativepos * recordSize);
+		}
+
+		/*
+			 Sets the current record to the supplied absolute position.
+			 @param row the absolute row.
+			 @return true if the row was set, false otherwise.
+		*/
+		public bool setRow(int row)
+		{
+			if(start_index <= row  && end_index >= row) 
+			{
+				unsafeMove(row - start_index - currentOffset);
+				return true;
+			}
+			// some tricks depending on whether we are on last/first chunk
+			if(IsForward && last && row < 0 && row >= start_index - end_index - 1 ) 
+			{
+				// move backward to the row from the end index, but
+				// honor the row number start at 1, make this
+				// relative to chunk by subtracting start index
+				// and relative for the move by subtracting the
+				// current offset
+				unsafeMove(end_index + row + 1 - start_index - currentOffset);
+				return true;
+			}
+			if(!IsForward && first && row > 0 && row <= end_index - start_index + 1) 
+			{
+				// simple. row is > 0. start_index if positive were 1 ...
+				unsafeMove(row - 1 - currentOffset);
+			}
+			// if we know the number of rows, we can compute this anyway
+			// by inverting the row
+			if(rowsInResultSet != -1 && ((start_index<0 && row>0) || (start_index>0 && row<0))) 
+			{
+				int inverted_row = (row > 0) ? (row - rowsInResultSet - 1) : (row + rowsInResultSet + 1);
+				return setRow(inverted_row);
+			}
+
+			return false;
+		}
+
+		/*
+			Called because there is a result set where the last element
+			is now interesting. This is the fact in a FETCH LAST
+			operation.
+		*/
+		public void moveToUpperBound()
+		{
+			int relativepos = chunkSize - currentOffset -1;
+			currentRecord = currentRecord.Clone(relativepos * recordSize);
+			currentOffset= chunkSize - 1;
+			return;
+		}
+
+		/*
+			Returns true if the internal position inside the chunk
+			is the greatest possible towards the end of this result set.
+			@return true if our current position is equal
+			to the end index of this chunk, false otherwise.
+		*/
+		public bool IsAtUpperBound()
+		{
+			return currentOffset == chunkSize-1;
+		}
+
+		/*
+			 Returns true if the internal position inside the chunk
+			 is the smallest possible
+			 @return true if our current position is equal
+			 to the start index of this chunk, false otherwise.
+		*/
+		public bool IsAtLowerBound
+		{
+			get
+			{
+				return currentOffset == 0;
+			}
+		}
+
+		/*
+			Get the reply data.
+			@return the replyData property.
+		*/
+		public ByteArray ReplyData
+		{
+			get
+			{
+				return replyData;
+			}
+		}
+
+		/*
+			 Returns whether this chunk is the first one or sets the first flag.
+			 Take care, that this information may not be reliable.
+			 @return true if this is the first, and false if this
+			 is not first or the information is not known.
+		*/
+		public bool IsFirst
+		{
+			get
+			{
+				return first;
+			}
+			set
+			{
+				first = value;
+			}
+		}
+
+		/*
+			Returns whether this chunk is the last one or sets the last flag.
+			Take care, that this information may not be reliable.
+			@return true if this is the last, and false if this
+			is not first or the information is not known.
+		*/
+		public bool IsLast
+		{
+			get
+			{
+				return last;
+			}
+			set
+			{
+				last = value;
+			}
+		}
+
+		/*
+			Gets the size of this chunk.
+			@return the number of rows in this chunk.
+		*/
+		public int Size
+		{
+			get
+			{
+				return chunkSize;
+			}
+		}
+
+		/*
+			Gets whether the current position is the first in the result set.
+			@return true if the current position is the first row
+			of the result set.
+		*/
+		public bool positionedAtFirst
+		{
+			get
+			{
+				return first && currentOffset == 0;
+			}
+		}
+
+		/*
+			Gets whether the current position is the last in the result set.
+			@return true if the current position is the last row
+			of the result set.
+		*/
+		public bool positionedAtLast
+		{
+			get
+			{
+				return last && currentOffset == chunkSize-1;
+			}
+		}
+
+		/*
+			Get the current position within the result set.
+			@return the current position in the result set.
+		*/
+		public int LogicalPos
+		{
+			get
+			{
+				return start_index + currentOffset;
+			}
+		}
+
+		/*
+			Gets the current offset in this chunk.
+			@return the current position in this chunk (starts with 0).
+		*/
+		public int Pos
+		{
+			get
+			{
+				return currentOffset;
+			}
+		}
+
+		/*
+			Retrieves the position where the internal position is after the
+			fetch if this chunk is the current chunk.
+			@return the internal position - either the start or the end of this chunk.
+		*/
+		public int KernelPos
+		{
+			get
+			{
+				switch(type) 
+				{
+					case FetchType.ABSOLUTE_DOWN:
+					case FetchType.RELATIVE_UP:
+					case FetchType.LAST:
+						return start_index;
+					case FetchType.FIRST:
+					case FetchType.ABSOLUTE_UP:
+					case FetchType.RELATIVE_DOWN:
+					default:
+						return end_index;
+				}
+			}
+		}
+
+		public bool IsForward
+		{
+			get
+			{
+				return (type == FetchType.FIRST || type == FetchType.ABSOLUTE_UP || type == FetchType.RELATIVE_UP);
+			}
+		}
+
+		/*
+			Updates the number of rows in the result set.
+			@param rows the number of rows in the result set.
+		*/
+		public void setRowsInResultSet(int rows)
+		{
+			rowsInResultSet = rows;
+		}
+
+		/*
+			Gets the start index of the fetch chunk.
+			@return The start index (smallest valid index).
+		*/
+		public int Start
+		{
+			get
+			{
+				return start_index;
+			}
+		}
+
+		/*
+			Gets the end index of the fetch chunk.
+			@return The end index (largest valid index).
+		*/
+		public int End
+		{
+			get
+			{
+				return end_index;
+			}
+		}
+	}
+
+	#endregion
 }

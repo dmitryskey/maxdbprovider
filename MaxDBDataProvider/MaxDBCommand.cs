@@ -191,11 +191,6 @@ namespace MaxDBDataProvider
 
 		public IDataReader ExecuteReader(CommandBehavior behavior)
 		{
-			/*
-			 * ExecuteReader should retrieve results from the data source
-			 * and return a DataReader that allows the user to process 
-			 * the results.
-			 */
 
 			// There must be a valid and open connection.
 			if (m_connection == null || m_connection.State != ConnectionState.Open)
@@ -636,7 +631,7 @@ namespace MaxDBDataProvider
 			for(int i = 0; i < replyPacket.partCount; i++) 
 			{
 				replyPacket.nextPart();
-				switch (replyPacket.partKind) 
+				switch (replyPacket.PartType) 
 				{
 					case PartKind.ColumnNames:
 						if (columnNames == null)
@@ -672,7 +667,7 @@ namespace MaxDBDataProvider
 						}
 						break;
 					case PartKind.TableName:
-						tableName = replyPacket.readASCII(replyPacket.PartDataPos, replyPacket.partLength);
+						tableName = replyPacket.readASCII(replyPacket.PartDataPos, replyPacket.PartLength);
 						break;
 					case PartKind.ParsidOfSelect:
 						// ignore
@@ -691,7 +686,7 @@ namespace MaxDBDataProvider
 					for (int i = 0; i < replyPacket.partCount; i++) 
 					{
 						replyPacket.nextPart();
-						switch (replyPacket.partKind) 
+						switch (replyPacket.PartType) 
 						{
 							case PartKind.ColumnNames:
 								if (columnNames == null)
