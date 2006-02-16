@@ -268,15 +268,15 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		public byte[] getClientProof(byte[] password)
+		public byte[] GetClientProof(byte[] password)
 		{
 			return Crypt.ScrammMD5(salt, password, clientchallenge, serverchallenge);
 		}
 
 		// Parses the serverchallenge and split it into salt and real server challenge.
-		public void parseServerChallenge(DataPartVariable vData)
+		public void ParseServerChallenge(DataPartVariable vData)
 		{
-			if (!vData.nextRow() || !vData.nextField())
+			if (!vData.NextRow() || !vData.NextField())
 				throw new MaxDBSQLException(MessageTranslator.Translate
 					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 
@@ -285,38 +285,37 @@ namespace MaxDBDataProvider
 				throw new MaxDBSQLException(MessageTranslator.Translate
 					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 
-			if (!vData.nextField() || vData.CurrentFieldLen < 8)
+			if (!vData.NextField() || vData.CurrentFieldLen < 8)
 				throw new MaxDBSQLException(MessageTranslator.Translate
 					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 
 			if (vData.CurrentFieldLen == 40)
 			{
-				/*first version of challenge response 
-				 *should only occurs with database version 7.6.0.0 <= kernel <= 7.6.0.7*/
+				// first version of challenge response should only occurs with database version 7.6.0.0 <= kernel <= 7.6.0.7
 				salt = vData.ReadBytes(vData.CurrentOffset, 8);
 				serverchallenge = vData.ReadBytes(vData.CurrentOffset + 8, vData.CurrentFieldLen - 8);
 			}
 			else
 			{
-				DataPartVariable vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen)), 1);
-				if (!vd.nextRow() || !vd.nextField())
+				DataPartVariable vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen), 0, vData.origData.Swapped), 1);
+				if (!vd.NextRow() || !vd.NextField())
 					throw new MaxDBSQLException(MessageTranslator.Translate
 						(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
 							Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 
 				salt = vd.ReadBytes(vd.CurrentOffset, vd.CurrentFieldLen);
-				if (!vd.nextField())
+				if (!vd.NextField())
 					throw new MaxDBSQLException(MessageTranslator.Translate
 						(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
 							Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 
 				serverchallenge = vd.ReadBytes(vd.CurrentOffset, vd.CurrentFieldLen);
 
-				/*from Version 7.6.0.10 on also the max password length will be delivered*/
-				if (vData.nextField())
+				// from Version 7.6.0.10 on also the max password length will be delivered
+				if (vData.NextField())
 				{
-					DataPartVariable mp_vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen)), 1);
-					if (!mp_vd.nextRow() || !mp_vd.nextField()) 
+					DataPartVariable mp_vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen), 0, vData.origData.Swapped), 1);
+					if (!mp_vd.NextRow() || !mp_vd.NextField()) 
 						throw new MaxDBSQLException(MessageTranslator.Translate
 							(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
 								Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
@@ -325,7 +324,7 @@ namespace MaxDBDataProvider
 					{
 						if (mp_vd.readASCII(mp_vd.CurrentOffset, mp_vd.CurrentFieldLen).ToLower().Trim() == Packet.MaxPasswordLenTag)
 						{
-							if (!mp_vd.nextField()) 
+							if (!mp_vd.NextField()) 
 								throw new MaxDBSQLException(MessageTranslator.Translate
 									(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
 										Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
@@ -345,13 +344,13 @@ namespace MaxDBDataProvider
 						} 
 						else 
 						{
-							if (!mp_vd.nextField()) 
+							if (!mp_vd.NextField()) 
 								throw new MaxDBSQLException(MessageTranslator.Translate
 									(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
 										Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 						}     
 					} 
-					while (mp_vd.nextField());
+					while (mp_vd.NextField());
 				}
 			}
 		}

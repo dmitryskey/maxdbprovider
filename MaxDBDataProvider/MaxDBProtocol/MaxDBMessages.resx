@@ -669,4 +669,10 @@
 	<data name="error.dbnull.unknown">
 		<value>Column nullable unknown</value>
 	</data>
+	<data name="error.oms.unsupported">
+		<value>OMS stream object is not supported</value>
+	</data>
+	<data name="error.statement.cancelled">
+		<value>SQL statement cancelled.</value>
+	</data>
 </root>

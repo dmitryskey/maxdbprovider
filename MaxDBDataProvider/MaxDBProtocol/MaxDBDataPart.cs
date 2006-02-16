@@ -175,9 +175,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		
 		public virtual void markEmptyStream(ByteArray descMark)
 		{
-			descMark.WriteByte(LongDesc.LastData, LongDesc.Valmode);
-			descMark.WriteInt32(massExtent + extent + 1, LongDesc.Valpos);
-			descMark.WriteInt32(0, LongDesc.Vallen);
+			descMark.WriteByte(LongDesc.LastData, LongDesc.ValMode);
+			descMark.WriteInt32(massExtent + extent + 1, LongDesc.ValPos);
+			descMark.WriteInt32(0, LongDesc.ValLen);
 		}
 		
 		public abstract bool FillWithOMSReader(TextReader reader, int rowSize);
@@ -205,7 +205,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			
 			if (maxDataSize <= 1)
 			{
-				descMark.WriteByte(LongDesc.NoData, LongDesc.Valmode);
+				descMark.WriteByte(LongDesc.NoData, LongDesc.ValMode);
 				return false;
 			}
 			int dataStart = this.extent;
@@ -231,17 +231,16 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				throw new MaxDBException("Reading from a stream resulted in an IOException", ex);
 			}
-			/*
-			* patch pos, length and kind
-			*/
-			if (streamExhausted)
-				descMark.WriteByte(LongDesc.LastData, LongDesc.Valmode);
-			else
-				descMark.WriteByte(LongDesc.DataPart, LongDesc.Valmode);
 
-			descMark.WriteInt32(massExtent + dataStart + 1, LongDesc.Valpos);
-			descMark.WriteInt32(extent - dataStart, LongDesc.Vallen);
-			putval.markRequestedChunk(origData.Clone(dataStart), extent - dataStart);
+			// patch pos, length and kind
+			if (streamExhausted)
+				descMark.WriteByte(LongDesc.LastData, LongDesc.ValMode);
+			else
+				descMark.WriteByte(LongDesc.DataPart, LongDesc.ValMode);
+
+			descMark.WriteInt32(massExtent + dataStart + 1, LongDesc.ValPos);
+			descMark.WriteInt32(extent - dataStart, LongDesc.ValLen);
+			putval.MarkRequestedChunk(origData.Clone(dataStart), extent - dataStart);
 			return streamExhausted;
 		}
 		
@@ -254,7 +253,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			int maxDataSize = (origData.Length - extent - 8) / unicodeWidthC;
 			if (maxDataSize <= 1)
 			{
-				descMark.WriteByte(LongDesc.NoData, LongDesc.Valmode);
+				descMark.WriteByte(LongDesc.NoData, LongDesc.ValMode);
 				return false;
 			}
 			
@@ -281,17 +280,17 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				throw new MaxDBException("Reading from a stream resulted in an IOException", ex);
 			}
-			/*
-			* patch pos, length and kind
-			*/
+			
+			
+			// patch pos, length and kind
 			if (streamExhausted)
-				descMark.WriteByte(LongDesc.LastData, LongDesc.Valmode);
+				descMark.WriteByte(LongDesc.LastData, LongDesc.ValMode);
 			else
-				descMark.WriteByte(LongDesc.DataPart, LongDesc.Valmode);
+				descMark.WriteByte(LongDesc.DataPart, LongDesc.ValMode);
 
-			descMark.WriteInt32(massExtent + dataStart + 1, LongDesc.Valpos);
-			descMark.WriteInt32(extent - dataStart, LongDesc.Vallen);
-			putval.markRequestedChunk(origData.Clone(dataStart), extent - dataStart);
+			descMark.WriteInt32(massExtent + dataStart + 1, LongDesc.ValPos);
+			descMark.WriteInt32(extent - dataStart, LongDesc.ValLen);
+			putval.MarkRequestedChunk(origData.Clone(dataStart), extent - dataStart);
 			return streamExhausted;
 		}
 	}
@@ -302,13 +301,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	public class DataPartVariable : DataPart 
 	{
-		private int fieldCount = 0;
-
-		private int currentArgCount = 0;
-
-		private int currentFieldCount = 0;
-
-		private int currentFieldLen = 0;
+		private int m_fieldCount = 0;
+		private int m_currentArgCount = 0;
+		private int m_currentFieldCount = 0;
+		private int m_currentFieldLen = 0;
 
 		public DataPartVariable(ByteArray data, MaxDBRequestPacket reqPacket) : base(data, reqPacket) 
 		{
@@ -319,28 +315,28 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			this.argCount = argCount;
 		}
 
-		public bool nextRow() 
+		public bool NextRow() 
 		{
-			if (currentArgCount >= argCount) 
+			if (m_currentArgCount >= argCount) 
 				return false;
 
-			currentArgCount++;
-			fieldCount = origData.readInt16(extent);
+			m_currentArgCount++;
+			m_fieldCount = origData.readInt16(extent);
 			extent += 2;
-			currentFieldCount = 0;
-			currentFieldLen = 0;
+			m_currentFieldCount = 0;
+			m_currentFieldLen = 0;
 			return true;
 		}
 
-		public bool nextField() 
+		public bool NextField() 
 		{
-			if (currentFieldCount >= fieldCount) 
+			if (m_currentFieldCount >= m_fieldCount) 
 				return false;
 
-			currentFieldCount++;
-			extent += currentFieldLen;
-			currentFieldLen = readFieldLength(extent);
-			extent += (currentFieldLen > 250) ? 3 : 1;
+			m_currentFieldCount++;
+			extent += m_currentFieldLen;
+			m_currentFieldLen = readFieldLength(extent);
+			extent += (m_currentFieldLen > 250) ? 3 : 1;
 			return true;
 		}
 
@@ -348,7 +344,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return currentFieldLen;
+				return m_currentFieldLen;
 			}
 		}
 
