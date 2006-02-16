@@ -18,12 +18,28 @@ namespace MaxDBDataProvider
 		
 		IntPtr m_stmt = IntPtr.Zero;
 
-		private bool m_setWithInfo = false;
+#if NATIVE
+		private ArrayList m_inputProcedureLongs;
+
 		private int m_rowsAffected = -1;
-		private bool m_hasRowCount = false;
+		private bool m_setWithInfo = false;
+		private bool m_hasRowCount;
+		private static int m_maxParseAgainCnt = 10;
 		private ArrayList m_warnings = new ArrayList();
-		private MaxDBParseInfo m_parseinfo;
+		private ArrayList m_inputLongs;
+		private MaxDBParseInfo m_parseInfo;
 		private MaxDBDataReader m_currentDataReader;
+		private FetchInfo m_fetchInfo;
+		private object[] m_inputArgs;
+		private string m_cursorName;
+		private bool m_canceled = false;
+		private ByteArray m_replyMem;
+		private const string m_initialParamValue = "initParam";
+
+		private static PutValueComparator putvalComparator = new PutValueComparator();
+
+#else
+#endif
 
 		// Implement the default constructor here.
 		public MaxDBCommand()
@@ -541,17 +557,17 @@ namespace MaxDBDataProvider
 
 		#region "Methods to support native protocol"
 
-		private MaxDBReplyPacket sendCommand(MaxDBRequestPacket requestPacket, string sqlCmd, int gcFlags, bool parseAgain)
+		private MaxDBReplyPacket SendCommand(MaxDBRequestPacket requestPacket, string sqlCmd, int gcFlags, bool parseAgain)
 		{
 			MaxDBReplyPacket replyPacket;
-			requestPacket.initDbsCommand(m_connection.m_autocommit, sqlCmd);
+			requestPacket.InitDbsCommand(m_connection.m_autocommit, sqlCmd);
 			if (m_setWithInfo)
 				requestPacket.setWithInfo();
 			replyPacket = m_connection.Exec(requestPacket, this, gcFlags);
 			return replyPacket;
 		}
 
-		private MaxDBReplyPacket sendSQL(string sql, bool parseAgain)
+		private MaxDBReplyPacket SendSQL(string sql, bool parseAgain)
 		{
 			MaxDBRequestPacket requestPacket;
 			MaxDBReplyPacket replyPacket;
@@ -560,7 +576,7 @@ namespace MaxDBDataProvider
 			try
 			{
 				requestPacket = m_connection.CreateRequestPacket();
-				replyPacket = sendCommand(requestPacket, sql, GCMode.GC_ALLOWED, parseAgain);
+				replyPacket = SendCommand(requestPacket, sql, GCMode.GC_ALLOWED, parseAgain);
 			}
 			catch (IndexOutOfRangeException) 
 			{
@@ -571,49 +587,170 @@ namespace MaxDBDataProvider
 			return replyPacket;
 		}
 
-		public bool Exec(string sql)
-		{
-			m_setWithInfo = true;
-			return Exec(sql, false);
-		}
-
-		private bool Exec(string sql, bool forQuery)
-		{
-			ClearWarnings();
-
-			assertOpen();
-			MaxDBReplyPacket replyPacket;
-			bool isQuery;
-			string actualSQL = sql;
-			bool inTrans = m_connection.IsInTransaction;
-
-			if (sql == null) 
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_SQLSTATEMENT_NULL), "42000");
-
-			try 
-			{
-				//CloseResultSet(true);
-
-				replyPacket = sendSQL(sql, false);
-				isQuery = ParseResult(replyPacket, sql, null, null);
-			}
-			catch (TimeoutException) 
-			{
-				if (inTrans) 
-					throw;
-				else 
-					isQuery = Exec(sql, forQuery);
-			}
-			return isQuery;
-		}
-
-		private void assertOpen() 
+		private void AssertOpen() 
 		{
 			if (m_connection == null || m_connection.m_comm == null) 
 				throw new ObjectIsClosedException();
 		}
 
-		protected bool ParseResult(MaxDBReplyPacket replyPacket, string sqlCmd, DBTechTranslator[] infos, string[] columnNames)
+		private void Reparse()
+		{
+			object[] tmpArgs = m_inputArgs;
+			DoParse(m_parseInfo.sqlCmd, true);
+			m_inputArgs = tmpArgs;
+		}
+
+		public bool Exec()
+		{
+			AssertOpen();
+			m_cursorName = m_connection.NextCursorName;
+			return Exec(m_maxParseAgainCnt);
+		}
+
+		public bool Exec(int afterParseAgain)
+		{
+			if (m_connection == null) 
+				throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_INTERNAL_CONNECTIONNULL));
+
+			MaxDBRequestPacket requestPacket;
+			MaxDBReplyPacket replyPacket;
+			bool isQuery;
+			DataPart dataPart;
+
+			// if this is one of the statements that is executed
+			// during parse instead of execution, execute it
+			// by doing a reparse
+			if(m_parseInfo.IsAlreadyExecuted) 
+			{
+				m_replyMem = null;
+				if (m_connection == null) 
+					throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_INTERNAL_CONNECTIONNULL));
+				Reparse();
+				m_rowsAffected=0;
+				return false;
+			}
+
+			if (!m_parseInfo.IsValid) 
+				Reparse();
+
+			try 
+			{
+				m_canceled = false;
+				// check if a reparse is needed.
+				if (!m_parseInfo.IsValid) 
+					Reparse();
+				
+				m_replyMem = null;
+
+				requestPacket = m_connection.CreateRequestPacket();
+				requestPacket.InitExecute(m_parseInfo.ParseId, m_connection.AutoCommit);
+				if (m_parseInfo.m_isSelect) 
+					requestPacket.AddCursorPart(m_cursorName);
+				// We must add a data part if we have input parameters or even if we have output streams.
+				if (m_parseInfo.m_inputCount > 0 || m_parseInfo.m_hasStreams) 
+				{
+					dataPart = requestPacket.NewDataPart(m_parseInfo.m_varDataInput);
+					if (m_parseInfo.m_inputCount > 0) 
+					{
+						dataPart.AddRow(m_parseInfo.m_inputCount);
+						for (int i = 0; i < m_parseInfo.m_paramInfos.Length; ++i) 
+						{
+							if (m_parseInfo.m_paramInfos[i].IsInput && m_initialParamValue == m_inputArgs[i].ToString())
+							{
+								if (m_parseInfo.m_paramInfos[i].IsStreamKind)
+									throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
+								else
+									throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_MISSINGINOUT, i + 1, "02000"));
+							}
+							else 
+								m_parseInfo.m_paramInfos[i].Put(dataPart, m_inputArgs[i]);
+						}
+						m_inputProcedureLongs = null;
+						if (m_parseInfo.m_hasLongs) 
+						{
+							if (m_parseInfo.m_isDBProc) 
+								HandleProcedureStreamsForExecute(dataPart, m_inputArgs);
+							else 
+								HandleStreamsForExecute(dataPart, m_inputArgs);
+						}
+						if (m_parseInfo.m_hasStreams) 
+							throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
+					} 
+					else 
+						throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
+					dataPart.Close();
+				}
+				// add a decribe order if command rturns a resultset
+				if (m_parseInfo.m_isSelect && m_parseInfo.m_columnInfos == null
+					&& m_parseInfo.m_funcCode != FunctionCode.DBProcWithResultSetExecute)
+				{
+					requestPacket.InitDbsCommand("DESCRIBE ", false, false);
+					requestPacket.AddParseIdPart(m_parseInfo.ParseId);
+				}
+				try 
+				{
+					replyPacket = m_connection.Exec(requestPacket, this,                                              
+						(!m_parseInfo.m_hasStreams && m_inputProcedureLongs == null) ? GCMode.GC_ALLOWED : GCMode.GC_NONE);
+					// Recycling of parse infos and cursor names is not allowed
+					// if streams are in the command. Even sending it just behind
+					// as next packet is harmful. Same with INPUT LONG parameters of
+					// DB Procedures.
+				}
+				catch (MaxDBSQLException dbExc) 
+				{
+					if ((dbExc.VendorCode == -8) && afterParseAgain > 0) 
+					{
+						ResetPutValues(m_inputLongs);
+						Reparse();
+						m_connection.FreeRequestPacket(requestPacket);
+						afterParseAgain--;
+						return Exec(afterParseAgain);
+					}
+					else 
+					{
+						// The request packet has already been recycled in
+						// Connection.execute()
+						throw dbExc;
+					}
+				}
+
+				// --- now it becomes difficult ...
+				if (m_parseInfo.m_isSelect) 
+					isQuery = ParseResult(replyPacket, null, m_parseInfo.m_columnInfos, m_parseInfo.m_columnNames);
+				else 
+				{
+					if(m_inputProcedureLongs != null) 
+						replyPacket = ProcessProcedureStreams(replyPacket);
+					else if (m_parseInfo.m_hasStreams) 
+						throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
+					isQuery = ParseResult(replyPacket, null, m_parseInfo.m_columnInfos, m_parseInfo.m_columnNames);
+					int returnCode = replyPacket.ReturnCode;
+					if (replyPacket.ExistsPart(PartKind.Data)) 
+						m_replyMem = replyPacket.Clone(replyPacket.PartDataPos);
+					if ((m_parseInfo.m_hasLongs && !m_parseInfo.m_isDBProc) && (returnCode == 0)) 
+						HandleStreamsForPutValue(replyPacket);
+				}
+
+				return isQuery;
+			}
+			catch (TimeoutException timeout) 
+			{
+				if (m_connection.IsInTransaction) 
+					throw timeout;
+				else 
+				{
+					ResetPutValues(m_inputLongs);
+					Reparse();
+					return Exec(m_maxParseAgainCnt);
+				}
+			} 
+			finally
+			{
+				m_canceled = false;
+			}
+		}
+
+		private bool ParseResult(MaxDBReplyPacket replyPacket, string sqlCmd, DBTechTranslator[] infos, string[] columnNames)
 		{
 			string tableName = null;
 			bool isQuery = false;
@@ -622,15 +759,15 @@ namespace MaxDBDataProvider
 			
 			m_rowsAffected = -1;
 			m_hasRowCount  = false;
-			int functionCode = replyPacket.funcCode;
+			int functionCode = replyPacket.FuncCode;
 			if (functionCode == FunctionCode.Select || functionCode == FunctionCode.Show || 
 				functionCode == FunctionCode.DBProcWithResultSetExecute || functionCode == FunctionCode.Explain) 
 				isQuery = true;
 
 			replyPacket.ClearPartOffset();
-			for(int i = 0; i < replyPacket.partCount; i++) 
+			for(int i = 0; i < replyPacket.PartCount; i++) 
 			{
-				replyPacket.nextPart();
+				replyPacket.NextPart();
 				switch (replyPacket.PartType) 
 				{
 					case PartKind.ColumnNames:
@@ -679,13 +816,13 @@ namespace MaxDBDataProvider
 
 			if (isQuery)
 			{
-				if (replyPacket.nextSegment() != -1 && replyPacket.funcCode == FunctionCode.Describe)
+				if (replyPacket.NextSegment() != -1 && replyPacket.FuncCode == FunctionCode.Describe)
 				{
 					bool newSFI = true;
 					replyPacket.ClearPartOffset();
-					for (int i = 0; i < replyPacket.partCount; i++) 
+					for (int i = 0; i < replyPacket.PartCount; i++) 
 					{
-						replyPacket.nextPart();
+						replyPacket.NextPart();
 						switch (replyPacket.PartType) 
 						{
 							case PartKind.ColumnNames:
@@ -709,7 +846,7 @@ namespace MaxDBDataProvider
 					}
 					
 					if (newSFI)
-						m_parseinfo.SetMetaData(infos, columnNames);
+						m_parseInfo.SetMetaData(infos, columnNames);
 					
 				}
 				
@@ -722,6 +859,89 @@ namespace MaxDBDataProvider
 			return isQuery;
 		}
 
+		// Parses the SQL command, or looks the parsed command up in the cache.
+		private MaxDBParseInfo DoParse(string sql, bool parseAgain)
+		{
+			if (sql == null) 
+				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_SQLSTATEMENT_NULL), "42000");
+
+			MaxDBReplyPacket replyPacket;
+			MaxDBParseInfo result = null;
+			ParseInfoCache cache = m_connection.m_parseCache;
+			string[] columnNames = null;
+
+			m_fetchInfo = null;
+
+			if (parseAgain) 
+			{
+				result = m_parseInfo;
+				result.MassParseid = null;
+			}
+			else if (cache != null) 
+				result = cache.findParseinfo(sql);
+
+			if ((result == null) || parseAgain) 
+			{
+				try 
+				{
+					m_setWithInfo = true;
+					replyPacket = SendSQL(sql, parseAgain);
+				} 
+				catch(TimeoutException)
+				{
+					replyPacket = SendSQL(sql, parseAgain);
+				}
+
+				if (!parseAgain) 
+					result = new MaxDBParseInfo(m_connection, sql, replyPacket.FuncCode);
+            
+				replyPacket.ClearPartOffset();
+				DBTechTranslator[] shortInfos = null;
+				for(int i = 0; i < replyPacket.PartCount; i++) 
+				{
+					replyPacket.NextPart();
+					switch (replyPacket.PartType) 
+					{
+						case PartKind.Parsid:
+							int parseidPos = replyPacket.PartDataPos;
+							result.SetParseIdAndSession(replyPacket.ReadBytes(parseidPos, 12), replyPacket.ReadInt32(parseidPos));
+							break;
+						case PartKind.ShortInfo:
+							shortInfos = replyPacket.ParseShortFields(m_connection.m_spaceOption,
+								result.m_isDBProc, result.m_procParamInfos, false);
+							break;
+						case PartKind.Vardata_ShortInfo:
+							result.m_varDataInput = true;
+							shortInfos = replyPacket.ParseShortFields(m_connection.m_spaceOption,
+								result.m_isDBProc, result.m_procParamInfos, true);
+							break;
+						case PartKind.ResultTableName:
+							result.m_isSelect = true;
+							int cursorLength = replyPacket.PartLength;
+							if (cursorLength > 0) 
+								m_cursorName = replyPacket.GetString(replyPacket.PartDataPos, cursorLength);
+							break;
+						case PartKind.TableName:
+							result.updTableName = replyPacket.GetString(replyPacket.PartDataPos, replyPacket.PartLength);
+							break;
+						case PartKind.ColumnNames:
+							columnNames = replyPacket.parseColumnNames ();
+							break;
+						default:
+							break;
+					}
+				}
+				result.setShortInfosAndColumnNames(shortInfos, columnNames);
+				if ((cache != null) && !parseAgain) 
+				{
+					cache.addParseinfo (result);
+				}
+			}
+			m_inputArgs = new object[result.m_paramInfos.Length];
+			ClearParameters();
+			return result;
+		}
+
 		private void ClearWarnings() 
 		{
 			m_warnings.Clear();
@@ -730,6 +950,178 @@ namespace MaxDBDataProvider
 		private void AddWarning(WarningException warning)
 		{
 			m_warnings.Add(warning);
+		}
+
+		private void ClearParameters()
+		{
+			for (int i = 0; i < m_inputArgs.Length; ++i) 
+				m_inputArgs [i] = m_initialParamValue;
+		}
+
+		private void ResetPutValues(ArrayList inpLongs)
+		{
+			if (inpLongs != null) 
+				foreach(PutValue putval in inpLongs)
+					putval.Reset();
+		}
+
+		private void HandleStreamsForExecute(DataPart dataPart, object[] args)
+		{
+			// get all putval objects
+			m_inputLongs = new ArrayList();
+			for (int i = 0; i < m_parseInfo.m_paramInfos.Length; i++) 
+			{
+				object inarg = args[i];
+				if (inarg == null) 
+					continue;
+        
+				try 
+				{
+					m_inputLongs.Add((PutValue) inarg);
+				}
+				catch (InvalidCastException) 
+				{
+					// not a long for input, ignore
+				}
+			}
+
+			if(m_inputLongs.Count > 1) 
+				m_inputLongs.Sort(putvalComparator);
+			
+			// write data (and patch descriptor)
+			for(short i = 0; i < m_inputLongs.Count; i++) 
+			{
+				PutValue putval = (PutValue)m_inputLongs[i];
+				if (putval.AtEnd)
+					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STREAM_ISATEND));  
+				putval.TransferStream(dataPart, i);
+			}
+		}
+
+		private void HandleProcedureStreamsForExecute(DataPart dataPart, object[] objects)
+		{
+			m_inputProcedureLongs = new ArrayList();
+			for(int i=0; i < m_parseInfo.m_paramInfos.Length; ++i) 
+			{
+				object arg = m_inputArgs[i];
+				if(arg == null) 
+					continue;
+
+				try 
+				{
+					AbstractProcedurePutValue pv = (AbstractProcedurePutValue) arg;
+					m_inputProcedureLongs.Add(pv);
+					pv.UpdateIndex(m_inputProcedureLongs.Count - 1);
+				} 
+				catch(InvalidCastException) 
+				{
+					continue;
+				}
+			}
+		}
+
+		private MaxDBReplyPacket ProcessProcedureStreams(MaxDBReplyPacket packet)
+		{
+			if (packet.ExistsPart(PartKind.AbapIStream)) 
+				throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
+
+			foreach (AbstractProcedurePutValue pv in m_inputProcedureLongs)
+				pv.CloseStream();
+			return packet;
+		}
+
+		private void HandleStreamsForPutValue(MaxDBReplyPacket replyPacket)
+		{
+			if (m_inputLongs.Count == 0) 
+				return;
+
+			PutValue lastStream = (PutValue) m_inputLongs[m_inputLongs.Count - 1];
+			MaxDBRequestPacket requestPacket;
+			DataPart dataPart;
+			int descriptorPos;
+			PutValue putval;
+			short firstOpenStream = 0;
+			int count = m_inputLongs.Count;
+			bool requiresTrailingPacket = false;
+
+			while (!lastStream.AtEnd) 
+			{
+				GetChangedPutValueDescriptors(replyPacket);
+				requestPacket = m_connection.CreateRequestPacket();
+				dataPart = requestPacket.InitPutValue(m_connection.AutoCommit);
+				
+				// get all descriptors and putvals
+				for (short i = firstOpenStream; (i < count) && dataPart.hasRoomFor(LongDesc.Size + 1); i++) 
+				{
+					putval = (PutValue) m_inputLongs[i];
+					if (putval.AtEnd) 
+						firstOpenStream++;
+					else 
+					{
+						descriptorPos = dataPart.Extent;
+						putval.putDescriptor(dataPart, descriptorPos);
+						dataPart.AddArg(descriptorPos, LongDesc.Size + 1);
+						if (m_canceled) 
+						{
+							putval.MarkErrorStream();
+							firstOpenStream++;
+						} 
+						else 
+						{
+							putval.TransferStream(dataPart, i);
+							if (putval.AtEnd) 
+								firstOpenStream++;
+						}
+					}
+				}
+				if (lastStream.AtEnd && !m_canceled) 
+				{
+					try 
+					{
+						lastStream.MarkAsLast(dataPart);
+					} 
+					catch (IndexOutOfRangeException) 
+					{
+						// no place for end of LONGs marker
+						requiresTrailingPacket = true;
+					}
+				}
+				// at end: patch last descriptor
+				dataPart.Close();
+				// execute and get descriptors
+				replyPacket = m_connection.Exec(requestPacket, this, GCMode.GC_DELAYED);
+				
+				//  write trailing end of LONGs marker
+				if (requiresTrailingPacket && !m_canceled) 
+				{
+					requestPacket = m_connection.CreateRequestPacket();
+					dataPart = requestPacket.InitPutValue(m_connection.AutoCommit);
+					lastStream.MarkAsLast(dataPart);
+					dataPart.Close();
+					m_connection.Exec(requestPacket, this, GCMode.GC_DELAYED);
+				}
+			}
+			if (m_canceled) 
+				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STATEMENT_CANCELLED), "42000", -102);
+		}
+
+		private void GetChangedPutValueDescriptors(MaxDBReplyPacket replyPacket)
+		{
+			byte[][] descriptorArray = replyPacket.ParseLongDescriptors();
+			byte[] descriptor;
+			ByteArray descriptorPointer;
+			PutValue putval;
+			int valIndex;
+			if (!replyPacket.ExistsPart(PartKind.LongData)) 
+				return;
+			for (int i = 0; i < descriptorArray.Length; ++i) 
+			{
+				descriptor = descriptorArray[i];
+				descriptorPointer = new ByteArray(descriptor);
+				valIndex = descriptorPointer.readInt16(LongDesc.ValInd);
+				putval = (PutValue)m_inputLongs[valIndex];
+				putval.setDescriptor(descriptor);
+			}
 		}
 
 		#endregion

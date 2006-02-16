@@ -97,7 +97,7 @@ namespace MaxDBDataProvider
 		{
 			offset += this.offset;
 			byte[] res = new byte[len];
-			data.CopyTo(res, offset);
+			Array.Copy(data, offset, res, 0, len);
 			return res;
 		}
 

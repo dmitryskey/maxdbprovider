@@ -51,8 +51,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			Filler1			=   2,  // int2
 			ApplVersion		=   4,  // c5
 			Appl			=   9,  // c3
-			VarpartSize		=   12, // int4
-			VarpartLen		=   16, // int4
+			VarPartSize		=   12, // int4
+			VarPartLen		=   16, // int4
 			Filler2			=   20, // int2
 			NoOfSegm		=   22, // int2
 			Filler3			=   24, // c8
@@ -272,6 +272,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			 * Call of addBatch on prepared statement (not ok).
 			 */
 			ERROR_PREPAREDSTATEMENT_ADDBATCH = "error.addbatch.preparedstatement",
+
+			/**
+			 * Call of cancel occured.
+			*/
+			ERROR_STATEMENT_CANCELLED="error.statement.cancelled",
 
 			/**
 			 * Try to execute null statement.
@@ -666,6 +671,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			ERROR_MEMORYRESULT_METHOD_UNSUPPORTED = "error.memoryresult.method.unsupported",
 			ERROR_AUTOGENKEYS_RETRIEVAL_UNSUPPORTED = "error.autogenkeys.retrieval.unsupported",
 			ERROR_SPECIAL_NUMBER_UNSUPPORTED = "error.special.number.unsupported",
+			ERROR_OMS_UNSUPPORTED = "error.oms.unsupported",
 
 			// unimplemented todos
 			ERROR_SETBYTES_NOTIMPLEMENTED = "error.setbytes.notimplemented",
@@ -881,7 +887,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			UserInfoReturned        =  15,
 			Surrogate               =  16,
 			Bdinfo                  =  17,
-			Longdata                =  18,
+			LongData                =  18,
 			TableName               =  19,
 			SessionInfoReturned     =  20,
 			OutputColsNoParameter   =  21,
@@ -984,11 +990,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			Infoset = 24,     // set1
 			State = 25,		  // bool
 			unused1 = 26,     // c1
-			Valmode = 27,     // i1
-			Valind = 28,      // i2
+			ValMode = 27,     // i1
+			ValInd = 28,      // i2
 			unused = 30,      // i2
-			Valpos = 32,      // i4
-			Vallen = 36,      // i4
+			ValPos = 32,      // i4
+			ValLen = 36,      // i4
 			Size = 40;
 	}
 

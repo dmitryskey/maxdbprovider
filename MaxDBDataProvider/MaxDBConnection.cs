@@ -50,7 +50,7 @@ namespace MaxDBDataProvider
 		private string m_cache;
 		private int m_cursorId = 0;
 		private int m_timeout, m_cacheLimit, m_cacheSize;
-		private ParseInfoCache m_parseCache = null;
+		internal ParseInfoCache m_parseCache = null;
 		private bool m_auth = false;
 		internal bool m_spaceOption = false;
 		private bool m_keepGarbage = false;
@@ -520,12 +520,12 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		private bool initiateChallengeResponse(MaxDBRequestPacket requestPacket, string user, Auth auth)
+		private bool InitiateChallengeResponse(MaxDBRequestPacket requestPacket, string user, Auth auth)
 		{
-			if (requestPacket.initChallengeResponse(user, auth.ClientChallenge))
+			if (requestPacket.InitChallengeResponse(user, auth.ClientChallenge))
 			{
 				MaxDBReplyPacket replyPacket = Exec(requestPacket, this, GCMode.GC_DELAYED); 
-				auth.parseServerChallenge(replyPacket.VarDataPart);
+				auth.ParseServerChallenge(replyPacket.VarDataPart);
 				return true;
 			}  
 			else 
@@ -551,7 +551,7 @@ namespace MaxDBDataProvider
 			return packet;
 		}
 
-		private void FreeRequestPacket(MaxDBRequestPacket requestPacket) 
+		internal void FreeRequestPacket(MaxDBRequestPacket requestPacket) 
 		{
 			requestPacket.IsAvailable = false;
 			m_packetPool.Push(requestPacket);
@@ -590,8 +590,8 @@ namespace MaxDBDataProvider
 				m_execObj = execObj;
 				replyPacket = m_comm.Exec(requestPacket, requestLen);
 
-				/*get Returncode*/
-				int firstSegm = replyPacket.firstSegment();
+				// get return code
+				int firstSegm = replyPacket.FirstSegment();
 				localWeakReturnCode = replyPacket.weakReturnCode;
 
 				if(localWeakReturnCode != -8) 
@@ -670,7 +670,7 @@ namespace MaxDBDataProvider
 				try
 				{
 					auth = new Auth();
-					isChallengeResponseSupported = initiateChallengeResponse(requestPacket, username, auth);
+					isChallengeResponseSupported = InitiateChallengeResponse(requestPacket, username, auth);
 					if (password.Length > auth.MaxPasswordLength && auth.MaxPasswordLength > 0)
 						password = password.Substring(0, auth.MaxPasswordLength);
 				}
@@ -713,7 +713,7 @@ namespace MaxDBDataProvider
 				setKernelFeatureRequest(Feature.SpaceOption);
 			}
 
-			requestPacket.initDbsCommand(false, connectCmd);
+			requestPacket.InitDbsCommand(false, connectCmd);
 
 			if (!isChallengeResponseSupported)
 			{
@@ -732,15 +732,15 @@ namespace MaxDBDataProvider
 			} 
 			else 
 			{
-				requestPacket.addClientProofPart(auth.getClientProof(passwordBytes)); 
-				requestPacket.addClientIDPart(TermID);
+				requestPacket.AddClientProofPart(auth.GetClientProof(passwordBytes)); 
+				requestPacket.AddClientIDPart(TermID);
 			}
 
 			defaultFeatureSet.CopyTo(kernelFeatures, 0);
 
 			setKernelFeatureRequest(Feature.MultipleDropParseid);
 			setKernelFeatureRequest(Feature.CheckScrollableOption);
-			requestPacket.addFeatureRequestPart(kernelFeatures);
+			requestPacket.AddFeatureRequestPart(kernelFeatures);
 
 			// execute
 			MaxDBReplyPacket replyPacket = Exec(requestPacket, this, GCMode.GC_DELAYED);
@@ -809,7 +809,7 @@ namespace MaxDBDataProvider
 		private void execSQLString(string cmd, int gcFlags)
 		{
 			MaxDBRequestPacket requestPacket = CreateRequestPacket();
-			requestPacket.initDbs (m_autocommit);
+			requestPacket.InitDbs (m_autocommit);
 			requestPacket.AddString(cmd);
 			try 
 			{

@@ -28,9 +28,6 @@ namespace MaxDBDataProvider
 		// The fetch size that is set.
 		private int             fetchSize;
 
-		// The maxRows value. This is set to -1 if no max rows are set.
-		private int             maxRows;
-
 		// The data of the last fetch operation.
 		private FetchChunk      currentChunk;
 
@@ -60,34 +57,33 @@ namespace MaxDBDataProvider
 		protected int           modifiedKernelPos;     // contains 0 if the kernel pos is not modified
 		// or the current kernel position.
 
-		internal MaxDBDataReader(MaxDBConnection connection, FetchInfo fetchInfo, MaxDBCommand  command, int maxRows, MaxDBReplyPacket reply)
+		internal MaxDBDataReader(MaxDBConnection connection, FetchInfo fetchInfo, MaxDBCommand  command, MaxDBReplyPacket reply)
 		{
 			this.fetchInfo = fetchInfo;
 			this.command = command;
 			this.fetchSize = DEFAULT_FETCHSIZE;
 
-			this.maxRows=maxRows;
 			this.isClosed=false;
 	
 			initializeFields();
 			openStreams = new ArrayList(5);
 			if (reply != null)
 			{
-				setCurrentChunk(new FetchChunk(FetchType.FIRST, // fetch first is forward
-					1,    // absolute start position
-					reply,          // reply packet
-					fetchInfo.RecordSize, // the size for data part navigation
-					maxRows, // the current maxRows setting, for determining the last
-					// condition in that case
-					this.rowsInResultSet
+				setCurrentChunk(new FetchChunk(
+					FetchType.FIRST,		// fetch first is forward
+					1,						// absolute start position
+					reply,					// reply packet
+					fetchInfo.RecordSize,	// the size for data part navigation
+											// condition in that case
+					rowsInResultSet
 					));
 				positionState = PositionType.BEFORE_FIRST;
 			}
 		}
 
 		internal MaxDBDataReader(MaxDBConnection connection, string cursorName, DBTechTranslator[] infos, string[] columnNames, 
-			MaxDBCommand command, int maxRows, MaxDBReplyPacket reply) :
-			this(connection, new FetchInfo(connection, cursorName, infos, columnNames), command, maxRows, reply)
+			MaxDBCommand command, MaxDBReplyPacket reply) :
+			this(connection, new FetchInfo(connection, cursorName, infos, columnNames), command, reply)
 		{
 		}
 
@@ -129,20 +125,20 @@ namespace MaxDBDataProvider
 				// have only the records in this chunk.
 				if(currentChunk.IsLast && currentChunk.IsFirst) 
 				{
-					setRowsInResultSet(currentChunk.Size);
-					currentChunk.setRowsInResultSet(rowsInResultSet);
+					rowsInResultSet = currentChunk.Size;
+					currentChunk.RowsInResultSet = rowsInResultSet;
 				}
 					// otherwise, we may have navigated through it from start ...
 				else if(currentChunk.IsLast && currentChunk.IsForward) 
 				{
-					setRowsInResultSet(currentChunk.End);
-					currentChunk.setRowsInResultSet(rowsInResultSet);
+					rowsInResultSet = currentChunk.End;
+					currentChunk.RowsInResultSet = rowsInResultSet;
 				}
 					// ... or from end
 				else if(currentChunk.IsFirst && !currentChunk.IsForward) 
 				{
-					setRowsInResultSet(-currentChunk.Start);
-					currentChunk.setRowsInResultSet(rowsInResultSet);
+					rowsInResultSet = -currentChunk.Start;
+					currentChunk.RowsInResultSet = rowsInResultSet;
 				} 
 				else if (currentChunk.IsForward) 
 					largestKnownAbsPos = Math.Max(largestKnownAbsPos, currentChunk.End);
@@ -157,12 +153,16 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		private void setRowsInResultSet(int rows)
+		internal bool Empty
 		{
-			if (maxRows > 0)
-				rowsInResultSet = Math.Min(rows, this.maxRows);
-			else
-				rowsInResultSet = rows;
+			get
+			{
+				return empty;
+			}
+			set
+			{
+				empty = value;
+			}
 		}
 
 #else

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Data;
 using System.Text;
+using System.Collections;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
@@ -54,7 +55,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public virtual bool atEnd
+		public virtual bool AtEnd
 		{
 			get
 			{
@@ -91,9 +92,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			this.desc = desc;
 		}
 
-		public virtual void transferStream(DataPart dataPart)
+		public virtual void TransferStream(DataPart dataPart)
 		{
-			if (atEnd)
+			if (AtEnd)
 				dataPart.markEmptyStream (descMark);
 			else 
 				if (dataPart.FillWithStream(stream, descMark, this)) 
@@ -110,13 +111,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public void transferStream(DataPart dataPart, short streamIndex)
+		public void TransferStream(DataPart dataPart, short streamIndex)
 		{
-			transferStream(dataPart);
-			descMark.writeInt16(streamIndex, LongDesc.Valind);
+			TransferStream(dataPart);
+			descMark.writeInt16(streamIndex, LongDesc.ValInd);
 		}
 
-		public void markAsLast(DataPart dataPart)
+		public void MarkAsLast(DataPart dataPart)
 		{
 			// avoid putting it in if this would break the aligned boundary.
 			if(dataPart.Length - dataPart.Extent - 8 - LongDesc.Size - 1 < 0) 
@@ -125,13 +126,29 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			int descriptorPos = dataPart.Extent;
 			writeDescriptor(dataPart, descriptorPos);
 			dataPart.AddArg(descriptorPos, LongDesc.Size + 1);
-			descMark.WriteByte(LongDesc.LastPutval, LongDesc.Valmode);
+			descMark.WriteByte(LongDesc.LastPutval, LongDesc.ValMode);
 		}
 
-		public void markRequestedChunk(ByteArray reqData, int reqLength)
+		public void MarkRequestedChunk(ByteArray reqData, int reqLength)
 		{
 			this.reqData = reqData;
 			this.reqLength = reqLength;
+		}
+
+		public void MarkErrorStream() 
+		{
+			descMark.WriteByte(LongDesc.Error, LongDesc.ValMode);
+			descMark.WriteInt32(0, LongDesc.ValPos);
+			descMark.WriteInt32(0, LongDesc.ValLen);
+			try 
+			{
+				stream.Close();
+			}
+			catch (IOException) 
+			{
+				// ignore
+			}
+			stream = null;
 		}
 
 		public virtual void Reset()
@@ -172,7 +189,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			sourceChars = source;	
 		}
 
-		public override bool atEnd
+		public override bool AtEnd
 		{
 			get
 			{
@@ -180,9 +197,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public override void transferStream(DataPart dataPart)
+		public override void TransferStream(DataPart dataPart)
 		{
-			if (!atEnd && dataPart.FillWithReader(reader, descMark, this))
+			if (!AtEnd && dataPart.FillWithReader(reader, descMark, this))
 			{
 				try 
 				{
@@ -228,9 +245,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			this.descriptor.WriteByte(LongDesc.StateStream, LongDesc.State);		
 		}
 
-		public void updateIndex(int index)
+		public void UpdateIndex(int index)
 		{
-			this.descriptorMark.writeInt16((short)index, LongDesc.Valind);        
+			this.descriptorMark.writeInt16((short)index, LongDesc.ValInd);        
 		}
 
 		public void putDescriptor(DataPart memory)
@@ -390,7 +407,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			try 
 			{
-				int valMode = descriptor[LongDesc.Valmode];
+				int valMode = descriptor[LongDesc.ValMode];
 				if (valMode == LongDesc.LastData || valMode == LongDesc.AllData) 
 				{
 					atEnd = true;
@@ -400,11 +417,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				firstChunk = false;
 				MaxDBRequestPacket requestPacket = connection.CreateRequestPacket();
 				MaxDBReplyPacket replyPacket;
-				DataPart longpart = requestPacket.initGetValue(connection.AutoCommit);
+				DataPart longpart = requestPacket.InitGetValue(connection.AutoCommit);
 				longpart.WriteByte(0, 0);
 				longpart.WriteBytes(descriptor, 1);
 				int maxval = int.MaxValue - 1;
-				longpart.WriteInt32(maxval, 1 + LongDesc.Vallen);
+				longpart.WriteInt32(maxval, 1 + LongDesc.ValLen);
 				longpart.AddArg(1, LongDesc.Size);
 				longpart.Close();
 				try 
@@ -416,10 +433,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					throw new IOException(sqlEx.Message, sqlEx);
 				}
 
-				replyPacket.findPart(PartKind.Longdata);
+				replyPacket.FindPart(PartKind.LongData);
 				int dataPos = replyPacket.PartDataPos;
 				descriptor = replyPacket.GetDataBytes(dataPos, LongDesc.Size + 1);
-				if(descriptor[LongDesc.Valmode] == LongDesc.StartposInvalid) 
+				if(descriptor[LongDesc.ValMode] == LongDesc.StartposInvalid) 
 					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_INVALID_STARTPOSITION));
             
 				SetupStreamBuffer(descriptor, replyPacket.Clone(dataPos));
@@ -438,10 +455,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		protected MaxDBReplyPacket ExecGetValue(byte[] descriptor)
 		{
 			MaxDBRequestPacket requestPacket = connection.CreateRequestPacket();
-			DataPart longpart = requestPacket.initGetValue(connection.AutoCommit);
+			DataPart longpart = requestPacket.InitGetValue(connection.AutoCommit);
 			longpart.WriteByte(0, 0);
 			longpart.WriteBytes(descriptor, 1);
-			longpart.WriteInt32(int.MaxValue - 1, 1 + LongDesc.Vallen);
+			longpart.WriteInt32(int.MaxValue - 1, 1 + LongDesc.ValLen);
 			longpart.AddArg(1, LongDesc.Size);
 			longpart.Close();
 			return connection.Exec(requestPacket, this, GCMode.GC_DELAYED);
@@ -452,8 +469,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			ByteArray desc = new ByteArray(descriptor);//??? swapMode? 
 			int dataStart;
 
-			dataStart = desc.ReadInt32(LongDesc.Valpos) - 1;
-			itemsInBuffer = desc.ReadInt32(LongDesc.Vallen) / itemSize;
+			dataStart = desc.ReadInt32(LongDesc.ValPos) - 1;
+			itemsInBuffer = desc.ReadInt32(LongDesc.ValLen) / itemSize;
 			streamBuffer = dataPart.Clone(dataStart);
 			this.descriptor = descriptor;
 			if(descriptor[LongDesc.InternPos] == 0 && descriptor[LongDesc.InternPos + 1] == 0 &&
@@ -490,12 +507,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 				// copy descriptor
 				Array.Copy(descriptor, 0, requestDescriptor, 0, descriptor.Length);
-				requestDescriptor[LongDesc.Valmode] = LongDesc.DataTrunc;
+				requestDescriptor[LongDesc.ValMode] = LongDesc.DataTrunc;
 				replyPacket = ExecGetValue(requestDescriptor);
 				// get descriptor and read intern_pos
 				try 
 				{
-					replyPacket.findPart(PartKind.Longdata);
+					replyPacket.FindPart(PartKind.LongData);
 				}
 				catch(PartNotFound) 
 				{
@@ -998,7 +1015,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		// The number of rows in the complete result set, or -1 if this is not known.
 		private int rowsInResultSet;
 
-		public FetchChunk(FetchType type, int absoluteStartRow, MaxDBReplyPacket replyPacket, int recordSize, int maxRows, int rowsInResultSet)
+		public FetchChunk(FetchType type, int absoluteStartRow, MaxDBReplyPacket replyPacket, int recordSize, int rowsInResultSet)
 		{
 			this.replyPacket = replyPacket;
 			this.type = type;
@@ -1006,8 +1023,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			this.rowsInResultSet = rowsInResultSet;
 			try 
 			{
-				replyPacket.firstSegment();
-				replyPacket.findPart(PartKind.Data);
+				replyPacket.FirstSegment();
+				replyPacket.FindPart(PartKind.Data);
 			} 
 			catch(PartNotFound) 
 			{
@@ -1040,7 +1057,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					end_index = absoluteStartRow + chunkSize -1;
 				}
 			}
-			determineFlags(maxRows);
+			determineFlags();
 		}
 
 		/*
@@ -1052,7 +1069,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		the limit here.
 		*/
 
-		private void determineFlags(int maxRows)
+		private void determineFlags()
 		{
 			if(replyPacket.WasLastPart) 
 			{
@@ -1077,15 +1094,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			if(end_index == -1) 
 				last=true;
-        
-			// one special last for maxRows set
-			if(maxRows!=0 && IsForward && end_index >= maxRows) 
-			{
-				// if we have fetched too much, we have to cut here ...
-				end_index = maxRows;
-				chunkSize = maxRows + 1 - start_index;
-				last = true;
-			}
 		}
     
 		// Gets the reply packet.
@@ -1383,9 +1391,16 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			Updates the number of rows in the result set.
 			@param rows the number of rows in the result set.
 		*/
-		public void setRowsInResultSet(int rows)
+		public int RowsInResultSet
 		{
-			rowsInResultSet = rows;
+			get
+			{
+				return rowsInResultSet;
+			}
+			set
+			{
+				rowsInResultSet = value;
+			}
 		}
 
 		/*
@@ -1410,6 +1425,24 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				return end_index;
 			}
+		}
+	}
+
+	#endregion
+
+	#region "Put Value class comparator"
+
+	public class PutValueComparator : IComparer
+	{
+		int IComparer.Compare(object x, object y)
+		{
+			PutValue p1 = (PutValue)x;
+			PutValue p2 = (PutValue)y;
+
+			int p1_bufpos = p1.BufPos;
+			int p2_bufpos = p2.BufPos;
+
+			return p1_bufpos - p2_bufpos;		
 		}
 	}
 

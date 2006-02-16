@@ -14,59 +14,59 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public string sqlCmd;
 		private byte[] parseid;
 		private byte[] massParseid;
-		DBTechTranslator[] paramInfos;
-		DBProcParameterInfo[] procParamInfos;
-		int inputCount;
+		internal DBTechTranslator[] m_paramInfos;
+		internal DBProcParameterInfo[] m_procParamInfos;
+		internal short m_inputCount;
 
 		private bool isMassCmd; // flag is set to true if command is a mass command
-		bool isSelect; // flag is set to true if command is a select command 
-		bool isDBProc; // flag is set to true if command is a call dbproc command 
-		bool hasLongs; // flag is set to true if command handle long columns 
-		bool hasStreams;
+		internal bool m_isSelect; // flag is set to true if command is a select command 
+		internal bool m_isDBProc; // flag is set to true if command is a call dbproc command 
+		internal bool m_hasLongs; // flag is set to true if command handle long columns 
+		internal bool m_hasStreams;
 		bool m_cached; // flag is set to true if command is in parseinfo cache 
-		int m_funcCode;
+		internal int m_funcCode;
 		int m_sessionID; // unique identifier for the connection
-		string[] columnNames;
+		internal string[] m_columnNames;
 
 		Hashtable columnMap;
 
-		DBTechTranslator[] columnInfos;
+		internal DBTechTranslator[] m_columnInfos;
 
 		bool isClosed = false;
 
-		bool varDataInput = false;
+		internal bool m_varDataInput = false;
 
 		// 11th Byte of Parseid coded application code
 		private const int applicationCodeByte = 10;
 
 		// tablename used for updateable resultsets
-		string updTableName;
+		internal string updTableName;
 
 		public MaxDBParseInfo(MaxDBConnection connection, string sqlCmd, int functionCode)
 		{
 			this.connection = connection;
 			this.sqlCmd = sqlCmd;
 			this.massParseid = null;
-			this.paramInfos = null;
-			this.inputCount = 0;
-			this.isSelect = false;
-			this.isDBProc = false;
-			this.hasLongs = false;
-			this.hasStreams = false;
+			m_paramInfos = null;
+			m_inputCount = 0;
+			m_isSelect = false;
+			m_isDBProc = false;
+			m_hasLongs = false;
+			m_hasStreams = false;
 			this.isMassCmd = false;
 			this.m_funcCode = functionCode;
 			this.m_sessionID = -1;
 			this.updTableName = null;
 			this.m_cached = false;
-			varDataInput = false;
+			m_varDataInput = false;
 			if ((m_funcCode == FunctionCode.Select) || (m_funcCode == FunctionCode.Show) 
 				|| (m_funcCode == FunctionCode.DBProcWithResultSetExecute) || (m_funcCode == FunctionCode.Explain))
-				isSelect = true;
+				m_isSelect = true;
         
 			if ((m_funcCode == FunctionCode.DBProcWithResultSetExecute) || (m_funcCode == FunctionCode.DBProcExecute)) 
-				this.isDBProc = true;
+				m_isDBProc = true;
         
-			this.columnNames = null;
+			m_columnNames = null;
 			this.columnMap = null;
 			if (m_funcCode == FunctionCode.DBProcExecute) 
 				DescribeProcedureCall();
@@ -278,7 +278,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			MaxDBDataReader rs = cmd.ExecuteReader();
 			if (!rs.Read()) 
 			{
-				procParamInfos = new DBProcParameterInfo[0];
+				m_procParamInfos = new DBProcParameterInfo[0];
 				rs.Close();
 				return;
 			}
@@ -321,7 +321,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			} 
 			while (rs.Read());
 			rs.Close();
-			procParamInfos = (DBProcParameterInfo[]) parameterInfos.ToArray(typeof(DBProcParameterInfo));
+			m_procParamInfos = (DBProcParameterInfo[]) parameterInfos.ToArray(typeof(DBProcParameterInfo));
 		}
 
 		public byte[] MassParseid
@@ -373,19 +373,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		}
 
 		/**
-		 * Gets the column infos, needed for result set meta data. If no result
-		 * set/no result set meta data available then <code>null</code> is
-		 * returned.
-		 */
-		public DBTechTranslator[] ColumnInfos
-		{
-			get
-			{
-				return columnInfos;
-			}
-		}
-
-		/**
 		 * Sets a parse id, together with the correct session id.
 		 * 
 		 * @param parseId
@@ -423,19 +410,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return this.paramInfos;
+				return m_paramInfos;
 			}
-		}
-
-		/**
-		 * Marks/Unmarks the statement as select.
-		 * 
-		 * @param select
-		 *            the select mark
-		 */
-		public void setSelect(bool select) 
-		{
-			this.isSelect = select;
 		}
 
 		/**
@@ -472,18 +448,17 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public void setShortInfosAndColumnNames(DBTechTranslator[] shortInfo, string[] columnNames)
 		{
 			// clear the internal dependent fields
-			inputCount = 0;
-			hasLongs = false;
-			hasStreams = false;
-			this.columnNames = null;
-			this.paramInfos = null;
+			m_inputCount = 0;
+			m_hasLongs = false;
+			m_hasStreams = false;
+			m_paramInfos = null;
 			this.columnMap = null;
-			this.columnInfos = null;
-			this.columnNames = columnNames;
+			m_columnInfos = null;
+			m_columnNames = columnNames;
 
 			if (shortInfo == null && columnNames == null) 
 			{
-				this.paramInfos = this.columnInfos = new DBTechTranslator[0];
+				m_paramInfos = m_columnInfos = new DBTechTranslator[0];
 				return;
 			}
 
@@ -494,25 +469,24 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				if (columnNames == null || columnNames.Length == 0) 
 				{
-					// this.columnInfos=null;
-					this.paramInfos = shortInfo;
-					for (int i = 0; i < paramInfos.Length; ++i) 
+					m_paramInfos = shortInfo;
+					for (int i = 0; i < m_paramInfos.Length; ++i) 
 					{
 						DBTechTranslator current = shortInfo[i];
 						if (current.IsInput) 
 						{
 							current.ColumnIndex = i;
-							inputCount++;
+							m_inputCount++;
 						}
-						hasLongs |= current.IsLongKind;
-						hasStreams |= current.IsStreamKind;
+						m_hasLongs |= current.IsLongKind;
+						m_hasStreams |= current.IsStreamKind;
 					}
 				} 
 				else 
 				{
 					int column_count = columnNames.Length;
-					this.columnInfos = new DBTechTranslator[column_count];
-					this.paramInfos = new DBTechTranslator[shortInfo.Length - column_count];
+					m_columnInfos = new DBTechTranslator[column_count];
+					m_paramInfos = new DBTechTranslator[shortInfo.Length - column_count];
 
 					int colInfoIdx = 0;
 					int paramInfoIdx = 0;
@@ -522,82 +496,80 @@ namespace MaxDBDataProvider.MaxDBProtocol
 						DBTechTranslator current = shortInfo[i];
 						if (current.IsInput) 
 						{
-							if (paramInfoIdx == this.paramInfos.Length) 
+							if (paramInfoIdx == m_paramInfos.Length) 
 							{
 								throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_INTERNAL_UNEXPECTEDINPUT, paramInfoIdx));
 							}
 							current.ColumnIndex = paramInfoIdx;
-							paramInfos[paramInfoIdx] = current;
+							m_paramInfos[paramInfoIdx] = current;
 							paramInfoIdx++;
-							inputCount++;
+							m_inputCount++;
 						} 
 						else 
 						{
-							if (colInfoIdx == columnInfos.Length) 
-							{
+							if (colInfoIdx == m_columnInfos.Length) 
 								throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_INTERNAL_UNEXPECTEDOUTPUT, colInfoIdx));
-							}
-							columnInfos[colInfoIdx] = current;
+							m_columnInfos[colInfoIdx] = current;
 							current.ColumnIndex = colInfoIdx;
 							current.ColumnName = columnNames[colInfoIdx];
 							colInfoIdx++;
 						}
-						hasLongs |= shortInfo[i].IsLongKind;
-						hasStreams |= shortInfo[i].IsStreamKind;
+						m_hasLongs |= shortInfo[i].IsLongKind;
+						m_hasStreams |= shortInfo[i].IsStreamKind;
 					}
 				}
 			} 
 			else 
 			{ // no result set data, as we cannot to be sure
-				this.paramInfos = shortInfo;
+				m_paramInfos = shortInfo;
 				if (columnNames != null) 
 				{
 					// fortunately at least column names
 					// sometimes only output parameters are named
-					if (columnNames.Length == paramInfos.Length) 
+					if (columnNames.Length == m_paramInfos.Length) 
 					{
 						for (int i = 0; i < columnNames.Length; ++i) 
 						{
-							DBTechTranslator current = paramInfos[i];
+							DBTechTranslator current = m_paramInfos[i];
 							current.ColumnIndex = i;
 							current.ColumnName = columnNames[i];
-							if (this.procParamInfos != null	&& i < procParamInfos.Length) 
-								current.SetProcParamInfo(procParamInfos[i]);
-							inputCount += current.IsInput ? 1 : 0;
-							hasLongs |= current.IsLongKind;
-							hasStreams |= current.IsStreamKind;
+							if (m_procParamInfos != null && i < m_procParamInfos.Length) 
+								current.SetProcParamInfo(m_procParamInfos[i]);
+							m_inputCount += (short)(current.IsInput ? 1 : 0);
+							m_hasLongs |= current.IsLongKind;
+							m_hasStreams |= current.IsStreamKind;
 						}
 					} 
 					else 
 					{ // we will leave out the input parameters
 						int colNameIdx = 0;
-						for (int j = 0; j < paramInfos.Length; ++j) 
+						for (int j = 0; j < m_paramInfos.Length; ++j) 
 						{
-							DBTechTranslator current = paramInfos[j];
+							DBTechTranslator current = m_paramInfos[j];
 							current.ColumnIndex = j;
-							if (procParamInfos != null && j < procParamInfos.Length) 
-								current.SetProcParamInfo(procParamInfos[j]);
+							if (m_procParamInfos != null && j < m_procParamInfos.Length) 
+								current.SetProcParamInfo(m_procParamInfos[j]);
 							if (current.IsOutput) 
 								current.ColumnName = columnNames[colNameIdx++];
 							else 
-								++inputCount;
-							hasLongs |= current.IsLongKind;
-							hasStreams |= current.IsStreamKind;
+								++m_inputCount;
+							m_hasLongs |= current.IsLongKind;
+							m_hasStreams |= current.IsStreamKind;
 						}
 					}
 				} 
 				else 
 				{
 					// No column names at all. OK.
-					for (int i = 0; i < paramInfos.Length; ++i) 
+					for (int i = 0; i < m_paramInfos.Length; ++i) 
 					{
-						DBTechTranslator current = paramInfos[i];
+						DBTechTranslator current = m_paramInfos[i];
 						current.ColumnIndex = i;
-						if (procParamInfos != null && i < procParamInfos.Length) 
-							current.SetProcParamInfo(procParamInfos[i]);
-						inputCount += current.IsInput ? 1 : 0;
-						hasLongs |= current.IsLongKind;
-						hasStreams |= current.IsStreamKind;
+						if (m_procParamInfos != null && i < m_procParamInfos.Length) 
+							current.SetProcParamInfo(m_procParamInfos[i]);
+						m_inputCount += (short)(current.IsInput ? 1 : 0);
+						m_hasLongs |= current.IsLongKind;
+						m_hasStreams |= current.IsStreamKind;
 					}
 				}
 			}
@@ -610,13 +582,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				if (columnMap != null)
 					return columnMap;
 
-				if (columnNames == null)
+				if (m_columnNames == null)
 					throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_NO_COLUMNNAMES));
 
-				columnMap = new Hashtable(columnNames.Length);
-				for (int i = 0; i < paramInfos.Length; ++i) 
+				columnMap = new Hashtable(m_columnNames.Length);
+				for (int i = 0; i < m_paramInfos.Length; ++i) 
 				{
-					DBTechTranslator current = paramInfos[i];
+					DBTechTranslator current = m_paramInfos[i];
 					string colname = current.ColumnName;
 					if (colname != null) 
 						columnMap[colname] = current;
@@ -634,14 +606,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			DBTechTranslator[] infos = null;
 
 			requestPacket = connection.CreateRequestPacket();
-			requestPacket.initDbsCommand(false, "Describe ");
-			requestPacket.addParseidPart(this.parseid);
+			requestPacket.InitDbsCommand(false, "Describe ");
+			requestPacket.AddParseIdPart(this.parseid);
 			replyPacket = connection.Exec(requestPacket, this, GCMode.GC_ALLOWED);
 
 			replyPacket.ClearPartOffset();
-			for(int i = 0; i < replyPacket.partCount; i++) 
+			for(int i = 0; i < replyPacket.PartCount; i++) 
 			{
-				replyPacket.nextPart();
+				replyPacket.NextPart();
 				switch (replyPacket.PartType) 
 				{
 					case PartKind.ColumnNames:
@@ -651,7 +623,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 						infos = replyPacket.ParseShortFields(connection.m_spaceOption, false, null, false);
 						break;
 					case PartKind.Vardata_ShortInfo:
-						this.varDataInput = true;
+						m_varDataInput = true;
 						infos = replyPacket.ParseShortFields(connection.m_spaceOption, false, null, true);
 						break;
 					default:
@@ -668,11 +640,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			int colCount = info.Length;
 			DBTechTranslator currentInfo;
 			string currentName;
-			this.columnNames = colName;
+			m_columnNames = colName;
 
 			if (colCount == colName.Length) 
 			{
-				this.columnInfos = info;
+				m_columnInfos = info;
 				for (int i = 0; i < colCount; ++i) 
 				{
 					currentInfo = info[i];
@@ -684,12 +656,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			else 
 			{
 				int outputColCnt = 0;
-				this.columnInfos = new DBTechTranslator[colName.Length];
+				m_columnInfos = new DBTechTranslator[colName.Length];
 				for (int i = 0; i < colCount; ++i) 
 				{
 					if (info[i].IsOutput) 
 					{
-						currentInfo = columnInfos[outputColCnt] = info[i];
+						currentInfo = m_columnInfos[outputColCnt] = info[i];
 						currentName = colName[outputColCnt];
 						currentInfo.ColumnName = currentName;
 						currentInfo.ColumnIndex = outputColCnt++;
@@ -998,12 +970,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			string[] columnNames = null;
 
 			MaxDBRequestPacket request = c.CreateRequestPacket();
-			request.initDbsCommand(false, "DESCRIBE \"" + cursorName + "\"");
+			request.InitDbsCommand(false, "DESCRIBE \"" + cursorName + "\"");
 			MaxDBReplyPacket reply = c.Exec(request, this, GCMode.GC_ALLOWED);
 			reply.ClearPartOffset();
-			for(int i = 0; i < reply.partCount; i++) 
+			for(int i = 0; i < reply.PartCount; i++) 
 			{
-				reply.nextPart();
+				reply.NextPart();
 
 				int partType = reply.PartType;
 
@@ -1034,7 +1006,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			
 			MaxDBRequestPacket request = connection.CreateRequestPacket();
 			byte currentSQLMode = request.switchSqlMode(SqlMode.Internal);
-			request.initDbsCommand(connection.AutoCommit, cmd);
+			request.InitDbsCommand(connection.AutoCommit, cmd);
 			if(fetchSize > 1) 
 				request.setMassCommand();
 			else 
