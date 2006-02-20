@@ -124,9 +124,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			WriteInt32(connData.MaxDataLen, HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
 			WriteInt32(connData.PacketSize, HeaderOffset.END + ConnectPacketOffset.PacketSize);
 			WriteInt32(connData.MinReplySize, HeaderOffset.END + ConnectPacketOffset.MinReplySize);
-			if (connData.DBName.Length > Consts.DBNameSize)
-				connData.DBName = connData.DBName.Substring(0, Consts.DBNameSize);
-			writeASCII(connData.DBName.PadRight(Consts.DBNameSize, ' '), HeaderOffset.END + ConnectPacketOffset.ServerDB);
+			if (connData.DBName.Length > ConnectPacketOffset.DBNameSize)
+				connData.DBName = connData.DBName.Substring(0, ConnectPacketOffset.DBNameSize);
+			writeASCII(connData.DBName.PadRight(ConnectPacketOffset.DBNameSize, ' '), HeaderOffset.END + ConnectPacketOffset.ServerDB);
 			writeASCII("        ", HeaderOffset.END + ConnectPacketOffset.ClientDB);
 			// fill out variable part
 			WriteByte(4, m_curPos++);
@@ -150,9 +150,19 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public void FillPacketLength()
 		{
-			const int packetMinLen = Consts.MinSize;
+			const int packetMinLen = ConnectPacketOffset.MinSize;
 			if (m_curPos < packetMinLen) m_curPos = packetMinLen;
 			writeUInt16((ushort)(m_curPos - HeaderOffset.END), HeaderOffset.END + ConnectPacketOffset.ConnectLength);
+		}
+
+		public void Close()
+		{
+			int currentLength = Length;
+			int requiredLength = ConnectPacketOffset.MinSize - HeaderOffset.END;
+
+			if (currentLength < requiredLength) 
+				m_curPos += requiredLength - currentLength;
+			writeUInt16((ushort)m_curPos, ConnectPacketOffset.ConnectLength);
 		}
 
 		public bool IsSwapped
@@ -316,7 +326,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public byte switchSqlMode(byte newMode) 
+		public byte SwitchSqlMode(byte newMode) 
 		{
 			byte result = m_currentSqlMode;
 

@@ -5,23 +5,21 @@ namespace MaxDBDataProvider
 {
 	public class MaxDBTransaction : IDbTransaction
 	{
-		private MaxDBConnection conn;
+		private MaxDBConnection m_connection;
 
 		internal MaxDBTransaction(MaxDBConnection conn)
 		{
-			this.conn = conn;
+			m_connection = conn;
 		}
 
 		public IsolationLevel IsolationLevel 
 		{
-			/*
-			 * Should return the current transaction isolation
-			 * level. For the template, assume the default
-			 * which is ReadCommitted.
-			 */
 			get 
-			{ 
-				switch (SQLDBC.SQLDBC_Connection_getTransactionIsolation(conn.m_connHandler))
+			{
+#if NATIVE
+				return m_connection.m_isolationLevel;
+#else
+				switch (SQLDBC.SQLDBC_Connection_getTransactionIsolation(m_connection.m_connHandler))
 				{
 					case 0:
 						return IsolationLevel.ReadUncommitted;
@@ -34,31 +32,30 @@ namespace MaxDBDataProvider
 					default:
 						return IsolationLevel.Unspecified;
 				}
+#endif
 			}
 		}
 
 		public void Commit()
 		{
-			/*
-			 * Implement Commit here. Although the template does
-			 * not provide an implementation, it should never be 
-			 * a no-op because data corruption could result.
-			 */
-			if(SQLDBC.SQLDBC_Connection_commit(conn.m_connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
+#if NATIVE
+			m_connection.Commit();
+#else
+			if(SQLDBC.SQLDBC_Connection_commit(m_connection.m_connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
 				throw new MaxDBException("COMMIT failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-					SQLDBC.SQLDBC_Connection_getError(conn.m_connHandler)));
+					SQLDBC.SQLDBC_Connection_getError(m_connection.m_connHandler)));
+#endif
 		}
 
 		public void Rollback()
 		{
-			/*
-			 * Implement Rollback here. Although the template does
-			 * not provide an implementation, it should never be
-			 * a no-op because data corruption could result.
-			 */
-			if(SQLDBC.SQLDBC_Connection_rollback(conn.m_connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
+#if NATIVE
+			m_connection.Rollback();
+#else
+			if(SQLDBC.SQLDBC_Connection_rollback(m_connection.m_connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
 				throw new MaxDBException("ROLLBACK failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-					SQLDBC.SQLDBC_Connection_getError(conn.m_connHandler)));
+					SQLDBC.SQLDBC_Connection_getError(m_connection.m_connHandler)));
+#endif
 		}
 
 		public IDbConnection Connection
@@ -67,7 +64,10 @@ namespace MaxDBDataProvider
 			 * Return the connection for the current transaction.
 			 */
 
-			get  { return this.conn; }
+			get  
+			{ 
+				return m_connection; 
+			}
 		}    
 
 		public void Dispose() 

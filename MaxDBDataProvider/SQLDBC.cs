@@ -342,7 +342,10 @@ namespace MaxDBDataProvider
 		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_clearParameters(IntPtr stmt);
 		
 		[DllImport("libsqldbc_c")]
-		public extern static IntPtr SQLDBC_PreparedStatement_getResultSet(IntPtr stmt);		
+		public extern static IntPtr SQLDBC_PreparedStatement_getResultSet(IntPtr stmt);
+		
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_PreparedStatement_getRowsAffected(IntPtr stmt); 
 		
 		#endregion
 

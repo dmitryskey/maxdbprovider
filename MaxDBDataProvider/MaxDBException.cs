@@ -203,4 +203,17 @@ namespace MaxDBDataProvider
 			}
 		}
 	}
+
+	public class InvalidColumnException : DataException 
+	{
+		public InvalidColumnException(int columnIndex) :
+			base(MessageTranslator.Translate(MessageKey.ERROR_INVALIDCOLUMNINDEX, columnIndex))
+		{
+		}
+
+		public InvalidColumnException(string columnName) :
+			base(MessageTranslator.Translate(MessageKey.ERROR_INVALIDCOLUMNNAME, columnName))
+		{
+		}
+	}
 }

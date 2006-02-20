@@ -145,6 +145,24 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_socket.Close();
 		}
 
+		public void Cancel()
+		{
+			try
+			{
+				MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END + ConnectPacketOffset.END]);
+				request.FillHeader(RSQLTypes.USER_CANCEL_REQUEST, m_sender, m_receiver, m_maxSendLen);
+				request.WriteInt32(m_sender, HeaderOffset.ReceiverRef);
+				request.Close();
+				request.SetSendLength(request.Length);
+				m_socket.Stream.Write(request.arrayData, 0, request.Length);
+				m_socket.Close();
+			}
+			catch(Exception ex)
+			{
+				throw new MaxDBException(ex.Message);
+			}
+		}
+
 		public MaxDBReplyPacket Exec(MaxDBRequestPacket userPacket, int len)
 		{
 			try

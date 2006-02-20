@@ -51,6 +51,22 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
+		public virtual int Precision
+		{
+			get
+			{
+				return m_logicalLength;
+			}
+		}
+
+		public virtual int Scale
+		{
+			get
+			{
+				return 0;
+			}
+		}
+
 		public int PhysicalLength
 		{
 			get
@@ -75,120 +91,15 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				switch (m_dataType) 
-				{
-					case DataType.CHA:
-					case DataType.CHE:
-					case DataType.DBYTEEBCDIC:
-						return DataType.stringValues[DataType.CHA];
-					case DataType.CHB:
-					case DataType.ROWID:
-						return DataType.stringValues[DataType.CHB];
-					case DataType.UNICODE:
-						return DataType.stringValues[DataType.UNICODE];
-					case DataType.VARCHARA:
-					case DataType.VARCHARE:
-						return DataType.stringValues[DataType.VARCHARA];
-					case DataType.VARCHARB:
-						return DataType.stringValues[DataType.VARCHARB];
-					case DataType.VARCHARUNI:
-						return DataType.stringValues[DataType.VARCHARUNI];
-					case DataType.STRA:
-					case DataType.STRE:
-					case DataType.LONGA:
-					case DataType.LONGE:
-					case DataType.LONGDB:
-						return DataType.stringValues[DataType.LONGA];
-					case DataType.STRB:
-					case DataType.LONGB:
-						return DataType.stringValues[DataType.LONGB];
-					case DataType.STRUNI:
-					case DataType.LONGUNI:
-						return DataType.stringValues[DataType.LONGUNI];
-					case DataType.DATE:
-						return DataType.stringValues[DataType.DATE];
-					case DataType.TIME:
-						return DataType.stringValues[DataType.TIME];
-					case DataType.TIMESTAMP:
-						return DataType.stringValues[DataType.TIMESTAMP];
-					case DataType.BOOLEAN:
-						return DataType.stringValues[DataType.BOOLEAN];
-					case DataType.FIXED:
-					case DataType.NUMBER:
-						return DataType.stringValues[DataType.FIXED];
-					case DataType.FLOAT:
-					case DataType.VFLOAT:
-						return DataType.stringValues[DataType.FLOAT];
-					case DataType.SMALLINT:
-						return DataType.stringValues[DataType.SMALLINT];
-					case DataType.INTEGER:
-						return DataType.stringValues[DataType.INTEGER];
-					default:
-						return MessageTranslator.Translate(MessageKey.UNKNOWNTYPE);
-				}
+				return GeneralColumnInfo.GetTypeName(m_dataType);
 			}
 		}
 
-		public Type ColumnClassName
+		public Type ColumnType
 		{
 			get
 			{
-				switch (m_dataType) 
-				{
-					case DataType.FIXED:
-					case DataType.FLOAT:
-					case DataType.VFLOAT:
-					case DataType.NUMBER:
-					case DataType.NONUMBER:
-						return typeof(decimal);
-					case DataType.CHA:
-					case DataType.CHE:
-						return typeof(string);
-					case DataType.CHB:
-					case DataType.ROWID:
-						return typeof(byte[]);
-					case DataType.DATE:
-					case DataType.TIME:
-					case DataType.TIMESTAMP:
-						return typeof(DateTime);
-					case DataType.UNKNOWN:
-						return typeof(object);
-					case DataType.DURATION:
-						return typeof(long);
-					case DataType.DBYTEEBCDIC:
-					case DataType.STRA:
-					case DataType.STRE:
-					case DataType.LONGA:
-					case DataType.LONGE:
-					case DataType.STRUNI:
-						return typeof(TextReader);
-					case DataType.STRB:
-					case DataType.LONGB:
-					case DataType.LONGDB:
-					case DataType.LONGUNI:
-						return typeof(BinaryReader);
-					case DataType.BOOLEAN:
-						return typeof(bool);
-					case DataType.UNICODE:
-					case DataType.VARCHARUNI:
-						return typeof(string);
-					case DataType.DTFILLER1:
-					case DataType.DTFILLER2:
-					case DataType.DTFILLER3:
-					case DataType.DTFILLER4:
-						return typeof(object);
-					case DataType.SMALLINT:
-						return typeof(short);
-					case DataType.INTEGER:
-						return typeof(int);
-					case DataType.VARCHARA:
-					case DataType.VARCHARE:
-						return typeof(string);
-					case DataType.VARCHARB:
-						return typeof(byte[]);
-					default:
-						return typeof(object);
-				}
+				return GeneralColumnInfo.GetType(m_dataType);
 			}
 		}
 
@@ -227,106 +138,106 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		protected MaxDBConversionException newGetException(string requestedType)
+		protected MaxDBConversionException CreateGetException(string requestedType)
 		{
 			return new MaxDBConversionException(MessageTranslator.Translate(
 				MessageKey.ERROR_CONVERSIONSQLNET, ColumnTypeName, requestedType));
 		}
 
-		protected MaxDBConversionException newSetException(string requestedType)
+		protected MaxDBConversionException CreateSetException(string requestedType)
 		{
 			return new MaxDBConversionException(MessageTranslator.Translate(
 				MessageKey.ERROR_CONVERSIONNETSQL, requestedType, ColumnTypeName));
 		}
 
-		protected MaxDBConversionException newParseException(string data, string requestedType)
+		protected MaxDBConversionException CreateParseException(string data, string requestedType)
 		{
 			if (requestedType == null) 
 				requestedType = ColumnTypeName;
 			return new MaxDBConversionException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSIONDATA, data, requestedType));
 		}
 
-		public virtual Stream GetASCIIStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public virtual Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
-			throw newGetException("ASCIIStream");
+			throw CreateGetException("ASCIIStream");
 		}
 
-		public virtual Stream GetUnicodeStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public virtual Stream GetUnicodeStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
-			throw newGetException("UnicodeStream");
+			throw CreateGetException("UnicodeStream");
 		}
 
-		public virtual Stream GetBinaryStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public virtual Stream GetBinaryStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
-			throw newGetException("BinaryStream");
+			throw CreateGetException("BinaryStream");
 		}
 
 		public virtual bool GetBoolean(ByteArray mem)
 		{
-			throw newGetException("boolean");
+			throw CreateGetException("boolean");
 		}
 
-		public virtual byte GetByte(SQLParamController controller, ByteArray mem)
+		public virtual byte GetByte(ISQLParamController controller, ByteArray mem)
 		{
-			throw newGetException("byte");
+			throw CreateGetException("byte");
 		}
 
-		public virtual byte[] GetBytes(SQLParamController controller, ByteArray mem)
+		public virtual byte[] GetBytes(ISQLParamController controller, ByteArray mem)
 		{
-			throw newGetException("byte[]");
+			throw CreateGetException("byte[]");
 		}
 
 		public virtual DateTime GetDateTime(ByteArray mem)
 		{
-			throw this.newGetException("DateTime");
+			throw this.CreateGetException("DateTime");
 		}
 
 		public virtual double GetDouble(ByteArray mem)
 		{
-			throw newGetException("double");
+			throw CreateGetException("double");
 		}
 
 		public virtual float GetFloat(ByteArray mem)
 		{
-			throw newGetException("float");
+			throw CreateGetException("float");
 		}
 
 		public virtual BigDecimal GetBigDecimal(ByteArray mem)
 		{
-			throw newGetException("decimal");
+			throw CreateGetException("decimal");
 		}
 
 		public virtual decimal GetDecimal(ByteArray mem)
 		{
-			throw newGetException("decimal");
+			throw CreateGetException("decimal");
 		}
 
 		public virtual short GetInt16(ByteArray mem)
 		{
-			throw newGetException("Int16");
+			throw CreateGetException("Int16");
 		}
 
 		public virtual int GetInt32(ByteArray mem)
 		{
-			throw newGetException("Int32");
+			throw CreateGetException("Int32");
 		}
 
 		public virtual long GetInt64(ByteArray mem)
 		{
-			throw newGetException("Int64");
+			throw CreateGetException("Int64");
 		}
 
 		public virtual object GetValue(ByteArray mem)
 		{
-			throw newGetException("object");
+			throw CreateGetException("object");
 		}
 
 		public virtual object[] GetValues(ByteArray mem)
 		{
-			throw newGetException("object[]");
+			throw CreateGetException("object[]");
 		}
 
-		public virtual string GetString(SQLParamController controller, ByteArray mem)
+		public virtual string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			object rawResult = GetValue(mem);
 
@@ -398,21 +309,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				switch (m_dataType) 
-				{
-					case DataType.STRA:
-					case DataType.STRE:
-					case DataType.STRB:
-					case DataType.STRUNI:
-					case DataType.LONGA:
-					case DataType.LONGE:
-					case DataType.LONGB:
-					case DataType.LONGDB:
-					case DataType.LONGUNI:
-						return true;
-					default:
-						return false;
-				}
+				return GeneralColumnInfo.IsLong(m_dataType);
 			}
 		}
 
@@ -543,7 +440,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					return TransStringForInput (new String ((char[]) val));
 	
 				// cannot convert other arrays
-				throw newSetException(val.GetType().FullName);
+				throw CreateSetException(val.GetType().FullName);
 			}
 			else 
 				// default conversion to string
@@ -577,7 +474,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public virtual object TransBytesForInput(byte[] val)
 		{
-			throw newGetException("Bytes");
+			throw CreateGetException("Bytes");
 		}
 
 		public virtual object TransDateTimeForInput(DateTime val, Calendar cal)
@@ -618,7 +515,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	
 		public virtual object TransStringForInput(string val)
 		{
-			throw newSetException("String");
+			throw CreateSetException("String");
 		}
 
 		public byte BigDecimal2Byte(BigDecimal bd)
@@ -704,7 +601,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 			catch 
 			{
-				throw newParseException(strValue, "DateTime");
+				throw CreateParseException(strValue, "DateTime");
 			}
 		}
 	}
@@ -736,7 +633,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 			catch
 			{
-				throw newParseException(val, "BigDecimal");
+				throw CreateParseException(val, "BigDecimal");
 			}
 		}
 
@@ -753,11 +650,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 			catch
 			{
-				throw newParseException(val, "Boolean");
+				throw CreateParseException(val, "Boolean");
 			}
 		}
 
-		public override byte[] GetBytes(SQLParamController controller, ByteArray mem)
+		public override byte[] GetBytes(ISQLParamController controller, ByteArray mem)
 		{
 			string result = GetString(controller, mem);
 			if (result != null)
@@ -766,12 +663,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				return null;
 		}
 
-		public override byte GetByte(SQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISQLParamController controller, ByteArray mem)
 		{
 			return BigDecimal2Byte(GetBigDecimal(mem));
 		}
 
-		public override Stream GetUnicodeStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetUnicodeStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			string asString = GetString(controller, mem);
 
@@ -811,7 +708,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return BigDecimal2Int64(GetBigDecimal(mem));
 		}
 
-		public override string GetString(SQLParamController controller, ByteArray mem)
+		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			if (!IsDBNull(mem))
 				return mem.readASCII(m_bufpos, m_logicalLength).TrimStart();
@@ -913,7 +810,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_charDatatypePostfix = " UNICODE";
 		}
 
-		public override string GetString(SQLParamController controller, ByteArray mem)
+		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			if (!IsDBNull(mem))
 				return Encoding.Unicode.GetString(mem.ReadBytes(m_bufpos, m_logicalLength * 2)).TrimStart();
@@ -921,7 +818,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				return null;
 		}
      
-		public override byte[] GetBytes(SQLParamController controller, ByteArray mem)
+		public override byte[] GetBytes(ISQLParamController controller, ByteArray mem)
 		{
 			string result = GetString(controller, mem);
 			if (result != null)
@@ -967,7 +864,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
-		public override string GetString(SQLParamController controller, ByteArray mem)
+		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			string result = null;
 
@@ -992,7 +889,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
-		public override string GetString(SQLParamController controller, ByteArray mem)
+		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			string result = null;
 
@@ -1036,7 +933,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
-		public override byte GetByte(SQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISQLParamController controller, ByteArray mem)
 		{
 			byte[] result = null;
 			if (IsDBNull(mem))
@@ -1046,7 +943,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return result[0];
 		}
     
-		public override byte[] GetBytes(SQLParamController controller, ByteArray mem)
+		public override byte[] GetBytes(ISQLParamController controller, ByteArray mem)
 		{
 			if (IsDBNull(mem))
 				return null;
@@ -1059,7 +956,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return GetBytes(null, mem);
 		}
 
-		public override string GetString(SQLParamController controller, ByteArray mem)
+		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			byte[] rawResult;
 
@@ -1150,7 +1047,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}    
 		}
 
-		public override Stream GetBinaryStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetBinaryStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			byte[] asBytes = GetBytes(null, mem);
 
@@ -1191,7 +1088,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				return false;
 		}
 
-		public override byte GetByte(SQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISQLParamController controller, ByteArray mem)
 		{
 			return GetBoolean(mem) ? (byte) 1 : (byte) 0;
 		}
@@ -1244,7 +1141,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				obj is float || obj is double || obj is decimal)
 				return TransBooleanForInput((bool) obj);
 			else
-				throw this.newSetException (obj.GetType().FullName);
+				throw CreateSetException(obj.GetType().FullName);
 
 		}
 
@@ -1302,7 +1199,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			} 
 			catch
 			{
-				throw newParseException(result + " scale: " + scale, null);
+				throw CreateParseException(result + " scale: " + scale, null);
 			}
 		}
 
@@ -1325,7 +1222,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			} 
 			catch
 			{
-				throw newParseException(result + " scale: " + frac, null);
+				throw CreateParseException(result + " scale: " + frac, null);
 			}
 		}
 
@@ -1334,7 +1231,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return GetInt32(mem) != 0;
 		}
 
-		public override byte GetByte(SQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISQLParamController controller, ByteArray mem)
 		{
 			return (byte)GetInt64(mem);
 		}
@@ -1401,7 +1298,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public int Precision
+		public override int Precision
 		{
 			get
 			{
@@ -1409,7 +1306,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public int Scale
+		public override int Scale
 		{
 			get
 			{
@@ -1515,7 +1412,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return null;
 		}
 
-		public override string GetString(SQLParamController controller, ByteArray mem)
+		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			switch (CheckDefineByte(mem)) 
 			{
@@ -1539,7 +1436,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 			catch 
 			{
-				throw newParseException(val, null);
+				throw CreateParseException(val, null);
 			}
 		}
 	}
@@ -1562,7 +1459,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return GetDateTime(mem);
 		}
 
-		public override string GetString(SQLParamController controller, ByteArray mem)
+		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			return (!IsDBNull(mem) ? mem.readASCII(m_bufpos, m_physicalLength - 1) : null);
 		}
@@ -1627,7 +1524,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				// ignore
 			}
-			throw this.newParseException (val, "Time");
+			throw CreateParseException(val, "Time");
 		}
 
 		protected override void putSpecific(DataPart dataPart, object data)
@@ -1651,7 +1548,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
-		public override string GetString(SQLParamController controller, ByteArray mem)
+		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			return (!IsDBNull(mem) ? mem.readUnicode(m_bufpos, m_physicalLength - 1) : null);
 		}
@@ -1708,7 +1605,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return GetDateTime(mem);
 		}
 
-		public override string GetString(SQLParamController controller, ByteArray mem)
+		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			return (!IsDBNull(mem) ? mem.readASCII(m_bufpos, m_physicalLength - 1) : null);
 		}
@@ -1816,7 +1713,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				// ignore
 			}
-			throw this.newParseException (val, "Timestamp");
+			throw CreateParseException (val, "Timestamp");
 		}
 
 		protected override void putSpecific(DataPart dataPart, object data)
@@ -1840,7 +1737,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
-		public override string GetString(SQLParamController controller, ByteArray mem)
+		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			return (!IsDBNull(mem) ? mem.readUnicode(m_bufpos, m_physicalLength - 1) : null);
 		}
@@ -1903,7 +1800,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return GetDateTime(mem);
 		}
 
-		public override string GetString(SQLParamController controller, ByteArray mem)
+		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			return (!IsDBNull(mem) ? mem.readASCII(m_bufpos, m_physicalLength - 1) : null);
 		}
@@ -1976,7 +1873,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				// ignore
 			}
-			throw this.newParseException (val, "Date");
+			throw CreateParseException (val, "Date");
 		}
 
 		protected override void putSpecific(DataPart dataPart, object data)
@@ -2000,7 +1897,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	{
 	}
 
-		public override string GetString(SQLParamController controller, ByteArray mem)
+		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			return (!IsDBNull(mem) ? mem.readUnicode(m_bufpos, m_physicalLength - 1) : null);
 		}
@@ -2064,7 +1961,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			dataPart.WriteBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
 
-		public override byte GetByte(SQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISQLParamController controller, ByteArray mem)
 		{
 			byte[] result = null;
 			if (IsDBNull(mem)) 
@@ -2074,7 +1971,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return result[0];
 		}
 
-		public override byte[] GetBytes(SQLParamController controller, ByteArray mem)
+		public override byte[] GetBytes(ISQLParamController controller, ByteArray mem)
 		{
 			if (!IsDBNull(mem))
 				return mem.ReadBytes(m_bufpos, m_logicalLength);
@@ -2194,7 +2091,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public override Stream GetBinaryStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetBinaryStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			byte[] asBytes = GetBytes(null, mem);
 
@@ -2710,7 +2607,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
     
-		private Stream GetStream(SQLParamController controller, ByteArray mem, ByteArray longdata)
+		private Stream GetStream(ISQLParamController controller, ByteArray mem, ByteArray longdata)
 		{
 			Stream result = null;
 			AbstractGetValue getval = null;
@@ -2729,12 +2626,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return result;
 		}
 
-		public override Stream GetASCIIStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			return GetStream(controller, mem, longData);
 		}
 	
-		public override Stream GetBinaryStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetBinaryStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			if(IsBinary)
 				return GetStream(controller, mem, longData);
@@ -2742,7 +2639,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				throw new MaxDBConversionException(MessageTranslator.Translate(MessageKey.ERROR_BINARYREADFROMLONG));
 		}
 
-		private GetLOBValue GetLOB(SQLParamController controller, ByteArray mem, ByteArray longData)
+		private GetLOBValue GetLOB(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			GetLOBValue result = null;
 			byte[] descriptor;
@@ -2758,7 +2655,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return result;
 		}
 
-		public override byte GetByte(SQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISQLParamController controller, ByteArray mem)
 		{
 			byte[] result = null;
 			if (IsDBNull(mem))
@@ -2768,7 +2665,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return result[0];
 		}
 
-		public override byte[] GetBytes(SQLParamController controller, ByteArray mem)
+		public override byte[] GetBytes(ISQLParamController controller, ByteArray mem)
 		{
 			Stream blobStream;
 			MemoryStream tmpStream;
@@ -2805,7 +2702,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return tmpStream.ToArray();
 		}
 
-		public virtual TextReader GetCharacterStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public virtual TextReader GetCharacterStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			Stream byteStream = GetASCIIStream(controller, mem, longData);
 			if (byteStream == null) 
@@ -2814,7 +2711,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return new RawByteReader(byteStream);
 		}
 
-		public override string GetString(SQLParamController controller, ByteArray mem)
+		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			const int bufSize = 4096;
 			TextReader reader;
@@ -2888,7 +2785,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return new UnicodeProcedurePutValue(this, reader, length);
 		}
 
-		public override Stream GetASCIIStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			TextReader reader = GetCharacterStream(controller, mem, longData);
 			if (reader == null) 
@@ -2897,7 +2794,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return new ReaderStream(reader, false);
 		}
 
-		public override TextReader GetCharacterStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public override TextReader GetCharacterStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			TextReader result = null;
 			AbstractGetValue getval;
@@ -2936,17 +2833,17 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
-		public override Stream GetASCIIStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			throw new MaxDBConversionException(MessageTranslator.Translate(MessageKey.ERROR_ASCIIREADFROMLONG));
 		}
 
-		public override Stream GetBinaryStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetBinaryStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			return GetStream(controller, mem, longData);
 		}
 
-		public virtual TextReader GetCharacterStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public virtual TextReader GetCharacterStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			Stream byteStream = GetASCIIStream(controller, mem, longData);
 			if (byteStream == null) 
@@ -2970,7 +2867,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		private GetLOBValue GetLOB(SQLParamController controller, ByteArray mem, ByteArray longData)
+		private GetLOBValue GetLOB(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			GetLOBValue result = null;
 			byte [] descriptor;
@@ -2983,7 +2880,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return result;
 		}
 
-		public int Precision
+		public override int Precision
 		{
 			get
 			{
@@ -2991,7 +2888,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public Stream GetStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public Stream GetStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			Stream result = null;
 			AbstractGetValue getval = null;
@@ -3007,7 +2904,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return result;
 		}
 
-		public override String GetString(SQLParamController controller, ByteArray mem)
+		public override String GetString(ISQLParamController controller, ByteArray mem)
 		{
 			const int bufSize = 4096;
 			TextReader reader;
@@ -3113,12 +3010,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_charDatatypePostfix = " ASCII";
 		}
 
-		public override Stream GetASCIIStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			return GetStream (controller, mem, longData);
 		}
 
-		public object GetObject(SQLParamController controller, ByteArray mem)
+		public object GetObject(ISQLParamController controller, ByteArray mem)
 		{
 			return GetString(controller, mem);
 		}
@@ -3156,12 +3053,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
-		public override Stream GetBinaryStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetBinaryStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			return GetStream (controller, mem, longData);
 		}
 
-		public override byte GetByte(SQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISQLParamController controller, ByteArray mem)
 		{
 			if (IsDBNull(mem))
 				return 0;
@@ -3169,7 +3066,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return GetBytes(controller, mem)[0];
 		}
     
-		public override byte[] GetBytes(SQLParamController controller, ByteArray mem)
+		public override byte[] GetBytes(ISQLParamController controller, ByteArray mem)
 		{
 			Stream blobStream;
 			MemoryStream tmpStream;
@@ -3206,7 +3103,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return tmpStream.ToArray();
 		}
 
-		public object GetObject(SQLParamController controller, ByteArray mem)
+		public object GetObject(ISQLParamController controller, ByteArray mem)
 		{
 			return GetBytes(controller, mem);
 		}
@@ -3255,7 +3152,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_charDatatypePostfix = " UNICODE";
 		}
 
-		public override Stream GetASCIIStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			TextReader reader = GetCharacterStream(controller, mem, longData);
 			if (reader == null) 
@@ -3264,12 +3161,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return new ReaderStream(reader, false);
 		}
 
-		public object GetObject(SQLParamController controller, ByteArray mem)
+		public object GetObject(ISQLParamController controller, ByteArray mem)
 		{
 			return GetString(controller, mem);
 		}
 
-		public override TextReader GetCharacterStream(SQLParamController controller, ByteArray mem, ByteArray longData)
+		public override TextReader GetCharacterStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
 			TextReader result = null;
 			AbstractGetValue getval;

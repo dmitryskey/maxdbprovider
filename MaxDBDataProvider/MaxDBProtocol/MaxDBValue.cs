@@ -1120,7 +1120,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			@return true if the row is inside, false if it's not
 			or the condition could not be determined due to an unknown end of result set.
 		*/
-		public bool containsRow(int row)
+		public bool ContainsRow(int row)
 		{
 			if(start_index <= row && end_index >= row) 
 				return true;
@@ -1147,7 +1147,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			@param relativepos the relative moving offset.
 			@return true if it was moved, false otherwise.
 		*/
-		bool move(int relativepos)
+		public bool Move(int relativepos)
 		{
 			if(currentOffset + relativepos < 0 || currentOffset + relativepos >= chunkSize )  
 				return false;

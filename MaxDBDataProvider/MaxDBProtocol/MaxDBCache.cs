@@ -325,7 +325,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			int functionCode = mapFunctionCode(parseinfo.FuncCode);
 			if (kindFilter[functionCode]) 
 			{
-				this[parseinfo.sqlCmd] = parseinfo;
+				this[parseinfo.m_sqlCmd] = parseinfo;
 				parseinfo.IsCached = true;
 				if (keepStats) 
 					stats[functionCode].addMiss();
