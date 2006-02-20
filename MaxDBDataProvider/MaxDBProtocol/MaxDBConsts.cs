@@ -37,7 +37,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			ServerDB        =	  24,   // C8
 			ClientDB        =	  32,   // C8
 			VarPart			=	  40,   // C256
-			END             =	 296;
+			END             =	 296,
+		// other connect header constants
+			DBNameSize        =      8,
+			MinSize           =     64;   // for Unix vserver
 	}
 
 	//
@@ -1434,10 +1437,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const int ReserveFor2ndSegment = 8192; //8kB reserve size in order packet if more than 1 segment will be used
 		public const int ReserveForReply = SegmentHeaderOffset.Part - PartHeaderOffset.Data + 200;
 		public const int defaultmaxNumberOfSegm = 6; //default maximum number of segments for a request packet
-
-		// other connect header constants
-		public const int DBNameSize        =      8;
-		public const int MinSize           =     64;   // for Unix vserver
 
 		public const int reserveForReply = SegmentHeaderOffset.Part - PartHeaderOffset.Data + 200;
 

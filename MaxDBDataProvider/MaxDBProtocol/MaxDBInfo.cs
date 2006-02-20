@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Text;
+using System.IO;
 using System.Collections;
 using System.Runtime.CompilerServices;
 
@@ -10,10 +11,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	public class MaxDBParseInfo 
 	{
-		public MaxDBConnection connection;
-		public string sqlCmd;
-		private byte[] parseid;
-		private byte[] massParseid;
+		public MaxDBConnection m_connection;
+		public string m_sqlCmd;
+		private byte[] m_parseid;
+		private byte[] m_massParseid;
 		internal DBTechTranslator[] m_paramInfos;
 		internal DBProcParameterInfo[] m_procParamInfos;
 		internal short m_inputCount;
@@ -28,11 +29,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		int m_sessionID; // unique identifier for the connection
 		internal string[] m_columnNames;
 
-		Hashtable columnMap;
+		Hashtable m_columnMap;
 
 		internal DBTechTranslator[] m_columnInfos;
-
-		bool isClosed = false;
 
 		internal bool m_varDataInput = false;
 
@@ -44,9 +43,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public MaxDBParseInfo(MaxDBConnection connection, string sqlCmd, int functionCode)
 		{
-			this.connection = connection;
-			this.sqlCmd = sqlCmd;
-			this.massParseid = null;
+			m_connection = connection;
+			m_sqlCmd = sqlCmd;
+			m_massParseid = null;
 			m_paramInfos = null;
 			m_inputCount = 0;
 			m_isSelect = false;
@@ -67,7 +66,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				m_isDBProc = true;
         
 			m_columnNames = null;
-			this.columnMap = null;
+			m_columnMap = null;
 			if (m_funcCode == FunctionCode.DBProcExecute) 
 				DescribeProcedureCall();
 		}
@@ -108,7 +107,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			// "OWNER"."IDENTIFIER" etc.
 			// we always simply give up if we find nothing that helps our needs
 			//
-			char[] cmdchars = sqlCmd.Trim().ToCharArray();
+			char[] cmdchars = m_sqlCmd.Trim().ToCharArray();
 			int i = 0;
 			int cmdchars_len = cmdchars.Length;
 			// ODBC like dbfunction call.
@@ -260,7 +259,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
 					+ "UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER=USER AND "
 					+ "DBPROCEDURE=? ORDER BY PARAM_NO, ASCII_OFFSET";
-				cmd = new MaxDBCommand(sql, connection);
+				cmd = new MaxDBCommand(sql, m_connection);
 				cmd.Parameters.Add("DBPROCEDURE", procedureName);
 			} 
 			else 
@@ -269,7 +268,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
 					+ "UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER=? AND "
 					+ "DBPROCEDURE = ? ORDER BY PARAM_NO, ASCII_OFFSET";
-				cmd = new MaxDBCommand(sql, connection);
+				cmd = new MaxDBCommand(sql, m_connection);
 				cmd.Parameters.Add("OWNER", ownerName);
 				cmd.Parameters.Add("DBPROCEDURE", procedureName);
 			}
@@ -324,15 +323,15 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_procParamInfos = (DBProcParameterInfo[]) parameterInfos.ToArray(typeof(DBProcParameterInfo));
 		}
 
-		public byte[] MassParseid
+		public byte[] MassParseID
 		{
 			get
 			{
-				return massParseid;
+				return m_massParseid;
 			}
 			set
 			{
-				this.massParseid = value;
+				m_massParseid = value;
 				if (value == null) 
 					return;
 
@@ -368,7 +367,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return m_sessionID == connection.m_sessionID;
+				return m_sessionID == m_connection.m_sessionID;
 			}
 		}
 
@@ -380,24 +379,24 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		 * @param sessionId
 		 *            the session id of the parse id.
 		 */
-		public void SetParseIdAndSession(byte[] parseId, int sessionId) 
+		public void SetParseIDAndSession(byte[] parseId, int sessionId) 
 		{
 			m_sessionID = sessionId;
-			this.parseid = parseId;
+			m_parseid = parseId;
 		}
 
 		[MethodImpl(MethodImplOptions.Synchronized)]
 		public void DropParseIDs() 
 		{
-			if (parseid != null && connection != null) 
+			if (m_parseid != null && m_connection != null) 
 			{
-				connection.DropParseID(parseid);
-				parseid = null;
+				m_connection.DropParseID(m_parseid);
+				m_parseid = null;
 			}
-			if (this.massParseid != null && this.connection != null) 
+			if (m_massParseid != null && m_connection != null) 
 			{
-				connection.DropParseID(massParseid);
-				massParseid = null;
+				m_connection.DropParseID(m_massParseid);
+				m_massParseid = null;
 			}
 		}
 
@@ -417,11 +416,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		/**
 		 * Gets the parse id.
 		 */
-		public byte[] ParseId 
+		public byte[] ParseID 
 		{
 			get
 			{
-				return parseid;
+				return m_parseid;
 			}
 		}
 
@@ -433,7 +432,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return (parseid != null && parseid[MaxDBParseInfo.applicationCodeByte] == FunctionCode.command_executed);
+				return (m_parseid != null && m_parseid[MaxDBParseInfo.applicationCodeByte] == FunctionCode.command_executed);
 			}
 		}
 
@@ -452,7 +451,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_hasLongs = false;
 			m_hasStreams = false;
 			m_paramInfos = null;
-			this.columnMap = null;
+			m_columnMap = null;
 			m_columnInfos = null;
 			m_columnNames = columnNames;
 
@@ -579,22 +578,22 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				if (columnMap != null)
-					return columnMap;
+				if (m_columnMap != null)
+					return m_columnMap;
 
 				if (m_columnNames == null)
 					throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_NO_COLUMNNAMES));
 
-				columnMap = new Hashtable(m_columnNames.Length);
+				m_columnMap = new Hashtable(m_columnNames.Length);
 				for (int i = 0; i < m_paramInfos.Length; ++i) 
 				{
 					DBTechTranslator current = m_paramInfos[i];
 					string colname = current.ColumnName;
 					if (colname != null) 
-						columnMap[colname] = current;
+						m_columnMap[colname] = current;
 				}
 		
-				return this.columnMap;
+				return m_columnMap;
 			}
 		}
 
@@ -605,10 +604,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			string[] columnNames = null;
 			DBTechTranslator[] infos = null;
 
-			requestPacket = connection.CreateRequestPacket();
+			requestPacket = m_connection.CreateRequestPacket();
 			requestPacket.InitDbsCommand(false, "Describe ");
-			requestPacket.AddParseIdPart(this.parseid);
-			replyPacket = connection.Exec(requestPacket, this, GCMode.GC_ALLOWED);
+			requestPacket.AddParseIdPart(m_parseid);
+			replyPacket = m_connection.Exec(requestPacket, this, GCMode.GC_ALLOWED);
 
 			replyPacket.ClearPartOffset();
 			for(int i = 0; i < replyPacket.PartCount; i++) 
@@ -620,11 +619,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 						columnNames = replyPacket.parseColumnNames();
 						break;
 					case PartKind.ShortInfo:
-						infos = replyPacket.ParseShortFields(connection.m_spaceOption, false, null, false);
+						infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, false);
 						break;
 					case PartKind.Vardata_ShortInfo:
 						m_varDataInput = true;
-						infos = replyPacket.ParseShortFields(connection.m_spaceOption, false, null, true);
+						infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, true);
 						break;
 					default:
 						//this.addWarning (new SQLWarning ("part " +
@@ -883,7 +882,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "SQL parameter controller interface"
 
-	public interface SQLParamController 
+	public interface ISQLParamController 
 	{
 		MaxDBConnection Connection{get;}
 		ByteArray ReplyData{get;}
@@ -1005,7 +1004,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			string cmd="FETCH NEXT \"" + cursorName + "\" INTO " + _fetchparamstring;
 			
 			MaxDBRequestPacket request = connection.CreateRequestPacket();
-			byte currentSQLMode = request.switchSqlMode(SqlMode.Internal);
+			byte currentSQLMode = request.SwitchSqlMode(SqlMode.Internal);
 			request.InitDbsCommand(connection.AutoCommit, cmd);
 			if(fetchSize > 1) 
 				request.setMassCommand();
@@ -1019,7 +1018,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			} 
 			finally 
 			{
-				request.switchSqlMode(currentSQLMode);
+				request.SwitchSqlMode(currentSQLMode);
 			}
 		}
 
@@ -1042,6 +1041,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return (DBTechTranslator)obj;
 		}
 
+		public DBTechTranslator GetColumnInfo(int index)
+		{
+			if (columnInfo == null)
+				Describe();
+			return columnInfo[index];
+		}
+
 		public int NumberOfColumns
 		{
 			get
@@ -1058,6 +1064,148 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 	}
+
+	#endregion
+
+	#region "General column information"
+
+	internal class GeneralColumnInfo
+	{
+		public static bool IsLong(int columnType)
+		{
+			switch (columnType)
+			{
+				case DataType.STRA:
+				case DataType.STRE:
+				case DataType.STRB:
+				case DataType.STRUNI:
+				case DataType.LONGA:
+				case DataType.LONGE:
+				case DataType.LONGB:
+				case DataType.LONGDB:
+				case DataType.LONGUNI:
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		public static string GetTypeName(int columnType)
+		{
+			switch (columnType) 
+			{
+				case DataType.CHA:
+				case DataType.CHE:
+				case DataType.DBYTEEBCDIC:
+					return DataType.stringValues[DataType.CHA];
+				case DataType.CHB:
+				case DataType.ROWID:
+					return DataType.stringValues[DataType.CHB];
+				case DataType.UNICODE:
+					return DataType.stringValues[DataType.UNICODE];
+				case DataType.VARCHARA:
+				case DataType.VARCHARE:
+					return DataType.stringValues[DataType.VARCHARA];
+				case DataType.VARCHARB:
+					return DataType.stringValues[DataType.VARCHARB];
+				case DataType.VARCHARUNI:
+					return DataType.stringValues[DataType.VARCHARUNI];
+				case DataType.STRA:
+				case DataType.STRE:
+				case DataType.LONGA:
+				case DataType.LONGE:
+				case DataType.LONGDB:
+					return DataType.stringValues[DataType.LONGA];
+				case DataType.STRB:
+				case DataType.LONGB:
+					return DataType.stringValues[DataType.LONGB];
+				case DataType.STRUNI:
+				case DataType.LONGUNI:
+					return DataType.stringValues[DataType.LONGUNI];
+				case DataType.DATE:
+					return DataType.stringValues[DataType.DATE];
+				case DataType.TIME:
+					return DataType.stringValues[DataType.TIME];
+				case DataType.TIMESTAMP:
+					return DataType.stringValues[DataType.TIMESTAMP];
+				case DataType.BOOLEAN:
+					return DataType.stringValues[DataType.BOOLEAN];
+				case DataType.FIXED:
+				case DataType.NUMBER:
+					return DataType.stringValues[DataType.FIXED];
+				case DataType.FLOAT:
+				case DataType.VFLOAT:
+					return DataType.stringValues[DataType.FLOAT];
+				case DataType.SMALLINT:
+					return DataType.stringValues[DataType.SMALLINT];
+				case DataType.INTEGER:
+					return DataType.stringValues[DataType.INTEGER];
+				default:
+					return MessageTranslator.Translate(MessageKey.UNKNOWNTYPE);
+			}
+		}
+
+		public static Type GetType(int columnType)
+		{
+			switch(columnType)
+			{
+				case DataType.FIXED:
+				case DataType.FLOAT:
+				case DataType.VFLOAT:
+				case DataType.NUMBER:
+				case DataType.NONUMBER:
+					return typeof(decimal);
+				case DataType.CHA:
+				case DataType.CHE:
+					return typeof(string);
+				case DataType.CHB:
+				case DataType.ROWID:
+					return typeof(byte[]);
+				case DataType.DATE:
+				case DataType.TIME:
+				case DataType.TIMESTAMP:
+					return typeof(DateTime);
+				case DataType.UNKNOWN:
+					return typeof(object);
+				case DataType.DURATION:
+					return typeof(long);
+				case DataType.DBYTEEBCDIC:
+				case DataType.STRA:
+				case DataType.STRE:
+				case DataType.LONGA:
+				case DataType.LONGE:
+				case DataType.STRUNI:
+					return typeof(TextReader);
+				case DataType.STRB:
+				case DataType.LONGB:
+				case DataType.LONGDB:
+				case DataType.LONGUNI:
+					return typeof(BinaryReader);
+				case DataType.BOOLEAN:
+					return typeof(bool);
+				case DataType.UNICODE:
+				case DataType.VARCHARUNI:
+					return typeof(string);
+				case DataType.DTFILLER1:
+				case DataType.DTFILLER2:
+				case DataType.DTFILLER3:
+				case DataType.DTFILLER4:
+					return typeof(object);
+				case DataType.SMALLINT:
+					return typeof(short);
+				case DataType.INTEGER:
+					return typeof(int);
+				case DataType.VARCHARA:
+				case DataType.VARCHARE:
+					return typeof(string);
+				case DataType.VARCHARB:
+					return typeof(byte[]);
+				default:
+					return typeof(object);
+			}
+		}
+	}
+
 
 	#endregion
 }

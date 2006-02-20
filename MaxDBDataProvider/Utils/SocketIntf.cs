@@ -421,7 +421,6 @@ namespace MaxDBDataProvider
 		private int maxlength;
 		private TextReader ips;
 		private int readlength = 0;
-		private int markedlength = 0;
 	
 		public TextReaderFilter(TextReader ips, int length) 
 		{
