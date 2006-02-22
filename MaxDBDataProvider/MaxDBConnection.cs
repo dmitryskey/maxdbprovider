@@ -38,7 +38,6 @@ namespace MaxDBDataProvider
 		private int m_cursorId = 0;
 		private int m_cacheLimit, m_cacheSize;
 		internal ParseInfoCache m_parseCache = null;
-		internal IsolationLevel m_isolationLevel = IsolationLevel.Unspecified;
 		private bool m_auth = false;
 		
 		private bool m_keepGarbage = false;
@@ -53,14 +52,12 @@ namespace MaxDBDataProvider
 		private IntPtr m_runtimeHandler;
 		private IntPtr m_envHandler;
 		private IntPtr m_connPropHandler;
-		private int m_isolationLevel = -1;
 		internal IntPtr m_connHandler = IntPtr.Zero;
 
 		#endregion
 #endif
 
-
-		
+		internal IsolationLevel m_isolationLevel = IsolationLevel.Unspecified;
 		internal bool m_spaceOption = false;
 		private int m_timeout = 0;
 		private Encoding m_enc = Encoding.ASCII;
@@ -332,7 +329,7 @@ namespace MaxDBDataProvider
 			{
 				AssertOpen ();
 				string cmd = "SET ISOLATION LEVEL " + MapIsolationLevel(level).ToString();
-				MaxDBRequestPacket requestPacket = CreateRequestPacket();
+				MaxDBRequestPacket requestPacket = GetRequestPacket();
 				int oldMode = requestPacket.SwitchSqlMode(SqlMode.Internal);
 				requestPacket.InitDbsCommand(m_autocommit, cmd);
 				//requestPacket.AddCursorPart(NextCursorName);
@@ -347,9 +344,9 @@ namespace MaxDBDataProvider
 				m_isolationLevel = level;
 			}
 #else
-			m_isolationLevel = MapIsolationLevel(level);
+			m_isolationLevel = level;
 
-			if(SQLDBC.SQLDBC_Connection_setTransactionIsolation(m_connHandler, m_isolationLevel) != SQLDBC_Retcode.SQLDBC_OK) 
+			if(SQLDBC.SQLDBC_Connection_setTransactionIsolation(m_connHandler, MapIsolationLevel(level)) != SQLDBC_Retcode.SQLDBC_OK) 
 				throw new MaxDBException("Can't set isolation level: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
 					SQLDBC.SQLDBC_Connection_getError(m_connHandler)));
 #endif
@@ -471,7 +468,7 @@ namespace MaxDBDataProvider
 		}
 
 		[MethodImpl(MethodImplOptions.Synchronized)]
-		public MaxDBRequestPacket CreateRequestPacket()
+		public MaxDBRequestPacket GetRequestPacket()
 		{
 			MaxDBRequestPacket packet;
 			
@@ -535,7 +532,7 @@ namespace MaxDBDataProvider
 				if(localWeakReturnCode != -8) 
 					FreeRequestPacket(requestPacket);
 
-				if (!m_autocommit && ! isParse) 
+				if (!m_autocommit && !isParse) 
 					m_inTransaction = true;
 
 				// if it is not completely forbidden, we will send the drop
@@ -600,7 +597,7 @@ namespace MaxDBDataProvider
 
 			string connectCmd;
 			byte [] crypted;
-			MaxDBRequestPacket requestPacket = CreateRequestPacket();
+			MaxDBRequestPacket requestPacket = GetRequestPacket();
 			Auth auth = null;
 			bool isChallengeResponseSupported = false;
 			if (m_comm.IsAuthAllowed)
@@ -752,7 +749,7 @@ namespace MaxDBDataProvider
 
 		private void ExecSQLString(string cmd, int gcFlags)
 		{
-			MaxDBRequestPacket requestPacket = CreateRequestPacket();
+			MaxDBRequestPacket requestPacket = GetRequestPacket();
 			requestPacket.InitDbs(m_autocommit);
 			requestPacket.AddString(cmd);
 			try 

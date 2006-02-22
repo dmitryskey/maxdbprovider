@@ -9,6 +9,7 @@ using System.Data;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
+#if NATIVE
 	#region "DB Tech translator class"
 
 	public abstract class DBTechTranslator
@@ -711,7 +712,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			if (!IsDBNull(mem))
-				return mem.readASCII(m_bufpos, m_logicalLength).TrimStart();
+				return mem.ReadASCII(m_bufpos, m_logicalLength).TrimStart();
 			else
 				return null;
 		}
@@ -1461,7 +1462,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
-			return (!IsDBNull(mem) ? mem.readASCII(m_bufpos, m_physicalLength - 1) : null);
+			return (!IsDBNull(mem) ? mem.ReadASCII(m_bufpos, m_physicalLength - 1) : null);
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)
@@ -1607,7 +1608,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
-			return (!IsDBNull(mem) ? mem.readASCII(m_bufpos, m_physicalLength - 1) : null);
+			return (!IsDBNull(mem) ? mem.ReadASCII(m_bufpos, m_physicalLength - 1) : null);
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)
@@ -1802,7 +1803,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
-			return (!IsDBNull(mem) ? mem.readASCII(m_bufpos, m_physicalLength - 1) : null);
+			return (!IsDBNull(mem) ? mem.ReadASCII(m_bufpos, m_physicalLength - 1) : null);
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)
@@ -2294,7 +2295,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			else 
 				throwConversionError(obj.GetType().FullName);
 			
-			memory.writeASCII(convStr, offset);
+			memory.WriteASCII(convStr, offset);
 		}
 	}
 
@@ -3208,6 +3209,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	}
 
 	#endregion
+#endif
 	
 	#region "Message translator class"
 

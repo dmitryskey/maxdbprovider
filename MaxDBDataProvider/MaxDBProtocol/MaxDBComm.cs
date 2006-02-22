@@ -3,6 +3,7 @@ using System.Net.Sockets;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
+#if NATIVE
 	/// <summary>
 	/// Summary description for MaxDBComm.
 	/// </summary>
@@ -167,22 +168,23 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			try
 			{
-				MaxDBPacket rawPacket = new MaxDBPacket(userPacket.arrayData);
+				MaxDBPacket rawPacket = new MaxDBPacket(userPacket.arrayData, 0, userPacket.Swapped); 
 				rawPacket.FillHeader(RSQLTypes.USER_DATA_REQUEST, m_sender, m_receiver, m_maxSendLen);
 				rawPacket.SetSendLength(len + HeaderOffset.END);
 				m_socket.Stream.Write(rawPacket.arrayData, 0, len + HeaderOffset.END);
-				byte[] headerBuf = new byte[HeaderOffset.END];
+				byte[] headerBuf = new byte[HeaderOffset.END + PacketHeaderOffset.MessSwap + 1];
 
-				if (m_socket.Stream.Read(headerBuf, 0, headerBuf.Length) != HeaderOffset.END)
+				if (m_socket.Stream.Read(headerBuf, 0, headerBuf.Length) != HeaderOffset.END + PacketHeaderOffset.MessSwap + 1)
 					throw new CommunicationException(RTEReturnCodes.SQLRECEIVE_LINE_DOWN);
 
-				MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf);
+				MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf, true);
+					//headerBuf[HeaderOffset.END + PacketHeaderOffset.MessSwap] == SwapMode.Swapped); //???
 				int returnCode = header.ReturnCode;
 				if (returnCode != 0)
 					throw new CommunicationException(returnCode);
 
 				byte[] packetBuf = new byte[header.MaxSendLength - HeaderOffset.END];
-				int replyLen = HeaderOffset.END;
+				int replyLen = HeaderOffset.END + PacketHeaderOffset.MessSwap + 1;
 				while(m_socket.Stream.DataAvailable)
 				{
 					if (replyLen < header.ActSendLength)
@@ -193,6 +195,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	
 				}
 
+				Array.Copy(headerBuf, HeaderOffset.END, packetBuf, 0, PacketHeaderOffset.MessSwap + 1); 
+
 				return new MaxDBReplyPacket(packetBuf);
 			}
 			catch(Exception ex)
@@ -201,4 +205,5 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 	}
+#endif
 }

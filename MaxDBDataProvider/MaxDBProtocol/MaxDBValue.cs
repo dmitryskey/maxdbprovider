@@ -6,6 +6,7 @@ using System.Collections;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
+#if NATIVE
 	#region "Put Value class"
 
 	public class PutValue
@@ -415,7 +416,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				}
             
 				firstChunk = false;
-				MaxDBRequestPacket requestPacket = connection.CreateRequestPacket();
+				MaxDBRequestPacket requestPacket = connection.GetRequestPacket();
 				MaxDBReplyPacket replyPacket;
 				DataPart longpart = requestPacket.InitGetValue(connection.AutoCommit);
 				longpart.WriteByte(0, 0);
@@ -454,7 +455,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		protected MaxDBReplyPacket ExecGetValue(byte[] descriptor)
 		{
-			MaxDBRequestPacket requestPacket = connection.CreateRequestPacket();
+			MaxDBRequestPacket requestPacket = connection.GetRequestPacket();
 			DataPart longpart = requestPacket.InitGetValue(connection.AutoCommit);
 			longpart.WriteByte(0, 0);
 			longpart.WriteBytes(descriptor, 1);
@@ -1447,4 +1448,5 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	}
 
 	#endregion
+#endif
 }

@@ -380,19 +380,19 @@
 		<value>Method getColumnClassName() is not yet implemented.</value>
 	</data>
 	<data name="error.internal.preparehelper">
-		<value>Internal JDBC error in method prepareHelper().</value>
+		<value>Internal error in method prepareHelper().</value>
 	</data>
 	<data name="error.internal.connectionnull">
-		<value>Internal JDBC error: connection field is null, but should not.</value>
+		<value>Internal error: connection field is null, but should not.</value>
 	</data>
 	<data name="error.internal.unexpectedinput">
-		<value>Internal JDBC error: input parameter at index {0} was not expected.</value>
+		<value>Internal error: input parameter at index {0} was not expected.</value>
 	</data>
 	<data name="error.internal.unexpectedoutput">
-		<value>Internal JDBC error: output parameter at index {0} was not expected.</value>
+		<value>Internal error: output parameter at index {0} was not expected.</value>
 	</data>
 	<data name="error.internal.invalidParseid">
-		<value>Internal JDBC error: parse id is null.</value>
+		<value>Internal error: parse id is null.</value>
 	</data>
 	<data name="error.nocolumns.updatable">
 		<value>No columns updatable.</value>

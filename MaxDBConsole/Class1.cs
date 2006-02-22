@@ -22,34 +22,14 @@ namespace MaxDBDataProvider
 			// TODO: Add code to start application here
 			//
 
-//			try
-//			{
-//				DateTime start_time = DateTime.Now;
-//
-//				OdbcConnection odbcconn = new OdbcConnection("DSN=Domino;UID=Dmitry S. Kataev/Belkamneft/RU;PWD=In9eew;");
-//				odbcconn.Open();
-//
-//				OdbcCommand cmd = new OdbcCommand("SELECT _16 AS CONTRAGENT_ID, _11 AS CFullName, _12 AS FullName, _13 AS INN, _18 AS Created, _19 AS Modified FROM View_Name", odbcconn);
-//				DataSet ds = new DataSet();
-//				OdbcDataAdapter da = new OdbcDataAdapter();
-//				da.SelectCommand = cmd;
-//				da.Fill(ds);
-//				int i = 0;
-//
-//				Console.WriteLine(DateTime.Now - start_time);
-//			}
-//			catch(Exception ex)
-//			{
-//				Console.WriteLine(ex.Message);
-//			}
-//
-//			return;
-
 			try
 			{
 				MaxDBConnection maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
 
 				maxdbconn.Open();
+				MaxDBCommand cmd1 = new MaxDBCommand("Select 'successfully connected' as \"connect test\" from dual", maxdbconn);
+				MaxDBDataReader reader = cmd1.ExecuteReader();
+				DataTable dt = reader.GetSchemaTable();
 				maxdbconn.Close();
 
 				return;
