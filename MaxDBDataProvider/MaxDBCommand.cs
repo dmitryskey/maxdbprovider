@@ -15,9 +15,11 @@ namespace MaxDBDataProvider
 		UpdateRowSource m_updatedRowSource = UpdateRowSource.None;
 		MaxDBParameterCollection m_parameters = new MaxDBParameterCollection();
 		CommandType m_sCmdType = CommandType.Text;
-#if NATIVE
-		private ArrayList m_inputProcedureLongs;
 
+#if NATIVE
+		#region "Native implementation parameters"
+
+		private ArrayList m_inputProcedureLongs;
 		private int m_rowsAffected = -1;
 		private bool m_setWithInfo = false;
 		private bool m_hasRowCount;
@@ -30,11 +32,15 @@ namespace MaxDBDataProvider
 		private bool m_canceled = false;
 		private ByteArray m_replyMem;
 		private const string m_initialParamValue = "initParam";
-
 		private static PutValueComparator putvalComparator = new PutValueComparator();
 
+		#endregion
 #else
+		#region "SQLDBC Wrapper parameters"
+
 		IntPtr m_stmt = IntPtr.Zero;
+		
+		#endregion
 #endif
 
 		// Implement the default constructor here.
@@ -55,9 +61,11 @@ namespace MaxDBDataProvider
 		{
 			m_sCmdText    = cmdText;
 			m_connection  = connection;
-			m_parseInfo = DoParse(cmdText, false);
+			
 #if !NATIVE
 			m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
+#else
+			m_parseInfo = DoParse(cmdText, false);
 #endif
 		}
 
@@ -66,9 +74,10 @@ namespace MaxDBDataProvider
 			m_sCmdText    = cmdText;
 			m_connection  = connection;
 			m_txn      = txn;
-			m_parseInfo = DoParse(cmdText, false);
 #if !NATIVE
 			m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
+#else
+			m_parseInfo = DoParse(cmdText, false);
 #endif
 		}
 
@@ -205,12 +214,12 @@ namespace MaxDBDataProvider
 			 * of records affected.
 			 */
       
-			// There must be a valid and open connection.
-			AssertOpen();
-
 			// Execute the command.
 
 #if NATIVE
+			// There must be a valid and open connection.
+			AssertOpen();
+
 			if (m_parseInfo != null && m_parseInfo.m_isSelect) 
 				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_SQLSTATEMENT_RESULTSET));
 			else 
@@ -242,7 +251,7 @@ namespace MaxDBDataProvider
 				throw;
 			}
 
-			return SQLDBC_PreparedStatement_getRowsAffected(m_stmt);
+			return SQLDBC.SQLDBC_PreparedStatement_getRowsAffected(m_stmt);
 #endif
 		}
 
@@ -258,12 +267,12 @@ namespace MaxDBDataProvider
 
 		public IDataReader ExecuteReader(CommandBehavior behavior)
 		{
-			// There must be a valid and open connection.
-			AssertOpen();
-
 			// Execute the command.
 
 #if NATIVE
+			// There must be a valid and open connection.
+			AssertOpen();
+
 			Execute();
 			return m_currentDataReader;
 #else
@@ -349,14 +358,11 @@ namespace MaxDBDataProvider
 
 		private MaxDBReplyPacket SendSQL(string sql, bool parseAgain)
 		{
-			MaxDBRequestPacket requestPacket;
 			MaxDBReplyPacket replyPacket;
-			string actualSQL = sql;
 
 			try
 			{
-				requestPacket = m_connection.CreateRequestPacket();
-				replyPacket = SendCommand(requestPacket, sql, GCMode.GC_ALLOWED, parseAgain);
+				replyPacket = SendCommand(m_connection.GetRequestPacket(), sql, GCMode.GC_ALLOWED, parseAgain);
 			}
 			catch (IndexOutOfRangeException) 
 			{
@@ -422,7 +428,7 @@ namespace MaxDBDataProvider
 				
 				m_replyMem = null;
 
-				requestPacket = m_connection.CreateRequestPacket();
+				requestPacket = m_connection.GetRequestPacket();
 				requestPacket.InitExecute(m_parseInfo.ParseID, m_connection.AutoCommit);
 				if (m_parseInfo.m_isSelect) 
 					requestPacket.AddCursorPart(m_cursorName);
@@ -584,7 +590,7 @@ namespace MaxDBDataProvider
 						}
 						break;
 					case PartKind.TableName:
-						tableName = replyPacket.readASCII(replyPacket.PartDataPos, replyPacket.PartLength);
+						tableName = replyPacket.ReadASCII(replyPacket.PartDataPos, replyPacket.PartLength);
 						break;
 					case PartKind.ParsidOfSelect:
 						// ignore
@@ -834,7 +840,7 @@ namespace MaxDBDataProvider
 			while (!lastStream.AtEnd) 
 			{
 				GetChangedPutValueDescriptors(replyPacket);
-				requestPacket = m_connection.CreateRequestPacket();
+				requestPacket = m_connection.GetRequestPacket();
 				dataPart = requestPacket.InitPutValue(m_connection.AutoCommit);
 				
 				// get all descriptors and putvals
@@ -881,7 +887,7 @@ namespace MaxDBDataProvider
 				//  write trailing end of LONGs marker
 				if (requiresTrailingPacket && !m_canceled) 
 				{
-					requestPacket = m_connection.CreateRequestPacket();
+					requestPacket = m_connection.GetRequestPacket();
 					dataPart = requestPacket.InitPutValue(m_connection.AutoCommit);
 					lastStream.MarkAsLast(dataPart);
 					dataPart.Close();

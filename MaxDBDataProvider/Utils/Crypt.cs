@@ -4,6 +4,7 @@ using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider
 {
+#if NATIVE
 	#region "Sample HMACMD5 implementation"
 
 	public class HMACMD5 : KeyedHashAlgorithm 
@@ -183,7 +184,7 @@ namespace MaxDBDataProvider
 			const int vp2 = 521;
 			const int vp3 = 133379;
 			const int maxPasswdLen = 18;
-			ByteArray passwdBytes = new ByteArray(maxPasswdLen, false);
+			ByteArray passwdBytes = new ByteArray(maxPasswdLen);
 			if (passwd.Length > maxPasswdLen)
 				passwd = passwd.Substring(0, maxPasswdLen);
 			else
@@ -192,7 +193,7 @@ namespace MaxDBDataProvider
 			if (isUnicode) 
 				passwdBytes.writeUnicode(passwd, 0);
 			else 
-				passwdBytes.writeASCII(passwd, 0);
+				passwdBytes.WriteASCII(passwd, 0);
 
 			int[] crypt = new int[6];
 			int left, right;
@@ -223,7 +224,7 @@ namespace MaxDBDataProvider
 				if ((crypt[i] & 1) != 0) 
 					crypt[i] = -crypt[i];
 
-			result = new ByteArray(6 * 4, false);
+			result = new ByteArray(6 * 4);
 			
 			for (int i = 0; i < 6; ++i) 
 				result.WriteInt32(crypt [i], i * 4);
@@ -357,4 +358,5 @@ namespace MaxDBDataProvider
 	}
 
 	#endregion
+#endif
 }

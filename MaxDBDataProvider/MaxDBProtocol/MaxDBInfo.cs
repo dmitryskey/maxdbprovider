@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
+#if NATIVE
 	#region "Parse information class"
 
 	public class MaxDBParseInfo 
@@ -604,7 +605,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			string[] columnNames = null;
 			DBTechTranslator[] infos = null;
 
-			requestPacket = m_connection.CreateRequestPacket();
+			requestPacket = m_connection.GetRequestPacket();
 			requestPacket.InitDbsCommand(false, "Describe ");
 			requestPacket.AddParseIdPart(m_parseid);
 			replyPacket = m_connection.Exec(requestPacket, this, GCMode.GC_ALLOWED);
@@ -968,7 +969,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			DBTechTranslator[] infos = null;
 			string[] columnNames = null;
 
-			MaxDBRequestPacket request = c.CreateRequestPacket();
+			MaxDBRequestPacket request = c.GetRequestPacket();
 			request.InitDbsCommand(false, "DESCRIBE \"" + cursorName + "\"");
 			MaxDBReplyPacket reply = c.Exec(request, this, GCMode.GC_ALLOWED);
 			reply.ClearPartOffset();
@@ -1003,7 +1004,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			string cmd="FETCH NEXT \"" + cursorName + "\" INTO " + _fetchparamstring;
 			
-			MaxDBRequestPacket request = connection.CreateRequestPacket();
+			MaxDBRequestPacket request = connection.GetRequestPacket();
 			byte currentSQLMode = request.SwitchSqlMode(SqlMode.Internal);
 			request.InitDbsCommand(connection.AutoCommit, cmd);
 			if(fetchSize > 1) 
@@ -1066,6 +1067,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	}
 
 	#endregion
+#endif
 
 	#region "General column information"
 
@@ -1206,7 +1208,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		}
 	}
 
-
 	#endregion
+
 }
 

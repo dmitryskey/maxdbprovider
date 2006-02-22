@@ -11,19 +11,17 @@ namespace MaxDBDataProvider
 	{
 		protected byte[] data; //data buffer
 		protected int offset = 0; //data buffer offset
-		protected bool swapMode;
+		protected bool swapMode = Consts.IsLittleEndian;
 
 		public ByteArray(byte[] data)
 		{
 			this.data = data;
-			this.swapMode = BitConverter.IsLittleEndian;
 		}
 
 		public ByteArray(byte[] data, int offset)
 		{
 			this.data = data;
 			this.offset = offset; 
-			this.swapMode = BitConverter.IsLittleEndian;
 		}
 
 		public ByteArray(byte[] data, int offset, bool swapMode)
@@ -36,7 +34,6 @@ namespace MaxDBDataProvider
 		public ByteArray(int size)
 		{
 			this.data = new byte[size];
-			this.swapMode = BitConverter.IsLittleEndian;
 		}
 
 		public ByteArray(int size, bool swapMode)
@@ -251,18 +248,18 @@ namespace MaxDBDataProvider
 			WriteBytes(BitConverter.GetBytes(val), offset);
 		}
 
-		public string readASCII(int offset, int len)
+		public string ReadASCII(int offset, int len)
 		{
 			offset += this.offset;
 			return Encoding.ASCII.GetString(data, offset, len);
 		}
 
-		public void writeASCII(string val, int offset)
+		public void WriteASCII(string val, int offset)
 		{
 			WriteBytes(Encoding.ASCII.GetBytes(val), offset);
 		}
 
-		public void writeASCII(string val, int offset, int len)
+		public void WriteASCII(string val, int offset, int len)
 		{
 			WriteBytes(Encoding.ASCII.GetBytes(val), offset, len, Consts.blankBytes);
 		}

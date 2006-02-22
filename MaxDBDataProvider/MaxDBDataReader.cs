@@ -4,10 +4,7 @@ using System.Text;
 using System.IO;
 using System.Globalization;
 using System.Collections;
-
-#if NATIVE
 using MaxDBDataProvider.MaxDBProtocol;
-#endif
 
 namespace MaxDBDataProvider
 {

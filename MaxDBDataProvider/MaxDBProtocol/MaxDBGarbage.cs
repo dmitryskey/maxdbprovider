@@ -47,7 +47,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				try 
 				{
-					requestPacket = conn.CreateRequestPacket();
+					requestPacket = conn.GetRequestPacket();
 					requestPacket.Init(short.MaxValue);
 					emptyCan(requestPacket);
 					conn.Exec(requestPacket, this, GCMode.GC_NONE);

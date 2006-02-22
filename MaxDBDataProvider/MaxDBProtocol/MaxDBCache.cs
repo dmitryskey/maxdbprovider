@@ -3,6 +3,8 @@ using System.Collections;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
+#if NATIVE
+
 	#region "Least-Recently-Used cache class"
 
 	public class LRUCache
@@ -370,6 +372,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	}
 
 	#endregion
+#endif
 }
 
 

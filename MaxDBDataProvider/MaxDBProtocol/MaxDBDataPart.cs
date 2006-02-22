@@ -5,6 +5,8 @@ using System.Text;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
+#if NATIVE
+
 	#region "DataPart class"
 
 	public abstract class DataPart
@@ -133,9 +135,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			origData.writeUnicode(val, offset, len);
 		}
 
-		public void writeASCII(string val, int offset, int len)
+		public void WriteASCII(string val, int offset, int len)
 		{
-			origData.writeASCII(val, offset, len);
+			origData.WriteASCII(val, offset, len);
 		}
 
 		public byte[] ReadBytes(int offset, int len)
@@ -165,7 +167,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public string readASCII(int offset, int len)
 		{
-			return origData.readASCII(offset, len);
+			return origData.ReadASCII(offset, len);
 		}
 
 		public string readUnicode(int offset, int len)
@@ -409,7 +411,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			int vallen = val.Length;
 			extent += writeFieldLength(vallen, extent);
-			origData.writeASCII(val, extent);
+			origData.WriteASCII(val, extent);
 			extent += vallen;
 		}
 
@@ -814,5 +816,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
     }  
 }
 
-#endregion
+	#endregion
+#endif
 }

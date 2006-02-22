@@ -1317,32 +1317,32 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	internal class ParamInfo 
 	{
 		// param modes, declared as set values
-		public const int Mandatory = 1;
-		public const int Optional = 2;
-		public const int Default = 4;
-		public const int EscapeChar = 8;
+		public const int Mandatory		= 1;
+		public const int Optional		= 2;
+		public const int Default		= 4;
+		public const int EscapeChar		= 8;
 		// param io types
-		public const int Input = 0;
-		public const int Output = 1;
-		public const int InOut = 2;
+		public const int Input			= 0;
+		public const int Output			= 1;
+		public const int InOut			= 2;
 		// layout of tsp1_param_info
-		public const int ModeOffset = 0;     // Set 1
-		public const int IOTypeOffset = 1;   // enum 1
+		public const int ModeOffset		= 0;     // Set 1
+		public const int IOTypeOffset	= 1;   // enum 1
 		public const int DataTypeOffset = 2; // enum1
-		public const int FracOffset = 3;     // int1
-		public const int LengthOffset = 4;   // int2
+		public const int FracOffset		= 3;     // int1
+		public const int LengthOffset	= 4;   // int2
 		public const int InOutLenOffset = 6; // int2
-		public const int BufPosOffset = 8;   // int4
+		public const int BufPosOffset	= 8;   // int4
 		public const int ParamNoOffset  = 8;    // int2
 		public const int ReadOnlyOffset = 10;   // int1
-		public const int SerialOffset    = 11;   // int1
+		public const int SerialOffset   = 11;   // int1
 		// The size of tsp1_param_info 
-		public const int ParamInfo_END = 12;
+		public const int END			= 12;
 	}
 
 	internal class Vsp00Consts
 	{
-		public const int KnlIdentifier   = 32;
+		public const int  KnlIdentifier  = 32;
 		public const byte DefinedBinary  = 0;
 		public const byte DefinedUnicode = 1;
 		public const byte DefinedAscii   = (byte) ' ';
@@ -1432,7 +1432,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public static readonly byte[] blankUnicodeBytes = new byte[fillBufSize * unicodeWidth];
 		public static readonly byte[] blankBigEndianUnicodeBytes = new byte[fillBufSize * unicodeWidth];
 
-		public const int AlignValue				   = 8;
+		public const int AlignValue	= 8;
 
 		public const int ReserveFor2ndSegment = 8192; //8kB reserve size in order packet if more than 1 segment will be used
 		public const int ReserveForReply = SegmentHeaderOffset.Part - PartHeaderOffset.Data + 200;
@@ -1440,8 +1440,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public const int reserveForReply = SegmentHeaderOffset.Part - PartHeaderOffset.Data + 200;
 
-		public const string AppID = "ADO";
-		public const string ApplVers = "10100";
+		public const string AppID = "ADO"; //"ODB";
+		public const string ApplVers = "10100"; //"70400";
+		public static readonly bool IsLittleEndian = BitConverter.IsLittleEndian;
 
 		static Consts()
 		{

@@ -3,6 +3,7 @@ using System.Text;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
+#if NATIVE
 	#region "MaxDB Packet"
 
 	/// <summary>
@@ -114,7 +115,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			// fill body
 			WriteByte(Consts.ASCIIClient, HeaderOffset.END + ConnectPacketOffset.MessCode);
-			WriteByte(BitConverter.IsLittleEndian ? SwapMode.Swapped : SwapMode.NotSwapped, HeaderOffset.END + ConnectPacketOffset.MessCode + 1);
+			WriteByte(Consts.IsLittleEndian ? SwapMode.Swapped : SwapMode.NotSwapped, HeaderOffset.END + ConnectPacketOffset.MessCode + 1);
 			writeUInt16(ConnectPacketOffset.END, HeaderOffset.END + ConnectPacketOffset.ConnectLength);
 			WriteByte(SQLType.USER, HeaderOffset.END + ConnectPacketOffset.ServiceType);
 			WriteByte(Consts.RSQL_DOTNET, HeaderOffset.END + ConnectPacketOffset.OSType);
@@ -126,12 +127,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			WriteInt32(connData.MinReplySize, HeaderOffset.END + ConnectPacketOffset.MinReplySize);
 			if (connData.DBName.Length > ConnectPacketOffset.DBNameSize)
 				connData.DBName = connData.DBName.Substring(0, ConnectPacketOffset.DBNameSize);
-			writeASCII(connData.DBName.PadRight(ConnectPacketOffset.DBNameSize, ' '), HeaderOffset.END + ConnectPacketOffset.ServerDB);
-			writeASCII("        ", HeaderOffset.END + ConnectPacketOffset.ClientDB);
+			WriteASCII(connData.DBName.PadRight(ConnectPacketOffset.DBNameSize, ' '), HeaderOffset.END + ConnectPacketOffset.ServerDB);
+			WriteASCII("        ", HeaderOffset.END + ConnectPacketOffset.ClientDB);
 			// fill out variable part
 			WriteByte(4, m_curPos++);
 			WriteByte(ArgType.REM_PID, m_curPos++);
-			writeASCII("0", m_curPos++);
+			WriteASCII("0", m_curPos++);
 			WriteByte(0, m_curPos++);
 			// add port number
 			WriteByte(4, m_curPos++);
@@ -271,13 +272,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		private bool m_isAvailable = false;
 		public const int resultCountSize = 6;
 
-		protected MaxDBRequestPacket(byte[] data, byte clientEncoding, string appID, string appVer) : base(data, HeaderOffset.END, false)
+		protected MaxDBRequestPacket(byte[] data, byte clientEncoding, string appID, string appVer) : base(data, HeaderOffset.END)
 		{
 			WriteByte(clientEncoding, PacketHeaderOffset.MessCode);
-			//WriteByte(BitConverter.IsLittleEndian ? SwapMode.Swapped : SwapMode.NotSwapped, PacketHeaderOffset.MessSwap);
-			WriteByte(SwapMode.NotSwapped, PacketHeaderOffset.MessSwap);//???
-			writeASCII(appVer, PacketHeaderOffset.ApplVersion);
-			writeASCII(appID, PacketHeaderOffset.Appl);
+			WriteByte(Consts.IsLittleEndian ? SwapMode.Swapped : SwapMode.NotSwapped, PacketHeaderOffset.MessSwap);
+			WriteASCII(appVer, PacketHeaderOffset.ApplVersion);
+			WriteASCII(appID, PacketHeaderOffset.Appl);
 			WriteInt32(data.Length - HeaderOffset.END - PacketHeaderOffset.Segment, PacketHeaderOffset.VarPartSize);
 			m_length = PacketHeaderOffset.Segment;
 		}
@@ -449,7 +449,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					return false;
 			}
 			InitDbs(reset, autocommit);
-			writeASCII(cmd, DataPos);
+			WriteASCII(cmd, DataPos);
 			m_partLength += cmd.Length;
 			m_partArgs = 1;
 			return true;
@@ -948,7 +948,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				{
 					FindPart(PartKind.SessionInfoReturned);
 					//offset 2200 is taken from order interface manual
-					return int.Parse(readASCII(PartDataPos + 2200, 1));
+					return int.Parse(ReadASCII(PartDataPos + 2200, 1));
 				}
 				catch(PartNotFound)  
 				{
@@ -965,7 +965,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				{
 					FindPart(PartKind.SessionInfoReturned);
 					//offset 2202 is taken from order interface manual
-					return int.Parse(readASCII(PartDataPos + 2201, 2));
+					return int.Parse(ReadASCII(PartDataPos + 2201, 2));
 				}
 				catch(PartNotFound)  
 				{
@@ -982,7 +982,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				{
 					FindPart(PartKind.SessionInfoReturned);
 					//offset 2204 is taken from order interface manual
-					return int.Parse(readASCII(PartDataPos + 2203, 2));
+					return int.Parse(ReadASCII(PartDataPos + 2203, 2));
 				}
 				catch(PartNotFound) 
 				{
@@ -1005,7 +1005,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			for (int i = 0; i < columnCount; ++i) 
 			{
 				nameLen = ReadByte(pos);
-				result[i] = readASCII(pos + 1, nameLen);
+				result[i] = ReadASCII(pos + 1, nameLen);
 				pos += nameLen + 1;
 			}
 			return result;
@@ -1048,7 +1048,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 				result[i] = GetTranslator(mode, ioType, dataType, frac, len, ioLen, bufpos, spaceoption, isDBProcedure, info);
 
-				pos += ParamInfo.ParamInfo_END;
+				pos += ParamInfo.END;
 			}
 			return result;
 		}
@@ -1132,7 +1132,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return readASCII(m_segmOffset + SegmentHeaderOffset.SqlState, 5);
+				return ReadASCII(m_segmOffset + SegmentHeaderOffset.SqlState, 5);
 			}
 		}
 
@@ -1143,7 +1143,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				try 
 				{
 					FindPart(PartKind.ErrorText);
-					return readASCII(PartDataPos, PartLength).Trim();
+					return ReadASCII(PartDataPos, PartLength).Trim();
 				}
 				catch(PartNotFound) 
 				{
@@ -1368,4 +1368,5 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	}
 
 	#endregion
+#endif
 }
