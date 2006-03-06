@@ -349,7 +349,7 @@ namespace MaxDBDataProvider
 		private MaxDBReplyPacket SendCommand(MaxDBRequestPacket requestPacket, string sqlCmd, int gcFlags, bool parseAgain)
 		{
 			MaxDBReplyPacket replyPacket;
-			requestPacket.InitDbsCommand(m_connection.m_autocommit, sqlCmd);
+			requestPacket.InitParseCommand(sqlCmd, true, parseAgain);
 			if (m_setWithInfo)
 				requestPacket.setWithInfo();
 			replyPacket = m_connection.Exec(requestPacket, this, gcFlags);
@@ -390,6 +390,7 @@ namespace MaxDBDataProvider
 		{
 			AssertOpen();
 			m_cursorName = m_connection.NextCursorName;
+
 			return Execute(m_maxParseAgainCnt);
 		}
 
@@ -403,8 +404,7 @@ namespace MaxDBDataProvider
 			bool isQuery;
 			DataPart dataPart;
 
-			// if this is one of the statements that is executed
-			// during parse instead of execution, execute it
+			// if this is one of the statements that is executed during parse instead of execution, execute it
 			// by doing a reparse
 			if(m_parseInfo.IsAlreadyExecuted) 
 			{
@@ -473,6 +473,58 @@ namespace MaxDBDataProvider
 					requestPacket.InitDbsCommand("DESCRIBE ", false, false);
 					requestPacket.AddParseIdPart(m_parseInfo.ParseID);
 				}
+
+				for(ushort i = 0; i < m_parameters.Count; i++)
+				{
+					MaxDBParameter param = m_parameters[i];
+					switch(param.m_dbType)
+					{
+						case MaxDBType.Boolean:
+							m_inputArgs[i] = FindColInfo(i).TransBooleanForInput(bool.Parse(param.Value.ToString()));
+							break;
+						case MaxDBType.CharA: 
+						case MaxDBType.StrA: 
+						case MaxDBType.VarCharA:
+						case MaxDBType.CharE: 
+						case MaxDBType.StrE: 
+						case MaxDBType.VarCharE:
+						case MaxDBType.Unicode: 
+						case MaxDBType.StrUni: 
+						case MaxDBType.VarCharUni:
+							if ( param.Value != null && 
+								m_connection.SQLMode == SqlMode.Oracle && param.Value.ToString() == string.Empty ) 
+								// in ORACLE mode a null values will be inserted if the string value is equal to "" 
+								m_inputArgs[i] = null;
+							else
+								m_inputArgs[i] = FindColInfo(i).TransStringForInput(param.Value.ToString());
+							break;
+						case MaxDBType.CharB: 
+						case MaxDBType.StrB: 
+						case MaxDBType.VarCharB:
+							m_inputArgs[i] = FindColInfo(i).TransBytesForInput((byte[])param.Value);
+							break;
+						case MaxDBType.Date:
+						case MaxDBType.Time:
+						case MaxDBType.TimeStamp:
+							m_inputArgs[i] = FindColInfo(i).TransDateTimeForInput((DateTime)param.Value);
+							break;
+						case MaxDBType.Fixed: 
+						case MaxDBType.Float: 
+						case MaxDBType.VFloat:
+						case MaxDBType.Number:
+						case MaxDBType.NoNumber:
+							m_inputArgs[i] = FindColInfo(i).TransDoubleForInput((double)param.Value);
+							break;
+						case MaxDBType.Integer:
+							m_inputArgs[i] = FindColInfo(i).TransInt64ForInput((long)param.Value);
+							break;
+						case MaxDBType.SmallInt:
+							m_inputArgs[i] = FindColInfo(i).TransInt16ForInput((short)param.Value);
+							break;
+					}
+				}
+
+
 				try 
 				{
 					replyPacket = m_connection.Exec(requestPacket, this,                                              
@@ -515,6 +567,51 @@ namespace MaxDBDataProvider
 						m_replyMem = replyPacket.Clone(replyPacket.PartDataPos);
 					if ((m_parseInfo.m_hasLongs && !m_parseInfo.m_isDBProc) && (returnCode == 0)) 
 						HandleStreamsForPutValue(replyPacket);
+				}
+
+				for(ushort i = 0; i < m_parameters.Count; i++)
+				{
+					MaxDBParameter param = m_parameters[i];
+					switch(param.m_dbType)
+					{
+						case MaxDBType.Boolean:
+							param.Value = FindColInfo(i).GetBoolean(m_replyMem);
+							break;
+						case MaxDBType.CharA: 
+						case MaxDBType.StrA: 
+						case MaxDBType.VarCharA:
+						case MaxDBType.CharE: 
+						case MaxDBType.StrE: 
+						case MaxDBType.VarCharE:
+						case MaxDBType.Unicode: 
+						case MaxDBType.StrUni: 
+						case MaxDBType.VarCharUni:
+							param.Value = FindColInfo(i).GetString(m_currentDataReader, m_replyMem);
+							break;
+						case MaxDBType.CharB: 
+						case MaxDBType.StrB: 
+						case MaxDBType.VarCharB:
+							param.Value = FindColInfo(i).GetBytes(m_currentDataReader, m_replyMem);
+							break;
+						case MaxDBType.Date:
+						case MaxDBType.Time:
+						case MaxDBType.TimeStamp:
+							param.Value = FindColInfo(i).GetDateTime(m_replyMem);
+							break;
+						case MaxDBType.Fixed: 
+						case MaxDBType.Float: 
+						case MaxDBType.VFloat:
+						case MaxDBType.Number:
+						case MaxDBType.NoNumber:
+							param.Value = FindColInfo(i).GetDouble(m_replyMem);
+							break;
+						case MaxDBType.Integer:
+							param.Value = FindColInfo(i).GetInt64(m_replyMem);
+							break;
+						case MaxDBType.SmallInt:
+							param.Value = FindColInfo(i).GetInt16(m_replyMem);
+							break;
+					}
 				}
 
 				return isQuery;
@@ -649,7 +746,7 @@ namespace MaxDBDataProvider
 		{
 			try 
 			{
-				FetchInfo fetchInfo = new FetchInfo(m_connection, m_connection.NextCursorName, infos, columnNames);
+				FetchInfo fetchInfo = new FetchInfo(m_connection, this.m_cursorName, infos, columnNames);
 				m_currentDataReader = new MaxDBDataReader(m_connection, fetchInfo, this, reply);
 			}
 			catch (MaxDBSQLException sqlExc) 
@@ -736,9 +833,7 @@ namespace MaxDBDataProvider
 				}
 				result.setShortInfosAndColumnNames(shortInfos, columnNames);
 				if ((cache != null) && !parseAgain) 
-				{
 					cache.addParseinfo (result);
-				}
 			}
 			m_inputArgs = new object[result.m_paramInfos.Length];
 			ClearParameters();
@@ -917,6 +1012,18 @@ namespace MaxDBDataProvider
 			}
 		}
 
+		private DBTechTranslator FindColInfo(int colIndex)
+		{
+			try 
+			{
+				return m_parseInfo.m_paramInfos[colIndex];
+			}
+			catch(IndexOutOfRangeException) 
+			{
+				throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_COLINDEX_NOTFOUND, colIndex, this));
+			}
+		}
+
 		#endregion
 #else
 		#region "Unsafe methods"
@@ -934,10 +1041,17 @@ namespace MaxDBDataProvider
 					case MaxDBType.Boolean:
 						buffer_length += sizeof(byte);
 						break;
-					case MaxDBType.CharA: case MaxDBType.StrA: case MaxDBType.VarCharA: 
+					case MaxDBType.CharA: 
+					case MaxDBType.StrA: 
+					case MaxDBType.VarCharA:
+					case MaxDBType.CharE: 
+					case MaxDBType.StrE: 
+					case MaxDBType.VarCharE: 
 						buffer_length += (((string)param.Value).Length + 1)* sizeof(byte);
 						break;
-					case MaxDBType.CharB: case MaxDBType.StrB: case MaxDBType.VarCharB:
+					case MaxDBType.CharB: 
+					case MaxDBType.StrB: 
+					case MaxDBType.VarCharB:
 						buffer_length += ((byte[])param.Value).Length * sizeof(byte);
 						break;
 					case MaxDBType.Date:
@@ -946,7 +1060,11 @@ namespace MaxDBDataProvider
 					case MaxDBType.Time:
 						buffer_length += sizeof(ODBCTIME);
 						break;
-					case MaxDBType.Fixed: case MaxDBType.Float: case MaxDBType.VFloat:
+					case MaxDBType.Fixed: 
+					case MaxDBType.Float: 
+					case MaxDBType.VFloat:
+					case MaxDBType.Number:
+					case MaxDBType.NoNumber:
 						buffer_length += sizeof(double);
 						break;
 					case MaxDBType.Integer:
@@ -958,7 +1076,9 @@ namespace MaxDBDataProvider
 					case MaxDBType.TimeStamp:
 						buffer_length += sizeof(ODBCTIMESTAMP);
 						break;
-					case MaxDBType.Unicode: case MaxDBType.StrUni: case MaxDBType.VarCharUni:
+					case MaxDBType.Unicode: 
+					case MaxDBType.StrUni: 
+					case MaxDBType.VarCharUni:
 						buffer_length += (((string)param.Value).Length + 1) * sizeof(char);
 						break;
 				}
@@ -987,10 +1107,14 @@ namespace MaxDBDataProvider
 									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							buffer_offset += val_length;
 							break;
-						case MaxDBType.CharA: case MaxDBType.StrA: case MaxDBType.VarCharA: 
+						case MaxDBType.CharA: 
+						case MaxDBType.StrA: 
+						case MaxDBType.VarCharA:
+						case MaxDBType.CharE: 
+						case MaxDBType.StrE: 
+						case MaxDBType.VarCharE: 
 							val_length = (((string)param.Value).Length + 1)* sizeof(byte);
-							paramArr.writeASCII((string)param.Value, buffer_offset);
-							//Array.Copy(Encoding.ASCII.GetBytes((string)param.Value), 0 , param_buffer, buffer_offset, val_length - sizeof(byte)); 
+							paramArr.WriteASCII((string)param.Value, buffer_offset);
 							
 							val_size[i - 1] = SQLDBC.SQLDBC_NTS;
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, 
@@ -999,7 +1123,9 @@ namespace MaxDBDataProvider
 									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							buffer_offset += val_length;
 							break;
-						case MaxDBType.CharB: case MaxDBType.StrB: case MaxDBType.VarCharB:
+						case MaxDBType.CharB: 
+						case MaxDBType.StrB: 
+						case MaxDBType.VarCharB:
 							val_length = ((byte[])param.Value).Length * sizeof(byte);
 							paramArr.WriteBytes((byte[])param.Value, buffer_offset);
 							//Array.Copy((byte[])param.Value, 0 , param_buffer, buffer_offset, val_length); 
@@ -1029,7 +1155,11 @@ namespace MaxDBDataProvider
 							
 							buffer_offset += val_length;
 							break;
-						case MaxDBType.Fixed: case MaxDBType.Float: case MaxDBType.VFloat:
+						case MaxDBType.Fixed: 
+						case MaxDBType.Float: 
+						case MaxDBType.VFloat:
+						case MaxDBType.Number:
+						case MaxDBType.NoNumber:
 							paramArr.writeDouble((double)param.Value, buffer_offset);
 							//Array.Copy(BitConverter.GetBytes((double)param.Value), 0, param_buffer, buffer_offset, sizeof(double));
 							val_length = sizeof(double);
@@ -1073,7 +1203,6 @@ namespace MaxDBDataProvider
 							val_length = sizeof(ODBCTIME);
 							
 							paramArr.WriteBytes(ODBCConverter.GetBytes(tm_odbc), buffer_offset);
-							//Array.Copy(ODBCConverter.GetBytes(tm_odbc), 0, param_buffer, buffer_offset, val_length);
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, 
 								new IntPtr(buffer_ptr + buffer_offset), ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
@@ -1096,7 +1225,6 @@ namespace MaxDBDataProvider
 							val_length = sizeof(ODBCTIMESTAMP);
 
 							paramArr.WriteBytes(ODBCConverter.GetBytes(ts_odbc), buffer_offset);
-							//Array.Copy(ODBCConverter.GetBytes(ts_odbc), 0, param_buffer, buffer_offset, val_length);
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, 
 								new IntPtr(buffer_ptr + buffer_offset),	ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
@@ -1104,11 +1232,12 @@ namespace MaxDBDataProvider
 									SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							buffer_offset += val_length;
 							break;
-						case MaxDBType.Unicode: case MaxDBType.StrUni: case MaxDBType.VarCharUni:
+						case MaxDBType.Unicode: 
+						case MaxDBType.StrUni: 
+						case MaxDBType.VarCharUni:
 							val_length = (((string)param.Value).Length + 1) * sizeof(char);
 							val_size[i - 1] = SQLDBC.SQLDBC_NTS;
 							paramArr.writeUnicode((string)param.Value, buffer_offset);
-							//Array.Copy(Encoding.Unicode.GetBytes((string)param.Value), 0, param_buffer, buffer_offset, val_length - sizeof(char));
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED, 
 								new IntPtr(buffer_ptr + buffer_offset), ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_TRUE) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
@@ -1135,10 +1264,15 @@ namespace MaxDBDataProvider
 								param.Value = (paramArr.ReadByte(buffer_offset) == 1 );
 							buffer_offset += sizeof(byte);
 							break;
-						case MaxDBType.CharA: case MaxDBType.StrA: case MaxDBType.VarCharA: 
+						case MaxDBType.CharA: 
+						case MaxDBType.StrA: 
+						case MaxDBType.VarCharA: 
+						case MaxDBType.CharE: 
+						case MaxDBType.StrE: 
+						case MaxDBType.VarCharE: 
 							val_length = (((string)param.Value).Length + 1)* sizeof(byte);
 							if (set_val)
-								param.Value = paramArr.readASCII(buffer_offset, val_length - 1);
+								param.Value = paramArr.ReadASCII(buffer_offset, val_length - 1);
 							buffer_offset += val_length;
 							break;
 						case MaxDBType.CharB: case MaxDBType.StrB: case MaxDBType.VarCharB:
@@ -1157,7 +1291,11 @@ namespace MaxDBDataProvider
 							}
 							buffer_offset += val_length;
 							break;
-						case MaxDBType.Fixed: case MaxDBType.Float: case MaxDBType.VFloat:
+						case MaxDBType.Fixed: 
+						case MaxDBType.Float: 
+						case MaxDBType.VFloat:
+						case MaxDBType.Number:
+						case MaxDBType.NoNumber:
 							val_length = sizeof(double);
 							if (set_val)
 								param.Value = paramArr.readDouble(buffer_offset);
@@ -1195,7 +1333,9 @@ namespace MaxDBDataProvider
 							}
 							buffer_offset += val_length;
 							break;
-						case MaxDBType.Unicode: case MaxDBType.StrUni: case MaxDBType.VarCharUni:
+						case MaxDBType.Unicode: 
+						case MaxDBType.StrUni: 
+						case MaxDBType.VarCharUni:
 							val_length = (((string)param.Value).Length + 1)* sizeof(char);
 							if (set_val)
 								param.Value = paramArr.readUnicode(buffer_offset, val_length - 1);

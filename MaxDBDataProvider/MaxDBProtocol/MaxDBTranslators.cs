@@ -478,7 +478,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			throw CreateGetException("Bytes");
 		}
 
-		public virtual object TransDateTimeForInput(DateTime val, Calendar cal)
+		public virtual object TransDateTimeForInput(DateTime val)
 		{
 			return TransObjectForInput(val);
 		}
@@ -804,7 +804,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	public class UnicodeStringTranslator : StringTranslator
 	{
- 
+		readonly private Encoding m_enc = Consts.IsLittleEndian ? Encoding.Unicode : Encoding.BigEndianUnicode;
+
 		public UnicodeStringTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos) :
 			base(mode, ioType, dataType, len, ioLen, bufpos)
 		{
@@ -814,7 +815,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			if (!IsDBNull(mem))
-				return Encoding.Unicode.GetString(mem.ReadBytes(m_bufpos, m_logicalLength * 2)).TrimStart();
+				return m_enc.GetString(mem.ReadBytes(m_bufpos, m_logicalLength * Consts.unicodeWidth)).TrimStart();
 			else
 				return null;
 		}
@@ -842,7 +843,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if (arg == null) 
 				return null;
         
-			byte[] bytes = Encoding.Unicode.GetBytes(arg);
+			byte[] bytes = m_enc.GetBytes(arg);
 			CheckFieldLimits (bytes.Length);
 			return bytes;
 		}

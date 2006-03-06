@@ -17,61 +17,37 @@ namespace MaxDBDataProvider
 		private bool m_fOpen = true;
 
 #if NATIVE
-		// The default fetch size to use if none is specified.
-		public const int DEFAULT_FETCHSIZE = 30000;
-
-		// The fetch details.
-		private FetchInfo       fetchInfo;
-
-		// The command that generated this result set.
-		private MaxDBCommand    command;
-
-		// The fetch size that is set.
-		private int             fetchSize;
-
-		// The data of the last fetch operation.
-		private FetchChunk      currentChunk;
-
+		
+		private FetchInfo       m_fetchInfo;	// The fetch details.
+		private MaxDBCommand    m_command;	// The command that generated this result set.
+		private FetchChunk      m_currentChunk;		// The data of the last fetch operation.
 		// The status of the position, i.e. one of the <code>POSITION_XXX</code> constants.
-		private PositionType	positionState;
-
-		// The status of the current chunk.
-		private PositionType    positionStateOfChunk;
-
-		private bool	        empty;                 // is this result set totally empty
-
-		private ArrayList       openStreams;           // a vector of all streams that went outside.
-		private int             rowsInResultSet;       // the number of rows in this result set, or -1 if not known
-
-		private int             safeFetchSize;         // The fetch size that is known to be good.
-		// This one is used when going backwards in the result set.
-		private bool			safeFetchSizeDetermined; 
-
-		private int             largestKnownAbsPos;    // largest known absolute position to be inside.
-
-		private int             modifiedKernelPos;     // contains 0 if the kernel pos is not modified
-		// or the current kernel position.
-
-		//connection handle
-		private MaxDBConnection m_connection;
+		private PositionType	m_positionState;
+		private PositionType    m_positionStateOfChunk;  // The status of the current chunk.
+		private bool	        m_empty;                 // is this result set totally empty
+		private ArrayList       m_openStreams;           // a vector of all streams that went outside.
+		private int             m_rowsInResultSet;       // the number of rows in this result set, or -1 if not known
+		private int             m_largestKnownAbsPos;    // largest known absolute position to be inside.
+		private int             m_modifiedKernelPos;     // contains 0 if the kernel pos is not modified
+													   // or the current kernel position.
+		private MaxDBConnection m_connection;	//connection handle
 
 		internal MaxDBDataReader()
 		{
-			empty = true;
+			m_empty = true;
 			m_connection = null;
 		}
 
 		internal MaxDBDataReader(MaxDBConnection connection, FetchInfo fetchInfo, MaxDBCommand  command, MaxDBReplyPacket reply)
 		{
 			m_connection = connection;
-			this.fetchInfo = fetchInfo;
-			this.command = command;
-			this.fetchSize = DEFAULT_FETCHSIZE;
+			m_fetchInfo = fetchInfo;
+			m_command = command;
 
 			m_fOpen = true;
 	
 			InitializeFields();
-			openStreams = new ArrayList(5);
+			m_openStreams = new ArrayList(5);
 			if (reply != null)
 			{
 				SetCurrentChunk(new FetchChunk(
@@ -79,9 +55,9 @@ namespace MaxDBDataProvider
 					1,						// absolute start position
 					reply,					// reply packet
 					fetchInfo.RecordSize,	// the size for data part navigation condition in that case
-					rowsInResultSet
+					m_rowsInResultSet
 					));
-				positionState = PositionType.BEFORE_FIRST;
+				m_positionState = PositionType.BEFORE_FIRST;
 			}
 		}
 
@@ -93,30 +69,20 @@ namespace MaxDBDataProvider
 
 		private void InitializeFields()
 		{
-			currentChunk = null;
-			positionState = PositionType.BEFORE_FIRST;
-			positionStateOfChunk = PositionType.NOT_AVAILABLE;
-			empty = false;
-			safeFetchSize = 1;
-			safeFetchSizeDetermined = false;
-			largestKnownAbsPos = 1;
-			rowsInResultSet = -1;
-			modifiedKernelPos = 0;
+			m_currentChunk = null;
+			m_positionState = PositionType.BEFORE_FIRST;
+			m_positionStateOfChunk = PositionType.NOT_AVAILABLE;
+			m_empty = false;
+			m_largestKnownAbsPos = 1;
+			m_rowsInResultSet = -1;
+			m_modifiedKernelPos = 0;
 		}
 
 		private void SetCurrentChunk(FetchChunk newChunk)
 		{
-			positionState = positionStateOfChunk = PositionType.INSIDE;
-			currentChunk = newChunk;
-			int safe_fetchsize = Math.Min(fetchSize, Math.Max(newChunk.Size, safeFetchSize));
-			if(safeFetchSize != safe_fetchsize) 
-			{
-				safeFetchSize = safe_fetchsize;
-				safeFetchSizeDetermined = false;
-			} 
-			else 
-				safeFetchSizeDetermined = safe_fetchsize != 1;
-			modifiedKernelPos = 0; // clear this out, until someone will de
+			m_positionState = m_positionStateOfChunk = PositionType.INSIDE;
+			m_currentChunk = newChunk;
+			m_modifiedKernelPos = 0; // clear this out, until someone will de
 			updateRowStatistics();
 		}
 
@@ -126,25 +92,25 @@ namespace MaxDBDataProvider
 			{
 				// If this is the one and only chunk, yes then we
 				// have only the records in this chunk.
-				if(currentChunk.IsLast && currentChunk.IsFirst) 
+				if(m_currentChunk.IsLast && m_currentChunk.IsFirst) 
 				{
-					rowsInResultSet = currentChunk.Size;
-					currentChunk.RowsInResultSet = rowsInResultSet;
+					m_rowsInResultSet = m_currentChunk.Size;
+					m_currentChunk.RowsInResultSet = m_rowsInResultSet;
 				}
 					// otherwise, we may have navigated through it from start ...
-				else if(currentChunk.IsLast && currentChunk.IsForward) 
+				else if(m_currentChunk.IsLast && m_currentChunk.IsForward) 
 				{
-					rowsInResultSet = currentChunk.End;
-					currentChunk.RowsInResultSet = rowsInResultSet;
+					m_rowsInResultSet = m_currentChunk.End;
+					m_currentChunk.RowsInResultSet = m_rowsInResultSet;
 				}
 					// ... or from end
-				else if(currentChunk.IsFirst && !currentChunk.IsForward) 
+				else if(m_currentChunk.IsFirst && !m_currentChunk.IsForward) 
 				{
-					rowsInResultSet = -currentChunk.Start;
-					currentChunk.RowsInResultSet = rowsInResultSet;
+					m_rowsInResultSet = -m_currentChunk.Start;
+					m_currentChunk.RowsInResultSet = m_rowsInResultSet;
 				} 
-				else if (currentChunk.IsForward) 
-					largestKnownAbsPos = Math.Max(largestKnownAbsPos, currentChunk.End);
+				else if (m_currentChunk.IsForward) 
+					m_largestKnownAbsPos = Math.Max(m_largestKnownAbsPos, m_currentChunk.End);
 			}
 		}
 
@@ -152,7 +118,7 @@ namespace MaxDBDataProvider
 		{
 			get
 			{
-				return rowsInResultSet != -1;
+				return m_rowsInResultSet != -1;
 			}
 		}
 
@@ -160,11 +126,11 @@ namespace MaxDBDataProvider
 		{
 			get
 			{
-				return empty;
+				return m_empty;
 			}
 			set
 			{
-				empty = value;
+				m_empty = value;
 			}
 		}
 
@@ -206,15 +172,18 @@ namespace MaxDBDataProvider
 			 * that include inserts/updates/deletes. The sample always
 			 * returns -1.
 			 */
-			get { return -1; }
+			get 
+			{ 
+				return -1; 
+			}
 		}
 
 		public void Close()
 		{
 			m_fOpen = false;
 #if NATIVE
-			currentChunk = null;
-			fetchInfo = null;
+			m_currentChunk = null;
+			m_fetchInfo = null;
 #else
 			SQLDBC.SQLDBC_ResultSet_close(m_resultset);
 #endif
@@ -230,9 +199,9 @@ namespace MaxDBDataProvider
 #if NATIVE
 			AssertNotClosed();
 			// if we have nothing, there is nothing to do.
-			if(empty) 
+			if(m_empty) 
 			{
-				this.positionState = PositionType.AFTER_LAST;
+				m_positionState = PositionType.AFTER_LAST;
 				return false;
 			}
 
@@ -242,35 +211,35 @@ namespace MaxDBDataProvider
 			CloseOpenStreams();
         
 			// if we are outside, ...
-			if(positionState == PositionType.BEFORE_FIRST) 
+			if(m_positionState == PositionType.BEFORE_FIRST) 
 			{
 				// ... check whether we still have it
-				if(positionStateOfChunk == PositionType.INSIDE && currentChunk.ContainsRow(1)) 
+				if(m_positionStateOfChunk == PositionType.INSIDE && m_currentChunk.ContainsRow(1)) 
 				{
-					currentChunk.setRow(1);
-					positionState = PositionType.INSIDE;
+					m_currentChunk.setRow(1);
+					m_positionState = PositionType.INSIDE;
 					result = true;
 				} 
 				else 
 					result = FetchFirst();
 			} 
-			else if(positionState == PositionType.INSIDE) 
+			else if(m_positionState == PositionType.INSIDE) 
 			{
-				if(currentChunk.Move(1)) 
+				if(m_currentChunk.Move(1)) 
 					result = true;
 				else 
 				{
-					if(currentChunk.IsLast) 
+					if(m_currentChunk.IsLast) 
 					{
-						positionState = PositionType.AFTER_LAST;
+						m_positionState = PositionType.AFTER_LAST;
 						return false;
 					}
 					result = FetchNextChunk();
 				}
 			} 
-			else if(positionState == PositionType.AFTER_LAST) 
+			else if(m_positionState == PositionType.AFTER_LAST) 
 			{
-				//
+				// ignore
 			}
 
 			return result;
@@ -311,7 +280,7 @@ namespace MaxDBDataProvider
 #if NATIVE
 			for (int cnt = 0; cnt < FieldCount; cnt++)
 			{
-				DBTechTranslator info = fetchInfo.GetColumnInfo(cnt);
+				DBTechTranslator info = m_fetchInfo.GetColumnInfo(cnt);
 				DataRow row = schema.NewRow();
 
 				row["ColumnName"] = info.ColumnName;
@@ -358,7 +327,7 @@ namespace MaxDBDataProvider
 			get
 			{
 #if NATIVE
-				return fetchInfo.NumberOfColumns;
+				return m_fetchInfo.NumberOfColumns;
 #else
 				return SQLDBC.SQLDBC_ResultSetMetaData_getColumnCount(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset)); 
 #endif
@@ -368,7 +337,7 @@ namespace MaxDBDataProvider
 		public string GetName(int i)
 		{
 #if NATIVE
-			return fetchInfo.GetColumnInfo(i).ColumnName;
+			return m_fetchInfo.GetColumnInfo(i).ColumnName;
 #else
 			return Encoding.Unicode.GetString(GetNameBytes((short)(i + 1))).TrimEnd('\0');
 #endif
@@ -382,7 +351,7 @@ namespace MaxDBDataProvider
 			 * The sample returns the simple name of the .NET Framework type.
 			 */
 #if NATIVE
-			return fetchInfo.GetColumnInfo(i).ColumnTypeName;
+			return m_fetchInfo.GetColumnInfo(i).ColumnTypeName;
 #else
 			return GeneralColumnInfo.GetTypeName(
 				SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1)));
@@ -392,7 +361,7 @@ namespace MaxDBDataProvider
 		public Type GetFieldType(int i)
 		{
 #if NATIVE
-			return fetchInfo.GetColumnInfo(i).ColumnType;
+			return m_fetchInfo.GetColumnInfo(i).ColumnType;
 #else
 			return GeneralColumnInfo.GetType(
 				SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1)));
@@ -1060,7 +1029,7 @@ namespace MaxDBDataProvider
 		{
 			get
 			{
-				return (currentChunk != null) ? currentChunk.ReplyData : null;
+				return (m_currentChunk != null) ? m_currentChunk.ReplyData : null;
 			}
 		}
 
@@ -1072,7 +1041,7 @@ namespace MaxDBDataProvider
 
 		private void CloseOpenStreams()
 		{
-			foreach (object obj in openStreams)
+			foreach (object obj in m_openStreams)
 			{
 				try 
 				{
@@ -1092,7 +1061,7 @@ namespace MaxDBDataProvider
 					// ignore
 				}
 			}
-			openStreams.Clear();
+			m_openStreams.Clear();
 		}
 
 		/*
@@ -1103,19 +1072,19 @@ namespace MaxDBDataProvider
 		{
 			MaxDBReplyPacket reply;
 
-			int usedFetchSize = this.fetchSize;
+			//int usedFetchSize = this.fetchSize;
 
 			try 
 			{
-				reply=fetchInfo.ExecFetchNext(usedFetchSize);
+				reply = m_fetchInfo.ExecFetchNext();
 			} 
 			catch(MaxDBSQLException sqlEx) 
 			{
 				if(sqlEx.VendorCode == 100) 
 				{
-					this.empty = true;
-					this.positionState = PositionType.AFTER_LAST;
-					this.currentChunk = null;
+					m_empty = true;
+					m_positionState = PositionType.AFTER_LAST;
+					m_currentChunk = null;
 				} 
 				else 
 					throw;
@@ -1125,8 +1094,8 @@ namespace MaxDBDataProvider
 				FetchType.FIRST,		// fetch first is forward
 				1,						// absolute start position
 				reply,					// reply packet
-				fetchInfo.RecordSize,	// the size for data part navigation
-				rowsInResultSet));
+				m_fetchInfo.RecordSize,	// the size for data part navigation
+				m_rowsInResultSet));
 			return true;
 		}
 
@@ -1137,47 +1106,46 @@ namespace MaxDBDataProvider
 		{
 			MaxDBReplyPacket reply;
 
-			int usedFetchSize = this.fetchSize;
+			//int usedFetchSize = this.fetchSize;
 			int usedOffset=1;
 
-
-			if(currentChunk.IsForward) 
-				if(modifiedKernelPos != 0) 
-					usedOffset +=  currentChunk.End - modifiedKernelPos;
+			if(m_currentChunk.IsForward) 
+				if(m_modifiedKernelPos != 0) 
+					usedOffset +=  m_currentChunk.End - m_modifiedKernelPos;
 				else 
 				{
 					// if an update destroyed the cursor position, we have to honor this ...
-					if(modifiedKernelPos == 0) 
-						usedOffset +=  currentChunk.End - currentChunk.KernelPos;
+					if(m_modifiedKernelPos == 0) 
+						usedOffset +=  m_currentChunk.End - m_currentChunk.KernelPos;
 					else 
-						usedOffset +=  currentChunk.End - modifiedKernelPos;
+						usedOffset +=  m_currentChunk.End - m_modifiedKernelPos;
 				}
 
 			try 
 			{
-				reply = fetchInfo.ExecFetchNext(usedFetchSize);
+				reply = m_fetchInfo.ExecFetchNext();
 			} 
 			catch(MaxDBSQLException sqlEx) 
 			{
 				if(sqlEx.VendorCode == 100) 
 				{
 					// fine, we are at the end.
-					currentChunk.IsLast = true;
+					m_currentChunk.IsLast = true;
 					updateRowStatistics();
 					// but invalidate it, as it is thrown away by the kernel
-					currentChunk = null;
-					positionStateOfChunk = PositionType.NOT_AVAILABLE;
-					positionState = PositionType.AFTER_LAST;
+					m_currentChunk = null;
+					m_positionStateOfChunk = PositionType.NOT_AVAILABLE;
+					m_positionState = PositionType.AFTER_LAST;
 					return false;
 				}
 				throw;
 			}
 			SetCurrentChunk(new FetchChunk(
 				FetchType.RELATIVE_UP,
-				currentChunk.End + 1,
+				m_currentChunk.End + 1,
 				reply,
-				fetchInfo.RecordSize,
-				rowsInResultSet));
+				m_fetchInfo.RecordSize,
+				m_rowsInResultSet));
 			return true;
 		}
 
@@ -1185,11 +1153,11 @@ namespace MaxDBDataProvider
 		{
 			get
 			{
-				if(positionState == PositionType.BEFORE_FIRST) 
+				if(m_positionState == PositionType.BEFORE_FIRST) 
 					throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_RESULTSET_BEFOREFIRST));
-				if(positionState == PositionType.AFTER_LAST) 
+				if(m_positionState == PositionType.AFTER_LAST) 
 					throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_RESULTSET_AFTERLAST));
-				return currentChunk.CurrentRecord;
+				return m_currentChunk.CurrentRecord;
 			}
 }
 
@@ -1200,7 +1168,7 @@ namespace MaxDBDataProvider
 
 			try 
 			{
-				info = fetchInfo.GetColumnInfo(colIndex - 1);
+				info = m_fetchInfo.GetColumnInfo(colIndex);
 			}
 			catch (IndexOutOfRangeException) 
 			{
