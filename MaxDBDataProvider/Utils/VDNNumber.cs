@@ -4,6 +4,8 @@ using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider
 {
+#if NATIVE
+
 	public abstract class VDNNumber 
 	{
 		private const int zeroExponentValue = 128;
@@ -558,4 +560,6 @@ namespace MaxDBDataProvider
 													1.0e61, 1.0e62, 1.0e63, 1.0e64,
 		};
 	}
+
+#endif
 }

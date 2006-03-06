@@ -100,6 +100,14 @@ namespace MaxDBDataProvider
 			}
 		}
 
+		public string SQLState
+		{
+			get
+			{
+				return m_sqlState;
+			}
+		}
+
 		public virtual bool isConnectionReleasing
 		{
 			get

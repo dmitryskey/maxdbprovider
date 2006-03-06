@@ -2170,7 +2170,7 @@ public class BigDecimal
 
 	public static BigDecimal operator - (BigDecimal bd)
 	{
-		return new BigDecimal( - bd.unscaledValue, bd.Scale);;
+		return new BigDecimal( - bd.unscaledValue, bd.Scale);
 	}
 
 	public static BigDecimal operator - (BigDecimal bd1, BigDecimal bd2)

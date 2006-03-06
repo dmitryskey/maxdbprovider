@@ -1,42 +1,58 @@
-!if !defined (TARGET)
-TARGET=.\bin\Release
-!else
-TARGET=.\bin\$(TARGET)
-!endif
+ifndef TARGET
+	TARGET=./bin/Debug
+else
+	TARGET=./bin/$(TARGET)
+endif
 
 MCS=mcs
-!if !defined(RELEASE)
-MCSFLAGS=-unsafe --stacktrace
-!endif
+MCSFLAGS=-debug --stacktrace -unsafe
 
-MAXDBCONSOLE_EXE=$(TARGET)\MaxDBConsole.exe
-MAXDBCONSOLE_PDB=$(TARGET)\MaxDBConsole.exe
-MAXDBCONSOLE_SRC=MaxDBConsole\AssemblyInfo.cs \
-	MaxDBConsole\Class1.cs
+LIBS=-lib:D:/PROGRA~1/MONO-1~1.3/lib\mono/1.0 -lib:D:/PROGRA~1/MONO-1~1.3/lib\mono/gtk-sharp
+
+MAXDBCONSOLE_EXE=$(TARGET)/MaxDBConsole.exe
+MAXDBCONSOLE_PDB=$(TARGET)/MaxDBConsole.exe
+MAXDBCONSOLE_SRC=MaxDBConsole/AssemblyInfo.cs \
+	MaxDBConsole/Class1.cs \
+	MaxDBConsole/Tests/TestMaxDB.cs
 MAXDBCONSOLE_RES=
 
-MAXDBDATAPROVIDER_DLL=$(TARGET)\MaxDBDataProvider.dll
-MAXDBDATAPROVIDER_PDB=$(TARGET)\MaxDBDataProvider.pdb
-MAXDBDATAPROVIDER_SRC=MaxDBDataProvider\AssemblyInfo.cs \
-	MaxDBDataProvider\MaxDBCommand.cs \
-	MaxDBDataProvider\MaxDBConnection.cs \
-	MaxDBDataProvider\MaxDBDataAdapter.cs \
-	MaxDBDataProvider\MaxDBDataReader.cs \
-	MaxDBDataProvider\MaxDBException.cs \
-	MaxDBDataProvider\MaxDBParameter.cs \
-	MaxDBDataProvider\MaxDBParameterCollection.cs \
-	MaxDBDataProvider\MaxDBTransaction.cs \
-	MaxDBDataProvider\MaxDBType.cs \
-	MaxDBDataProvider\SQLDBC.cs
-MAXDBDATAPROVIDER_RES=
+MAXDBDATAPROVIDER_DLL=$(TARGET)/MaxDBDataProvider.dll
+MAXDBDATAPROVIDER_PDB=$(TARGET)/MaxDBDataProvider.pdb
+MAXDBDATAPROVIDER_SRC=MaxDBDataProvider/AssemblyInfo.cs \
+	MaxDBDataProvider/MaxDBCommand.cs \
+	MaxDBDataProvider/MaxDBConnection.cs \
+	MaxDBDataProvider/MaxDBDataAdapter.cs \
+	MaxDBDataProvider/MaxDBDataReader.cs \
+	MaxDBDataProvider/MaxDBException.cs \
+	MaxDBDataProvider/MaxDBParameter.cs \
+	MaxDBDataProvider/MaxDBParameterCollection.cs \
+	MaxDBDataProvider/MaxDBTransaction.cs \
+	MaxDBDataProvider/MaxDBType.cs \
+	MaxDBDataProvider/SQLDBC.cs \
+	MaxDBDataProvider/MaxDBProtocol/MaxDBCache.cs \
+	MaxDBDataProvider/MaxDBProtocol/MaxDBComm.cs \
+	MaxDBDataProvider/MaxDBProtocol/MaxDBConsts.cs \
+	MaxDBDataProvider/MaxDBProtocol/MaxDBDataPart.cs \
+	MaxDBDataProvider/MaxDBProtocol/MaxDBGarbage.cs \
+	MaxDBDataProvider/MaxDBProtocol/MaxDBInfo.cs \
+	MaxDBDataProvider/MaxDBProtocol/MaxDBPacket.cs \
+	MaxDBDataProvider/MaxDBProtocol/MaxDBTranslators.cs \
+	MaxDBDataProvider/MaxDBProtocol/MaxDBValue.cs \
+	MaxDBDataProvider/Utils/BigNumber.cs \
+	MaxDBDataProvider/Utils/ByteArray.cs \
+	MaxDBDataProvider/Utils/Crypt.cs \
+	MaxDBDataProvider/Utils/Logger.cs \
+	MaxDBDataProvider/Utils/SocketIntf.cs \
+	MaxDBDataProvider/Utils/VDNNumber.cs
+MAXDBDATAPROVIDER_RES=-resource:MaxDBDataProvider/MaxDBProtocol/MaxDBMessages.resx,MaxDBDataProvider.MaxDBProtocol.MaxDBMessages.resx
 
 $(MAXDBCONSOLE_EXE): $(MAXDBCONSOLE_SRC) $(MAXDBDATAPROVIDER_DLL)
-	-md $(TARGET)
-	$(MCS) $(MCSFLAGS) -r:System.dll -r:System.Data.dll -r:System.Xml.dll -r:$(MAXDBDATAPROVIDER_DLL) -target:exe -out:$(MAXDBCONSOLE_EXE) $(MAXDBCONSOLE_RES) $(MAXDBCONSOLE_SRC)
+	-mkdir -p $(TARGET)
+	$(MCS) $(MCSFLAGS) $(LIBS) -r:System.dll -r:System.Data.dll -r:System.Xml.dll -r:$(MAXDBDATAPROVIDER_DLL) -r:nunit.framework.dll -target:exe -out:$(MAXDBCONSOLE_EXE) $(MAXDBCONSOLE_RES) $(MAXDBCONSOLE_SRC)
 
 $(MAXDBDATAPROVIDER_DLL): $(MAXDBDATAPROVIDER_SRC) 
-	-md $(TARGET)
-	$(MCS) $(MCSFLAGS) -r:System.dll -r:System.Data.dll -r:System.Xml.dll -target:library -out:$(MAXDBDATAPROVIDER_DLL) $(MAXDBDATAPROVIDER_RES) $(MAXDBDATAPROVIDER_SRC)
+	-mkdir -p $(TARGET)
+	$(MCS) $(MCSFLAGS) $(LIBS) -r:System.dll -r:System.Data.dll -r:System.Xml.dll -target:library -out:$(MAXDBDATAPROVIDER_DLL) $(MAXDBDATAPROVIDER_RES) $(MAXDBDATAPROVIDER_SRC)
 
 
 # common targets
@@ -45,10 +61,10 @@ all:	$(MAXDBCONSOLE_EXE) \
 	$(MAXDBDATAPROVIDER_DLL)
 
 clean:
-	-del "$(MAXDBCONSOLE_EXE)" 2> nul
-	-del "$(MAXDBCONSOLE_PDB)" 2> nul
-	-del "$(MAXDBDATAPROVIDER_DLL)" 2> nul
-	-del "$(MAXDBDATAPROVIDER_PDB)" 2> nul
+	-rm -f "$(MAXDBCONSOLE_EXE)" 2> /dev/null
+	-rm -f "$(MAXDBCONSOLE_PDB)" 2> /dev/null
+	-rm -f "$(MAXDBDATAPROVIDER_DLL)" 2> /dev/null
+	-rm -f "$(MAXDBDATAPROVIDER_PDB)" 2> /dev/null
 
 
 # project names as targets
