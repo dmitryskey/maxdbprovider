@@ -3,6 +3,10 @@ using System.Runtime.InteropServices;
 
 namespace MaxDBDataProvider
 {
+#if !NATIVE
+
+	#region "Classes, structures and enumerations to support interropting"
+
 	#region "Enumerations"
 
 	public enum SQLDBC_Retcode 
@@ -427,4 +431,8 @@ namespace MaxDBDataProvider
 
 		#endregion
 	}
+
+	#endregion
+
+#endif
 }

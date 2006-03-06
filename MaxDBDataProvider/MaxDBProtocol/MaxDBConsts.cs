@@ -1442,7 +1442,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public const string AppID = "ADO";//"ODB"; 
 		public const string ApplVers = "10100";//"70400";
-		public static readonly bool IsLittleEndian = BitConverter.IsLittleEndian;
+		public static readonly bool IsLittleEndian = !BitConverter.IsLittleEndian;
 		public const string Cursor_Prefix = "ADONET_CURSOR_";//"JDBC_CURSOR_";
 
 		static Consts()

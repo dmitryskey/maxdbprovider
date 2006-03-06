@@ -330,17 +330,17 @@ namespace MaxDBDataProvider
 				AssertOpen ();
 				string cmd = "SET ISOLATION LEVEL " + MapIsolationLevel(level).ToString();
 				MaxDBRequestPacket requestPacket = GetRequestPacket();
-				int oldMode = requestPacket.SwitchSqlMode(SqlMode.Internal);
+				byte oldMode = requestPacket.SwitchSqlMode(SqlMode.Internal);
 				requestPacket.InitDbsCommand(m_autocommit, cmd);
-				//requestPacket.AddCursorPart(NextCursorName);
 				try 
 				{
 					Exec(requestPacket, this, GCMode.GC_ALLOWED);
 				}
 				catch (TimeoutException) 
 				{
-					//ignore
+					requestPacket.SwitchSqlMode(oldMode);
 				}
+				
 				m_isolationLevel = level;
 			}
 #else
@@ -526,7 +526,6 @@ namespace MaxDBDataProvider
 				replyPacket = m_comm.Exec(requestPacket, requestLen);
 
 				// get return code
-				int firstSegm = replyPacket.FirstSegment();
 				localWeakReturnCode = replyPacket.weakReturnCode;
 
 				if(localWeakReturnCode != -8) 

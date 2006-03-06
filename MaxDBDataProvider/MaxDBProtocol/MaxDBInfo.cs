@@ -295,9 +295,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					string datatype = rs.GetString(2);
 					if (datatype.ToUpper() == "ABAPTABLE" || datatype.ToUpper() == "STRUCTURE") 
 					{
-						int len = rs.GetInt32(4);
-						int dec = rs.GetInt32(5);
-						currentInfo = new DBProcParameterInfo(datatype, len, dec);
+						currentInfo = new DBProcParameterInfo(datatype);
 						parameterInfos.Add(currentInfo);
 					} 
 					else 
@@ -598,43 +596,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		void doDescribeParseId()
-		{
-			MaxDBRequestPacket requestPacket;
-			MaxDBReplyPacket replyPacket;
-			string[] columnNames = null;
-			DBTechTranslator[] infos = null;
-
-			requestPacket = m_connection.GetRequestPacket();
-			requestPacket.InitDbsCommand(false, "Describe ");
-			requestPacket.AddParseIdPart(m_parseid);
-			replyPacket = m_connection.Exec(requestPacket, this, GCMode.GC_ALLOWED);
-
-			replyPacket.ClearPartOffset();
-			for(int i = 0; i < replyPacket.PartCount; i++) 
-			{
-				replyPacket.NextPart();
-				switch (replyPacket.PartType) 
-				{
-					case PartKind.ColumnNames:
-						columnNames = replyPacket.parseColumnNames();
-						break;
-					case PartKind.ShortInfo:
-						infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, false);
-						break;
-					case PartKind.Vardata_ShortInfo:
-						m_varDataInput = true;
-						infos = replyPacket.ParseShortFields(m_connection.m_spaceOption, false, null, true);
-						break;
-					default:
-						//this.addWarning (new SQLWarning ("part " +
-						//        PartKind.names [enum.partKind ()] + " not handled"));
-						break;
-				}
-			}
-			SetMetaData(infos, columnNames);
-		}
-
 		public void SetMetaData(DBTechTranslator[] info, string[] colName)
 		{
 			int colCount = info.Length;
@@ -722,11 +683,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const int STRUCTURE  = 2;
 
 		private int       type;
-		private string    typeName;
 		private string    sqlTypeName;
 		private string    baseTypeName;
-		private int       length;
-		private int       precision;
 		private ArrayList typeElements;
 	
 		/*
@@ -735,11 +693,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		  @param len The length information from DBPROCPARAMINFO.
 		  @param dec The precision information from DBPROCPARAMINFO.
 		*/
-		public DBProcParameterInfo(string datatype, int len, int dec) 
+		public DBProcParameterInfo(string datatype) 
 		{
-			typeName  = datatype;
-			length    = len;
-			precision = dec;	
 			if(datatype.ToUpper().Trim() == "ABAPTABLE") 
 			{
 				type = ABAPTABLE;

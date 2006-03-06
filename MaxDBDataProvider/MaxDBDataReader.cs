@@ -19,7 +19,6 @@ namespace MaxDBDataProvider
 #if NATIVE
 		
 		private FetchInfo       m_fetchInfo;	// The fetch details.
-		private MaxDBCommand    m_command;	// The command that generated this result set.
 		private FetchChunk      m_currentChunk;		// The data of the last fetch operation.
 		// The status of the position, i.e. one of the <code>POSITION_XXX</code> constants.
 		private PositionType	m_positionState;
@@ -42,7 +41,6 @@ namespace MaxDBDataProvider
 		{
 			m_connection = connection;
 			m_fetchInfo = fetchInfo;
-			m_command = command;
 
 			m_fOpen = true;
 	

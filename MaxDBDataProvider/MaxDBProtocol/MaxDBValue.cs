@@ -11,48 +11,48 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	public class PutValue
 	{
-		private byte[] desc;
+		private byte[] m_desc;
 		//
 		// Set if the Putval instance was created from a byte array (to that byte array).
 		//
-		private byte[] sourceBytes;
+		private byte[] m_sourceBytes;
     
-		protected ByteArray descMark;
-		private Stream stream;
+		protected ByteArray m_descMark;
+		private Stream m_stream;
 		//
 		// the following is used to reread data to recover from a timeout
 		//
-		protected ByteArray reqData = null;
-		protected int reqLength;
-		private int bufpos;
+		protected ByteArray m_reqData = null;
+		protected int m_reqLength;
+		private int m_bufpos;
 
 		public PutValue(Stream stream, int length, int bufpos)
 		{
 			if (length >= 0)
-				stream = new StreamFilter(stream, length);
+				m_stream = new StreamFilter(stream, length);
 			else
-				this.stream = stream;
-			this.bufpos = bufpos;
+				m_stream = stream;
+			m_bufpos = bufpos;
 		}
     
 		public PutValue(byte[] bytes, int bufpos)
 		{
-			stream = new MemoryStream(bytes);
-			sourceBytes = bytes;
-			bufpos = bufpos;
+			m_stream = new MemoryStream(bytes);
+			m_sourceBytes = bytes;
+			m_bufpos = bufpos;
 		}
     
 		protected PutValue(int bufpos)
 		{
-			bufpos = bufpos;
-			stream = null;
+			m_bufpos = bufpos;
+			m_stream = null;
 		}
 
 		public int BufPos
 		{
 			get
 			{
-				return bufpos;
+				return m_bufpos;
 			}
 		}
 
@@ -60,16 +60,16 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return stream == null;
+				return m_stream == null;
 			}
 		}
 
 		public void writeDescriptor(DataPart mem, int pos)
 		{
-			if (desc == null) 
-				desc = new byte[LongDesc.Size];
+			if (m_desc == null) 
+				m_desc = new byte[LongDesc.Size];
         
-			descMark = mem.writeDescriptor(pos, desc);
+			m_descMark = mem.writeDescriptor(pos, m_desc);
 		}
 
 		private byte[] newDescriptor
@@ -82,40 +82,40 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public void putDescriptor(DataPart mem, int pos)
 		{
-			if (desc == null) 
-				desc = newDescriptor;
+			if (m_desc == null) 
+				m_desc = newDescriptor;
 			
-			descMark = mem.writeDescriptor(pos, desc);
+			m_descMark = mem.writeDescriptor(pos, m_desc);
 		}
 
 		public void setDescriptor(byte[] desc)
 		{
-			this.desc = desc;
+			m_desc = desc;
 		}
 
 		public virtual void TransferStream(DataPart dataPart)
 		{
 			if (AtEnd)
-				dataPart.markEmptyStream (descMark);
+				dataPart.markEmptyStream(m_descMark);
 			else 
-				if (dataPart.FillWithStream(stream, descMark, this)) 
+				if (dataPart.FillWithStream(m_stream, m_descMark, this)) 
 			{
 				try 
 				{
-					stream.Close();
+					m_stream.Close();
 				}
 				catch 
 				{
 					// ignore
 				}
-				stream = null;
+				m_stream = null;
 			}
 		}
 
 		public void TransferStream(DataPart dataPart, short streamIndex)
 		{
 			TransferStream(dataPart);
-			descMark.writeInt16(streamIndex, LongDesc.ValInd);
+			m_descMark.writeInt16(streamIndex, LongDesc.ValInd);
 		}
 
 		public void MarkAsLast(DataPart dataPart)
@@ -127,43 +127,43 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			int descriptorPos = dataPart.Extent;
 			writeDescriptor(dataPart, descriptorPos);
 			dataPart.AddArg(descriptorPos, LongDesc.Size + 1);
-			descMark.WriteByte(LongDesc.LastPutval, LongDesc.ValMode);
+			m_descMark.WriteByte(LongDesc.LastPutval, LongDesc.ValMode);
 		}
 
 		public void MarkRequestedChunk(ByteArray reqData, int reqLength)
 		{
-			this.reqData = reqData;
-			this.reqLength = reqLength;
+			m_reqData = reqData;
+			m_reqLength = reqLength;
 		}
 
 		public void MarkErrorStream() 
 		{
-			descMark.WriteByte(LongDesc.Error, LongDesc.ValMode);
-			descMark.WriteInt32(0, LongDesc.ValPos);
-			descMark.WriteInt32(0, LongDesc.ValLen);
+			m_descMark.WriteByte(LongDesc.Error, LongDesc.ValMode);
+			m_descMark.WriteInt32(0, LongDesc.ValPos);
+			m_descMark.WriteInt32(0, LongDesc.ValLen);
 			try 
 			{
-				stream.Close();
+				m_stream.Close();
 			}
 			catch (IOException) 
 			{
 				// ignore
 			}
-			stream = null;
+			m_stream = null;
 		}
 
 		public virtual void Reset()
 		{
-			if (reqData != null) 			
+			if (m_reqData != null) 			
 			{
-				byte[] data = reqData.ReadBytes(0, reqLength);
+				byte[] data = m_reqData.ReadBytes(0, m_reqLength);
 				Stream firstChunk = new MemoryStream(data);
-				if (stream == null) 
-					stream = firstChunk;
+				if (m_stream == null) 
+					m_stream = firstChunk;
 				else 
-					stream = new JoinStream (new Stream[]{firstChunk, stream});
+					m_stream = new JoinStream (new Stream[]{firstChunk, m_stream});
 			}
-			reqData = null;
+			m_reqData = null;
 		}
 	}
 
@@ -200,7 +200,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override void TransferStream(DataPart dataPart)
 		{
-			if (!AtEnd && dataPart.FillWithReader(reader, descMark, this))
+			if (!AtEnd && dataPart.FillWithReader(reader, m_descMark, this))
 			{
 				try 
 				{
@@ -216,15 +216,15 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override void Reset()
 		{
-			if(reqData != null) 
+			if(m_reqData != null) 
 			{
-				StringReader firstChunk = new StringReader(reqData.readUnicode(0, reqLength));
+				StringReader firstChunk = new StringReader(m_reqData.readUnicode(0, m_reqLength));
 				if(reader == null) 
 					reader = firstChunk;
 				else
 					reader = new JoinTextReader(new TextReader[] {firstChunk, reader });
       
-				reqData = null;
+				m_reqData = null;
 			}
 		}
 	}
@@ -885,7 +885,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			public override int Read(char[] b, int offset, int count)
 			{
-				int originalOffset = offset;
 				int charsCopied = 0;
 				int chunkChars;
 				int chunkBytes;

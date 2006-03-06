@@ -15,7 +15,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		private int m_sender = 0;
 		private int m_receiver = 0;
 		private int m_maxSendLen = 0;
-		private int m_swapMode = SwapMode.NotSwapped;
 		private bool m_isauthallowed = false;
 		private int m_maxcmdsize = 0;
 		private bool m_session = false;
@@ -114,8 +113,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			int len = m_socket.Stream.Read(replyBuffer, 0, replyBuffer.Length);
 			if (len <= HeaderOffset.END)
 				throw new Exception(MessageTranslator.Translate(MessageKey.ERROR_RECV_CONNECT));
-
-			m_swapMode = replyBuffer[HeaderOffset.END + ConnectPacketOffset.MessCode + 1];
 			
 			MaxDBConnectPacket replyPacket = new MaxDBConnectPacket(replyBuffer, 
 				replyBuffer[HeaderOffset.END + ConnectPacketOffset.MessCode + 1] == SwapMode.Swapped);
@@ -172,9 +169,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				rawPacket.FillHeader(RSQLTypes.USER_DATA_REQUEST, m_sender, m_receiver, m_maxSendLen);
 				rawPacket.SetSendLength(len + HeaderOffset.END);
 				m_socket.Stream.Write(rawPacket.arrayData, 0, len + HeaderOffset.END);
-				byte[] headerBuf = new byte[HeaderOffset.END + PacketHeaderOffset.MessSwap + 1];
+				byte[] headerBuf = new byte[HeaderOffset.END];
 
-				if (m_socket.Stream.Read(headerBuf, 0, headerBuf.Length) != HeaderOffset.END + PacketHeaderOffset.MessSwap + 1)
+				int headerLength = m_socket.Stream.Read(headerBuf, 0, headerBuf.Length);
+
+				if (headerLength != HeaderOffset.END)
 					throw new CommunicationException(RTEReturnCodes.SQLRECEIVE_LINE_DOWN);
 
 				MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf, true);
@@ -184,7 +183,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					throw new CommunicationException(returnCode);
 
 				byte[] packetBuf = new byte[header.MaxSendLength - HeaderOffset.END];
-				int replyLen = HeaderOffset.END + PacketHeaderOffset.MessSwap + 1;
+				int replyLen = HeaderOffset.END;
 				while(m_socket.Stream.DataAvailable)
 				{
 					if (replyLen < header.ActSendLength)
@@ -194,8 +193,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 							header.ActSendLength, replyLen, packetBuf.Length + HeaderOffset.END));
 	
 				}
-
-				Array.Copy(headerBuf, HeaderOffset.END, packetBuf, 0, PacketHeaderOffset.MessSwap + 1); 
 
 				return new MaxDBReplyPacket(packetBuf);
 			}
