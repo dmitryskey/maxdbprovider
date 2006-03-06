@@ -793,7 +793,7 @@ namespace MaxDBDataProvider
 		{
 			get
 			{
-				return "ADONET_CURSOR_" + m_cursorId++;
+				return Consts.Cursor_Prefix + m_cursorId++;
 			}
 		}
 

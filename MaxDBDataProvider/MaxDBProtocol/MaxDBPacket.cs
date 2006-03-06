@@ -360,7 +360,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_partLength += data.Length;
 		}
 
-		public void AddResultCount (int count) 
+		public void AddResultCount(int count) 
 		{
 			NewPart(PartKind.ResultCount);
 			byte[] fullNumber = VDNNumber.Long2Number (count);
@@ -455,6 +455,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return true;
 		}
 
+		public int InitParseCommand(string cmd, bool reset, bool parseagain) 
+		{
+			InitParse(reset, parseagain);
+			AddString(cmd);
+			m_partArgs = 1;
+			return this.m_partLength;
+		}
+
 		public void InitDbs(bool autocommit) 
 		{
 			InitDbs(true, autocommit);
@@ -468,6 +476,15 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			NewSegment(CmdMessType.Dbs, autocommit, false);
 			NewPart(PartKind.Command);
 			m_partArgs = 1;
+		}
+
+		public void InitParse(bool reset, bool parseagain) 
+		{
+			if (reset) 
+				Reset();
+			NewSegment(CmdMessType.Parse, false, parseagain);
+			NewPart(PartKind.Command);
+			return;
 		}
 
 		public bool InitChallengeResponse(string user, byte[] challenge)

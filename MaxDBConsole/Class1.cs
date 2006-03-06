@@ -25,50 +25,44 @@ namespace MaxDBDataProvider
 			try
 			{
 				MaxDBConnection maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
-
 				maxdbconn.Open();
-				MaxDBCommand cmd1 = new MaxDBCommand("Select 'successfully connected' as \"connect test\" from dual", maxdbconn);
-				MaxDBDataReader reader = cmd1.ExecuteReader();
-				DataTable dt = reader.GetSchemaTable();
-				maxdbconn.Close();
-
-				return;
-				
-				string ver = maxdbconn.ServerVersion;
-				bool auto = maxdbconn.AutoCommit;
 
 				DateTime start_time = DateTime.Now;
 				
-				MaxDBTransaction trans = maxdbconn.BeginTransaction(IsolationLevel.ReadUncommitted);
+				//MaxDBTransaction trans = maxdbconn.BeginTransaction(IsolationLevel.ReadUncommitted);
 
-				using(MaxDBCommand cmd = new MaxDBCommand("INSERT INTO TEST (CHARU_FIELD) VALUES('123Hello')", maxdbconn))
-				{
-					cmd.Transaction = trans;
-					cmd.ExecuteNonQuery();
-					cmd.Transaction.Commit();
-				}
+//				using(MaxDBCommand cmd = new MaxDBCommand("INSERT INTO TEST (CHARU_FIELD) VALUES('123Hello')", maxdbconn))
+//				{
+//					cmd.Transaction = trans;
+//					cmd.ExecuteNonQuery();
+//					cmd.Transaction.Commit();
+//				}
 
-				for(int i=0;i<1000;i++)
+				for(int i=0;i<1/*000*/;i++)
 				{
-					using(MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM TEST --WHERE CHARU_FIELD=:a --AND DATE_FIELD=:b", maxdbconn))
+					using(MaxDBCommand cmd = new MaxDBCommand("SELECT 'Successfully connected' AS \"connect test\" FROM DUAL --WHERE CHARU_FIELD=:a --AND DATE_FIELD=:b", maxdbconn))
 					{
 						//						cmd.Parameters.Add(":a", MaxDBType.VarCharUni, "Hello");
 						//						cmd.Parameters.Add(":b", MaxDBType.Fixed, 0.0);
 
-						cmd.Transaction = trans;
+						//cmd.Transaction = trans;
 												
-						//MaxDBDataReader reader = cmd.ExecuteReader();
+						MaxDBDataReader reader = cmd.ExecuteReader();
+						while(reader.Read())
+						{
+							Console.Out.WriteLine(reader.GetString(0));
+						}
 						//						DataTable dt = reader.GetSchemaTable();
 
-						DataSet ds = new DataSet();
-						MaxDBDataAdapter da = new MaxDBDataAdapter();
-						da.SelectCommand = cmd;
-						da.Fill(ds, "List");
-
-						cmd.Transaction.Rollback();
-
-						foreach(DataRow row in ds.Tables[0].Rows)
-							Console.WriteLine(row[0].ToString());
+//						DataSet ds = new DataSet();
+//						MaxDBDataAdapter da = new MaxDBDataAdapter();
+//						da.SelectCommand = cmd;
+//						da.Fill(ds, "List");
+//
+//						//cmd.Transaction.Rollback();
+//
+//						foreach(DataRow row in ds.Tables[0].Rows)
+//							Console.WriteLine(row[0].ToString());
 					}
 				}
 
