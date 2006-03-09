@@ -16,7 +16,7 @@ namespace MaxDBDataProvider
 		/// The main entry point for the application.
 		/// </summary>
 		[STAThread]
-		static unsafe void Main(string[] args)
+		static void Main(string[] args)
 		{
 			//
 			// TODO: Add code to start application here
@@ -38,9 +38,9 @@ namespace MaxDBDataProvider
 //					cmd.Transaction.Commit();
 //				}
 
-				for(int i=0;i<1/*000*/;i++)
+				for(int i=0;i<1;i++)
 				{
-					using(MaxDBCommand cmd = new MaxDBCommand("SELECT 'Successfully connected' AS \"connect test\" FROM DUAL --WHERE CHARU_FIELD=:a --AND DATE_FIELD=:b", maxdbconn))
+					using(MaxDBCommand cmd = new MaxDBCommand("SELECT info FROM hotel", maxdbconn))
 					{
 						//						cmd.Parameters.Add(":a", MaxDBType.VarCharUni, "Hello");
 						//						cmd.Parameters.Add(":b", MaxDBType.Fixed, 0.0);
@@ -50,7 +50,11 @@ namespace MaxDBDataProvider
 						MaxDBDataReader reader = cmd.ExecuteReader();
 						while(reader.Read())
 						{
-							Console.Out.WriteLine(reader.GetString(0));
+							/*
+							char[] buffer = new char[40];
+							reader.GetChars(0, 46, buffer, 3, 36);
+							Console.Out.WriteLine(new string(buffer));
+							*/
 						}
 						//						DataTable dt = reader.GetSchemaTable();
 

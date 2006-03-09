@@ -492,13 +492,13 @@ namespace MaxDBDataProvider
 			m_packetPool.Push(requestPacket);
 		}
 
-		public MaxDBReplyPacket	Exec(MaxDBRequestPacket requestPacket, object execObj, int gcFlags)
+		internal MaxDBReplyPacket Exec(MaxDBRequestPacket requestPacket, object execObj, int gcFlags)
 		{
 			return Exec(requestPacket, false, false, execObj, gcFlags);
 		}
 
 		[MethodImpl(MethodImplOptions.Synchronized)]
-		public MaxDBReplyPacket Exec(MaxDBRequestPacket requestPacket, bool ignoreErrors, bool isParse, object execObj, int gcFlags)
+		internal MaxDBReplyPacket Exec(MaxDBRequestPacket requestPacket, bool ignoreErrors, bool isParse, object execObj, int gcFlags)
 		{
 			int requestLen;
 			MaxDBReplyPacket replyPacket = null;

@@ -351,7 +351,7 @@ namespace MaxDBDataProvider
 			MaxDBReplyPacket replyPacket;
 			requestPacket.InitParseCommand(sqlCmd, true, parseAgain);
 			if (m_setWithInfo)
-				requestPacket.setWithInfo();
+				requestPacket.SetWithInfo();
 			replyPacket = m_connection.Exec(requestPacket, this, gcFlags);
 			return replyPacket;
 		}
@@ -778,7 +778,7 @@ namespace MaxDBDataProvider
 				result.MassParseID = null;
 			}
 			else if (cache != null) 
-				result = cache.findParseinfo(sql);
+				result = cache.FindParseInfo(sql);
 
 			if ((result == null) || parseAgain) 
 			{

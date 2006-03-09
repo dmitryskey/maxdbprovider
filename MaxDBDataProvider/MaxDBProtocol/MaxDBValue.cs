@@ -12,11 +12,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	public class PutValue
 	{
 		private byte[] m_desc;
-		//
-		// Set if the Putval instance was created from a byte array (to that byte array).
-		//
-		private byte[] m_sourceBytes;
-    
 		protected ByteArray m_descMark;
 		private Stream m_stream;
 		//
@@ -38,7 +33,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public PutValue(byte[] bytes, int bufpos)
 		{
 			m_stream = new MemoryStream(bytes);
-			m_sourceBytes = bytes;
 			m_bufpos = bufpos;
 		}
     
@@ -174,7 +168,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	public class PutUnicodeValue : PutValue
 	{
 		private TextReader reader;
-		private char[] sourceChars;
     
 		public PutUnicodeValue(TextReader readerp, int length, int bufpos) : base(bufpos)
 		{
@@ -187,7 +180,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public PutUnicodeValue(char[] source, int bufpos) : base(bufpos)
 		{
 			reader = new StringReader(new string(source));
-			sourceChars = source;	
 		}
 
 		public override bool AtEnd
@@ -233,11 +225,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Abstract Procedure Put Value class"
 
-	public abstract class AbstractProcedurePutValue 
+	internal abstract class AbstractProcedurePutValue 
 	{
 		private DBTechTranslator translator; 
 		private ByteArray  descriptor;
-		private ByteArray    descriptorMark;
+		private ByteArray  descriptorMark;
 	
 		public AbstractProcedurePutValue(DBTechTranslator translator)
 		{	    
@@ -267,12 +259,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Basic Procedure Put Value class"
 
-	public abstract class BasicProcedurePutValue : AbstractProcedurePutValue 
+	internal abstract class BasicProcedurePutValue : AbstractProcedurePutValue 
 	{
 		protected Stream stream;
 		protected int      length;
  
-		public BasicProcedurePutValue(DBTechTranslator translator, Stream stream, int length) : base(translator)
+		internal BasicProcedurePutValue(DBTechTranslator translator, Stream stream, int length) : base(translator)
 		{
 			if (length == -1) 
 			{
@@ -308,7 +300,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "ASCII Procedure Put Value class"
 
-	public class ASCIIProcedurePutValue : BasicProcedurePutValue
+	internal class ASCIIProcedurePutValue : BasicProcedurePutValue
 	{ 
 		public ASCIIProcedurePutValue(DBTechTranslator translator, byte[] bytes): this(translator, new MemoryStream(bytes), -1)
 		{
@@ -322,9 +314,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Binary Procedure Put Value class"
 
-	public class BinaryProcedurePutValue : BasicProcedurePutValue
+	internal class BinaryProcedurePutValue : BasicProcedurePutValue
 	{
-	
 		public BinaryProcedurePutValue(DBTechTranslator translator, byte[] bytes):this(translator, new MemoryStream(bytes), -1)
 		{
 		}
@@ -338,7 +329,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Unicode Procedure Put Value class"
 
-	public class UnicodeProcedurePutValue : AbstractProcedurePutValue 
+	internal class UnicodeProcedurePutValue : AbstractProcedurePutValue 
 	{
 		protected TextReader reader;
 		protected int length;
@@ -453,7 +444,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		protected MaxDBReplyPacket ExecGetValue(byte[] descriptor)
+		internal MaxDBReplyPacket ExecGetValue(byte[] descriptor)
 		{
 			MaxDBRequestPacket requestPacket = connection.GetRequestPacket();
 			DataPart longpart = requestPacket.InitGetValue(connection.AutoCommit);
@@ -592,12 +583,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	class GetValue : AbstractGetValue
 	{
-		bool isBinary = false;
 		int asciiColumnAsUnicodeMultiplier = 1;
     
 		public GetValue(MaxDBConnection connection, byte[] descriptor, ByteArray dataPart, int dataKind) : base(connection, descriptor, dataPart, 1)
 		{
-			isBinary = (dataKind == DataType.STRB) || (dataKind == DataType.LONGB);
 			if ((dataKind == DataType.STRA || dataKind == DataType.LONGA) && connection.DatabaseEncoding == Encoding.Unicode) 
 				asciiColumnAsUnicodeMultiplier = 2; 
 		}

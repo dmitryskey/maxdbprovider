@@ -10,7 +10,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 #if NATIVE
 	#region "Parse information class"
 
-	public class MaxDBParseInfo 
+	internal class MaxDBParseInfo 
 	{
 		public MaxDBConnection m_connection;
 		public string m_sqlCmd;
@@ -53,11 +53,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_isDBProc = false;
 			m_hasLongs = false;
 			m_hasStreams = false;
-			this.isMassCmd = false;
-			this.m_funcCode = functionCode;
-			this.m_sessionID = -1;
-			this.updTableName = null;
-			this.m_cached = false;
+			isMassCmd = false;
+			m_funcCode = functionCode;
+			m_sessionID = -1;
+			updTableName = null;
+			m_cached = false;
 			m_varDataInput = false;
 			if ((m_funcCode == FunctionCode.Select) || (m_funcCode == FunctionCode.Show) 
 				|| (m_funcCode == FunctionCode.DBProcWithResultSetExecute) || (m_funcCode == FunctionCode.Explain))
@@ -848,7 +848,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Fetch information class"
 
-	public class FetchInfo
+	internal class FetchInfo
 	{
 		private MaxDBConnection     m_connection;            // current connection
 		private string              m_cursorName;            // cursor
@@ -963,7 +963,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			byte currentSQLMode = request.SwitchSqlMode(SqlMode.Internal);
 			request.InitDbsCommand(m_connection.AutoCommit, cmd);
 
-			request.AddResultCount(1);
+			request.SetMassCommand();
+			request.AddResultCount(30000);
+
 			try 
 			{
 				return m_connection.Exec(request, this, GCMode.GC_DELAYED);
