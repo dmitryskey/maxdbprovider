@@ -6,13 +6,11 @@ namespace MaxDBDataProvider
 {
 #if NATIVE
 
-	public abstract class VDNNumber 
+	internal abstract class VDNNumber 
 	{
 		private const int zeroExponentValue = 128;
 		private const int tensComplement = 9;
-		private const int numberBytes = 20;
 		private const int numberDigits = 38;
-		private readonly BigDecimal zero = new BigDecimal(0);
 		private const String zerostring = "0000000000000000000000000000000000000000000000000000000000000000";
 
 		public static byte[] BigDecimal2Number(BigDecimal dec) 
@@ -216,8 +214,7 @@ namespace MaxDBDataProvider
 				}
 				numberString = Encoding.ASCII.GetString(digits, 0, lastSignificant + 1);
 				result = new BigDecimal(numberString);
-				result = result.movePointRight(exponent);
-				return result;
+				return result.MovePointRight(exponent);
 			}
 			catch (Exception) 
 			{

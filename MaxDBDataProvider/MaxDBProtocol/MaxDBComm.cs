@@ -7,7 +7,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	/// <summary>
 	/// Summary description for MaxDBComm.
 	/// </summary>
-	public class MaxDBComm
+	internal class MaxDBComm
 	{
 		private ISocketIntf m_socket;
 		private string m_dbname;

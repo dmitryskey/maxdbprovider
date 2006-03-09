@@ -1,0 +1,2 @@
+1. SELECT ... FOR UPDATE doesn't work
+2. connect to the 7.6 in the LittleEndian mode fails

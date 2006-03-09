@@ -261,7 +261,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Parse information class"
 
-	public class ParseInfoCache : LRUCache
+	internal class ParseInfoCache : LRUCache
 	{
 		const int defaultSize = 1000;
 		private const int maxFunctionCode = FunctionCode.Delete + 1;
@@ -309,7 +309,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			stats[FunctionCode.Delete] = new CacheInfo("delete");
 		}
 
-		public MaxDBParseInfo findParseinfo(string sqlCmd)
+		public MaxDBParseInfo FindParseInfo(string sqlCmd)
 		{
 			MaxDBParseInfo result = null;
 

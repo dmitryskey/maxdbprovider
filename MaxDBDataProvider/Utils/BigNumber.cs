@@ -133,7 +133,7 @@
 using System;
 using System.Globalization;
 
-public class BigInteger
+internal class BigInteger
 {
 	// maximum length of the BigInteger in uint (4 bytes)
 	// change this to suit the required level of precision.
@@ -2032,11 +2032,11 @@ public class BigInteger
 	}
 }
 
-public class BigDecimal
+internal class BigDecimal
 {
 	private BigInteger m_int;
 	private int m_scale;
-	private string m_sep = CultureInfo.CurrentCulture.NumberFormat.CurrencyDecimalSeparator;
+	private string m_sep = CultureInfo.InvariantCulture.NumberFormat.CurrencyDecimalSeparator;
 
 	public BigDecimal()
 	{
@@ -2079,7 +2079,7 @@ public class BigDecimal
 			
 		if (num.Length > 0)
 		{
-			num = num.Replace(CultureInfo.CurrentCulture.NumberFormat.CurrencyGroupSeparator, string.Empty);
+			num = num.Replace(CultureInfo.InvariantCulture.NumberFormat.CurrencyGroupSeparator, string.Empty);
 			int dot_index = num.IndexOf(m_sep, cur_off);
 
 			if (dot_index >= 0)
@@ -2213,6 +2213,9 @@ public class BigDecimal
 
 	public static bool operator == (BigDecimal bd1, BigDecimal bd2)
 	{
+		if (object.Equals(bd1, null) && !object.Equals(bd2, null)) return false;
+		if (!object.Equals(bd1, null) && object.Equals(bd2, null)) return false;
+		if (object.Equals(bd1, null) && object.Equals(bd2, null)) return true;
 		int scale = (bd1.Scale > bd2.Scale ? bd1.Scale : bd2.Scale);
 		return bd1.setScale(scale).unscaledValue == bd2.setScale(scale).unscaledValue;
 	}
@@ -2234,12 +2237,12 @@ public class BigDecimal
 
 	public static explicit operator double(BigDecimal val)
 	{
-		return double.Parse(val.ToString());
+		return double.Parse(val.ToString(), CultureInfo.InvariantCulture);
 	}
 
 	public static explicit operator decimal(BigDecimal val)
 	{
-		return decimal.Parse(val.ToString());
+		return decimal.Parse(val.ToString(), CultureInfo.InvariantCulture);
 	}
 
 	public static implicit operator BigDecimal(long val)
@@ -2272,15 +2275,15 @@ public class BigDecimal
 		return new BigDecimal(m_int, m_scale);
 	}
 
-	public BigDecimal movePointLeft(int n)
+	public BigDecimal MovePointLeft(int n)
 	{
 		if (n >= 0)
 			return new BigDecimal(m_int, m_scale + n);
 		else
-			return movePointRight(-n);
+			return MovePointRight(-n);
 	}
 
-	public BigDecimal movePointRight(int n)
+	public BigDecimal MovePointRight(int n)
 	{
 		if (n >= 0)
 		{
@@ -2297,7 +2300,7 @@ public class BigDecimal
 			}
 		}
 		else
-			return movePointLeft(-n);
+			return MovePointLeft(-n);
 	}
 
 	public override string ToString()

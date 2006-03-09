@@ -370,7 +370,7 @@ namespace MaxDBDataProvider
 		{
 #if NATIVE
 			DBTechTranslator info = FindColumnInfo(i);
-			return info.IsDBNull(CurrentRecord)? DBNull.Value : FindColumnInfo(i).GetValue(CurrentRecord);
+			return info.IsDBNull(CurrentRecord)? DBNull.Value : info.GetValue(CurrentRecord);
 #else
 			int columnType;
 			byte[] data = GetValueBytes(i, out columnType);
@@ -510,27 +510,15 @@ namespace MaxDBDataProvider
 #endif
 		}
 
-		public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
+		public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferOffset, int length)
 		{
-			//TO DO: need to be optimized
-			if (buffer.Length - bufferoffset > length)
-				length = buffer.Length - bufferoffset;
-
 #if NATIVE
-			byte[] fieldBytes = FindColumnInfo(i).GetBytes(this, CurrentRecord);
+			return FindColumnInfo(i).GetBytes(this, CurrentRecord, fieldOffset, buffer, bufferOffset, length);
 #else
 			int columnType;
-			byte[] fieldBytes = GetValueBytes(i, out columnType);
-#endif			
-			long length_to_copy = length;
-			
-			if (fieldBytes.LongLength - fieldOffset > length_to_copy)
-				length_to_copy = fieldBytes.LongLength - fieldOffset;
-			Array.Copy(fieldBytes, fieldOffset, buffer, bufferoffset, length_to_copy);
-			
-			return length_to_copy;
-
-		}
+			return GetValueBytes(i, out columnType, fieldOffset, buffer, bufferOffset, length);
+#endif
+}
 
 		public char GetChar(int i)
 		{
@@ -543,13 +531,17 @@ namespace MaxDBDataProvider
 
 		public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
 		{
-			//TO DO: need to be optimized
-			const int char_size = 2;
-			byte[] byte_buffer = new byte[buffer.LongLength * char_size];
-			long copied_chars = GetBytes(i, fieldoffset * char_size, byte_buffer, bufferoffset * char_size, length * char_size) / char_size;
-			for (i = bufferoffset; i < bufferoffset + copied_chars; i++)
-				buffer[i] = BitConverter.ToChar(byte_buffer, i * char_size);
-			return copied_chars;
+#if NATIVE
+			return FindColumnInfo(i).GetChars(this, CurrentRecord, fieldoffset, buffer, bufferoffset, length);
+#else
+			int columnType;
+			byte[] byte_buffer = new byte[buffer.Length * Consts.unicodeWidth]; 
+			long result_length = GetValueBytes(i, out columnType,
+				fieldoffset * Consts.unicodeWidth, byte_buffer, bufferoffset * Consts.unicodeWidth, length * Consts.unicodeWidth);
+			for (int k = 0; k < byte_buffer.Length / Consts.unicodeWidth; k++)
+				buffer[k] = BitConverter.ToChar(byte_buffer, k * Consts.unicodeWidth);
+			return result_length / Consts.unicodeWidth;
+#endif
 		}
 
 		public Guid GetGuid(int i)
@@ -984,7 +976,11 @@ namespace MaxDBDataProvider
 
 		public bool IsDBNull(int i)
 		{
+#if NATIVE
+			return FindColumnInfo(i).IsDBNull(CurrentRecord);
+#else
 			return (GetValue(i) == DBNull.Value);
+#endif
 		}
 
 		/*
@@ -1363,6 +1359,81 @@ namespace MaxDBDataProvider
 				default:
 					return null;
 			}
+		}
+
+		private unsafe long GetValueBytes(int i, out int columnType, long dataIndex, byte[] buffer, int bufferIndex, int length)
+		{
+			SQLDBC_Retcode rc;
+			SQLDBC_HostType hostType;
+			columnType = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1));
+			switch(columnType)
+			{
+				case DataType.STRA:
+				case DataType.VARCHARA:
+				case DataType.CHA:
+					hostType = SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII;
+					break;
+				case DataType.VARCHARUNI:
+				case DataType.STRUNI:
+				case DataType.UNICODE:
+					hostType = SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED;
+					break;
+				case DataType.STRB:
+				case DataType.VARCHARB:
+				case DataType.CHB:
+					hostType = SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY;
+					break;
+				default:
+					byte[] byte_buffer = GetValueBytes(i, out columnType);
+					Array.Copy(byte_buffer, dataIndex, buffer, bufferIndex, length);
+					return length;
+			}
+
+			byte[] columnValue = new byte[4096];
+			int val_length = 0;
+			int alreadyRead = 0;
+
+			fixed(byte *valuePtr = columnValue)
+			{
+				for(;;)
+				{
+					rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, hostType, new IntPtr(valuePtr), ref val_length, 
+						(int)(alreadyRead + columnValue.Length < dataIndex ? columnValue.Length : dataIndex - alreadyRead), 0);
+
+					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+						return 0;
+
+					if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+						throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+
+					if (rc == SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+					{
+						if(alreadyRead + columnValue.Length < dataIndex)
+						{
+							alreadyRead += columnValue.Length;
+							continue;
+						}
+						else
+							break;
+					}
+
+					if (rc == SQLDBC_Retcode.SQLDBC_OK)
+						break;
+				}
+			}
+
+			length = Math.Min(length, buffer.Length - bufferIndex);
+
+			fixed(byte *valuePtr = buffer)
+			{
+				rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, hostType, 
+					new IntPtr(valuePtr + bufferIndex), ref val_length, length, 0);
+
+				if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC && rc != SQLDBC_Retcode.SQLDBC_OK)
+					throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+			}
+
+			return length;
 		}
 
 		#endregion

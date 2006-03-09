@@ -219,7 +219,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			get
 			{
 				int pos = HeaderOffset.END + ConnectPacketOffset.VarPart;
-				while(pos < data.Length)
+				while(pos < m_data.Length)
 				{
 					if (ReadByte(pos + 1) == ArgType.PORT_NO)
 						return ReadByte(pos + 2) * 0xFF + ReadByte(pos + 3);//port number is always not swapped
@@ -236,7 +236,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			get
 			{
 				int pos = HeaderOffset.END + ConnectPacketOffset.VarPart;
-				while(pos < data.Length)
+				while(pos < m_data.Length)
 				{
 					byte len = ReadByte(pos);
 
@@ -244,7 +244,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 						break;
 
 					if (ReadByte(pos + 1) == ArgType.AUTH_ALLOW)
-						foreach(string authParam in Encoding.ASCII.GetString(data, pos + 2, len - 3).Split(','))
+						foreach(string authParam in Encoding.ASCII.GetString(m_data, pos + 2, len - 3).Split(','))
 							if (authParam.ToUpper() == Crypt.ScramMD5Name)
 								return true;
 					
@@ -444,7 +444,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if (!reset) 
 			{
 				CloseSegment();
-				if (data.Length - HeaderOffset.END - m_length - SegmentHeaderOffset.Part - PartHeaderOffset.Data
+				if (m_data.Length - HeaderOffset.END - m_length - SegmentHeaderOffset.Part - PartHeaderOffset.Data
 					- m_replyReserve - Consts.ReserveForReply < cmd.Length || m_segments >= maxNumberOfSeg) 
 					return false;
 			}
@@ -549,12 +549,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return new DataPartFixed(Clone(m_partOffset + PartHeaderOffset.Data), this);
 		}
 
-		public void setWithInfo()
+		public void SetWithInfo()
 		{
 			WriteByte(1, m_segOffset + SegmentHeaderOffset.WithInfo);
 		}
 
-		public void setMassCommand() 
+		public void SetMassCommand() 
 		{
 			WriteByte(1, m_segOffset + SegmentHeaderOffset.MassCmd);
 		}
@@ -578,7 +578,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			writeInt16(1, m_partOffset + PartHeaderOffset.ArgCount);
 			WriteInt32(m_segOffset - PacketHeaderOffset.Segment, m_partOffset + PartHeaderOffset.SegmOffs);
 			WriteInt32(PartHeaderOffset.Data, m_partOffset + PartHeaderOffset.BufLen);
-			WriteInt32(data.Length - HeaderOffset.END - m_partOffset, m_partOffset + PartHeaderOffset.BufSize);
+			WriteInt32(m_data.Length - HeaderOffset.END - m_partOffset, m_partOffset + PartHeaderOffset.BufSize);
 		}
 
 		public void AddPartFeature(byte[] features)
@@ -751,7 +751,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "MaxDB Reply Packet"
 
-	public class MaxDBReplyPacket : MaxDBPacket
+	internal class MaxDBReplyPacket : MaxDBPacket
 	{
 		private int m_segmOffset;
 		private int m_partOffset;
@@ -887,7 +887,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				try 
 				{
 					FindPart(PartKind.Vardata);
-					return new DataPartVariable(new ByteArray(ReadBytes(PartDataPos , PartLength), 0, swapMode), 1);
+					return new DataPartVariable(new ByteArray(ReadBytes(PartDataPos , PartLength), 0, m_swapMode), 1);
 				}
 				catch (PartNotFound)
 				{
@@ -1121,9 +1121,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				case DataType.UNICODE:
 				case DataType.VARCHARUNI:
 					if (spaceoption)
-						return new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+						return new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, m_swapMode);
 					else
-						return new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+						return new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, m_swapMode);
 				case DataType.LONGUNI:
 				case DataType.STRUNI:
 					if(isDBProcedure) 
@@ -1339,7 +1339,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "MaxDB Unicode Reply Packet"
 
-	public class MaxDBReplyPacketUnicode : MaxDBReplyPacket
+	internal class MaxDBReplyPacketUnicode : MaxDBReplyPacket
 	{
 		public MaxDBReplyPacketUnicode(byte[] data) : base(data)
 		{
@@ -1355,9 +1355,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				case DataType.VARCHARA:
 				case DataType.VARCHARE:
 					if (spaceoption)
-						return new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+						return new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, m_swapMode);
 					else
-						return new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+						return new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, m_swapMode);
 				case DataType.CHB: 
 					if(procParamInfo != null && procParamInfo.ElementType == DBProcParameterInfo.STRUCTURE) 
 						return new StructureTranslator(mode, ioType, dataType, len, ioLen, bufpos, true);

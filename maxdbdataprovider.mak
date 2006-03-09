@@ -5,7 +5,7 @@ else
 endif
 
 MCS=mcs
-MCSFLAGS=-debug --stacktrace -unsafe
+MCSFLAGS=-debug --stacktrace -d:NATIVE
 
 LIBS=-lib:D:/PROGRA~1/MONO-1~1.3/lib\mono/1.0 -lib:D:/PROGRA~1/MONO-1~1.3/lib\mono/gtk-sharp
 
