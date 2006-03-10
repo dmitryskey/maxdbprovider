@@ -26,15 +26,15 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public void FillHeader(byte msgClass, int senderRef, int receiverRef, int maxSendLen)
 		{
 			// fill out header part
-			writeUInt32(0, HeaderOffset.ActSendLen);
+			WriteUInt32(0, HeaderOffset.ActSendLen);
 			WriteByte(3, HeaderOffset.ProtocolID);
 			WriteByte(msgClass, HeaderOffset.MessClass);
 			WriteByte(0, HeaderOffset.RTEFlags);
 			WriteByte(0, HeaderOffset.ResidualPackets);
 			WriteInt32(senderRef, HeaderOffset.SenderRef);
 			WriteInt32(receiverRef, HeaderOffset.ReceiverRef);
-			writeUInt16(0, HeaderOffset.RTEReturnCode);
-			writeUInt16(0, HeaderOffset.Filler);
+			WriteUInt16(0, HeaderOffset.RTEReturnCode);
+			WriteUInt16(0, HeaderOffset.Filler);
 			WriteInt32(maxSendLen, HeaderOffset.MaxSendLen);
 		}
 
@@ -72,7 +72,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return readInt16(HeaderOffset.RTEReturnCode);
+				return ReadInt16(HeaderOffset.RTEReturnCode);
 			}
 		}
 
@@ -116,7 +116,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			// fill body
 			WriteByte(Consts.ASCIIClient, HeaderOffset.END + ConnectPacketOffset.MessCode);
 			WriteByte(Consts.IsLittleEndian ? SwapMode.Swapped : SwapMode.NotSwapped, HeaderOffset.END + ConnectPacketOffset.MessCode + 1);
-			writeUInt16(ConnectPacketOffset.END, HeaderOffset.END + ConnectPacketOffset.ConnectLength);
+			WriteUInt16(ConnectPacketOffset.END, HeaderOffset.END + ConnectPacketOffset.ConnectLength);
 			WriteByte(SQLType.USER, HeaderOffset.END + ConnectPacketOffset.ServiceType);
 			WriteByte(Consts.RSQL_DOTNET, HeaderOffset.END + ConnectPacketOffset.OSType);
 			WriteByte(0, HeaderOffset.END + ConnectPacketOffset.Filler1);
@@ -137,7 +137,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			// add port number
 			WriteByte(4, m_curPos++);
 			WriteByte(ArgType.PORT_NO, m_curPos++);
-			writeUInt16((ushort)connData.Port, m_curPos);
+			WriteUInt16((ushort)connData.Port, m_curPos);
 			m_curPos += 2;
 			// add aknowledge flag
 			WriteByte(3, m_curPos++);
@@ -153,7 +153,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			const int packetMinLen = ConnectPacketOffset.MinSize;
 			if (m_curPos < packetMinLen) m_curPos = packetMinLen;
-			writeUInt16((ushort)(m_curPos - HeaderOffset.END), HeaderOffset.END + ConnectPacketOffset.ConnectLength);
+			WriteUInt16((ushort)(m_curPos - HeaderOffset.END), HeaderOffset.END + ConnectPacketOffset.ConnectLength);
 		}
 
 		public void Close()
@@ -163,7 +163,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			if (currentLength < requiredLength) 
 				m_curPos += requiredLength - currentLength;
-			writeUInt16((ushort)m_curPos, ConnectPacketOffset.ConnectLength);
+			WriteUInt16((ushort)m_curPos, ConnectPacketOffset.ConnectLength);
 		}
 
 		public bool IsSwapped
@@ -431,7 +431,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			CloseSegment();
 			WriteInt32(m_length - PacketHeaderOffset.Segment, PacketHeaderOffset.VarPartLen);
-			writeInt16(m_segments, PacketHeaderOffset.NoOfSegm);
+			WriteInt16(m_segments, PacketHeaderOffset.NoOfSegm);
 		}
 
 		public void InitDbsCommand(bool autocommit, string cmd) 
@@ -493,10 +493,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			ClosePart();
 			DataPartVariable data = NewVarDataPart();
 			data.AddRow(2);
-			data.WriteBytes(Encoding.ASCII.GetBytes(Crypt.ScramMD5Name), data.extent);
-			data.AddArg(data.extent, 0);
-			data.WriteBytes(challenge, data.extent);
-			data.AddArg(data.extent, 0);
+			data.WriteBytes(Encoding.ASCII.GetBytes(Crypt.ScramMD5Name), data.m_extent);
+			data.AddArg(data.m_extent, 0);
+			data.WriteBytes(challenge, data.m_extent);
+			data.AddArg(data.m_extent, 0);
 			data.Close();
 			return true;
 		}
@@ -527,7 +527,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			int partDataOffs;
 			NewPart(PartKind.Vardata);
 			partDataOffs = m_partOffset + PartHeaderOffset.Data;
-			return new DataPartVariable(Clone(partDataOffs), this);
+			return new DataPartVariable(Clone(partDataOffs, false), this); //??? why DataPartVariable requires BigEndian?
 		}
 
 		public DataPart NewDataPart(bool varData) 
@@ -575,7 +575,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_partArgs = 0;
 			WriteByte(kind, m_partOffset + PartHeaderOffset.PartKind);
 			WriteByte(0, m_partOffset + PartHeaderOffset.Attributes);
-			writeInt16(1, m_partOffset + PartHeaderOffset.ArgCount);
+			WriteInt16(1, m_partOffset + PartHeaderOffset.ArgCount);
 			WriteInt32(m_segOffset - PacketHeaderOffset.Segment, m_partOffset + PartHeaderOffset.SegmOffs);
 			WriteInt32(PartHeaderOffset.Data, m_partOffset + PartHeaderOffset.BufLen);
 			WriteInt32(m_data.Length - HeaderOffset.END - m_partOffset, m_partOffset + PartHeaderOffset.BufSize);
@@ -603,10 +603,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			DataPartVariable data = NewVarDataPart();
 			data.AddRow(2);
-			data.WriteBytes(Encoding.ASCII.GetBytes(Crypt.ScramMD5Name), data.extent);
-			data.AddArg(data.extent,0);
-			data.WriteBytes(clientProof,data.extent);
-			data.AddArg(data.extent,0);
+			data.WriteBytes(Encoding.ASCII.GetBytes(Crypt.ScramMD5Name), data.m_extent);
+			data.AddArg(data.m_extent,0);
+			data.WriteBytes(clientProof, data.m_extent);
+			data.AddArg(data.m_extent, 0);
 			data.Close();
 		}
 
@@ -665,7 +665,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				return;
 
 			WriteInt32(extent, m_partOffset + PartHeaderOffset.BufLen);
-			writeInt16(args, m_partOffset + PartHeaderOffset.ArgCount);
+			WriteInt16(args, m_partOffset + PartHeaderOffset.ArgCount);
 			m_segLength += alignSize(extent + PartHeaderOffset.Data);
 			m_partOffset = -1;
 			m_partLength = -1;
@@ -685,8 +685,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_segParts = 0;
 			WriteInt32(0, m_segOffset + SegmentHeaderOffset.Len);
 			WriteInt32(m_segOffset - PacketHeaderOffset.Segment, m_segOffset + SegmentHeaderOffset.Offs);
-			writeInt16(0, m_segOffset + SegmentHeaderOffset.NoOfParts);
-			writeInt16(++m_segments, m_segOffset + SegmentHeaderOffset.OwnIndex);
+			WriteInt16(0, m_segOffset + SegmentHeaderOffset.NoOfParts);
+			WriteInt16(++m_segments, m_segOffset + SegmentHeaderOffset.OwnIndex);
 			WriteByte(SegmKind.Cmd, m_segOffset + SegmentHeaderOffset.SegmKind);
 
 			// request segment
@@ -711,7 +711,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			ClosePart();
 			WriteInt32(m_segLength, m_segOffset + SegmentHeaderOffset.Len);
-			writeInt16(m_segParts, m_segOffset + SegmentHeaderOffset.NoOfParts);
+			WriteInt16(m_segParts, m_segOffset + SegmentHeaderOffset.NoOfParts);
 			m_length += m_segLength;
 			m_segOffset = -1;
 			m_segLength = -1;
@@ -775,7 +775,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_cachedResultCount = int.MinValue;
 			m_cachedPartCount = int.MinValue;
 
-			int pc = readInt16(m_segmOffset + SegmentHeaderOffset.NoOfParts);
+			int pc = ReadInt16(m_segmOffset + SegmentHeaderOffset.NoOfParts);
 			m_partIndices = new int[pc];
 			int partofs = 0;
 			for(int i = 0; i < pc; i++) 
@@ -829,7 +829,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			get
 			{
 				if (m_cachedPartCount == int.MinValue)
-					return m_cachedPartCount = readInt16(m_segmOffset + SegmentHeaderOffset.NoOfParts);
+					return m_cachedPartCount = ReadInt16(m_segmOffset + SegmentHeaderOffset.NoOfParts);
 				else 
 					return m_cachedPartCount;
 			}
@@ -844,7 +844,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return readInt16(m_partOffset + PartHeaderOffset.ArgCount);
+				return ReadInt16(m_partOffset + PartHeaderOffset.ArgCount);
 			}
 		}
 
@@ -887,7 +887,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				try 
 				{
 					FindPart(PartKind.Vardata);
-					return new DataPartVariable(new ByteArray(ReadBytes(PartDataPos , PartLength), 0, m_swapMode), 1);
+					return new DataPartVariable(new ByteArray(ReadBytes(PartDataPos , PartLength), 0, false), 1);//??? why DataPartVariable requires BigEndian
 				}
 				catch (PartNotFound)
 				{
@@ -925,7 +925,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return readInt16(PacketHeaderOffset.NoOfSegm);
+				return ReadInt16(PacketHeaderOffset.NoOfSegm);
 			}
 		}
 
@@ -1056,10 +1056,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				ioType = ReadByte(pos + ParamInfo.IOTypeOffset);
 				dataType = ReadByte(pos + ParamInfo.DataTypeOffset);
 				frac = ReadByte(pos + ParamInfo.FracOffset);
-				len = readInt16(pos + ParamInfo.LengthOffset);
-				ioLen = readInt16(pos + ParamInfo.InOutLenOffset);
+				len = ReadInt16(pos + ParamInfo.LengthOffset);
+				ioLen = ReadInt16(pos + ParamInfo.InOutLenOffset);
 				if (isVardata && mode == ParamInfo.Input)
-					bufpos =  readInt16(pos + ParamInfo.ParamNoOffset); 
+					bufpos =  ReadInt16(pos + ParamInfo.ParamNoOffset); 
 				else
 					bufpos = ReadInt32(pos + ParamInfo.BufPosOffset);
 
@@ -1141,7 +1141,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return readInt16(m_segmOffset + SegmentHeaderOffset.ReturnCode); 
+				return ReadInt16(m_segmOffset + SegmentHeaderOffset.ReturnCode); 
 			}
 		}
 
@@ -1197,7 +1197,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				try 
 				{
 					FindPart(PartKind.SessionInfoReturned);
-					return ReadInt32(PartDataPos + 1);
+					return Clone(0, false).ReadInt32(PartDataPos + 1);//??? session ID is always BigEndian
 				}
 				catch(PartNotFound) 
 				{
@@ -1226,7 +1226,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return readInt16(m_segmOffset + SegmentHeaderOffset.FunctionCode);
+				return ReadInt16(m_segmOffset + SegmentHeaderOffset.FunctionCode);
 			}
 		}
 

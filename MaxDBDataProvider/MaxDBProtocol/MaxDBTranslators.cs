@@ -10,6 +10,7 @@ using System.Data;
 namespace MaxDBDataProvider.MaxDBProtocol
 {
 #if NATIVE
+
 	#region "DB Tech translator class"
 
 	internal abstract class DBTechTranslator
@@ -604,8 +605,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			byte[] bytes = Encoding.GetEncoding(1251).GetBytes(data.ToString());
 			if (bytes.Length > m_physicalLength - 1) 
 				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
-			dataPart.writeDefineByte((byte) ' ', m_bufpos - 1);
-			dataPart.writeASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
+			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
+			dataPart.WriteASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)
@@ -868,8 +869,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		protected override void PutSpecific(DataPart dataPart, object data)
 		{
-			dataPart.writeDefineByte ((byte) 1, m_bufpos - 1);
-			dataPart.writeUnicodeBytes ((byte []) data, m_bufpos, m_physicalLength - 1);
+			dataPart.WriteDefineByte ((byte) 1, m_bufpos - 1);
+			dataPart.WriteUnicodeBytes ((byte []) data, m_bufpos, m_physicalLength - 1);
 		}
 	}
 
@@ -937,8 +938,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		protected override void PutSpecific (DataPart dataPart, object data)
 		{
 			byte[] bytes = (byte[]) data;
-			dataPart.writeDefineByte(0, m_bufpos - 1);
-			dataPart.WriteBytes (bytes, m_bufpos, m_physicalLength - 1);
+			dataPart.WriteDefineByte(0, m_bufpos - 1);
+			dataPart.WriteBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
 	}
 
@@ -1552,8 +1553,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			byte [] bytes = (byte[])data;
 			if (bytes.Length > m_physicalLength - 1) 
 				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
-			dataPart.writeDefineByte((byte) ' ', m_bufpos - 1);
-			dataPart.writeASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
+			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
+			dataPart.WriteASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
 	}
 
@@ -1570,7 +1571,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
-			return (!IsDBNull(mem) ? mem.readUnicode(m_bufpos, m_physicalLength - 1) : null);
+			return (!IsDBNull(mem) ? mem.ReadUnicode(m_bufpos, m_physicalLength - 1) : null);
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)
@@ -1594,8 +1595,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			byte[] bytes = (byte[])data;
 			if (bytes.Length > m_physicalLength - 1) 
 				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
-			dataPart.writeDefineByte ((byte) 1, m_bufpos - 1);
-			dataPart.writeUnicodeBytes(bytes, m_bufpos, m_physicalLength - 1);
+			dataPart.WriteDefineByte ((byte) 1, m_bufpos - 1);
+			dataPart.WriteUnicodeBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
 
 		public override object TransTimeForInput(DateTime dt)
@@ -1741,8 +1742,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			byte [] bytes = (byte[])data;
 			if (bytes.Length > m_physicalLength - 1) 
 				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
-			dataPart.writeDefineByte((byte) ' ', m_bufpos - 1);
-			dataPart.writeASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
+			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
+			dataPart.WriteASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
 	}
 
@@ -1759,7 +1760,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
-			return (!IsDBNull(mem) ? mem.readUnicode(m_bufpos, m_physicalLength - 1) : null);
+			return (!IsDBNull(mem) ? mem.ReadUnicode(m_bufpos, m_physicalLength - 1) : null);
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)
@@ -1788,8 +1789,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			byte[] bytes = (byte[])data;
 			if (bytes.Length > m_physicalLength - 1) 
 				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
-			dataPart.writeDefineByte ((byte) 1, m_bufpos - 1);
-			dataPart.writeUnicodeBytes(bytes, m_bufpos, m_physicalLength - 1);
+			dataPart.WriteDefineByte ((byte) 1, m_bufpos - 1);
+			dataPart.WriteUnicodeBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
 
 		public override object TransTimestampForInput(DateTime dt)
@@ -1900,8 +1901,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			byte [] bytes = (byte[])data;
 			if (bytes.Length > m_physicalLength - 1) 
 				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
-			dataPart.writeDefineByte((byte) ' ', m_bufpos - 1);
-			dataPart.writeASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
+			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
+			dataPart.WriteASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
 	}
 
@@ -1918,7 +1919,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
-			return (!IsDBNull(mem) ? mem.readUnicode(m_bufpos, m_physicalLength - 1) : null);
+			return (!IsDBNull(mem) ? mem.ReadUnicode(m_bufpos, m_physicalLength - 1) : null);
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)
@@ -1942,8 +1943,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			byte [] bytes = (byte[])data;
 			if (bytes.Length > m_physicalLength - 1) 
 				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
-			dataPart.writeDefineByte((byte) ' ', m_bufpos - 1);
-			dataPart.writeUnicodeBytes(bytes, m_bufpos, m_physicalLength - 1);
+			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
+			dataPart.WriteUnicodeBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
 
 		public override object TransDateForInput(DateTime dt)
@@ -1976,7 +1977,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		protected override void PutSpecific(DataPart dataPart, object data)
 		{
 			byte[] bytes = (byte[]) data;
-			dataPart.writeDefineByte(0, m_bufpos - 1);
+			dataPart.WriteDefineByte(0, m_bufpos - 1);
 			dataPart.WriteBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
 
@@ -2329,7 +2330,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			string ca  = memory.readUnicode(offset + recordOffset, structElement.Length * 2);
+			string ca  = memory.ReadUnicode(offset + recordOffset, structElement.Length * 2);
 			if(structElement.Length == 1) 
 				return ca[0];
 			else
@@ -2348,7 +2349,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			else 
 				throwConversionError(obj.GetType().FullName);
 			
-			memory.writeUnicode(convStr, offset);
+			memory.WriteUnicode(convStr, offset);
 		}
 	}
 
@@ -2364,7 +2365,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			return memory.readInt16(offset + recordOffset);
+			return memory.ReadInt16(offset + recordOffset);
 		}
 		
 		public override void PutValue(ByteArray memory, object obj)
@@ -2374,7 +2375,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				|| (obj is float && (float)obj <= short.MaxValue && (float)obj >= short.MinValue) 
 				|| (obj is double && (double)obj <= short.MaxValue && (double)obj >= short.MinValue)
 				|| (obj is decimal && (decimal)obj <= short.MaxValue && (decimal)obj >= short.MinValue))
-				memory.writeInt16((short)obj, offset);
+				memory.WriteInt16((short)obj, offset);
 			else
 			{
 				if (obj is float && ((float)obj > short.MaxValue || (float)obj < short.MinValue) 
@@ -2435,7 +2436,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			return memory.readInt64(offset + recordOffset);
+			return memory.ReadInt64(offset + recordOffset);
 		}
 		
 		public override void PutValue(ByteArray memory, object obj)
@@ -2445,7 +2446,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				|| (obj is float && (float)obj <= long.MaxValue && (float)obj >= long.MinValue) 
 				|| (obj is double && (double)obj <= long.MaxValue && (double)obj >= long.MinValue)
 				|| (obj is decimal && (decimal)obj <= long.MaxValue && (decimal)obj >= long.MinValue))
-				memory.writeInt64((long)obj, offset);
+				memory.WriteInt64((long)obj, offset);
 			else
 			{
 				if (obj is float && ((float)obj > long.MaxValue || (float)obj < long.MinValue) 

@@ -8,7 +8,7 @@ using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider
 {
-	public class MaxDBDataReader : IDataReader, IDataRecord 
+	public sealed class MaxDBDataReader : IDataReader, IDataRecord 
 #if NATIVE 
 		, ISQLParamController 
 #endif
@@ -28,8 +28,8 @@ namespace MaxDBDataProvider
 		private int             m_rowsInResultSet;       // the number of rows in this result set, or -1 if not known
 		private int             m_largestKnownAbsPos;    // largest known absolute position to be inside.
 		private int             m_modifiedKernelPos;     // contains 0 if the kernel pos is not modified
-													   // or the current kernel position.
-		private MaxDBConnection m_connection;	//connection handle
+														 // or the current kernel position.
+		private MaxDBConnection m_connection;			 //connection handle
 
 		internal MaxDBDataReader()
 		{
@@ -1093,9 +1093,7 @@ namespace MaxDBDataProvider
 			return true;
 		}
 
-		/*
-			Fetch the next chunk, moving forward over the result set.
-		*/
+		// Fetch the next chunk, moving forward over the result set.
 		private bool FetchNextChunk()
 		{
 			MaxDBReplyPacket reply;

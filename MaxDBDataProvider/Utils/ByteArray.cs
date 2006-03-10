@@ -54,6 +54,11 @@ namespace MaxDBDataProvider
 			return new ByteArray(m_data, m_offset + offset, m_swapMode); 
 		}
 
+		public ByteArray Clone(int offset, bool swapMode)
+		{
+			return new ByteArray(m_data, m_offset + offset, swapMode); 
+		}
+
 		public byte[] arrayData
 		{
 			get
@@ -161,23 +166,23 @@ namespace MaxDBDataProvider
 				return (ushort)(m_data[offset] * 0x100 + m_data[offset + 1]);
 		}
 
-		public void writeUInt16(ushort val, int offset)
+		public void WriteUInt16(ushort val, int offset)
 		{
-			writeValue(val, offset, 2);
+			WriteValue(val, offset, 2);
 		}
 
-		public short readInt16(int offset)
+		public short ReadInt16(int offset)
 		{
 			offset += m_offset;
 			return (short)ReadUInt16(offset);
 		}
 
-		public void writeInt16(short val, int offset)
+		public void WriteInt16(short val, int offset)
 		{
-			writeValue(val, offset, 2);
+			WriteValue(val, offset, 2);
 		}
 
-		public uint readUInt32(int offset)
+		public uint ReadUInt32(int offset)
 		{
 			offset += m_offset;
 			if (m_swapMode)
@@ -186,64 +191,64 @@ namespace MaxDBDataProvider
 				return (uint)(ReadUInt16(offset) * 0x10000 + ReadUInt16(offset + 2));
 		}
 
-		public void writeUInt32(uint val, int offset)
+		public void WriteUInt32(uint val, int offset)
 		{
-			writeValue(val, offset, 4);
+			WriteValue(val, offset, 4);
 		}
 
 		public int ReadInt32(int offset)
 		{
 			offset += m_offset;
-			return (int)readUInt32(offset);
+			return (int)ReadUInt32(offset);
 		}
 
 		public void WriteInt32(int val, int offset)
 		{
-			writeValue(val, offset, 4);
+			WriteValue(val, offset, 4);
 		}
 
-		public ulong readUInt64(int offset)
+		public ulong ReadUInt64(int offset)
 		{
 			if (m_swapMode)
-				return (ulong)(readUInt32(offset + 4) * 0x100000000 + readUInt32(offset));
+				return (ulong)(ReadUInt32(offset + 4) * 0x100000000 + ReadUInt32(offset));
 			else
-				return (ulong)(readUInt32(offset) * 0x100000000 + readUInt32(offset + 4));
+				return (ulong)(ReadUInt32(offset) * 0x100000000 + ReadUInt32(offset + 4));
 		}
 
-		public void writeUInt64(ulong val, int offset)
+		public void WriteUInt64(ulong val, int offset)
 		{
-			writeValue(val, offset, 8);
+			WriteValue(val, offset, 8);
 		}
 
-		public long readInt64(int offset)
+		public long ReadInt64(int offset)
 		{
 			offset += m_offset;
-			return (long)readUInt64(offset);
+			return (long)ReadUInt64(offset);
 		}
 
-		public void writeInt64(long val, int offset)
+		public void WriteInt64(long val, int offset)
 		{
-			writeValue(val, offset, 8);
+			WriteValue(val, offset, 8);
 		}
 
-		public float readFloat(int offset)
+		public float ReadFloat(int offset)
 		{
 			offset += m_offset;
 			return BitConverter.ToSingle(m_data, offset);
 		}
 
-		public void writeFloat(float val, int offset)
+		public void WriteFloat(float val, int offset)
 		{
 			WriteBytes(BitConverter.GetBytes(val), offset);
 		}
 
-		public double readDouble(int offset)
+		public double ReadDouble(int offset)
 		{
 			offset += m_offset;
 			return BitConverter.ToDouble(m_data, offset);
 		}
 
-		public void writeDouble(double val, int offset)
+		public void WriteDouble(double val, int offset)
 		{
 			WriteBytes(BitConverter.GetBytes(val), offset);
 		}
@@ -264,7 +269,7 @@ namespace MaxDBDataProvider
 			WriteBytes(Encoding.ASCII.GetBytes(val), offset, len, Consts.blankBytes);
 		}
 
-		public string readUnicode(int offset, int len)
+		public string ReadUnicode(int offset, int len)
 		{
 			offset += m_offset;
 			if (m_swapMode)
@@ -273,7 +278,7 @@ namespace MaxDBDataProvider
 				return Encoding.BigEndianUnicode.GetString(m_data, offset, len);
 		}
 
-		public void writeUnicode(string val, int offset)
+		public void WriteUnicode(string val, int offset)
 		{
 			if (m_swapMode)
 				WriteBytes(Encoding.Unicode.GetBytes(val), offset);
@@ -281,7 +286,7 @@ namespace MaxDBDataProvider
 				WriteBytes(Encoding.BigEndianUnicode.GetBytes(val), offset);
 		}
 
-		public void writeUnicode(string val, int offset, int len)
+		public void WriteUnicode(string val, int offset, int len)
 		{
 			if (m_swapMode)
 				WriteBytes(Encoding.Unicode.GetBytes(val), offset, len, Consts.blankUnicodeBytes);
@@ -289,7 +294,7 @@ namespace MaxDBDataProvider
 				WriteBytes(Encoding.BigEndianUnicode.GetBytes(val), offset, len, Consts.blankBigEndianUnicodeBytes);
 		}
 
-		protected void writeValue(ulong val, int offset, int bytes)
+		protected void WriteValue(ulong val, int offset, int bytes)
 		{
 			offset += m_offset;
 			for(int i = 0; i < bytes; i++)
@@ -302,7 +307,7 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		protected void writeValue(long val, int offset, int bytes)
+		protected void WriteValue(long val, int offset, int bytes)
 		{
 			offset += m_offset;
 			for(int i = 0; i < bytes; i++)

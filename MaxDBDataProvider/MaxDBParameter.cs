@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider
 {
@@ -120,10 +121,66 @@ namespace MaxDBDataProvider
 						return DbType.String;
 
 					default:
-						throw new MaxDBException("Parameter is of unknown data type");
+						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSIONSQLNET, 
+							DataType.stringValues[(int)m_dbType], string.Empty));
 				}
 			}
-			set  { m_dbType = this._inferDbType(value); }
+			set  
+			{
+				switch (value)
+				{
+					case DbType.SByte:
+					case DbType.Byte:
+						m_dbType = MaxDBType.CharB;
+						break;
+					case DbType.UInt16:
+					case DbType.UInt32:
+					case DbType.UInt64:
+					case DbType.Int64:
+						m_dbType = MaxDBType.Fixed;
+						break;
+					case DbType.Boolean:
+						m_dbType = MaxDBType.Boolean;
+						break;
+					case DbType.Int16:
+						m_dbType = MaxDBType.SmallInt;
+						break;
+					case DbType.Int32:
+						m_dbType = MaxDBType.Integer;
+						break;
+					case DbType.Single:
+						m_dbType = MaxDBType.Number;
+						break;
+					case DbType.Double:
+						m_dbType = MaxDBType.Number;
+						break;
+					case DbType.Decimal:
+						m_dbType = MaxDBType.Number;
+						break;
+					case DbType.Date:
+						m_dbType = MaxDBType.Date;
+						break;
+					case DbType.Time:
+						m_dbType = MaxDBType.Time;
+						break;
+					case DbType.DateTime:
+						m_dbType = MaxDBType.TimeStamp;
+						break;
+					case DbType.AnsiString:
+					case DbType.Guid:
+						m_dbType = MaxDBType.VarCharA;
+						break;
+					case DbType.String:
+						m_dbType = MaxDBType.VarCharUni;//?? unicode
+						break;
+					case DbType.StringFixedLength:
+						m_dbType = MaxDBType.CharE;//?? unicode
+						break;
+					default:
+						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSIONNETSQL, value.ToString(), string.Empty));
+				}
+
+			}
 		}
 
 		public ParameterDirection Direction 
@@ -222,57 +279,6 @@ namespace MaxDBDataProvider
 					throw new MaxDBException("Value is of unknown data type");
 			}
 		}
-
-		private MaxDBType _inferDbType(DbType type)
-		{
-			switch (type)
-			{
-				case DbType.Object:
-					throw new MaxDBException("Invalid data type");
-
-				case DbType.SByte:
-					return MaxDBType.CharA;
-
-				case DbType.UInt16:
-				case DbType.UInt32:
-				case DbType.UInt64:
-					return MaxDBType.Fixed;
-
-				case DbType.Boolean:
-					return MaxDBType.Boolean;
-
-				case DbType.Byte:
-					return MaxDBType.CharB;
-
-				case DbType.Int16:
-					return MaxDBType.SmallInt;
-
-				case DbType.Int32:
-					return MaxDBType.Integer;
-
-				case DbType.Int64:
-					return MaxDBType.Fixed;
-
-				case DbType.Single:
-					return MaxDBType.Float;
-
-				case DbType.Double:
-					return MaxDBType.Float;
-
-				case DbType.Decimal:
-					return MaxDBType.Float;
-
-				case DbType.DateTime:
-					return MaxDBType.TimeStamp;
-
-				case DbType.String:
-					return MaxDBType.StrUni;
-
-				default:
-					throw new MaxDBException("Value is of unknown data type");
-			}
-		}
-
 	}
 }
 
