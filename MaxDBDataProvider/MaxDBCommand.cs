@@ -1356,4 +1356,3 @@ namespace MaxDBDataProvider
 #endif
 	}
 }
-
