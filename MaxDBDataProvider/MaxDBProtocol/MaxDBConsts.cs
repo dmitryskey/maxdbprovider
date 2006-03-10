@@ -299,15 +299,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			 */
 			ERROR_RESULTSET_NOTUPDATABLE = "error.resultset.notupdatable",
 
-			/**
-			 * Try to retrieve named savepoint by index.
-			 */
-			ERROR_NAMED_SAVEPOINT = "error.named.savepoint",
-
-			/**
-			 * Try to retrieve unnamed savepoint by name.
-			 */
-			ERROR_UNNAMED_SAVEPOINT = "error.unnamed.savepoint",
+			// Try to retrieve unnamed parameter by name.
+			ERROR_UNNAMED_PARAMETER = "error.unnamed.parameter",
 
 			/**
 			 * Try to use something as save point.

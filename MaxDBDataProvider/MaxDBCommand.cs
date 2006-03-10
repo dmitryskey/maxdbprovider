@@ -572,8 +572,8 @@ namespace MaxDBDataProvider
 				for(ushort i = 0; i < m_parameters.Count; i++)
 				{
 					MaxDBParameter param = m_parameters[i];
-					//if (param.Direction == ParameterDirection.Input)
-					//	continue;
+					if (param.Direction == ParameterDirection.Input)
+						continue;
 
 					switch(param.m_dbType)
 					{
@@ -676,7 +676,10 @@ namespace MaxDBDataProvider
 							m_hasRowCount = true;
 						}
 						break;
-					case PartKind.ResultTableName: 
+					case PartKind.ResultTableName:
+						string cname = replyPacket.ReadASCII(replyPacket.PartDataPos, replyPacket.PartLength);
+						if (cname.Length > 0)
+							m_cursorName = cname;
 						break;
 					case PartKind.Data: 
 						dataPartFound = true;

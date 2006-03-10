@@ -6,11 +6,12 @@ namespace MaxDBDataProvider
 {
 	public class MaxDBParameter : IDataParameter
 	{
-		internal MaxDBType m_dbType  = MaxDBType.Fixed;
+		internal MaxDBType m_dbType = MaxDBType.VarCharA;
 		internal ParameterDirection m_direction = ParameterDirection.Input;
 		bool m_fNullable  = false;
 		string m_sParamName;
 		string m_sSourceColumn;
+		int m_size;
 		DataRowVersion m_sourceVersion = DataRowVersion.Current;
 		object m_value;
 
@@ -24,56 +25,30 @@ namespace MaxDBDataProvider
 			m_dbType   = type;
 		}
 
-		public MaxDBParameter(string parameterName, object value)
+		public MaxDBParameter(string parameterName, object val)
 		{
 			m_sParamName = parameterName;
-			Value = value;   
+			m_value = val;   
 		}
 
-		public MaxDBParameter(string parameterName, MaxDBType dbType, object p_value )
+		public MaxDBParameter(string parameterName, MaxDBType type, int size) : this(parameterName, type)
 		{
-			m_sParamName  = parameterName;
-			m_dbType    = dbType;
-			switch (m_dbType)
-			{
-				case MaxDBType.Boolean:
-					m_value = (bool)p_value;
-					break;
-				case MaxDBType.CharA:
-					m_value = (sbyte)p_value;
-					break;
-				case MaxDBType.CharB:
-					m_value = (byte)p_value;
-					break;
-				case MaxDBType.Date:
-				case MaxDBType.Time:
-				case MaxDBType.TimeStamp:
-					m_value = (DateTime)p_value;
-					break;
-				case MaxDBType.Fixed:
-				case MaxDBType.Float:
-				case MaxDBType.VFloat:
-					m_value = (double)p_value;
-					break;
-				case MaxDBType.Integer:
-					m_value = (int)p_value;
-					break;
-				case MaxDBType.SmallInt:
-					m_value = (short)p_value;
-					break;
-				case MaxDBType.StrA:
-				case MaxDBType.StrB:
-				case MaxDBType.VarCharA:
-				case MaxDBType.VarCharB:
-				case MaxDBType.Unicode:
-				case MaxDBType.VarCharUni:
-				case MaxDBType.StrUni:
-					m_value = (string)p_value;
-					break;
-				default:
-					m_value = p_value;
-					break;
-			}
+			m_size = size;
+		}
+
+		public MaxDBParameter(string parameterName, MaxDBType type, int size, string sourceColumn) : this(parameterName, type, size)
+		{
+			m_sSourceColumn = sourceColumn;
+		}
+
+		public MaxDBParameter(string parameterName, MaxDBType type, int size, ParameterDirection direction,
+			bool isNullable, byte precision, byte scale, string sourceColumn, DataRowVersion sourceVersion, object val) : 
+				this (parameterName, type, size, sourceColumn)
+		{
+			m_fNullable = isNullable;
+			m_direction = direction;
+			m_sourceVersion = sourceVersion;
+			m_value = val;
 		}
 
 		public DbType DbType 
@@ -112,6 +87,7 @@ namespace MaxDBDataProvider
 						return DbType.AnsiString;
 
 					case MaxDBType.Time:
+						return DbType.Time;
 					case MaxDBType.TimeStamp:
 						return DbType.DateTime;
 
