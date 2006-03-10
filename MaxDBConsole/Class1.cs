@@ -40,9 +40,10 @@ namespace MaxDBDataProvider
 
 				for(int i=0;i<1;i++)
 				{
-					using(MaxDBCommand cmd = new MaxDBCommand("SELECT info FROM hotel", maxdbconn))
+					using(MaxDBCommand cmd = new MaxDBCommand("SELECT 1+2 from dual", maxdbconn))
 					{
-						//						cmd.Parameters.Add(":a", MaxDBType.VarCharUni, "Hello");
+						//cmd.Parameters.Add(":a", MaxDBType.DTFiller1, "Congress");
+						//DbType dd1 = cmd.Parameters[0].DbType;
 						//						cmd.Parameters.Add(":b", MaxDBType.Fixed, 0.0);
 
 						//cmd.Transaction = trans;
@@ -51,10 +52,11 @@ namespace MaxDBDataProvider
 						while(reader.Read())
 						{
 							/*
+							
+							reader.GetChars(0, 46, buffer, 3, 36);*/
+							string str = reader.GetString(0);
 							char[] buffer = new char[40];
-							reader.GetChars(0, 46, buffer, 3, 36);
-							Console.Out.WriteLine(new string(buffer));
-							*/
+							
 						}
 						//						DataTable dt = reader.GetSchemaTable();
 

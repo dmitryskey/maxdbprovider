@@ -432,48 +432,8 @@ namespace MaxDBDataProvider
 				requestPacket.InitExecute(m_parseInfo.ParseID, m_connection.AutoCommit);
 				if (m_parseInfo.m_isSelect) 
 					requestPacket.AddCursorPart(m_cursorName);
+				
 				// We must add a data part if we have input parameters or even if we have output streams.
-				if (m_parseInfo.m_inputCount > 0 || m_parseInfo.m_hasStreams) 
-				{
-					dataPart = requestPacket.NewDataPart(m_parseInfo.m_varDataInput);
-					if (m_parseInfo.m_inputCount > 0) 
-					{
-						dataPart.AddRow(m_parseInfo.m_inputCount);
-						for (int i = 0; i < m_parseInfo.m_paramInfos.Length; ++i) 
-						{
-							if (m_parseInfo.m_paramInfos[i].IsInput && m_initialParamValue == m_inputArgs[i].ToString())
-							{
-								if (m_parseInfo.m_paramInfos[i].IsStreamKind)
-									throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
-								else
-									throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_MISSINGINOUT, i + 1, "02000"));
-							}
-							else 
-								m_parseInfo.m_paramInfos[i].Put(dataPart, m_inputArgs[i]);
-						}
-						m_inputProcedureLongs = null;
-						if (m_parseInfo.m_hasLongs) 
-						{
-							if (m_parseInfo.m_isDBProc) 
-								HandleProcedureStreamsForExecute(dataPart, m_inputArgs);
-							else 
-								HandleStreamsForExecute(dataPart, m_inputArgs);
-						}
-						if (m_parseInfo.m_hasStreams) 
-							throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
-					} 
-					else 
-						throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
-					dataPart.Close();
-				}
-				// add a decribe order if command rturns a resultset
-				if (m_parseInfo.m_isSelect && m_parseInfo.m_columnInfos == null
-					&& m_parseInfo.m_funcCode != FunctionCode.DBProcWithResultSetExecute)
-				{
-					requestPacket.InitDbsCommand("DESCRIBE ", false, false);
-					requestPacket.AddParseIdPart(m_parseInfo.ParseID);
-				}
-
 				for(ushort i = 0; i < m_parameters.Count; i++)
 				{
 					MaxDBParameter param = m_parameters[i];
@@ -524,6 +484,46 @@ namespace MaxDBDataProvider
 					}
 				}
 
+				if (m_parseInfo.m_inputCount > 0 || m_parseInfo.m_hasStreams) 
+				{
+					dataPart = requestPacket.NewDataPart(m_parseInfo.m_varDataInput);
+					if (m_parseInfo.m_inputCount > 0) 
+					{
+						dataPart.AddRow(m_parseInfo.m_inputCount);
+						for (int i = 0; i < m_parseInfo.m_paramInfos.Length; ++i) 
+						{
+							if (m_parseInfo.m_paramInfos[i].IsInput && m_initialParamValue == m_inputArgs[i].ToString())
+							{
+								if (m_parseInfo.m_paramInfos[i].IsStreamKind)
+									throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
+								else
+									throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_MISSINGINOUT, i + 1, "02000"));
+							}
+							else 
+								m_parseInfo.m_paramInfos[i].Put(dataPart, m_inputArgs[i]);
+						}
+						m_inputProcedureLongs = null;
+						if (m_parseInfo.m_hasLongs) 
+						{
+							if (m_parseInfo.m_isDBProc) 
+								HandleProcedureStreamsForExecute(dataPart, m_inputArgs);
+							else 
+								HandleStreamsForExecute(dataPart, m_inputArgs);
+						}
+						if (m_parseInfo.m_hasStreams) 
+							throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
+					} 
+					else 
+						throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
+					dataPart.Close();
+				}
+				// add a decribe order if command rturns a resultset
+				if (m_parseInfo.m_isSelect && m_parseInfo.m_columnInfos == null
+					&& m_parseInfo.m_funcCode != FunctionCode.DBProcWithResultSetExecute)
+				{
+					requestPacket.InitDbsCommand("DESCRIBE ", false, false);
+					requestPacket.AddParseIdPart(m_parseInfo.ParseID);
+				}
 
 				try 
 				{
@@ -534,7 +534,7 @@ namespace MaxDBDataProvider
 					// as next packet is harmful. Same with INPUT LONG parameters of
 					// DB Procedures.
 				}
-				catch (MaxDBSQLException dbExc) 
+				catch(MaxDBSQLException dbExc) 
 				{
 					if ((dbExc.VendorCode == -8) && afterParseAgain > 0) 
 					{
@@ -572,6 +572,9 @@ namespace MaxDBDataProvider
 				for(ushort i = 0; i < m_parameters.Count; i++)
 				{
 					MaxDBParameter param = m_parameters[i];
+					//if (param.Direction == ParameterDirection.Input)
+					//	continue;
+
 					switch(param.m_dbType)
 					{
 						case MaxDBType.Boolean:
@@ -939,7 +942,7 @@ namespace MaxDBDataProvider
 				dataPart = requestPacket.InitPutValue(m_connection.AutoCommit);
 				
 				// get all descriptors and putvals
-				for (short i = firstOpenStream; (i < count) && dataPart.hasRoomFor(LongDesc.Size + 1); i++) 
+				for (short i = firstOpenStream; (i < count) && dataPart.HasRoomFor(LongDesc.Size + 1); i++) 
 				{
 					putval = (PutValue) m_inputLongs[i];
 					if (putval.AtEnd) 
@@ -1006,7 +1009,7 @@ namespace MaxDBDataProvider
 			{
 				descriptor = descriptorArray[i];
 				descriptorPointer = new ByteArray(descriptor);
-				valIndex = descriptorPointer.readInt16(LongDesc.ValInd);
+				valIndex = descriptorPointer.ReadInt16(LongDesc.ValInd);
 				putval = (PutValue)m_inputLongs[valIndex];
 				putval.setDescriptor(descriptor);
 			}

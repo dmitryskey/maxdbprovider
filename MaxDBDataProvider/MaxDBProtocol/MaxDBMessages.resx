@@ -97,21 +97,8 @@
 	<resheader name="writer">
 		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=1.0.5000.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
 	</resheader>
-	<data name="error.connect.rteexception">
-		<value>Cannot connect to {0} [{1}].</value>
-		<comment>{0} - URL, {1} - RTEException message (localized)</comment>
-	</data>
-	<data name="error.invalid.transactionisolation">
-		<value>The transaction isolation level {0} is invalid.</value>
-		<comment>{0} - given isolation level</comment>
-	</data>
-	<data name="error.invalid.transport">
-		<value>The transport option {0} is invalid.</value>
-		<comment>{0} - given transport option</comment>
-	</data>
-	<data name="error.library.notloaded">
-		<value>The native support library {0} was not loaded.</value>
-		<comment>{0} - name of shared library</comment>
+	<data name="error.connection.notopened">
+		<value>Connection is not opened.</value>
 	</data>
 	<data name="error.valueoverflow">
 		<value>Parameter {0}: value too large.</value>
@@ -125,14 +112,6 @@
 		<value>[{0}]: {1}</value>
 		<comment>{0} - vendor code, {1} - reason (localized)</comment>
 	</data>
-	<data name="error.invalid.argumentvalue">
-		<value>Invalid argument {0}.</value>
-		<comment>{0} - the argument</comment>
-	</data>
-	<data name="error.invalid.argumentvalue.wexample">
-		<value>Invalid argument {0}, use {1}.</value>
-		<comment>{0} - the argument, {1} - sample value(s)</comment>
-	</data>
 	<data name="error.invalidcolumnindex">
 		<value>Invalid column index {0}.</value>
 		<comment>{0} - the column index</comment>
@@ -141,22 +120,11 @@
 		<value>Invalid column {0}.</value>
 		<comment>{0} - the column name</comment>
 	</data>
-	<data name="error.notimplemented">
-		<value>Not implemented ({0}).</value>
-		<comment>{0} - the detail reason (localized)</comment>
-	</data>
 	<data name="error.objectisclosed">
 		<value>Object is closed.</value>
 	</data>
 	<data name="error.timeout">
 		<value>Timeout</value>
-	</data>
-	<data name="error.restart.required">
-		<value>SERVERDB must be restarted.</value>
-	</data>
-	<data name="error.invariant.messswap">
-		<value>Invariant violated: messSwap = {0}.</value>
-		<comment>{0} - value of messswap</comment>
 	</data>
 	<data name="error">
 		<value>Error</value>
@@ -189,33 +157,6 @@
 	<data name="error.movebackwardinblob">
 		<value>Moving backwards in Blob is not supported.</value>
 	</data>
-	<data name="error.setbytes.notimplemented">
-		<value>Method setBytes() is not yet implemented.</value>
-	</data>
-	<data name="error.setbinarystream.notimplemented">
-		<value>Method setBinaryStream() is not yet implemented.</value>
-	</data>
-	<data name="error.truncate.notimplemented">
-		<value>Method truncate() not yet implemented.</value>
-	</data>
-	<data name="error.setstring.notimplemented">
-		<value>Method setString() not yet implemented.</value>
-	</data>
-	<data name="error.setasciistream.notimplemented">
-		<value>Method setAsciiStream() not yet implemented.</value>
-	</data>
-	<data name="error.setcharacterstream.notimplemented">
-		<value>Method setCharacterStream() not yet implemented.</value>
-	</data>
-	<data name="error.getsubstring.notimplemented">
-		<value>Method getSubString() not yet implemented.</value>
-	</data>
-	<data name="error.position.notimplemented">
-		<value>Method position() not yet implemented.</value>
-	</data>
-	<data name="error.getbytes.notimplemented">
-		<value>Method getBytes() not yet implemented.</value>
-	</data>
 	<data name="error.asciireadfromlong">
 		<value>Cannot read ASCII data from this LONG column.</value>
 	</data>
@@ -227,13 +168,6 @@
 	</data>
 	<data name="error.binaryputtolong">
 		<value>Cannot put binary data into this LONG column.</value>
-	</data>
-	<data name="error.notranslator">
-		<value>No translator for data type {0}.</value>
-		<comment>{0} - data type (code number)</comment>
-	</data>
-	<data name="error.addbatch.preparedstatement">
-		<value>Call of addBatch(String) is not allowed for PreparedStatement.</value>
 	</data>
 	<data name="error.sqlstatement.null">
 		<value>SQL statement is null.</value>
@@ -295,10 +229,6 @@
 		<value>The number value {0} is not supported.</value>
 		<comment>{0} - the NaN or INF value</comment>
 	</data>
-	<data name="error.memoryresult.method.notimplemented">
-		<value>Method {0}() of MemoryResultSet is not yet implemented.</value>
-		<comment>{0} - the method name</comment>
-	</data>
 	<data name="error.nouser">
 		<value>No user name given.</value>
 	</data>
@@ -358,9 +288,6 @@
 	<data name="error.nodatapart">
 		<value>Execute delivered no data part.</value>
 	</data>
-	<data name="error.getobject.notimplemented">
-		<value>Method getObject() is not yet implemented.</value>
-	</data>
 	<data name="error.preparestatement.notimplemented">
 		<value>Method prepareStatement() is not yet implemented.</value>
 	</data>
@@ -375,9 +302,6 @@
 	</data>
 	<data name="error.nooutparamdata">
 		<value>No output parameter data delivered by call statement.</value>
-	</data>
-	<data name="error.getcolumnclassname.notimplemented">
-		<value>Method getColumnClassName() is not yet implemented.</value>
 	</data>
 	<data name="error.internal.preparehelper">
 		<value>Internal error in method prepareHelper().</value>
@@ -570,9 +494,6 @@
 	<data name="error.stream.isatend">
 		<value>Stream is empty or already closed.</value>
 	</data>
-	<data name="error.codeset.unsupported">
-		<value>The code set {0} is not supported for structure elements.</value>
-	</data>
 	<data name="error.conversion.structuretype">
 		<value>Structure member {0} has unsupported data type {1}.</value>
 	</data>
@@ -608,9 +529,6 @@
 	</data>
 	<data name="error.invalid.startposition">
 		<value>Internal error: Invalid start position for LONG data.</value>
-	</data>
-	<data name="error.reset.stream">
-		<value>Unable to reset stream for DB procedure.</value>
 	</data>
 	<data name="error.connection.wrongserverchallengereceived">
 		<value>Connect failed, wrong format of server challenge [{0}] </value>

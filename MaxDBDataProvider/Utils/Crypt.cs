@@ -5,6 +5,7 @@ using MaxDBDataProvider.MaxDBProtocol;
 namespace MaxDBDataProvider
 {
 #if NATIVE
+
 	#region "Sample HMACMD5 implementation"
 
 	public class HMACMD5 : KeyedHashAlgorithm 
@@ -191,7 +192,7 @@ namespace MaxDBDataProvider
 				passwd = passwd.PadRight(maxPasswdLen, ' ');
         
 			if (isUnicode) 
-				passwdBytes.writeUnicode(passwd, 0);
+				passwdBytes.WriteUnicode(passwd, 0);
 			else 
 				passwdBytes.WriteASCII(passwd, 0);
 
@@ -281,7 +282,7 @@ namespace MaxDBDataProvider
 				throw new MaxDBSQLException(MessageTranslator.Translate
 					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
 
-			string alg = vData.readASCII(vData.CurrentOffset, vData.CurrentFieldLen);
+			string alg = vData.ReadASCII(vData.CurrentOffset, vData.CurrentFieldLen);
 			if (alg.ToUpper().Trim() != Crypt.ScramMD5Name)
 				throw new MaxDBSQLException(MessageTranslator.Translate
 					(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
@@ -298,7 +299,7 @@ namespace MaxDBDataProvider
 			}
 			else
 			{
-				DataPartVariable vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen), 0, vData.origData.Swapped), 1);
+				DataPartVariable vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen), 0, vData.m_origData.Swapped), 1);
 				if (!vd.NextRow() || !vd.NextField())
 					throw new MaxDBSQLException(MessageTranslator.Translate
 						(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
@@ -315,7 +316,7 @@ namespace MaxDBDataProvider
 				// from Version 7.6.0.10 on also the max password length will be delivered
 				if (vData.NextField())
 				{
-					DataPartVariable mp_vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen), 0, vData.origData.Swapped), 1);
+					DataPartVariable mp_vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen), 0, vData.m_origData.Swapped), 1);
 					if (!mp_vd.NextRow() || !mp_vd.NextField()) 
 						throw new MaxDBSQLException(MessageTranslator.Translate
 							(MessageKey.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
@@ -323,7 +324,7 @@ namespace MaxDBDataProvider
 
 					do 
 					{
-						if (mp_vd.readASCII(mp_vd.CurrentOffset, mp_vd.CurrentFieldLen).ToLower().Trim() == Packet.MaxPasswordLenTag)
+						if (mp_vd.ReadASCII(mp_vd.CurrentOffset, mp_vd.CurrentFieldLen).ToLower().Trim() == Packet.MaxPasswordLenTag)
 						{
 							if (!mp_vd.NextField()) 
 								throw new MaxDBSQLException(MessageTranslator.Translate
@@ -333,7 +334,7 @@ namespace MaxDBDataProvider
 							{
 								try 
 								{
-									maxPasswordLen = int.Parse(mp_vd.readASCII(mp_vd.CurrentOffset, mp_vd.CurrentFieldLen));
+									maxPasswordLen = int.Parse(mp_vd.ReadASCII(mp_vd.CurrentOffset, mp_vd.CurrentFieldLen));
 								} 
 								catch
 								{
@@ -358,5 +359,6 @@ namespace MaxDBDataProvider
 	}
 
 	#endregion
+
 #endif
 }

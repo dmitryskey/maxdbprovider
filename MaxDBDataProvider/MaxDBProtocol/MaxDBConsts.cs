@@ -119,162 +119,65 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	{
 		public const string 
 
-			// An RTEException was thrown in a connect operation.
-			ERROR_CONNECTRTEEXCEPTION = "error.connect.rteexception",
-
 			// Connection is not opened
 			ERROR_CONNECTIONNOTOPENED = "error.connection.notopened",
 
-			/**
-			 * The transaction isolation level set as option is invalid.
-			 */
-			ERROR_INVALIDTRANSACTIONISOLATION = "error.invalid.transactionisolation",
-
-			/*
-			 * The transport option was set to an invalid value.
-			 */
-			ERROR_INVALIDTRANSPORT = "error.invalid.transport",
-
-			/**
-			 * Native support library was not initialised.
-			 */
-			ERROR_LIBRARYNOTLOADED = "error.library.notloaded",
-
-			/**
-			 * Value overflow.
-			 */
+			// Value overflow.
 			ERROR_VALUEOVERFLOW = "error.valueoverflow",
 
-			/**
-			 * Database exception (with error position).
-			 */
+			// Database exception (with error position).
 			ERROR_DATABASEEXCEPTION = "error.databaseexception",
 
-			/**
-			 * Database exception (without error position).
-			 */
+			// Database exception (without error position).
 			ERROR_DATABASEEXCEPTION_WOERRPOS = "error.databaseexception.woerrpos",
 
-			/**
-			 * Invalid argument value.
-			 */
-			ERROR_INVALIDARGUMENTVALUE = "error.invalid.argumentvalue",
-
-			/**
-			 * Invalid argument value, correct examples are given.
-			 */
-			ERROR_INVALIDARGUMENTVALUE_WEXAMPLE = "error.invalid.argumentvalue.wexample",
-
-			/**
-			 * Invalid column index.
-			 */
+			// Invalid column index.
 			ERROR_INVALIDCOLUMNINDEX = "error.invalidcolumnindex",
 
-			/**
-			 * Invalid column name.
-			 */
+			// Invalid column name.
 			ERROR_INVALIDCOLUMNNAME = "error.invalidcolumnname",
 
-			/**
-			 * Something is not yet there.
-			 */
-			ERROR_NOTIMPLEMENTED = "error.notimplemented",
-
-			/**
-			 * Stream for LONG input could not be resetted.
-			 */
-			ERROR_RESET_STREAM = "error.reset.stream",
-
-			/**
-			* An object is closed but shouldn't.
-			*/
+			// An object is closed but shouldn't.
 			ERROR_OBJECTISCLOSED = "error.objectisclosed",
 
-			/**
-			 * A time out.
-			 */
+			// A time out.
 			ERROR_TIMEOUT = "error.timeout",
 
-			/**
-			 * Restart required.
-			 */
-			ERROR_RESTARTREQUIRED = "error.restart.required",
-
-			/**
-			 * Invariant: messswap <= 0
-			 */
-			ERROR_INVARIANT_MESSSWAP = "error.invariant.messswap",
-
-			/**
-			 * No longdata packet.
-			 */
+			// No longdata packet.
 			ERROR_LONGDATAEXPECTED = "error.longdata.expected",
 
-			/**
-			 * Invalid startposition for long data. 
-			 */
+			// Invalid startposition for long data. 
 			ERROR_INVALID_STARTPOSITION = "error.invalid.startposition",
 
-			/**
-			 * SQL -> .NET type conversion.
-			 */
+			// SQL -> .NET type conversion.
 			ERROR_CONVERSIONSQLNET = "error.conversion.sqlnet",
 
-			/**
-			 * .NET -> SQL type conversion.
-			 */
+			// .NET -> SQL type conversion.
 			ERROR_CONVERSIONNETSQL = "error.conversion.netsql",
 
-			/**
-			 * Data -> any type conversion.
-			 */
+			// Data -> any type conversion.
 			ERROR_CONVERSIONDATA = "error.conversion.data",
 
-			/**
-			 * VDN Number -> BigDecimal conversion.
-			 */
+			// VDN Number -> BigDecimal conversion.
 			ERROR_CONVERSIONVDNnumber = "error.conversion.VDNnumber",
 
-			/**
-			 * VDN Number -> Special Null value.
-			 */
+			// VDN Number -> Special Null value.
 			ERROR_CONVERSIONSpecialNullValue = "error.conversion.SpecialNullValue",
 
-			/**
-			 * Unsupported blob navigation.
-			 */
+			// Unsupported blob navigation.
 			ERROR_MOVEBACKWARDINBLOB = "error.movebackwardinblob",
 
-			/**
-			 * Try to read ASCII data from LONG column.
-			 */
+			// Try to read ASCII data from LONG column.
 			ERROR_ASCIIREADFROMLONG = "error.asciireadfromlong",
 
-			/**
-			 * Try to read binary data from LONG column.
-			 */
+			// Try to read binary data from LONG column.
 			ERROR_BINARYREADFROMLONG = "error.binaryreadfromlong",
 
-			/**
-			 * Try to put ASCII data into LONG column.
-			 */
+			// Try to put ASCII data into LONG column.
 			ERROR_ASCIIPUTTOLONG = "error.asciiputtolong",
 
-
-			/**
-			 * No data type translator.
-			 */
-			ERROR_NOTRANSLATOR = "error.notranslator",
-
-			/**
-			 * Try to put binary data into LONG column.
-			 */
+			// Try to put binary data into LONG column.
 			ERROR_BINARYPUTTOLONG = "error.binaryputtolong",
-
-			/**
-			 * Call of addBatch on prepared statement (not ok).
-			 */
-			ERROR_PREPAREDSTATEMENT_ADDBATCH = "error.addbatch.preparedstatement",
 
 			/**
 			 * Call of cancel occured.
@@ -675,22 +578,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			ERROR_AUTOGENKEYS_RETRIEVAL_UNSUPPORTED = "error.autogenkeys.retrieval.unsupported",
 			ERROR_SPECIAL_NUMBER_UNSUPPORTED = "error.special.number.unsupported",
 			ERROR_OMS_UNSUPPORTED = "error.oms.unsupported",
-
-			// unimplemented todos
-			ERROR_SETBYTES_NOTIMPLEMENTED = "error.setbytes.notimplemented",
-			ERROR_SETBINARYSTREAM_NOTIMPLEMENTED = "error.setbinarystream.notimplemented",
-			ERROR_TRUNCATE_NOTIMPLEMENTED = "error.truncate.notimplemented",
-			ERROR_SETSTRING_NOTIMPLEMENTED = "error.setstring.notimplemented",
-			ERROR_SETASCIISTREAM_NOTIMPLEMENTED = "error.setasciistream.notimplemented",
-			ERROR_SETCHARACTERSTREAM_NOTIMPLEMENTED = "error.setcharacterstream.notimplemented",
-			ERROR_GETSUBSTRING_NOTIMPLEMENTED = "error.getsubstring.notimplemented",
-			ERROR_POSITION_NOTIMPLEMENTED = "error.position.notimplemented",
-			ERROR_GETBYTES_NOTIMPLEMENTED = "error.getbytes.notimplemented",
-			ERROR_GETOBJECT_NOTIMPLEMENTED = "error.getobject.notimplemented",
-			ERROR_PREPARESTATEMENT_NOTIMPLEMENTED = "error.preparestatement.notimplemented",
-			ERROR_GETCOLUMNCLASSNAME_NOTIMPLEMENTED = "error.getcolumnclassname.notimplemented",
-			ERROR_MEMORYRESULT_METHOD_NOTIMPLEMENTED = "error.memoryresult.method.notimplemented",
-			ERROR_CODESET_UNSUPPORTED = "error.codeset.unsupported",
 	
 			// communication errors
 			COMMERROR_OK="commerror.ok",
@@ -1442,7 +1329,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public const string AppID = "ADO";//"ODB"; 
 		public const string ApplVers = "10100";//"70400";
-		public static readonly bool IsLittleEndian = !BitConverter.IsLittleEndian;
+		public static readonly bool IsLittleEndian = BitConverter.IsLittleEndian;
 		public const string Cursor_Prefix = "ADONET_CURSOR_";//"JDBC_CURSOR_";
 
 		static Consts()

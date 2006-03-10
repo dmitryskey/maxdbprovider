@@ -63,7 +63,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if (m_desc == null) 
 				m_desc = new byte[LongDesc.Size];
         
-			m_descMark = mem.writeDescriptor(pos, m_desc);
+			m_descMark = mem.WriteDescriptor(pos, m_desc);
 		}
 
 		private byte[] newDescriptor
@@ -79,7 +79,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if (m_desc == null) 
 				m_desc = newDescriptor;
 			
-			m_descMark = mem.writeDescriptor(pos, m_desc);
+			m_descMark = mem.WriteDescriptor(pos, m_desc);
 		}
 
 		public void setDescriptor(byte[] desc)
@@ -90,7 +90,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public virtual void TransferStream(DataPart dataPart)
 		{
 			if (AtEnd)
-				dataPart.markEmptyStream(m_descMark);
+				dataPart.MarkEmptyStream(m_descMark);
 			else 
 				if (dataPart.FillWithStream(m_stream, m_descMark, this)) 
 			{
@@ -109,7 +109,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public void TransferStream(DataPart dataPart, short streamIndex)
 		{
 			TransferStream(dataPart);
-			m_descMark.writeInt16(streamIndex, LongDesc.ValInd);
+			m_descMark.WriteInt16(streamIndex, LongDesc.ValInd);
 		}
 
 		public void MarkAsLast(DataPart dataPart)
@@ -210,7 +210,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			if(m_reqData != null) 
 			{
-				StringReader firstChunk = new StringReader(m_reqData.readUnicode(0, m_reqLength));
+				StringReader firstChunk = new StringReader(m_reqData.ReadUnicode(0, m_reqLength));
 				if(reader == null) 
 					reader = firstChunk;
 				else
@@ -240,14 +240,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public void UpdateIndex(int index)
 		{
-			this.descriptorMark.writeInt16((short)index, LongDesc.ValInd);        
+			this.descriptorMark.WriteInt16((short)index, LongDesc.ValInd);        
 		}
 
 		public void putDescriptor(DataPart memory)
 		{
-			memory.writeDefineByte (0, translator.BufPos - 1);
+			memory.WriteDefineByte (0, translator.BufPos - 1);
 			memory.WriteBytes(descriptor.arrayData, translator.BufPos);
-			descriptorMark = memory.origData.Clone(translator.BufPos);       
+			descriptorMark = memory.m_origData.Clone(translator.BufPos);       
 		}
 
 		public abstract void TransferStream(DataPart dataPart, short rowCount);
@@ -525,56 +525,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public abstract Stream BinaryStream{get;}
 
 		public abstract TextReader CharacterStream{get;}
-
-		public long Position(string searchstr, long start)
-		{
-			throw new NotImplementedException(MessageTranslator.Translate(MessageKey.ERROR_POSITION_NOTIMPLEMENTED));
-		}
-
-		public int SetBytes(long pos, byte[] bytes)
-		{
-			throw new NotImplementedException(MessageTranslator.Translate(MessageKey.ERROR_SETBYTES_NOTIMPLEMENTED));
-		}
-
-		public int SetBytes(long pos, byte[] bytes, int offset, int len)
-		{
-			throw new NotImplementedException(MessageTranslator.Translate(MessageKey.ERROR_SETBYTES_NOTIMPLEMENTED));
-		}
-
-		public Stream SetBinaryStream(long pos)
-		{
-			throw new NotImplementedException(MessageTranslator.Translate(MessageKey.ERROR_SETBINARYSTREAM_NOTIMPLEMENTED));
-		}
-
-		public void Truncate(long len)
-		{
-			throw new NotImplementedException(MessageTranslator.Translate(MessageKey.ERROR_TRUNCATE_NOTIMPLEMENTED));
-		}
-
-		public int SetString(long pos, string str)
-		{
-			throw new NotImplementedException(MessageTranslator.Translate(MessageKey.ERROR_SETSTRING_NOTIMPLEMENTED));
-		}
-
-		public int SetString(long pos, string str, int offset, int len)
-		{
-			throw new NotImplementedException(MessageTranslator.Translate(MessageKey.ERROR_SETSTRING_NOTIMPLEMENTED));
-		}
-
-		public Stream SetASCIIStream(long pos)
-		{
-			throw new NotImplementedException(MessageTranslator.Translate(MessageKey.ERROR_SETASCIISTREAM_NOTIMPLEMENTED));
-		}
-
-		public TextWriter SetCharacterStream(long pos)
-		{
-			throw new NotImplementedException(MessageTranslator.Translate(MessageKey.ERROR_SETCHARACTERSTREAM_NOTIMPLEMENTED));
-		}
-
-		public long Position(char[] clob, long start)
-		{
-			throw new NotImplementedException(MessageTranslator.Translate(MessageKey.ERROR_POSITION_NOTIMPLEMENTED));
-		}
 	}
 
 	#endregion
@@ -888,7 +838,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					{
 						chunkChars = Math.Min(count, m_value.itemsInBuffer);
 						chunkBytes = chunkChars * Consts.unicodeWidth;
-						chunk = m_value.streamBuffer.readUnicode(0, chunkBytes).ToCharArray();
+						chunk = m_value.streamBuffer.ReadUnicode(0, chunkBytes).ToCharArray();
 						Array.Copy(chunk, 0, b, offset, chunkChars);
 						count -= chunkChars;
 						offset += chunkChars;
