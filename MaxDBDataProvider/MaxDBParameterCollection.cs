@@ -96,9 +96,10 @@ namespace MaxDBDataProvider
 
 		#region "IList implementation"
 		
-		int IList.Add(object value)
+		int IList.Add(object val)
 		{
-			return Add((MaxDBParameter)value);
+			Add((MaxDBParameter)val);
+			return collection.Length - 1;
 		}
 
 		public void Clear()
@@ -189,33 +190,44 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		public int Add(MaxDBParameter value)
+		public MaxDBParameter Add(MaxDBParameter val)
 		{
-			if (value.ParameterName != null)
+			if (val.ParameterName != null)
 			{
 				MaxDBParameter[] new_collection = new MaxDBParameter[collection.Length + 1];
 				collection.CopyTo(new_collection, 0);
-				new_collection[collection.Length] = value;
+				new_collection[collection.Length] = val;
 				collection = new_collection;
-				return collection.Length - 1;
+				return val;
 			}
 			else
-				throw new ArgumentException("parameter must be named");
+				throw new ArgumentException(MaxDBProtocol.MessageTranslator.Translate(MaxDBProtocol.MessageKey.ERROR_UNNAMED_PARAMETER));
 		}
 
-		public int Add(string parameterName, MaxDBType type)
+		public MaxDBParameter Add(string parameterName, MaxDBType type)
 		{
 			return Add(new MaxDBParameter(parameterName, type));
 		}
 
-		public int Add(string parameterName, object value)
+		public MaxDBParameter Add(string parameterName, object val)
 		{
-			return Add(new MaxDBParameter(parameterName, value));
+			return Add(new MaxDBParameter(parameterName, val));
 		}
 
-		public int Add(string parameterName, MaxDBType dbType, object value)
+		public MaxDBParameter Add(string parameterName, MaxDBType dbType, int size)
 		{
-			return Add(new MaxDBParameter(parameterName, dbType, value));
+			return Add(new MaxDBParameter(parameterName, dbType, size));
+		}
+
+		public MaxDBParameter Add(string parameterName, MaxDBType type, int size, string sourceColumn)
+		{
+			return Add(new MaxDBParameter(parameterName, type, size, sourceColumn));
+		}
+
+		public MaxDBParameter Add(string parameterName, MaxDBType type, int size, ParameterDirection direction,
+			bool isNullable, byte precision, byte scale, string sourceColumn, DataRowVersion sourceVersion, object val)
+		{
+			return Add(new MaxDBParameter(parameterName, type, size, direction, isNullable, precision, scale, sourceColumn, sourceVersion, val));
 		}
 	}
 }

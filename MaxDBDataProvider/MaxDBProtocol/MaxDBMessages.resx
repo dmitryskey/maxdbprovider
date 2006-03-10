@@ -269,11 +269,8 @@
 		<value>Invalid value for query timeout, must be &gt;=0, value is {0}.</value>
 		<comment>{0} - actual value (number)</comment>
 	</data>
-	<data name="error.named.savepoint">
-		<value>A named savepoint does not have an id.</value>
-	</data>
-	<data name="error.unnamed.savepoint">
-		<value>An unnamed savepoint does not have a name.</value>
+	<data name="error.unnamed.parameter">
+		<value>Parameter must be named.</value>
 	</data>
 	<data name="error.nosavepointsapdb">
 		<value>Parameter "savepoint" is not a SAP DB save point, but a {0}.</value>
