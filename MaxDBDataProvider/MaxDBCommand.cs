@@ -1163,7 +1163,7 @@ namespace MaxDBDataProvider
 						case MaxDBType.VFloat:
 						case MaxDBType.Number:
 						case MaxDBType.NoNumber:
-							paramArr.writeDouble((double)param.Value, buffer_offset);
+							paramArr.WriteDouble((double)param.Value, buffer_offset);
 							//Array.Copy(BitConverter.GetBytes((double)param.Value), 0, param_buffer, buffer_offset, sizeof(double));
 							val_length = sizeof(double);
 
@@ -1185,7 +1185,7 @@ namespace MaxDBDataProvider
 							buffer_offset += val_length;
 							break;
 						case MaxDBType.SmallInt:
-							paramArr.writeInt16((short)param.Value, buffer_offset);
+							paramArr.WriteInt16((short)param.Value, buffer_offset);
 							//Array.Copy(BitConverter.GetBytes((short)param.Value), 0, param_buffer, buffer_offset, sizeof(short));
 							val_length = sizeof(short);
 
@@ -1240,7 +1240,7 @@ namespace MaxDBDataProvider
 						case MaxDBType.VarCharUni:
 							val_length = (((string)param.Value).Length + 1) * sizeof(char);
 							val_size[i - 1] = SQLDBC.SQLDBC_NTS;
-							paramArr.writeUnicode((string)param.Value, buffer_offset);
+							paramArr.WriteUnicode((string)param.Value, buffer_offset);
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED, 
 								new IntPtr(buffer_ptr + buffer_offset), ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_TRUE) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException("Execution failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
@@ -1301,7 +1301,7 @@ namespace MaxDBDataProvider
 						case MaxDBType.NoNumber:
 							val_length = sizeof(double);
 							if (set_val)
-								param.Value = paramArr.readDouble(buffer_offset);
+								param.Value = paramArr.ReadDouble(buffer_offset);
 							buffer_offset += val_length;
 							break;
 						case MaxDBType.Integer:
@@ -1313,7 +1313,7 @@ namespace MaxDBDataProvider
 						case MaxDBType.SmallInt:
 							val_length = sizeof(int);
 							if (set_val)
-								param.Value = paramArr.readInt16(buffer_offset);
+								param.Value = paramArr.ReadInt16(buffer_offset);
 							buffer_offset += val_length;
 							break;
 						case MaxDBType.Time:
@@ -1341,7 +1341,7 @@ namespace MaxDBDataProvider
 						case MaxDBType.VarCharUni:
 							val_length = (((string)param.Value).Length + 1)* sizeof(char);
 							if (set_val)
-								param.Value = paramArr.readUnicode(buffer_offset, val_length - 1);
+								param.Value = paramArr.ReadUnicode(buffer_offset, val_length - 1);
 							buffer_offset += val_length;
 							break;
 					}
