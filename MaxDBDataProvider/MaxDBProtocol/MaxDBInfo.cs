@@ -443,7 +443,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		 * @param columnames
 		 *            the names of the result columns
 		 */
-		public void setShortInfosAndColumnNames(DBTechTranslator[] shortInfo, string[] columnNames)
+		public void SetShortInfosAndColumnNames(DBTechTranslator[] shortInfo, string[] columnNames)
 		{
 			// clear the internal dependent fields
 			m_inputCount = 0;
@@ -935,7 +935,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				int partType = reply.PartType;
 
 				if(partType == PartKind.ColumnNames) 
-					columnNames=reply.parseColumnNames();
+					columnNames=reply.ParseColumnNames();
 				else if(partType == PartKind.ShortInfo) 
 					infos = reply.ParseShortFields(m_connection.m_spaceOption, false, null, false);
 				else if(partType == PartKind.Vardata_ShortInfo) 

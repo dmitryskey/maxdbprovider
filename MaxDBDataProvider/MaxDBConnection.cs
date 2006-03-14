@@ -526,7 +526,7 @@ namespace MaxDBDataProvider
 				replyPacket = m_comm.Exec(requestPacket, requestLen);
 
 				// get return code
-				localWeakReturnCode = replyPacket.weakReturnCode;
+				localWeakReturnCode = replyPacket.WeakReturnCode;
 
 				if(localWeakReturnCode != -8) 
 					FreeRequestPacket(requestPacket);
@@ -564,7 +564,7 @@ namespace MaxDBDataProvider
 				m_execObj = null;
 			}
 			if (!ignoreErrors && localWeakReturnCode != 0) 
-				throw replyPacket.createException();
+				throw replyPacket.CreateException();
 			return replyPacket;
 		}
 

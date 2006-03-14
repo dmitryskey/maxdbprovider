@@ -272,13 +272,6 @@
 	<data name="error.unnamed.parameter">
 		<value>Parameter must be named.</value>
 	</data>
-	<data name="error.nosavepointsapdb">
-		<value>Parameter "savepoint" is not a SAP DB save point, but a {0}.</value>
-		<comment>{0} - class name of wrong parameter (type name, not to localize).</comment>
-	</data>
-	<data name="error.savepoint.released">
-		<value>The save point is already released.</value>
-	</data>
 	<data name="error.no.columnnames">
 		<value>Could not get column names from database kernel.</value>
 	</data>
@@ -586,6 +579,9 @@
 	</data>
 	<data name="error.oms.unsupported">
 		<value>OMS stream object is not supported</value>
+	</data>
+	<data name="error.tabledirect.unsupported">
+		<value>TableDirect parameter is not supported</value>
 	</data>
 	<data name="error.statement.cancelled">
 		<value>SQL statement cancelled.</value>

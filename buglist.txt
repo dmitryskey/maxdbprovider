@@ -1,2 +1,4 @@
 1. SELECT ... FOR UPDATE doesn't work
-2. Read last record - 7.6 
+2. Read last record - 7.6
+3. Output parameters don't work
+ 
