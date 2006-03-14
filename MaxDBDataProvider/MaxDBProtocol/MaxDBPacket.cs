@@ -1012,7 +1012,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		#region "Field and Column Operations"
 
-		public string[] parseColumnNames() 
+		public string[] ParseColumnNames() 
 		{
 			int columnCount = PartArgs;
 			string[] result = new string[columnCount];
@@ -1184,7 +1184,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 						return m_cachedResultCount--;
 					}
 				}
-				return m_cachedResultCount = VDNNumber.Number2Int(ReadBytes(m_partOffset + PartHeaderOffset.Data, PartLength));
+				
+				return m_cachedResultCount = VDNNumber.Number2Int(ReadDataBytes(m_partOffset + PartHeaderOffset.Data, PartLength));
 			} 
 			else 
 				return m_cachedResultCount;
@@ -1254,7 +1255,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public int weakReturnCode
+		public int WeakReturnCode
 		{
 			get
 			{
@@ -1290,7 +1291,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public MaxDBSQLException createException() 
+		public MaxDBSQLException CreateException() 
 		{
 			string state = SqlState;
 			int rc = ReturnCode;
@@ -1303,7 +1304,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return new MaxDBSQLException(errmsg, state, rc, errorPos);
 		}
 
-		public byte[] GetDataBytes (int pos, int len) 
+		public byte[] ReadDataBytes(int pos, int len) 
 		{
 			int defByte;
 
@@ -1314,9 +1315,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return ReadBytes(pos + 1, len - 1);
 		}
 
-		public string GetString(int offset, int len) 
+		public string ReadString(int offset, int len) 
 		{
-			return GetString(offset, len);
+			return ReadString(offset, len);
 		}
 
 		public byte[][] ParseLongDescriptors() 

@@ -427,7 +427,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 				replyPacket.FindPart(PartKind.LongData);
 				int dataPos = replyPacket.PartDataPos;
-				descriptor = replyPacket.GetDataBytes(dataPos, LongDesc.Size + 1);
+				descriptor = replyPacket.ReadDataBytes(dataPos, LongDesc.Size + 1);
 				if(descriptor[LongDesc.ValMode] == LongDesc.StartposInvalid) 
 					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_INVALID_STARTPOSITION));
             
@@ -512,7 +512,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				}
 
 				int dataPos = replyPacket.PartDataPos;
-				resultDescriptor = replyPacket.GetDataBytes(dataPos, LongDesc.Size + 1);
+				resultDescriptor = replyPacket.ReadDataBytes(dataPos, LongDesc.Size + 1);
 				ByteArray descBytes = new ByteArray(resultDescriptor);
 
 				// The result is the Pascal index of the append position, so 1 has to be subtracted

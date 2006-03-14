@@ -117,6 +117,8 @@ namespace MaxDBDataProvider
 
 	#endregion
 
+	#region "ODBC Date/Time format converter"
+
 	public class ODBCConverter
 	{
 		public static unsafe byte[] GetBytes(ODBCDATE dt)
@@ -193,6 +195,8 @@ namespace MaxDBDataProvider
 			return ts_val;
 		}
 	}
+
+	#endregion
 
 	/// <summary>
 	/// Summary description for SQLDBC.
@@ -333,7 +337,7 @@ namespace MaxDBDataProvider
 		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareASCII(IntPtr stmt, string query);
 
 		[DllImport("libsqldbc_c")]
-		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_bindParameter(IntPtr stmt, ushort index, SQLDBC_HostType type, IntPtr paramAddr,  
+		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_bindParameter(IntPtr stmt, short index, SQLDBC_HostType type, IntPtr paramAddr,  
 						ref int length, int size, SQLDBC_BOOL terminate);		
 		
 		[DllImport("libsqldbc_c")]
@@ -393,6 +397,12 @@ namespace MaxDBDataProvider
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_ParameterMetaData_getParameterName(IntPtr hdl, short param, byte[] buffer, 
 			StringEncodingType type, int size, ref int length);
+
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_ParameterMetaData_getParameterLength(IntPtr hdl, short param);
+
+		[DllImport("libsqldbc_c")]
+		public extern static int SQLDBC_ParameterMetaData_getPhysicalLength(IntPtr hdl, short param);
 
 		#endregion
 

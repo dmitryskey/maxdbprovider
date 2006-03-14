@@ -303,16 +303,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			ERROR_UNNAMED_PARAMETER = "error.unnamed.parameter",
 
 			/**
-			 * Try to use something as save point.
-			 */
-			ERROR_NO_SAVEPOINTSAPDB = "error.nosavepointsapdb",
-
-			/**
-			 * Try to use released savepoint
-			 */
-			ERROR_SAVEPOINT_RELEASED = "error.savepoint.released",
-
-			/**
 			 * Parse id part not found.
 			 */
 			ERROR_PARSE_NOPARSEID = "error.parse.noparseid",
@@ -571,6 +561,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			ERROR_AUTOGENKEYS_RETRIEVAL_UNSUPPORTED = "error.autogenkeys.retrieval.unsupported",
 			ERROR_SPECIAL_NUMBER_UNSUPPORTED = "error.special.number.unsupported",
 			ERROR_OMS_UNSUPPORTED = "error.oms.unsupported",
+			ERROR_TABLEDIRECT_UNSUPPORTED = "error.tabledirect.unsupported",
 	
 			// communication errors
 			COMMERROR_OK="commerror.ok",

@@ -28,7 +28,8 @@ namespace MaxDBDataProvider
 		public MaxDBParameter(string parameterName, object val)
 		{
 			m_sParamName = parameterName;
-			m_value = val;   
+			m_value = val;
+			m_dbType  = _inferType(Type.GetTypeCode(val.GetType()));
 		}
 
 		public MaxDBParameter(string parameterName, MaxDBType type, int size) : this(parameterName, type)
@@ -196,8 +197,7 @@ namespace MaxDBDataProvider
 			}
 			set
 			{
-				m_value    = value;
-				m_dbType  = _inferType(Type.GetTypeCode(value.GetType()));
+				m_value = value;
 			}
 		}
 
