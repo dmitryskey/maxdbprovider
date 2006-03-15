@@ -996,7 +996,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					end_index = absoluteStartRow + chunkSize -1;
 				}
 			}
-			determineFlags();
+			DetermineFlags();
 		}
 
 		/*
@@ -1008,7 +1008,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		the limit here.
 		*/
 
-		private void determineFlags()
+		private void DetermineFlags()
 		{
 			if(replyPacket.WasLastPart) 
 			{
@@ -1092,7 +1092,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				return false;
 			else 
 			{
-				unsafeMove(relativepos);
+				UnsafeMove(relativepos);
 				return true;
 			}
 		}
@@ -1101,7 +1101,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			Moves the position inside the chunk by a relative offset, but unchecked.
 			@param relativepos the relative moving offset.
 		*/
-		private void unsafeMove(int relativepos)
+		private void UnsafeMove(int relativepos)
 		{
 			currentOffset += relativepos;
 			currentRecord = currentRecord.Clone(relativepos * recordSize);
@@ -1116,7 +1116,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			if(start_index <= row  && end_index >= row) 
 			{
-				unsafeMove(row - start_index - currentOffset);
+				UnsafeMove(row - start_index - currentOffset);
 				return true;
 			}
 			// some tricks depending on whether we are on last/first chunk
@@ -1127,13 +1127,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				// relative to chunk by subtracting start index
 				// and relative for the move by subtracting the
 				// current offset
-				unsafeMove(end_index + row + 1 - start_index - currentOffset);
+				UnsafeMove(end_index + row + 1 - start_index - currentOffset);
 				return true;
 			}
 			if(!IsForward && first && row > 0 && row <= end_index - start_index + 1) 
 			{
 				// simple. row is > 0. start_index if positive were 1 ...
-				unsafeMove(row - 1 - currentOffset);
+				UnsafeMove(row - 1 - currentOffset);
 			}
 			// if we know the number of rows, we can compute this anyway
 			// by inverting the row
@@ -1144,44 +1144,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 
 			return false;
-		}
-
-		/*
-			Called because there is a result set where the last element
-			is now interesting. This is the fact in a FETCH LAST
-			operation.
-		*/
-		public void moveToUpperBound()
-		{
-			int relativepos = chunkSize - currentOffset -1;
-			currentRecord = currentRecord.Clone(relativepos * recordSize);
-			currentOffset= chunkSize - 1;
-			return;
-		}
-
-		/*
-			Returns true if the internal position inside the chunk
-			is the greatest possible towards the end of this result set.
-			@return true if our current position is equal
-			to the end index of this chunk, false otherwise.
-		*/
-		public bool IsAtUpperBound()
-		{
-			return currentOffset == chunkSize-1;
-		}
-
-		/*
-			 Returns true if the internal position inside the chunk
-			 is the smallest possible
-			 @return true if our current position is equal
-			 to the start index of this chunk, false otherwise.
-		*/
-		public bool IsAtLowerBound
-		{
-			get
-			{
-				return currentOffset == 0;
-			}
 		}
 
 		/*

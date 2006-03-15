@@ -41,14 +41,16 @@ namespace MaxDBDataProvider
 
 				for(int i=0;i<1;i++)
 				{
-					using(MaxDBCommand cmd = new MaxDBCommand("SELECT info INTO :a FROM HOTEL WHERE zip = :b", maxdbconn))
+					using(MaxDBCommand cmd = new MaxDBCommand("SELECT name FROM HOTEL WHERE zip = :b", maxdbconn))
 					{
-						cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Direction = ParameterDirection.Output;
-						cmd.Parameters.Add(":b", MaxDBType.VarCharUni).Value = "20005";
+						//cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Direction = ParameterDirection.Output;
+						cmd.Parameters.Add(":b", MaxDBType.VarCharA).Value = "20005";
 						//DbType dd1 = cmd.Parameters[0].DbType;
 						//						cmd.Parameters.Add(":b", MaxDBType.Fixed, 0.0);
 
 						//cmd.Transaction = trans;
+
+						//cmd.ExecuteNonQuery();
 
 						MaxDBDataReader reader = cmd.ExecuteReader();
 						while(reader.Read())

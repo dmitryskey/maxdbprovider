@@ -21,7 +21,7 @@ namespace MaxDBDataProvider
 		SQLDBC_NEED_DATA                = 99     // Late binding, data is needed for execution. 
 	}
 
-	public enum StringEncodingType 
+	public enum SQLDBC_StringEncodingType 
 	{
 		Unknown     = 0,
 		Ascii       = 1,
@@ -81,6 +81,14 @@ namespace MaxDBDataProvider
 	{
 		SQLDBC_FALSE = 0,
 		SQLDBC_TRUE = 1
+	}
+
+	public enum SQLDBC_ParameterMode 
+	{
+		Unknown = 0,
+		In = 1,
+		InOut = 2,
+		Out = 4
 	}
 
 	#endregion
@@ -331,7 +339,7 @@ namespace MaxDBDataProvider
 		public extern static IntPtr SQLDBC_PreparedStatement_getError(IntPtr stmt);
 
 		[DllImport("libsqldbc_c")]
-		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareNTS(IntPtr stmt, byte[] query , StringEncodingType type);
+		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareNTS(IntPtr stmt, byte[] query , SQLDBC_StringEncodingType type);
 
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareASCII(IntPtr stmt, string query);
@@ -396,13 +404,16 @@ namespace MaxDBDataProvider
  
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_ParameterMetaData_getParameterName(IntPtr hdl, short param, byte[] buffer, 
-			StringEncodingType type, int size, ref int length);
+			SQLDBC_StringEncodingType type, int size, ref int length);
 
 		[DllImport("libsqldbc_c")]
 		public extern static int SQLDBC_ParameterMetaData_getParameterLength(IntPtr hdl, short param);
 
 		[DllImport("libsqldbc_c")]
 		public extern static int SQLDBC_ParameterMetaData_getPhysicalLength(IntPtr hdl, short param);
+
+		[DllImport("libsqldbc_c")]
+		public extern static SQLDBC_ParameterMode SQLDBC_ParameterMetaData_getParameterMode(IntPtr hdl, short param);
 
 		#endregion
 
@@ -413,7 +424,7 @@ namespace MaxDBDataProvider
 
 		[DllImport("libsqldbc_c")]
 		public extern static SQLDBC_Retcode SQLDBC_ResultSetMetaData_getColumnName(IntPtr hdl, short column, IntPtr buffer, 
-			StringEncodingType encoding, int size, ref int length); 
+			SQLDBC_StringEncodingType encoding, int size, ref int length); 
 
 		[DllImport("libsqldbc_c")]
 		public extern static int SQLDBC_ResultSetMetaData_getColumnType(IntPtr hdl, short column);

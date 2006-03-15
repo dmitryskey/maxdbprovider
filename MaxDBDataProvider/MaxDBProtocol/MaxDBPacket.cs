@@ -904,7 +904,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				bool result;
 
 				partAttributes = this.ReadByte(m_partOffset + PartHeaderOffset.Attributes);
-				result = (partAttributes & PartAttributes.LastPacket) != 0;
+				result = (partAttributes & PartAttributes.LastPacket_Ext) != 0;
 				return result;
 			}
 		}
