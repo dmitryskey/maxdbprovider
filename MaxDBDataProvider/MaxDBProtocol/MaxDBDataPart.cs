@@ -85,7 +85,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		
 		public virtual void SetLastPart()
 		{
-			reqPacket.AddPartAttr(PartAttributes.LastPacket);
+			reqPacket.AddPartAttr(PartAttributes.LastPacket_Ext);
 		}
 		
 		public abstract void WriteDefineByte(byte val, int offset);

@@ -245,7 +245,8 @@ namespace MaxDBDataProvider
 			try
 			{
 				if (m_connection.DatabaseEncoding is UnicodeEncoding)
-					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(m_stmt, m_connection.DatabaseEncoding.GetBytes(sql), StringEncodingType.UCS2Swapped);
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(m_stmt, m_connection.DatabaseEncoding.GetBytes(sql), 
+						SQLDBC_StringEncodingType.UCS2Swapped);
 				else
 					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(m_stmt, sql);
 			
@@ -300,7 +301,8 @@ namespace MaxDBDataProvider
 			try
 			{
 				if (m_connection.DatabaseEncoding is UnicodeEncoding)
-					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(m_stmt, m_connection.DatabaseEncoding.GetBytes(sql), StringEncodingType.UCS2Swapped);
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(m_stmt, m_connection.DatabaseEncoding.GetBytes(sql), 
+						SQLDBC_StringEncodingType.UCS2Swapped);
 				else
 					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(m_stmt, sql);
 			
@@ -452,11 +454,11 @@ namespace MaxDBDataProvider
 					requestPacket.AddCursorPart(m_cursorName);
 				
 				// We must add a data part if we have input parameters or even if we have output streams.
-				for(ushort i = 0; i < m_parameters.Count; i++)
+				for(int i = 0; i < m_parseInfo.m_paramInfos.Length; i++)
 				{
 					MaxDBParameter param = m_parameters[i];
 					
-					if (param.Direction != ParameterDirection.Input && param.Direction != ParameterDirection.InputOutput)
+					if (!FindColInfo(i).IsInput)
 						continue;
 					
 					switch(param.m_dbType)
@@ -591,10 +593,10 @@ namespace MaxDBDataProvider
 						HandleStreamsForPutValue(replyPacket);
 				}
 
-				for(ushort i = 0; i < m_parameters.Count; i++)
+				for(int i = 0; i < m_parseInfo.m_paramInfos.Length; i++)
 				{
 					MaxDBParameter param = m_parameters[i];
-					if (param.Direction == ParameterDirection.Input)
+					if (!FindColInfo(i).IsOutput)
 						continue;
 
 					switch(param.m_dbType)
@@ -1104,7 +1106,9 @@ namespace MaxDBDataProvider
 
 					int val_length = 0; 
 					
-					bool input_val = (param.Direction == ParameterDirection.Input || param.Direction == ParameterDirection.InputOutput);
+					bool input_val = (
+						SQLDBC.SQLDBC_ParameterMetaData_getParameterMode(meta, i) == SQLDBC_ParameterMode.In || 
+						SQLDBC.SQLDBC_ParameterMetaData_getParameterMode(meta, i) == SQLDBC_ParameterMode.InOut);
 					
 					switch(param.m_dbType)
 					{
@@ -1293,9 +1297,9 @@ namespace MaxDBDataProvider
 						MaxDBParameter param = parameters[i - 1];
 
 						int val_length = 0;
-						bool output_val = (param.Direction == ParameterDirection.Output || 
-										   param.Direction == ParameterDirection.InputOutput || 
-										   param.Direction == ParameterDirection.ReturnValue);
+						bool output_val = (
+							SQLDBC.SQLDBC_ParameterMetaData_getParameterMode(meta, i) == SQLDBC_ParameterMode.InOut || 
+							SQLDBC.SQLDBC_ParameterMetaData_getParameterMode(meta, i) == SQLDBC_ParameterMode.Out);
 											
 						switch(param.m_dbType)
 						{

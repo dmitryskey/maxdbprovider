@@ -266,24 +266,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return chars.Length;
 		}
 
-		public ParameterDirection ParameterMode 
-		{
-			get
-			{
-				switch (m_ioType) 
-				{
-					case (ParamInfo.Output):
-						return ParameterDirection.Output;
-					case (ParamInfo.Input):
-						return ParameterDirection.Input;
-					case (ParamInfo.InOut):
-						return ParameterDirection.InputOutput;
-					default :
-						return ParameterDirection.Input;
-				}
-			}
-		}
-
 		public virtual bool IsCaseSensitive 
 		{
 			get

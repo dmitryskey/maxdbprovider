@@ -1183,7 +1183,7 @@ namespace MaxDBDataProvider
 			fixed(byte *namePtr = columnName)
 			{
 				rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), pos, 
-					new IntPtr(namePtr), StringEncodingType.UCS2Swapped, len, ref len);
+					new IntPtr(namePtr), SQLDBC_StringEncodingType.UCS2Swapped, len, ref len);
 				if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
 					throw new MaxDBException("Can't not allocate buffer for the column name");
 			}
@@ -1194,7 +1194,7 @@ namespace MaxDBDataProvider
 			fixed(byte *namePtr = columnName)
 			{
 				rc = SQLDBC.SQLDBC_ResultSetMetaData_getColumnName(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), pos, 
-					new IntPtr(namePtr), StringEncodingType.UCS2Swapped, len, ref len);
+					new IntPtr(namePtr), SQLDBC_StringEncodingType.UCS2Swapped, len, ref len);
 
 				if (rc != SQLDBC_Retcode.SQLDBC_OK)
 					throw new MaxDBException("Can't not get column name");
