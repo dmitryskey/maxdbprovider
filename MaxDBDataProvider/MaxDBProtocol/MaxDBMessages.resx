@@ -179,23 +179,6 @@
 		<value>IN or OUT param missing at position {0}.</value>
 		<comment>{0} - parameter position (number)</comment>
 	</data>
-	<data name="error.batchresultset">
-		<value>SQL statement in batch would create a result set.</value>
-	</data>
-	<data name="error.batchresultset.withnumber">
-		<value>Batch command number {0} generates a result set.</value>
-		<comment>{0} - command number</comment>
-	</data>
-	<data name="error.batchprocout">
-		<value>Called DB procedure in batch contained OUT or INOUT parameters.</value>
-	</data>
-	<data name="error.batchmissingin">
-		<value>Missing IN/INOUT parameter at row {0} and position {1}.</value>
-		<comment>{0} - row number (number), {1} - position (number)</comment>
-	</data>
-	<data name="error.sqlstatement.rowcount">
-		<value>SQL statement would generate a row count.</value>
-	</data>
 	<data name="error.sqlstatement.resultset">
 		<value>SQL statement would generate a result set.</value>
 	</data>
@@ -205,25 +188,6 @@
 	</data>
 	<data name="error.sqlstatement.noprocedure">
 		<value>SQL statement does not call a DB procedure.</value>
-	</data>
-	<data name="error.array.unsupported">
-		<value>Data type ARRAY is not supported by database.</value>
-	</data>
-	<data name="error.timezone.unsupported">
-		<value>Timezone feature not supported by database.</value>
-	</data>
-	<data name="error.ref.unsupported">
-		<value>Data type REF is not supported by database.</value>
-	</data>
-	<data name="error.url.unsupported">
-		<value>Data type DATALINK is not supported by database.</value>
-	</data>
-	<data name="error.autogenkeys.retrieval.unsupported">
-		<value>Retrieving auto generated keys is not supported.</value>
-	</data>
-	<data name="error.memoryresult.method.unsupported">
-		<value>Method {0}() of MemoryResultSet is not supported.</value>
-		<comment>{0} - the method name</comment>
 	</data>
 	<data name="error.special.number.unsupported">
 		<value>The number value {0} is not supported.</value>
@@ -238,63 +202,17 @@
 	<data name="error.invalidpassword">
 		<value>The password is invalid.</value>
 	</data>
-	<data name="error.row.isnull">
-		<value>Invalid argument value "row" = 0.</value>
-	</data>
 	<data name="error.resultset.beforefirst">
 		<value>Result set is positioned before first row.</value>
 	</data>
 	<data name="error.resultset.afterlast">
 		<value>Result set is positioned after last row.</value>
 	</data>
-	<data name="error.resultset.notupdatable">
-		<value>Result set is not updatable.</value>
-	</data>
-	<data name="error.notupdatable">
-		<value>Statement delivers no updatable.</value>
-	</data>
-	<data name="error.invalid.fetchsize">
-		<value>Invalid fetch size, value must be &gt;=0 and &lt;= this.getMaxRows(), value was {0}.</value>
-		<comment>{0} - actual value (number)</comment>
-	</data>
-	<data name="error.invalid.maxfieldsize">
-		<value>Invalid maxfield size, value must be &gt;=0, value was {0}.</value>
-		<comment>{0} - actual value (number)</comment>
-	</data>
-	<data name="error.invalid.maxrows">
-		<value>Invalid number of maxrows, value must be &gt;=0, value was {0}.</value>
-		<comment>{0} - actual value (number)</comment>
-	</data>
-	<data name="error.invalid.querytimeout">
-		<value>Invalid value for query timeout, must be &gt;=0, value is {0}.</value>
-		<comment>{0} - actual value (number)</comment>
-	</data>
 	<data name="error.unnamed.parameter">
 		<value>Parameter must be named.</value>
 	</data>
 	<data name="error.no.columnnames">
 		<value>Could not get column names from database kernel.</value>
-	</data>
-	<data name="error.nodatapart">
-		<value>Execute delivered no data part.</value>
-	</data>
-	<data name="error.preparestatement.notimplemented">
-		<value>Method prepareStatement() is not yet implemented.</value>
-	</data>
-	<data name="error.connection.autocommit">
-		<value>Connection is currently in auto-commit mode.</value>
-	</data>
-	<data name="error.parse.noparseid">
-		<value>Parse did not deliver a parseid part.</value>
-	</data>
-	<data name="error.parse.nofieldinfo">
-		<value>Parse did not deliver a fieldinfo part.</value>
-	</data>
-	<data name="error.nooutparamdata">
-		<value>No output parameter data delivered by call statement.</value>
-	</data>
-	<data name="error.internal.preparehelper">
-		<value>Internal error in method prepareHelper().</value>
 	</data>
 	<data name="error.internal.connectionnull">
 		<value>Internal error: connection field is null, but should not.</value>
@@ -308,45 +226,15 @@
 	<data name="error.internal.invalidParseid">
 		<value>Internal error: parse id is null.</value>
 	</data>
-	<data name="error.nocolumns.updatable">
-		<value>No columns updatable.</value>
-	</data>
-	<data name="error.unknown.host">
-		<value>Unknown host {0} [{1}], {2}.</value>
-		<comment>{0} - host name, {1} - .NET exception message, {2} - runtime error code</comment>
-	</data>
 	<data name="error.host.connect">
 		<value>Cannot connect to host {0}:{1}.</value>
 		<comment>{0} - host name, {1} - port name</comment>
-	</data>
-	<data name="error.host.niconnect">
-		<value>Cannot open NI-connection to host {0} [{1}], {2}.</value>
-		<comment>{0} - host name, {1} - .NET exception message, {2} - runtime error code</comment>
-	</data>
-	<data name="error.host.niloadlibrary">
-		<value>Could not load NI support library [{1}].</value>
-		<comment>{0} - reason</comment>
-	</data>
-	<data name="error.host.wrongconnecturl">
-		<value>Wrong connect URL [{0}].</value>
-		<comment>{0} - reason</comment>
 	</data>
 	<data name="error.recv.connect">
 		<value>Receive of connect failed.</value>
 	</data>
 	<data name="error.connectreply.garbled">
 		<value>Reply is garbled.</value>
-	</data>
-	<data name="error.connect.receivefailed">
-		<value>Connect reply receive failed [{0}].</value>
-		<comment>{0} - exception message</comment>
-	</data>
-	<data name="error.data.receivefailed.reason">
-		<value>Data receive failed [{0}].</value>
-		<comment>{0} - exception message</comment>
-	</data>
-	<data name="error.data.receivefailed">
-		<value>Data receive failed.</value>
 	</data>
 	<data name="error.chunkoverflow">
 		<value>Read {0} bytes at position {1} in buffer of length {2}.</value>
@@ -355,113 +243,8 @@
 	<data name="error.admin.reconnect">
 		<value>Reconnect for admin session not supported.</value>
 	</data>
-	<data name="error.invalid.swapping">
-		<value>Invalid swapping</value>
-	</data>
-	<data name="error.send.getoutputstream">
-		<value>Could not get output stream for sending.</value>
-	</data>
-	<data name="error.send.write">
-		<value>Could not send data.</value>
-	</data>
-	<data name="error.format.toofewargs">
-		<value>Too few arguments for format.</value>
-	</data>
-	<data name="error.format.percent">
-		<value>Format string must start with a '%'.</value>
-	</data>
-	<data name="error.format.notanumber">
-		<value>Object [{0}] is not a number.</value>
-		<comment>{0} - dump of object</comment>
-	</data>
-	<data name="error.format.unknown">
-		<value>Format specifier {0} is unknown.</value>
-		<comment>{0} - format specifier (single char)</comment>
-	</data>
-	<data name="error.format.toomanyargs">
-		<value>Too many arguments for format.</value>
-	</data>
-	<data name="warning.part.nothandled">
-		<value>Part of kind {0} is not handled.</value>
-		<comment>{0} - kind of part (identifier)</comment>
-	</data>
-	<data name="warning.emptyresultset">
-		<value>Empty result set.</value>
-	</data>
-	<data name="error.executequery.preparedstatement">
-		<value>Calling method executeQuery(String) is not allowed for PreparedStatement.</value>
-	</data>
-	<data name="error.executeupdate.preparedstatement">
-		<value>Calling method executeUpdate(String) is not allowed for PreparedStatement.</value>
-	</data>
-	<data name="error.assertion.maxrowsinresult">
-		<value>Assertion failed: max rows inside result set but result set end is not known.</value>
-	</data>
-	<data name="error.resultset.forwardonly">
-		<value>The operation is not allowed for result set type FORWARD_ONLY.</value>
-	</data>
-	<data name="error.cancelupdates.insertrow">
-		<value>The method cancelRowUpdates cannot be called while positioned at the insert row.</value>
-	</data>
-	<data name="error.deleterow.insertrow">
-		<value>The method deleteRow cannot be called while positioned at the insert row.</value>
-	</data>
-	<data name="error.updaterow.insertrow">
-		<value>The method updateRow cannot be called while positioned at the insert row.</value>
-	</data>
-	<data name="error.deleterow.norow">
-		<value>The method deleteRow requires a position at a valid row of the result set.</value>
-	</data>
-	<data name="error.insertrow.insertrow">
-		<value>The method insertRow cannot be called if not positioned at the insert row.</value>
-	</data>
-	<data name="error.updaterow.norow">
-		<value>The method updateRow requires a position at a valid row of the result set.</value>
-	</data>
-	<data name="error.database.notset">
-		<value>The database name was not set.</value>
-	</data>
-	<data name="error.connection.invalidated">
-		<value>The connection was invalidated.</value>
-	</data>
-	<data name="error.connection.JNDILookup">
-		<value>JNDI lookup failed.</value>
-	</data>
-	<data name="error.commit.xasession">
-		<value>A COMMIT in a XA managed session is not allowed.</value>
-	</data>
-	<data name="error.rollback.xasession">
-		<value>A ROLLBACK in a XA managed session is not allowed.</value>
-	</data>
-	<data name="error.autocommit.xasession">
-		<value>Setting autocommit=true in a XA managed session is not allowed.</value>
-	</data>
-	<data name="error.mandatory.property.notfound">
-		<value>The mandatory data source property {0} was not set.</value>
-		<comment>{0} key of the property</comment>
-	</data>
-	<data name="error.not.stringrefaddr">
-		<value>Only javax.naming.StringRefAddr type is supported, found {0}.</value>
-		<comment>{0} class name of RefAddr implementation</comment>
-	</data>
-	<data name="error.not.null.content">
-		<value>The content of a RefAddr must not be null.</value>
-	</data>
-	<data name="error.not.string.content">
-		<value>The content of a StringRefAddr must be of type java.lang.String, found {0}.</value>
-		<comment>{0} class name of content</comment>
-	</data>
 	<data name="error.stream.ioexception">
 		<value>IO Exception in stream read: {0}</value>
-	</data>
-	<data name="error.nometadata">
-		<value>Exception accessing database meta data field {0}</value>
-	</data>
-	<data name="inputpos">
-		<value>(input position {0})</value>
-	</data>
-	<data name="error.stream.oddsize">
-		<value>Stream has invalid length (stream length must be a multiple of the row size).</value>
 	</data>
 	<data name="error.stream.conversion.string">
 		<value>Character data argument cannot be converted to binary/structured stream.</value>
@@ -469,29 +252,11 @@
 	<data name="error.stream.conversion.bytes">
 		<value>Binary data argument cannot be converted to character/structured stream.</value>
 	</data>
-	<data name="error.stream.sourceread">
-		<value>Exception while reading stream source: {0}.</value>
-	</data>
-	<data name="error.stream.eof">
-		<value>Internal error: Stream {0} requested from database but is already at EOF.</value>
-	</data>
-	<data name="error.stream.nodata">
-		<value>Internal error: Data expected for output stream but no data found.</value>
-	</data>
-	<data name="error.stream.unknowntype">
-		<value>Internal error: Unknown stream type.</value>
-	</data>
 	<data name="error.stream.isatend">
 		<value>Stream is empty or already closed.</value>
 	</data>
 	<data name="error.conversion.structuretype">
 		<value>Structure member {0} has unsupported data type {1}.</value>
-	</data>
-	<data name="error.structure.incomplete">
-		<value>Structure data is incomplete.</value>
-	</data>
-	<data name="error.structure.complete">
-		<value>Structure data is already complete.</value>
 	</data>
 	<data name="error.structure.arraywronglength">
 		<value>Number of items in input and structure do not match (required {0}, input was {1}).</value>
@@ -505,18 +270,6 @@
 	<data name="error.structure.element.overflow">
 		<value>Conversion of structure element of type {0} failed (overflow), value was {1}.</value>
 	</data>
-	<data name="error.stream.blob.unsupported">
-		<value>Stream BLOB object does not support the method {0}.</value>
-	</data>
-	<data name="error.invalid.blob.position">
-		<value>Invalid blob position {0}.</value>
-	</data>
-	<data name="error.unknown.procedurelong">
-		<value>Unknown LONG parameter of DB procedure (index {0}) requested.</value>
-	</data>
-	<data name="error.message.notavailable">
-		<value>Message not available.</value>
-	</data>
 	<data name="error.invalid.startposition">
 		<value>Internal error: Invalid start position for LONG data.</value>
 	</data>
@@ -525,9 +278,6 @@
 	</data>
 	<data name="error.connection.challengeresponsenotsupported">
 		<value>Secure connect using challenge response authentication is not supported</value>
-	</data>
-	<data name="commerror">
-		<value>Communication Error: {0}</value>
 	</data>
 	<data name="commerror.ok">
 		<value>OK</value>

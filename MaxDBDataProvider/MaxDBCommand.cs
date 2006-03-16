@@ -372,7 +372,7 @@ namespace MaxDBDataProvider
 			requestPacket.InitParseCommand(sqlCmd, true, parseAgain);
 			if (m_setWithInfo)
 				requestPacket.SetWithInfo();
-			replyPacket = m_connection.Exec(requestPacket, this, gcFlags);
+			replyPacket = m_connection.Exec(requestPacket, false, true, this, gcFlags);
 			return replyPacket;
 		}
 
