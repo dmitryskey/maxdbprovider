@@ -179,437 +179,122 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			// Try to put binary data into LONG column.
 			ERROR_BINARYPUTTOLONG = "error.binaryputtolong",
 
-			/**
-			 * Call of cancel occured.
-			*/
+			// Call of cancel occured.
 			ERROR_STATEMENT_CANCELLED="error.statement.cancelled",
 
-			/**
-			 * Try to execute null statement.
-			 */
+			// Try to execute null statement.
 			ERROR_SQLSTATEMENT_NULL = "error.sqlstatement.null",
 
-			/**
-			 * Try to execute too long statement.
-			 */
+			// Try to execute too long statement.
 			ERROR_SQLSTATEMENT_TOOLONG = "error.sqlstatement.toolong",
 
-			/**
-			 * IN or OUT param missing.
-			 */
+			// IN or OUT param missing.
 			ERROR_MISSINGINOUT = "error.missinginout",
 
-			/**
-			 * Statement in batch generated result set.
-			 */
-			ERROR_BATCHRESULTSET = "error.batchresultset",
-
-			/**
-			 * Statement in batch generated result set.
-			 */
-			ERROR_BATCHRESULTSET_WITHNUMBER = "error.batchresultset.withnumber",
-
-			/**
-			 * Procedure call in batch contained OUT/INOUT.
-			 */
-			ERROR_BATCHPROCOUT = "error.batchprocout",
-
-			/**
-			 * Procedure call in batch contained OUT/INOUT.
-			 */
-			ERROR_BATCHMISSINGIN = "error.batchmissingin",
-
-			/**
-			 * A statement executed as query delivered a row count.
-			 */
-			ERROR_SQLSTATEMENT_ROWCOUNT = "error.sqlstatement.rowcount",
-
-			/**
-			 * A statement executed as update delivered a result set.
-			 */
+			// A statement executed as update delivered a result set.
 			ERROR_SQLSTATEMENT_RESULTSET = "error.sqlstatement.resultset",
 
-			/**
-			 * A statement assumed to be a procedure call is not one.
-			 */
+			// A statement assumed to be a procedure call is not one.
 			ERROR_SQLSTATEMENT_NOPROCEDURE = "error.sqlstatement.noprocedure",
 
-			/**
-			 * Column index not found.
-			 */
+			// Column index not found.
 			ERROR_COLINDEX_NOTFOUND = "error.colindex.notfound",
 
-			/**
-			 * User name missing.
-			 */
+			// User name missing.
 			ERROR_NOUSER = "error.nouser",
-
-			/**
-			 * Password missing.
-			 */
+ 
+			// Password missing.
 			ERROR_NOPASSWORD = "error.nopassword",
 
-			/**
-			 * Password invalid.
-			 */
+			// Password invalid.
 			ERROR_INVALIDPASSWORD = "error.invalidpassword",
 
-			/**
-			 * Savepoint for auto-commit mode session.
-			 */
-			ERROR_CONNECTION_AUTOCOMMIT = "error.connection.autocommit",
-
-			/**
-			 * Argument to row is 0.
-			 */
-			ERROR_ROW_ISNULL = "error.row.isnull",
-
-			/**
-			 * Try to get record at position < first.
-			 */
+			// Try to get record at position < first.
 			ERROR_RESULTSET_BEFOREFIRST = "error.resultset.beforefirst",
 
-			/**
-			 * Try to get record at position > last.
-			 */
+			// Try to get record at position > last.
 			ERROR_RESULTSET_AFTERLAST = "error.resultset.afterlast",
-
-			/**
-			 * Try to fetch <0 or >maxrows items
-			 */
-			ERROR_INVALID_FETCHSIZE = "error.invalid.fetchsize",
-
-			/**
-			 * Try to set a field size of too less or to much
-			 */
-			ERROR_INVALID_MAXFIELDSIZE = "error.invalid.maxfieldsize",
-
-			/**
-			 * Try to set maxrows to less than 0.
-			 */
-			ERROR_INVALID_MAXROWS = "error.invalid.maxrows",
-
-			/**
-			 * Try to set query timeout < 0.
-			 */
-			ERROR_INVALID_QUERYTIMEOUT = "error.invalid.querytimeout",
-
-			/**
-			 * Try to update r/o result set.
-			 */
-			ERROR_RESULTSET_NOTUPDATABLE = "error.resultset.notupdatable",
 
 			// Try to retrieve unnamed parameter by name.
 			ERROR_UNNAMED_PARAMETER = "error.unnamed.parameter",
 
-			/**
-			 * Parse id part not found.
-			 */
-			ERROR_PARSE_NOPARSEID = "error.parse.noparseid",
-
-			/**
-			 * No column names delivered from kernel.
-			 */
+			// No column names delivered from kernel.
 			ERROR_NO_COLUMNNAMES = "error.no.columnnames",
 
-			/**
-			 * Fieldinfo part not found.
-			 */
-			ERROR_PARSE_NOFIELDINFO = "error.parse.nofieldinfo",
-
-			/**
-			 * Data part not found after execute.
-			 */
-			ERROR_NODATAPART = "error.nodatapart",
-
-			/**
-			 * Statement assigned for updatable is not
-			 */
-			ERROR_NOTUPDATABLE = "error.notupdatable",
-
-			/**
-			 * Call statement did not deliver output data (DB Procedure stopped).
-			 */
-			ERROR_NOOUTPARAMDATA = "error.nooutparamdata",
-
-			/**
-			 * Unknown kind of part.
-			 */
-			WARNING_PART_NOTHANDLED="warning.part.nothandled",
-
-			/**
-			 * SQL Exception while updating result set.
-			 */
-			ERROR_INTERNAL_PREPAREHELPER = "error.internal.preparehelper",
-
-			/**
-			 * Connection field is null.
-			 */
+			// Connection field is null.
 			ERROR_INTERNAL_CONNECTIONNULL = "error.internal.connectionnull",
 
-			/**
-			 * No more input expected at this place.
-			 */
+			// No more input expected at this place.
 			ERROR_INTERNAL_UNEXPECTEDINPUT = "error.internal.unexpectedinput",
 
-			/**
-			 * No more output expected at this place.
-			 */
+			// No more output expected at this place.
 			ERROR_INTERNAL_UNEXPECTEDOUTPUT = "error.internal.unexpectedoutput",
 
-			/**
-			 * Internal JDBC error: parse id is null.
-			 */
+			// Internal error: parse id is null.
 			ERROR_INTERNAL_INVALIDPARSEID = "error.internal.invalidParseid",
 
-			/**
-			 * No updatable columns found.
-			 */
-			ERROR_NOCOLUMNS_UPDATABLE = "error.nocolumns.updatable",
-
-			/**
-			 * Runtime: unknown host.
-			 */
-			ERROR_UNKNOWN_HOST = "error.unknown.host",
-
-			/**
-			 * Runtime: connect to host failed.
-			 */
+			// Runtime: connect to host failed.
 			ERROR_HOST_CONNECT = "error.host.connect",
 
-			/**
-			 * Runtime: execution failed.
-			 */
+			// Runtime: execution failed.
 			ERROR_EXEC_FAILED = "error.exec.failed",
     
-			/**
-			 * Runtime: connect to host failed.
-			 */
-			ERROR_HOST_NICONNECT = "error.host.niconnect",
-       
-			/**
-			 * Runtime: connect to host failed.
-			 */
-			ERROR_WRONG_CONNECT_URL = "error.host.wrongconnecturl",
-			/**
-			 * Runtime: load ni libraries failed.
-			 */
-			ERROR_LOAD_NILIBRARY = "error.host.niloadlibrary",
-			/**
-			 * Runtime: receive of connect failed.
-			 */
+			// Runtime: receive of connect failed.
 			ERROR_RECV_CONNECT = "error.recv.connect",
 
-			/**
-			 * Runtime: receive garbled reply
-			 */
+			// Runtime: receive garbled reply
 			ERROR_REPLY_GARBLED = "error.connectreply.garbled",
 
-			/**
-			 * Runtime: connect reply receive failed
-			 */
-			ERROR_CONNECT_RECVFAILED = "error.connect.receivefailed",
-
-			/**
-			 * Runtime: data receive failed
-			 */
-			ERROR_DATA_RECVFAILED = "error.data.receivefailed",
-
-			/**
-			 * Runtime: data receive failed (w reason)
-			 */
-			ERROR_DATA_RECVFAILED_REASON = "error.data.receivefailed.reason",
-
-			/**
-			 * Runtime: reconnect on admin session unsupported
-			 */
+			// Runtime: reconnect on admin session unsupported
 			ERROR_ADMIN_RECONNECT = "error.admin.reconnect",
 
-			/**
-			 * Runtime: invalid swapping
-			 */
-			ERROR_INVALID_SWAPPING = "error.invalid.swapping",
-
-			/**
-			 * Runtime: send: getoutputstream failed (IO exception)
-			 */
-			ERROR_SEND_GETOUTPUTSTREAM = "error.send.getoutputstream",
-
-			/**
-			 * Runtime: send: write failed (IO exception)
-			 */
-			ERROR_SEND_WRITE = "error.send.write",
-
-			/**
-			 * Runtime: chunk overflow in read
-			 */
+			// Runtime: chunk overflow in read
 			ERROR_CHUNKOVERFLOW = "error.chunkoverflow",
 
-			/**
-			 * Util/printf: too few arguments for formatting.
-			 */
-			ERROR_FORMAT_TOFEWARGS = "error.format.toofewargs",
-
-			/**
-			 * Util/printf: format string must start with '%'
-			 */
-			ERROR_FORMAT_PERCENT = "error.format.percent",
-
-			/**
-			 * Util/printf: number object is not a number
-			 */
-			ERROR_FORMAT_NOTANUMBER = "error.format.notanumber",
-
-			/**
-			 * Util/printf: unknown format spec
-			 */
-			ERROR_FORMAT_UNKNOWN = "error.format.unknown",
-
-			/**
-			 * Util/printf: number object is not a number
-			 */
-			ERROR_FORMAT_TOOMANYARGS = "error.format.toomanyargs",
-
-			/**
-			 * No result set.
-			 */
-			WARNING_EMPTY_RESULTSET="warning.emptyresultset",
-
-			/**
-			 * <code>executeQuery(String)</code> called on <code>PreparedStatement</code>.
-			 */
-			ERROR_EXECUTEQUERY_PREPAREDSTATEMENT = "error.executequery.preparedstatement",
-
-			/**
-			 * <code>executeUpdate(String)</code> called on <code>PreparedStatement</code>.
-			 */
-			ERROR_EXECUTEUPDATE_PREPAREDSTATEMENT = "error.executeupdate.preparedstatement",
-
-			/**
-			 * Internal: <code>maxRows</code> inside result but end of result unknown (should not happen).
-			 */
-			ERROR_ASSERTION_MAXROWS_IN_RESULT = "error.assertion.maxrowsinresult",
-
-			/**
-			 * An illegal operation for a FORWARD_ONLY result set.
-			 */
-			ERROR_RESULTSET_FORWARDONLY = "error.resultset.forwardonly",
-
-			/**
-			 * <code>cancelRowUpdates</code> called while on insert row.
-			 */
-			ERROR_CANCELUPDATES_INSERTROW = "error.cancelupdates.insertrow",
-
-			/**
-			 * <code>deleteRow</code> called while on insert row.
-			 */
-			ERROR_DELETEROW_INSERTROW = "error.deleterow.insertrow",
-
-			/**
-			 * <code>deleteRow</code> called while on insert row.
-			 */
-			ERROR_UPDATEROW_INSERTROW = "error.updaterow.insertrow",
-
-			/**
-			 * <code>insertRow</code> called while not on insert row.
-			 */
-			ERROR_INSERTROW_INSERTROW = "error.insertrow.insertrow",
-
-			/**
-			 * <code>deleteRow</code> called while not positioned at a row
-			 */
-			ERROR_DELETEROW_NOROW = "error.deleterow.norow",
-
-			/**
-			 * <code>updateRow</code> called while not positioned at a row
-			 */
-			ERROR_UPDATEROW_NOROW = "error.updaterow.norow",
-
-			/**
-			 * Reading from a stream resulted in an IOException
-			 */
+			// Reading from a stream resulted in an IOException
 			ERROR_STREAM_IOEXCEPTION = "error.stream.ioexception",
-
-			/**
-			 * Problem in access to DatabaseMetaData.
-			 */
-			ERROR_NOMETADATA = "error.nometadata",
 
 			// Column nullable unknown
 			ERROR_DBNULL_UNKNOWN = "error.dbnull.unknown",
 
-			// jdbcext messages
-			ERROR_DATABASE_NOT_SET = "error.database.notset",
-			ERROR_CONNECTION_INVALIDATED = "error.connection.invalidated",
-			ERROR_COMMIT_XASESSION = "error.commit.xasession",
-			ERROR_ROLLBACK_XASESSION = "error.rollback.xasession",
-			ERROR_AUTOCOMMIT_XASESSION = "error.autocommit.xasession",
-
-			ERROR_MANDATORY_PROPERTY_NOTFOUND = "error.mandatory.property.notfound",
-			ERROR_NOT_STRINGREFADDR = "error.not.stringrefaddr",
-			ERROR_NOT_STRING_CONTENT = "error.not.string.content",
-			ERROR_NOT_NULL_CONTENT = "error.not.null.content",
-
-			ERROR_JNDILOOKUP_FAILED = "error.connection.JNDILookup",
-
-			// unsupported database features
-			ERROR_ARRAY_UNSUPPORTED = "error.array.unsupported",
-			ERROR_TIMEZONE_UNSUPPORTED = "error.timezone.unsupported",
-			ERROR_REF_UNSUPPORTED = "error.ref.unsupported",
-			ERROR_URL_UNSUPPORTED = "error.url.unsupported",
-			ERROR_MEMORYRESULT_METHOD_UNSUPPORTED = "error.memoryresult.method.unsupported",
-			ERROR_AUTOGENKEYS_RETRIEVAL_UNSUPPORTED = "error.autogenkeys.retrieval.unsupported",
+			// Unsupported database features
 			ERROR_SPECIAL_NUMBER_UNSUPPORTED = "error.special.number.unsupported",
 			ERROR_OMS_UNSUPPORTED = "error.oms.unsupported",
 			ERROR_TABLEDIRECT_UNSUPPORTED = "error.tabledirect.unsupported",
 	
-			// communication errors
-			COMMERROR_OK="commerror.ok",
-			COMMERROR_CONNECTDOWN="commerror.connectiondown",
-			COMMERROR_TASKLIMIT="commerror.tasklimit",
-			COMMERROR_TIMEOUT="commerror.timeout",
-			COMMERROR_CRASH="commerror.crash",
-			COMMERROR_RESTARTREQUIRED="commerror.restartrequired",
-			COMMERROR_SHUTDOWN="commerror.shutdown",
-			COMMERROR_SENDLINEDOWN="commerror.sendlinedown",
-			COMMERROR_RECVLINEDOWN="commerror.recvlinedown",
-			COMMERROR_PACKETLIMIT="commerror.packetlimit",
-			COMMERROR_RELEASED="commerror.released",
-			COMMERROR_WOULDBLOCK="commerror.wouldblock",
-			COMMERROR_UNKNOWNREQUEST="commerror.unknownrequest",
-			COMMERROR_SERVERDBUNKNOWN="commerror.serverdbunknown",
-
-			// OMS Streams
-			ERROR_STREAM_ODDSIZE = "error.stream.oddsize",
+			// Streams
 			ERROR_CONVERSION_STRINGSTREAM  = "error.stream.conversion.string",
-			ERROR_STREAM_SOURCEREAD = "error.stream.sourceread",
 			ERROR_CONVERSION_BYTESTREAM = "error.stream.conversion.bytes",
-			ERROR_STREAM_EOF = "error.stream.eof",
-			ERROR_STREAM_NODATA = "error.stream.nodata",
-			ERROR_STREAM_UNKNOWNTYPE = "error.stream.unknowntype",
 			ERROR_STREAM_ISATEND = "error.stream.isatend",
 			ERROR_CONVERSION_STRUCTURETYPE = "error.conversion.structuretype",	
-			ERROR_STRUCTURE_INCOMPLETE = "error.structure.incomplete",
-			ERROR_STRUCTURE_COMPLETE = "error.structure.complete",				
 			ERROR_STRUCTURE_ARRAYWRONGLENTGH = "error.structure.arraywronglength",
 			ERROR_STRUCT_ELEMENT_NULL = "error.structure.element.null",
 			ERROR_STRUCT_ELEMENT_CONVERSION = "error.structure.element.conversion",
 			ERROR_STRUCT_ELEMENT_OVERFLOW = "error.structure.element.overflow",
-			ERROR_STREAM_BLOB_UNSUPPORTED = "error.stream.blob.unsupported",
-			ERROR_INVALID_BLOB_POSITION = "error.invalid.blob.position",	
-			// LONG in DBPROCs
-			ERROR_UNKNOWN_PROCEDURELONG = "error.unknown.procedurelong",
-			ERROR_MESSAGE_NOT_AVAILABLE = "error.message.notavailable",
 
 			// Connection
 			ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED = "error.connection.wrongserverchallengereceived",
 			ERROR_CONNECTION_CHALLENGERESPONSENOTSUPPORTED = "error.connection.challengeresponsenotsupported",
-			// the rest
-			ERROR="error",
-			UNKNOWNTYPE="unknowntype",
-			COMMERROR="commerror",
-			INPUTPOS="inputpos";
 
+			// communication errors
+			COMMERROR_OK = "commerror.ok",
+			COMMERROR_CONNECTDOWN = "commerror.connectiondown",
+			COMMERROR_TASKLIMIT = "commerror.tasklimit",
+			COMMERROR_TIMEOUT = "commerror.timeout",
+			COMMERROR_CRASH = "commerror.crash",
+			COMMERROR_RESTARTREQUIRED = "commerror.restartrequired",
+			COMMERROR_SHUTDOWN = "commerror.shutdown",
+			COMMERROR_SENDLINEDOWN = "commerror.sendlinedown",
+			COMMERROR_RECVLINEDOWN = "commerror.recvlinedown",
+			COMMERROR_PACKETLIMIT = "commerror.packetlimit",
+			COMMERROR_RELEASED = "commerror.released",
+			COMMERROR_WOULDBLOCK = "commerror.wouldblock",
+			COMMERROR_UNKNOWNREQUEST = "commerror.unknownrequest",
+			COMMERROR_SERVERDBUNKNOWN = "commerror.serverdbunknown",
+			
+			// the rest
+			ERROR = "error",
+			UNKNOWNTYPE = "unknowntype";
 	}
 
 	#endregion
@@ -997,20 +682,20 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	{
 		public static readonly string[] ErrorText = 
 			{
-				"OK",
-				"Connection down, session released",
-				"Tasklimit",
-				"Timeout",
-				"Crash",
-				"Restart required",
-				"Shutdown",
-				"Send line down",
-				"Receive line down",
-				"Packet limit",
-				"Released",
-				"Would block",
-				"Unknown Request",
-				"Server or DB unknown"
+				MessageTranslator.Translate(MessageKey.COMMERROR_OK),
+				MessageTranslator.Translate(MessageKey.COMMERROR_CONNECTDOWN),
+				MessageTranslator.Translate(MessageKey.COMMERROR_TASKLIMIT),
+				MessageTranslator.Translate(MessageKey.COMMERROR_TIMEOUT),
+				MessageTranslator.Translate(MessageKey.COMMERROR_CRASH),
+				MessageTranslator.Translate(MessageKey.COMMERROR_RESTARTREQUIRED),
+				MessageTranslator.Translate(MessageKey.COMMERROR_SHUTDOWN),
+				MessageTranslator.Translate(MessageKey.COMMERROR_SENDLINEDOWN),
+				MessageTranslator.Translate(MessageKey.COMMERROR_RECVLINEDOWN),
+				MessageTranslator.Translate(MessageKey.COMMERROR_PACKETLIMIT),
+				MessageTranslator.Translate(MessageKey.COMMERROR_RELEASED),
+				MessageTranslator.Translate(MessageKey.COMMERROR_WOULDBLOCK),
+				MessageTranslator.Translate(MessageKey.COMMERROR_UNKNOWNREQUEST),
+				MessageTranslator.Translate(MessageKey.COMMERROR_SERVERDBUNKNOWN)
 			};
 	}
 

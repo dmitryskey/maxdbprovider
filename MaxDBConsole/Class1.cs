@@ -41,7 +41,7 @@ namespace MaxDBDataProvider
 
 				for(int i=0;i<1;i++)
 				{
-					using(MaxDBCommand cmd = new MaxDBCommand("SELECT name FROM HOTEL WHERE zip = :b", maxdbconn))
+					using(MaxDBCommand cmd = new MaxDBCommand("SELECT name FROM HOTEL WHERE zip = :b FOR UPDATE", maxdbconn))
 					{
 						//cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Direction = ParameterDirection.Output;
 						cmd.Parameters.Add(":b", MaxDBType.VarCharA).Value = "20005";
