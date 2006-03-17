@@ -370,7 +370,7 @@ namespace MaxDBDataProvider
 		{
 #if NATIVE
 			DBTechTranslator info = FindColumnInfo(i);
-			return info.IsDBNull(CurrentRecord)? DBNull.Value : info.GetValue(CurrentRecord);
+			return info.IsDBNull(CurrentRecord)? DBNull.Value : info.GetValue(this, CurrentRecord);
 #else
 			int columnType;
 			byte[] data = GetValueBytes(i, out columnType);

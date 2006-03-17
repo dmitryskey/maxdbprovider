@@ -237,7 +237,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			throw CreateGetException("Int64");
 		}
 
-		public virtual object GetValue(ByteArray mem)
+		public virtual object GetValue(ISQLParamController controller, ByteArray mem)
 		{
 			throw CreateGetException("object");
 		}
@@ -249,7 +249,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public virtual string GetString(ISQLParamController controller, ByteArray mem)
 		{
-			object rawResult = GetValue(mem);
+			object rawResult = GetValue(controller, mem);
 
 			if (rawResult == null) 
 				return null;
@@ -617,9 +617,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
-		public object GetObject(ByteArray mem)
+		public override object GetValue(ISQLParamController controller, ByteArray mem)
 		{
-			return GetString(null, mem);
+			return GetString(controller, mem);
 		}
 
 		public override BigDecimal GetBigDecimal(ByteArray mem)
@@ -820,6 +820,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			else
 				return null;
 		}
+
+		public override object GetValue(ISQLParamController controller, ByteArray mem)
+		{
+			return GetString(controller, mem);
+		}
      
 		public override byte[] GetBytes(ISQLParamController controller, ByteArray mem)
 		{
@@ -954,9 +959,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				return mem.ReadBytes(m_bufpos, 1);
 		}
 
-		public object GetObject(ByteArray mem)
+		public override object GetValue(ISQLParamController controller, ByteArray mem)
 		{
-			return GetBytes(null, mem);
+			return GetBytes(controller, mem);
 		}
 
 		public override string GetString(ISQLParamController controller, ByteArray mem)
@@ -1106,7 +1111,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return GetByte(null, mem);
 		}
 
-		public override object GetValue(ByteArray mem)
+		public override object GetValue(ISQLParamController controller, ByteArray mem)
 		{
 			if (!IsDBNull(mem))
 				return GetBoolean(mem);
@@ -1280,7 +1285,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return VDNNumber.Number2Long(mem.ReadBytes(m_bufpos, m_physicalLength - 1));
 		}
 
-		public override object GetValue(ByteArray mem)
+		public override object GetValue(ISQLParamController controller, ByteArray mem)
 		{
 			if(IsDBNull(mem))
 				return null;
@@ -1292,12 +1297,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 						return GetFloat(mem);
 					else
 						return GetDouble(mem);
-				case DataType.INTEGER: // isnull catched before
+				case DataType.INTEGER: // isNull catched before
 					return GetInt32(mem);
 				case DataType.SMALLINT:
 					return GetInt16(mem);
 				default:
-					return GetBigDecimal(mem);
+					return (decimal)GetBigDecimal(mem);
 			}
 		}
 
@@ -1457,7 +1462,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
-		public override object GetValue(ByteArray mem)
+		public override object GetValue(ISQLParamController controller, ByteArray mem)
 		{
 			return GetDateTime(mem);
 		}
@@ -1603,7 +1608,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
-		public override object GetValue(ByteArray mem)
+		public override object GetValue(ISQLParamController controller, ByteArray mem)
 		{
 			return GetDateTime(mem);
 		}
@@ -1797,7 +1802,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 		}
 
-		public override object GetValue(ByteArray mem)
+		public override object GetValue(ISQLParamController controller, ByteArray mem)
 		{
 			return GetDateTime(mem);
 		}
@@ -1981,7 +1986,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				return null;
 		}
 
-		public override object GetValue(ByteArray mem)
+		public override object GetValue(ISQLParamController controller, ByteArray mem)
 		{
 			byte[] ba = GetBytes(null, mem);
 			if(ba != null) 
@@ -2619,7 +2624,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				descriptor = mem.ReadBytes(m_bufpos, m_logicalLength);
 				// return also NULL if the LONG hasn't been touched.
-				if (descriptorIsNull(descriptor)) 
+				if (DescriptorIsNull(descriptor)) 
 					return null;
 			
 				getval = new GetLOBValue (controller.Connection, descriptor, longdata, m_dataType);
@@ -2816,7 +2821,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return alreadyRead;
 		}
 
-		protected bool descriptorIsNull(byte[] descriptor) 
+		protected bool DescriptorIsNull(byte[] descriptor) 
 		{
 			return descriptor[LongDesc.State] == LongDesc.StateStream;
 		}
@@ -2875,7 +2880,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if (!IsDBNull(mem)) 
 			{
 				descriptor = mem.ReadBytes(m_bufpos, m_logicalLength);
-				if (descriptorIsNull(descriptor))
+				if (DescriptorIsNull(descriptor))
 					return null;
             
 				getval = new GetUnicodeLOBValue(controller.Connection, descriptor, longData, IsUnicodeColumn);
@@ -3160,7 +3165,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return GetStream (controller, mem, longData);
 		}
 
-		public object GetObject(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISQLParamController controller, ByteArray mem)
 		{
 			return GetString(controller, mem);
 		}
@@ -3248,7 +3253,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return tmpStream.ToArray();
 		}
 
-		public object GetObject(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISQLParamController controller, ByteArray mem)
 		{
 			return GetBytes(controller, mem);
 		}
@@ -3305,7 +3310,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return new ReaderStream(reader, false);
 		}
 
-		public object GetObject(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISQLParamController controller, ByteArray mem)
 		{
 			return GetString(controller, mem);
 		}
@@ -3393,48 +3398,38 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			} 
 			catch(MissingManifestResourceException) 
 			{
-				// emergency - create an informative message in this case at least
-				StringBuilder result = new StringBuilder("No message available for locale ");
-				result.Append(Thread.CurrentThread.CurrentUICulture.EnglishName);
-				result.Append(", key ");
-				result.Append(key);
-				// if arguments given append them
-				if(args == null || args.Length==0) 
-					result.Append(".");
-				else 
+				try
 				{
-					result.Append(", arguments [");
-					for(int i=0; i<args.Length - 1; i++) 
-					{
-						result.Append(args[i].ToString());
-						result.Append(", ");
-					}
-					result.Append(args[args.Length-1].ToString());
-					result.Append("].");
+					// retrieve text and format it for default locale
+					string msg = rm.GetString(key, System.Globalization.CultureInfo.InvariantCulture);
+					if (args != null)
+						return string.Format(msg, args);
+					else
+						return msg;
 				}
-				return result.ToString();
+				catch 
+				{
+					StringBuilder result = new StringBuilder("No message available for default locale ");
+					result.Append("for key ");
+					result.Append(key);
+					// if arguments given append them
+					if(args == null || args.Length==0) 
+						result.Append(".");
+					else 
+					{
+						result.Append(", arguments [");
+						for(int i=0; i< args.Length - 1; i++) 
+						{
+							result.Append(args[i].ToString());
+							result.Append(", ");
+						}
+						result.Append(args[args.Length-1].ToString());
+						result.Append("].");
+					}
+
+					return result.ToString();
+				}
 			} 
-			catch 
-			{
-				StringBuilder result = new StringBuilder("No message available for default locale ");
-				result.Append("for key ");
-				result.Append(key);
-				// if arguments given append them
-				if(args == null || args.Length==0) 
-					result.Append(".");
-				else 
-				{
-					result.Append(", arguments [");
-					for(int i=0; i< args.Length - 1; i++) 
-					{
-						result.Append(args[i].ToString());
-						result.Append(", ");
-					}
-					result.Append(args[args.Length-1].ToString());
-					result.Append("].");
-				}
-				return result.ToString();
-			}
 		}
 	}
 

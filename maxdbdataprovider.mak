@@ -28,7 +28,6 @@ MAXDBDATAPROVIDER_SRC=MaxDBDataProvider/AssemblyInfo.cs \
 	MaxDBDataProvider/MaxDBParameterCollection.cs \
 	MaxDBDataProvider/MaxDBTransaction.cs \
 	MaxDBDataProvider/MaxDBType.cs \
-	MaxDBDataProvider/SQLDBC.cs \
 	MaxDBDataProvider/MaxDBProtocol/MaxDBCache.cs \
 	MaxDBDataProvider/MaxDBProtocol/MaxDBComm.cs \
 	MaxDBDataProvider/MaxDBProtocol/MaxDBConsts.cs \
@@ -43,7 +42,9 @@ MAXDBDATAPROVIDER_SRC=MaxDBDataProvider/AssemblyInfo.cs \
 	MaxDBDataProvider/Utils/Crypt.cs \
 	MaxDBDataProvider/Utils/Logger.cs \
 	MaxDBDataProvider/Utils/SocketIntf.cs \
-	MaxDBDataProvider/Utils/VDNNumber.cs
+	MaxDBDataProvider/Utils/VDNNumber.cs \
+	MaxDBDataProvider/Utils/SQLDBC.cs 
+
 MAXDBDATAPROVIDER_RES=-resource:MaxDBDataProvider/MaxDBProtocol/MaxDBMessages.resx,MaxDBDataProvider.MaxDBProtocol.MaxDBMessages.resx
 
 $(MAXDBCONSOLE_EXE): $(MAXDBCONSOLE_SRC) $(MAXDBDATAPROVIDER_DLL)

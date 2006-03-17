@@ -64,8 +64,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 				if (m_socket.ReopenSocketAfterInfoPacket)
 				{
+					ISocketIntf new_socket = m_socket.Clone();
 					Close();
-					m_socket = m_socket.Clone();
+					m_socket = new_socket;
 				}
 
 				m_session = true;
@@ -97,8 +98,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public void Reconnect()
 		{
-			m_socket.Close();
-			m_socket = m_socket.Clone();
+			ISocketIntf new_socket = m_socket.Clone();
+			Close();
+			m_socket = new_socket;
 			if (m_session)
 				Connect(m_dbname, m_port);
 			else
