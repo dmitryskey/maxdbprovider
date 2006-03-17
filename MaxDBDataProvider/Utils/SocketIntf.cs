@@ -19,16 +19,21 @@ namespace MaxDBDataProvider
 		void Close();
 	}
 
-	public class SocketClass : TcpClient, ISocketIntf
+	public class SocketClass : ISocketIntf
 	{
 		private string m_host;
 		private int m_port;
+        private int m_timeout;
+        private TcpClient m_client;
 
-		public SocketClass(string host, int port, int timeout) : base(host, port)
+		public SocketClass(string host, int port, int timeout) 
 		{
 			m_host = host;
 			m_port = port;
-			base.ReceiveTimeout = timeout;
+            m_timeout = timeout;
+
+            m_client = new TcpClient(host, port);
+            m_client.ReceiveTimeout = m_timeout;
 		}
 
 		#region SocketIntf Members
@@ -45,7 +50,7 @@ namespace MaxDBDataProvider
 		{
 			get
 			{
-				return base.GetStream();
+				return m_client.GetStream();
 			}
 		}
 
@@ -67,12 +72,12 @@ namespace MaxDBDataProvider
 
 		ISocketIntf ISocketIntf.Clone()
 		{
-			return new SocketClass(m_host, m_port, base.ReceiveTimeout);
+			return new SocketClass(m_host, m_port, m_timeout);
 		}
 
 		void ISocketIntf.Close()
 		{
-			Close();
+			m_client.Close();
 		}
 
 		#endregion

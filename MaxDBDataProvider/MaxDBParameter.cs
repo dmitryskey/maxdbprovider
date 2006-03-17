@@ -201,6 +201,18 @@ namespace MaxDBDataProvider
 			}
 		}
 
+		public int Size
+		{
+			get
+			{
+				return m_size;
+			}
+			set
+			{
+				m_size = value;
+			}
+		}
+
 		private MaxDBType _inferType(TypeCode type)
 		{
 			switch (type)

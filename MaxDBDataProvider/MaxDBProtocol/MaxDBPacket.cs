@@ -1317,7 +1317,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public string ReadString(int offset, int len) 
 		{
-			return ReadString(offset, len);
+			return ReadASCII(offset, len);
 		}
 
 		public byte[][] ParseLongDescriptors() 

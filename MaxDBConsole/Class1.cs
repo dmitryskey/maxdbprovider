@@ -41,10 +41,10 @@ namespace MaxDBDataProvider
 
 				for(int i=0;i<1;i++)
 				{
-					using(MaxDBCommand cmd = new MaxDBCommand("SELECT name FROM HOTEL WHERE zip = :b FOR UPDATE", maxdbconn))
+					using(MaxDBCommand cmd = new MaxDBCommand("SELECT name FROM HOTEL WHERE zip LIKE :b FOR UPDATE", maxdbconn))
 					{
 						//cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Direction = ParameterDirection.Output;
-						cmd.Parameters.Add(":b", MaxDBType.VarCharA).Value = "20005";
+						cmd.Parameters.Add(":b", MaxDBType.VarCharA).Value = "2%";
 						//DbType dd1 = cmd.Parameters[0].DbType;
 						//						cmd.Parameters.Add(":b", MaxDBType.Fixed, 0.0);
 
@@ -52,27 +52,27 @@ namespace MaxDBDataProvider
 
 						//cmd.ExecuteNonQuery();
 
-						MaxDBDataReader reader = cmd.ExecuteReader();
-						while(reader.Read())
-						{
-							/*
-							
-							reader.GetChars(0, 46, buffer, 3, 36);*/
-							string str = reader.GetString(0);
-							char[] buffer = new char[40];
-							
-						}
+//						MaxDBDataReader reader = cmd.ExecuteReader();
+//						while(reader.Read())
+//						{
+//							/*
+//							
+//							reader.GetChars(0, 46, buffer, 3, 36);*/
+//							string str = reader.GetString(0);
+//							char[] buffer = new char[40];
+//							
+//						}
 						//						DataTable dt = reader.GetSchemaTable();
 
-						//						DataSet ds = new DataSet();
-						//						MaxDBDataAdapter da = new MaxDBDataAdapter();
-						//						da.SelectCommand = cmd;
-						//						da.Fill(ds, "List");
-						//
-						//						//cmd.Transaction.Rollback();
-						//
-						//						foreach(DataRow row in ds.Tables[0].Rows)
-						//							Console.WriteLine(row[0].ToString());
+												DataSet ds = new DataSet();
+												MaxDBDataAdapter da = new MaxDBDataAdapter();
+												da.SelectCommand = cmd;
+												da.Fill(ds, "List");
+						
+												//cmd.Transaction.Rollback();
+						
+												foreach(DataRow row in ds.Tables[0].Rows)
+													Console.WriteLine(row[0].ToString());
 					}
 				}
 

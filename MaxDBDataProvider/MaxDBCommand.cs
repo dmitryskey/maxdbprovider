@@ -60,9 +60,8 @@ namespace MaxDBDataProvider
 			m_sCmdText = cmdText;
 		}
 
-		public MaxDBCommand(string cmdText, MaxDBConnection connection)
+		public MaxDBCommand(string cmdText, MaxDBConnection connection) : this(cmdText)
 		{
-			m_sCmdText    = cmdText;
 			m_connection  = connection;
 			
 #if !NATIVE
@@ -70,10 +69,8 @@ namespace MaxDBDataProvider
 #endif
 		}
 
-		public MaxDBCommand(string cmdText, MaxDBConnection connection, MaxDBTransaction txn)
+		public MaxDBCommand(string cmdText, MaxDBConnection connection, MaxDBTransaction txn) : this(cmdText, connection)
 		{
-			m_sCmdText    = cmdText;
-			m_connection  = connection;
 			m_txn      = txn;
 #if !NATIVE
 			m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
