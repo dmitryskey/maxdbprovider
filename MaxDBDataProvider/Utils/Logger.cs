@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace MaxDBDataProvider
+namespace MaxDBDataProvider.Utils
 {
 	/// <summary>
 	/// Summary description for Logger.

@@ -4,6 +4,7 @@ using System.Text;
 using System.Collections;
 using System.Runtime.CompilerServices;
 using MaxDBDataProvider.MaxDBProtocol;
+using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider
 {
