@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using System.Net.Sockets;
 
-namespace MaxDBDataProvider
+namespace MaxDBDataProvider.Utils
 {
 	/// <summary>
 	/// Summary description for SocketIntf.
@@ -50,7 +50,10 @@ namespace MaxDBDataProvider
 		{
 			get
 			{
-				return m_client.GetStream();
+				if (m_client != null)
+					return m_client.GetStream();
+				else
+					return null;
 			}
 		}
 
@@ -78,6 +81,7 @@ namespace MaxDBDataProvider
 		void ISocketIntf.Close()
 		{
 			m_client.Close();
+			m_client = null;
 		}
 
 		#endregion

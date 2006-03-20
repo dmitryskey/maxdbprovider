@@ -5,6 +5,7 @@ using System.IO;
 using System.Globalization;
 using System.Collections;
 using MaxDBDataProvider.MaxDBProtocol;
+using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider
 {

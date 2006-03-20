@@ -2,7 +2,7 @@ using System;
 using System.Security.Cryptography;
 using MaxDBDataProvider.MaxDBProtocol;
 
-namespace MaxDBDataProvider
+namespace MaxDBDataProvider.Utils
 {
 #if NATIVE
 

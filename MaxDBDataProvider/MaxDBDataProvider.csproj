@@ -18,7 +18,7 @@
                 OutputType = "Library"
                 PreBuildEvent = ""
                 PostBuildEvent = ""
-                RootNamespace = "MaxDBDataProvider"
+                RootNamespace = ""
                 RunPostBuildEvent = "OnBuildSuccess"
                 StartupObject = ""
             >
@@ -154,6 +154,10 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "MaxDBMessages.resx"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
                     RelPath = "MaxDBParameter.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
@@ -204,10 +208,6 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "MaxDBProtocol\MaxDBMessages.resx"
-                    BuildAction = "EmbeddedResource"
-                />
-                <File
                     RelPath = "MaxDBProtocol\MaxDBPacket.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
@@ -249,6 +249,7 @@
                 />
                 <File
                     RelPath = "Utils\SQLDBC.cs"
+                    SubType = "Code"
                     BuildAction = "Compile"
                 />
                 <File

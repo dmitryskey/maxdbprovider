@@ -3,6 +3,7 @@ using System.IO;
 using System.Data;
 using System.Text;
 using System.Collections;
+using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {

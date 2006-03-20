@@ -1,5 +1,6 @@
 using System;
 using System.Net.Sockets;
+using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
@@ -138,24 +139,30 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public void Close()
 		{
-			MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END]);
-			request.FillHeader(RSQLTypes.USER_RELEASE_REQUEST, m_sender, m_receiver, m_maxSendLen);
-			request.SetSendLength(0);
-			m_socket.Stream.Write(request.arrayData, 0, request.Length);
-			m_socket.Close();
+			if (m_socket.Stream != null)
+			{
+				MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END]);
+				request.FillHeader(RSQLTypes.USER_RELEASE_REQUEST, m_sender, m_receiver, m_maxSendLen);
+				request.SetSendLength(0);
+				m_socket.Stream.Write(request.arrayData, 0, request.Length);
+				m_socket.Close();
+			}
 		}
 
 		public void Cancel()
 		{
 			try
 			{
-				MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END + ConnectPacketOffset.END]);
-				request.FillHeader(RSQLTypes.USER_CANCEL_REQUEST, m_sender, m_receiver, m_maxSendLen);
-				request.WriteInt32(m_sender, HeaderOffset.ReceiverRef);
-				request.Close();
-				request.SetSendLength(request.Length);
-				m_socket.Stream.Write(request.arrayData, 0, request.Length);
-				m_socket.Close();
+				if (m_socket.Stream != null)
+				{
+					MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END + ConnectPacketOffset.END]);
+					request.FillHeader(RSQLTypes.USER_CANCEL_REQUEST, m_sender, m_receiver, m_maxSendLen);
+					request.WriteInt32(m_sender, HeaderOffset.ReceiverRef);
+					request.Close();
+					request.SetSendLength(request.Length);
+					m_socket.Stream.Write(request.arrayData, 0, request.Length);
+					m_socket.Close();
+				}
 			}
 			catch(Exception ex)
 			{

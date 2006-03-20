@@ -6,6 +6,7 @@ using System.Threading;
 using System.ComponentModel;
 using System.Globalization;
 using System.Data;
+using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
@@ -3363,7 +3364,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	public class MessageTranslator
 	{
-		private static ResourceManager rm = new ResourceManager("MaxDBDataProvider.MaxDBProtocol.MaxDBMessages", typeof(MessageTranslator).Assembly);
+		private static ResourceManager rm = new ResourceManager("MaxDBMessages", typeof(MessageTranslator).Assembly);
 
 		public static string Translate(string key)
 		{
@@ -3398,37 +3399,24 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			} 
 			catch(MissingManifestResourceException) 
 			{
-				try
+				StringBuilder result = new StringBuilder("No message available for key ");
+				result.Append(key);
+				// if arguments given append them
+				if(args == null || args.Length==0) 
+					result.Append(".");
+				else 
 				{
-					// retrieve text and format it for default locale
-					string msg = rm.GetString(key, System.Globalization.CultureInfo.InvariantCulture);
-					if (args != null)
-						return string.Format(msg, args);
-					else
-						return msg;
-				}
-				catch 
-				{
-					StringBuilder result = new StringBuilder("No message available for default locale ");
-					result.Append("for key ");
-					result.Append(key);
-					// if arguments given append them
-					if(args == null || args.Length==0) 
-						result.Append(".");
-					else 
+					result.Append(", arguments [");
+					for(int i=0; i< args.Length - 1; i++) 
 					{
-						result.Append(", arguments [");
-						for(int i=0; i< args.Length - 1; i++) 
-						{
-							result.Append(args[i].ToString());
-							result.Append(", ");
-						}
-						result.Append(args[args.Length-1].ToString());
-						result.Append("].");
+						result.Append(args[i].ToString());
+						result.Append(", ");
 					}
-
-					return result.ToString();
+					result.Append(args[args.Length-1].ToString());
+					result.Append("].");
 				}
+
+				return result.ToString();
 			} 
 		}
 	}

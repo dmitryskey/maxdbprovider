@@ -45,11 +45,11 @@ MAXDBDATAPROVIDER_SRC=MaxDBDataProvider/AssemblyInfo.cs \
 	MaxDBDataProvider/Utils/VDNNumber.cs \
 	MaxDBDataProvider/Utils/SQLDBC.cs 
 
-MAXDBDATAPROVIDER_RES=-resource:MaxDBDataProvider/MaxDBProtocol/MaxDBMessages.resx,MaxDBDataProvider.MaxDBProtocol.MaxDBMessages.resx
+MAXDBDATAPROVIDER_RES=-resource:MaxDBDataProvider/MaxDBMessages.resx,MaxDBMessages.resx
 
 $(MAXDBCONSOLE_EXE): $(MAXDBCONSOLE_SRC) $(MAXDBDATAPROVIDER_DLL)
 	-mkdir -p $(TARGET)
-	$(MCS) $(MCSFLAGS) $(LIBS) -r:System.dll -r:System.Data.dll -r:System.Xml.dll -r:$(MAXDBDATAPROVIDER_DLL) -r:nunit.framework.dll -target:exe -out:$(MAXDBCONSOLE_EXE) $(MAXDBCONSOLE_RES) $(MAXDBCONSOLE_SRC)
+	$(MCS) $(MCSFLAGS) $(LIBS) -r:System.dll -r:System.Data.dll -r:System.Xml.dll -r:$(MAXDBDATAPROVIDER_DLL) -r:nunit.framework.dll -target:exe -out:$(MAXDBCONSOLE_EXE) $(MAXDBCONSOLE_SRC)
 
 $(MAXDBDATAPROVIDER_DLL): $(MAXDBDATAPROVIDER_SRC) 
 	-mkdir -p $(TARGET)

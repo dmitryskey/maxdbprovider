@@ -2,7 +2,7 @@ using System;
 using System.Text;
 using MaxDBDataProvider.MaxDBProtocol;
 
-namespace MaxDBDataProvider
+namespace MaxDBDataProvider.Utils
 {
 	/// <summary>
 	/// Summary description for ByteArray.
