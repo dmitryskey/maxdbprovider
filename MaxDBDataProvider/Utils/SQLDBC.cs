@@ -215,7 +215,7 @@ namespace MaxDBDataProvider.Utils
 
 			public const int SQLDBC_NULL_DATA = -1;
 			public const int SQLDBC_DATA_AT_EXEC = -2;
-			public const int SQLDBC_NTS =-3;
+			public const int SQLDBC_NTS = -3;
 			public const int SQLDBC_NO_TOTAL = -4;
 			public const int SQLDBC_DEFAULT_PARAM = -5;
 			public const int SQLDBC_IGNORE = -6;

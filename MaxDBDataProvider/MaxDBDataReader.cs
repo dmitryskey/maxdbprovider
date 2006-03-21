@@ -1216,7 +1216,8 @@ namespace MaxDBDataProvider
 					val_length = sizeof(byte);
 					if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT1, new IntPtr(&byte_val), 
 						ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-						throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " + 
+							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
 					else
@@ -1228,7 +1229,8 @@ namespace MaxDBDataProvider
 					{
 						if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, new IntPtr(dt_ptr), 
 							ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-							throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " + 
+								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
@@ -1241,7 +1243,8 @@ namespace MaxDBDataProvider
 					{
 						if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, new IntPtr(tm_ptr), 
 							ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-							throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
@@ -1254,7 +1257,8 @@ namespace MaxDBDataProvider
 					{
 						if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, new IntPtr(ts_ptr), 
 							ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-							throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
@@ -1267,7 +1271,8 @@ namespace MaxDBDataProvider
 					val_length = sizeof(double);
 					if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_DOUBLE, new IntPtr(&double_val), 
 						ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-						throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
 					else
@@ -1277,7 +1282,8 @@ namespace MaxDBDataProvider
 					val_length = sizeof(int);
 					if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, new IntPtr(&int_val), 
 						ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-						throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
 					else
@@ -1287,7 +1293,8 @@ namespace MaxDBDataProvider
 					val_length = sizeof(short);
 					if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT2, new IntPtr(&short_val), 
 						ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-						throw new MaxDBException("Error getObject " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
 					else
@@ -1303,25 +1310,29 @@ namespace MaxDBDataProvider
 
 					fixed(byte *valuePtr = columnValue)
 					{
-						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED, 
+						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, 
+							Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2, 
 							new IntPtr(valuePtr), ref val_length, val_length, 0);
 
 						if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 							return null;
 
 						if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-							throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
 					columnValue = new byte[val_length];
 
 					fixed(byte *valuePtr = columnValue)
 					{
-						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED, 
+						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, 
+							Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2, 
 							new IntPtr(valuePtr), ref val_length, val_length, 0);
 
 						if (rc != SQLDBC_Retcode.SQLDBC_OK)
-							throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
 					return columnValue;
@@ -1340,7 +1351,8 @@ namespace MaxDBDataProvider
 							return null;
 
 						if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-							throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
 					binValue = new byte[val_length];
@@ -1351,7 +1363,8 @@ namespace MaxDBDataProvider
 							new IntPtr(valuePtr), ref val_length, val_length, 0);
 
 						if (rc != SQLDBC_Retcode.SQLDBC_OK)
-							throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
 					return binValue;
@@ -1375,7 +1388,7 @@ namespace MaxDBDataProvider
 				case DataType.VARCHARUNI:
 				case DataType.STRUNI:
 				case DataType.UNICODE:
-					hostType = SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED;
+					hostType = Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2;
 					break;
 				case DataType.STRB:
 				case DataType.VARCHARB:
@@ -1403,7 +1416,8 @@ namespace MaxDBDataProvider
 						return 0;
 
 					if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-						throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 
 					if (rc == SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
 					{
@@ -1429,7 +1443,8 @@ namespace MaxDBDataProvider
 					new IntPtr(valuePtr + bufferIndex), ref val_length, length, 0);
 
 				if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC && rc != SQLDBC_Retcode.SQLDBC_OK)
-					throw new MaxDBException("Error getObject: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+					throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+						SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 			}
 
 			return length;

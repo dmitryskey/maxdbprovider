@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Resources;
 using System.Text;
 using System.Threading;
 using System.ComponentModel;
@@ -3359,67 +3358,4 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#endregion
 #endif
-	
-	#region "Message translator class"
-
-	public class MessageTranslator
-	{
-		private static ResourceManager rm = new ResourceManager("MaxDBMessages", typeof(MessageTranslator).Assembly);
-
-		public static string Translate(string key)
-		{
-			return Translate(key, null);
-		}
-
-		public static string Translate(string key, object o1)
-		{
-			return Translate(key, new object[]{ o1 });
-		}
-
-		public static string Translate(string key, object o1, object o2)
-		{
-			return Translate(key, new object[]{ o1, o2 });
-		}
-
-		public static string Translate(string key, object o1, object o2, object o3)
-		{
-			return Translate(key, new object[]{ o1, o2, o3 });
-		}
-
-		public static string Translate(string key, object[] args) 
-		{
-			try 
-			{
-				// retrieve text and format it
-				string msg = rm.GetString(key);
-				if (args != null)
-					return string.Format(msg, args);
-				else
-					return msg;
-			} 
-			catch(MissingManifestResourceException) 
-			{
-				StringBuilder result = new StringBuilder("No message available for key ");
-				result.Append(key);
-				// if arguments given append them
-				if(args == null || args.Length==0) 
-					result.Append(".");
-				else 
-				{
-					result.Append(", arguments [");
-					for(int i=0; i< args.Length - 1; i++) 
-					{
-						result.Append(args[i].ToString());
-						result.Append(", ");
-					}
-					result.Append(args[args.Length-1].ToString());
-					result.Append("].");
-				}
-
-				return result.ToString();
-			} 
-		}
-	}
-
-	#endregion
 }

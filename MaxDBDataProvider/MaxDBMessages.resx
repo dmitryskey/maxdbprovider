@@ -322,7 +322,10 @@
 		<value>Server or DB unknown</value>
 	</data>
 	<data name="error.exec.failed">
-		<value>Packet execution failed </value>
+		<value>Execution failed</value>
+	</data>
+	<data name="error.getobject.failed">
+		<value>getObject function failed</value>
 	</data>
 	<data name="error.dbnull.unknown">
 		<value>Column nullable unknown</value>
