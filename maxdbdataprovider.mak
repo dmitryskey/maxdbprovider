@@ -7,6 +7,8 @@ endif
 MCS=mcs
 MCSFLAGS=-debug --stacktrace -d:NATIVE
 
+RESGEN=resgen
+
 LIBS=-lib:D:/PROGRA~1/MONO-1~1.3/lib\mono/1.0 -lib:D:/PROGRA~1/MONO-1~1.3/lib\mono/gtk-sharp
 
 MAXDBCONSOLE_EXE=$(TARGET)/MaxDBConsole.exe
@@ -45,7 +47,8 @@ MAXDBDATAPROVIDER_SRC=MaxDBDataProvider/AssemblyInfo.cs \
 	MaxDBDataProvider/Utils/VDNNumber.cs \
 	MaxDBDataProvider/Utils/SQLDBC.cs 
 
-MAXDBDATAPROVIDER_RES=-resource:MaxDBDataProvider/MaxDBMessages.resx,MaxDBMessages.resx
+MAXDBDATAPROVIDER_RESX=MaxDBDataProvider/MaxDBMessages.resx
+MAXDBDATAPROVIDER_RES=MaxDBDataProvider/MaxDBMessages.resources 
 
 $(MAXDBCONSOLE_EXE): $(MAXDBCONSOLE_SRC) $(MAXDBDATAPROVIDER_DLL)
 	-mkdir -p $(TARGET)
@@ -53,7 +56,8 @@ $(MAXDBCONSOLE_EXE): $(MAXDBCONSOLE_SRC) $(MAXDBDATAPROVIDER_DLL)
 
 $(MAXDBDATAPROVIDER_DLL): $(MAXDBDATAPROVIDER_SRC) 
 	-mkdir -p $(TARGET)
-	$(MCS) $(MCSFLAGS) $(LIBS) -r:System.dll -r:System.Data.dll -r:System.Xml.dll -target:library -out:$(MAXDBDATAPROVIDER_DLL) $(MAXDBDATAPROVIDER_RES) $(MAXDBDATAPROVIDER_SRC)
+	$(RESGEN) $(MAXDBDATAPROVIDER_RESX) $(MAXDBDATAPROVIDER_RES)
+	$(MCS) $(MCSFLAGS) $(LIBS) -r:System.dll -r:System.Data.dll -r:System.Xml.dll -target:library -out:$(MAXDBDATAPROVIDER_DLL) -res:$(MAXDBDATAPROVIDER_RES) $(MAXDBDATAPROVIDER_SRC)
 
 
 # common targets
