@@ -21,66 +21,76 @@ namespace MaxDBDataProvider
 			// TODO: Add code to start application here
 			//
 
-			MaxDBConnection maxdbconn = null;
-			MaxDBTransaction trans = null;
+			PerfomanceTest();
 
-			try
-			{
-				maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
-				maxdbconn.Open();
+//			MaxDBConnection maxdbconn = null;
+//			MaxDBTransaction trans = null;
 
-				trans = maxdbconn.BeginTransaction(IsolationLevel.ReadCommitted);
-
-				using(MaxDBCommand cmd = new MaxDBCommand("INSERT INTO ruscity (zip,name,state) VALUES (:a,:b, :c)", maxdbconn))
-				{
-					cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Value = "42600";
-					cmd.Parameters.Add(":b", MaxDBType.VarCharUni).Value = "»жевск";
-					cmd.Parameters.Add(":c", MaxDBType.VarCharUni).Value = "UD";
-					cmd.Transaction = trans;
-					cmd.ExecuteNonQuery();
-					cmd.Transaction.Commit();
-				}
-
-				using(MaxDBCommand cmd = new MaxDBCommand("SELECT NAME FROM RUSCITY WHERE zip = :b", maxdbconn))
-				{
-					//cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Direction = ParameterDirection.Output;
-					cmd.Parameters.Add(":b", MaxDBType.VarCharUni).Value = "20005";
-
-					//cmd.Transaction = trans;
-
-					//cmd.ExecuteNonQuery();
-
-					//string sdf = cmd.Parameters[0].Value.ToString();
-
-					MaxDBDataReader reader = cmd.ExecuteReader();
-					while(reader.Read())
-						Console.Out.WriteLine(reader.GetString(0));
-				}
-//											
-//					DataTable dt = reader.GetSchemaTable();
+//			try
+//			{
+//				maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
+//				maxdbconn.Open();
 //
-//					DataSet ds = new DataSet();
-//					MaxDBDataAdapter da = new MaxDBDataAdapter();
-//					da.SelectCommand = cmd;
-//					da.Fill(ds, "List");
-//					
-//					
-//					foreach(DataRow row in ds.Tables[0].Rows)
-//						Console.WriteLine(row[0].ToString());
+//				trans = maxdbconn.BeginTransaction(IsolationLevel.ReadCommitted);
+//
+//				using(MaxDBCommand cmd = new MaxDBCommand("DELETE FROM ruscity WHERE zip = :a", maxdbconn))
+//				{
+//					cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Value = "42600";
+//					cmd.Transaction = trans;
+//					cmd.ExecuteNonQuery();
 //				}
-			}
-			catch(Exception ex)
-			{
-				if (trans != null) trans.Rollback();
-				Console.WriteLine(ex.Message);
-			}
-			finally
-			{
-				if (maxdbconn != null)
-					maxdbconn.Close();
-			}
-
-			return;
+//
+//				using(MaxDBCommand cmd = new MaxDBCommand("INSERT INTO ruscity (zip,name,state) VALUES (:a,:b, :c)", maxdbconn))
+//				{
+//					cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Value = "42600";
+//					cmd.Parameters.Add(":b", MaxDBType.VarCharUni).Value = "»жевск";
+//					cmd.Parameters.Add(":c", MaxDBType.VarCharUni).Value = "UD";
+//					cmd.Transaction = trans;
+//					cmd.ExecuteNonQuery();
+//					cmd.Transaction.Commit();
+//				}
+//
+//				using(MaxDBCommand cmd = new MaxDBCommand("SELECT NAME FROM RUSCITY WHERE zip = :b", maxdbconn))
+//				{
+//					//cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Direction = ParameterDirection.Output;
+//					cmd.Parameters.Add(":b", MaxDBType.VarCharUni).Value = "42600";
+//
+//					//cmd.Transaction = trans;
+//
+//					//cmd.ExecuteNonQuery();
+//
+//					//string sdf = cmd.Parameters[0].Value.ToString();
+//
+//					MaxDBDataReader reader = cmd.ExecuteReader();
+//					while(reader.Read())
+//						System.Windows.Forms.MessageBox.Show(reader.GetString(0), "Name", 
+//							System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+//				}
+////											
+////					DataTable dt = reader.GetSchemaTable();
+////
+////					DataSet ds = new DataSet();
+////					MaxDBDataAdapter da = new MaxDBDataAdapter();
+////					da.SelectCommand = cmd;
+////					da.Fill(ds, "List");
+////					
+////					
+////					foreach(DataRow row in ds.Tables[0].Rows)
+////						Console.WriteLine(row[0].ToString());
+////				}
+//			}
+//			catch(Exception ex)
+//			{
+//				if (trans != null) trans.Rollback();
+//				Console.WriteLine(ex.Message);
+//			}
+//			finally
+//			{
+//				if (maxdbconn != null)
+//					maxdbconn.Close();
+//			}
+//
+//			return;
 		}
 
 		static void PerfomanceTest()

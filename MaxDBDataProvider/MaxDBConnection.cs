@@ -474,12 +474,7 @@ namespace MaxDBDataProvider
 			MaxDBRequestPacket packet;
 			
 			if (m_packetPool.Count == 0)
-			{
-				if (m_enc == Encoding.ASCII)
-					packet = new MaxDBRequestPacket(new byte[HeaderOffset.END + m_comm.MaxCmdSize], Consts.AppID, Consts.AppVersion);
-				else
-					packet = new MaxDBRequestPacketUnicode(new byte[HeaderOffset.END + m_comm.MaxCmdSize], Consts.AppID, Consts.AppVersion);
-			}
+				packet = new MaxDBRequestPacket(new byte[HeaderOffset.END + m_comm.MaxCmdSize], Consts.AppID, Consts.AppVersion);
 			else
 				packet = (MaxDBRequestPacket)m_packetPool.Pop();
 
