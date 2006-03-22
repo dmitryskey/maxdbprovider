@@ -22,6 +22,70 @@ namespace MaxDBDataProvider
 			//
 
 			MaxDBConnection maxdbconn = null;
+			MaxDBTransaction trans = null;
+
+			try
+			{
+				maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
+				maxdbconn.Open();
+
+				trans = maxdbconn.BeginTransaction(IsolationLevel.ReadCommitted);
+
+				using(MaxDBCommand cmd = new MaxDBCommand("INSERT INTO ruscity (zip,name,state) VALUES (:a,:b, :c)", maxdbconn))
+				{
+					cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Value = "42600";
+					cmd.Parameters.Add(":b", MaxDBType.VarCharUni).Value = "»жевск";
+					cmd.Parameters.Add(":c", MaxDBType.VarCharUni).Value = "UD";
+					cmd.Transaction = trans;
+					cmd.ExecuteNonQuery();
+					cmd.Transaction.Commit();
+				}
+
+				using(MaxDBCommand cmd = new MaxDBCommand("SELECT NAME FROM RUSCITY WHERE zip = :b", maxdbconn))
+				{
+					//cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Direction = ParameterDirection.Output;
+					cmd.Parameters.Add(":b", MaxDBType.VarCharUni).Value = "20005";
+
+					//cmd.Transaction = trans;
+
+					//cmd.ExecuteNonQuery();
+
+					//string sdf = cmd.Parameters[0].Value.ToString();
+
+					MaxDBDataReader reader = cmd.ExecuteReader();
+					while(reader.Read())
+						Console.Out.WriteLine(reader.GetString(0));
+				}
+//											
+//					DataTable dt = reader.GetSchemaTable();
+//
+//					DataSet ds = new DataSet();
+//					MaxDBDataAdapter da = new MaxDBDataAdapter();
+//					da.SelectCommand = cmd;
+//					da.Fill(ds, "List");
+//					
+//					
+//					foreach(DataRow row in ds.Tables[0].Rows)
+//						Console.WriteLine(row[0].ToString());
+//				}
+			}
+			catch(Exception ex)
+			{
+				if (trans != null) trans.Rollback();
+				Console.WriteLine(ex.Message);
+			}
+			finally
+			{
+				if (maxdbconn != null)
+					maxdbconn.Close();
+			}
+
+			return;
+		}
+
+		static void PerfomanceTest()
+		{
+			MaxDBConnection maxdbconn = null;
 
 			try
 			{
@@ -29,77 +93,20 @@ namespace MaxDBDataProvider
 				maxdbconn.Open();
 
 				DateTime start_time = DateTime.Now;
-				
-				//MaxDBTransaction trans = maxdbconn.BeginTransaction(IsolationLevel.ReadUncommitted);
 
-				//				using(MaxDBCommand cmd = new MaxDBCommand("INSERT INTO TEST (CHARU_FIELD) VALUES('123Hello')", maxdbconn))
-				//				{
-				//					cmd.Transaction = trans;
-				//					cmd.ExecuteNonQuery();
-				//					cmd.Transaction.Commit();
-				//				}
-
-				for(int i=0;i<1;i++)
+				for(int i=0;i<1000;i++)
 				{
-					using(MaxDBCommand cmd = new MaxDBCommand("SELECT NAME FROM HOTEL", maxdbconn))
+					using(MaxDBCommand cmd = new MaxDBCommand("SELECT NAME FROM HOTEL WHERE zip = :b", maxdbconn))
 					{
-						//cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Direction = ParameterDirection.Output;
-						//cmd.Parameters.Add(":b", MaxDBType.VarCharA).Value = "2%";
-						//DbType dd1 = cmd.Parameters[0].DbType;
-						//						cmd.Parameters.Add(":b", MaxDBType.Fixed, 0.0);
+						cmd.Parameters.Add(":b", MaxDBType.VarCharUni).Value = "20005";
 
-						//cmd.Transaction = trans;
-
-						//cmd.ExecuteNonQuery();
-
-//						MaxDBDataReader reader = cmd.ExecuteReader();
-//						while(reader.Read())
-//						{
-//							/*
-//							
-//							reader.GetChars(0, 46, buffer, 3, 36);*/
-//							string str = reader.GetString(0);
-//							char[] buffer = new char[40];
-//							
-//						}
-						//						DataTable dt = reader.GetSchemaTable();
-
-												DataSet ds = new DataSet();
-												MaxDBDataAdapter da = new MaxDBDataAdapter();
-												da.SelectCommand = cmd;
-												da.Fill(ds, "List");
-						
-												//cmd.Transaction.Rollback();
-						
-												foreach(DataRow row in ds.Tables[0].Rows)
-													Console.WriteLine(row[0].ToString());
+						MaxDBDataReader reader = cmd.ExecuteReader();
+						while(reader.Read())
+							Console.Out.WriteLine(reader.GetString(0));
 					}
 				}
 
 				Console.WriteLine(DateTime.Now - start_time);
-
-				//				OdbcConnection odbcconn = new OdbcConnection("Dsn=TESTDB;Uid=DBA;Pwd=123;");
-				//				odbcconn.Open();
-				//				
-				//				start_time = DateTime.Now;
-				//				
-				//				for(int i=0;i<1000;i++)
-				//				{
-				//					using(OdbcCommand cmd = new OdbcCommand("SELECT * FROM TEST WHERE CHARA_FIELD=:a", odbcconn))
-				//					{
-				//						cmd.Parameters.Add(":a", "Test");
-				//
-				//						DataSet ds = new DataSet();
-				//						OdbcDataAdapter da = new OdbcDataAdapter();
-				//						da.SelectCommand = cmd;
-				//						da.Fill(ds, "List");
-				//					}
-				//				}
-				//				
-				//				Console.WriteLine(DateTime.Now - start_time);
-				//				
-				//				odbcconn.Close();
-
 			}
 			catch(Exception ex)
 			{
@@ -113,5 +120,6 @@ namespace MaxDBDataProvider
 
 			return;
 		}
+
 	}
 }

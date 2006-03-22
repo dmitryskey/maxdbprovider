@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace MaxDBDataProvider.Utils
 {
-#if !NATIVE
+#if !SAFE
 
 	#region "Classes, structures and enumerations to support interropting"
 

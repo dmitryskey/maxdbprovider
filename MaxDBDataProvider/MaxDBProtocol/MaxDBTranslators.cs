@@ -9,7 +9,7 @@ using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
-#if NATIVE
+#if SAFE
 
 	#region "DB Tech translator class"
 
@@ -142,21 +142,21 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		protected MaxDBConversionException CreateGetException(string requestedType)
 		{
-			return new MaxDBConversionException(MessageTranslator.Translate(
-				MessageKey.ERROR_CONVERSIONSQLNET, ColumnTypeName, requestedType));
+			return new MaxDBConversionException(MaxDBMessages.Extract(
+				MaxDBMessages.ERROR_CONVERSIONSQLNET, ColumnTypeName, requestedType));
 		}
 
 		protected MaxDBConversionException CreateSetException(string requestedType)
 		{
-			return new MaxDBConversionException(MessageTranslator.Translate(
-				MessageKey.ERROR_CONVERSIONNETSQL, requestedType, ColumnTypeName));
+			return new MaxDBConversionException(MaxDBMessages.Extract(
+				MaxDBMessages.ERROR_CONVERSIONNETSQL, requestedType, ColumnTypeName));
 		}
 
 		protected MaxDBConversionException CreateParseException(string data, string requestedType)
 		{
 			if (requestedType == null) 
 				requestedType = ColumnTypeName;
-			return new MaxDBConversionException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSIONDATA, data, requestedType));
+			return new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONDATA, data, requestedType));
 		}
 
 		public virtual Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
@@ -343,7 +343,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				if ((m_mode & ParamInfo.Optional) != 0) 
 					return true;
 				
-				throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_DBNULL_UNKNOWN));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_DBNULL_UNKNOWN));
 			}
 		}
 
@@ -486,7 +486,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public virtual object TransDoubleForInput(double val)
 		{
 			if(double.IsInfinity(val) || double.IsNaN(val)) 
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_SPECIAL_NUMBER_UNSUPPORTED, val.ToString()));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SPECIAL_NUMBER_UNSUPPORTED, val.ToString()));
 
 			return TransObjectForInput(new BigDecimal(val));
 		}
@@ -494,7 +494,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public virtual object TransFloatForInput(float val)
 		{
 			if(float.IsInfinity(val) || float.IsNaN(val)) 
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_SPECIAL_NUMBER_UNSUPPORTED, val.ToString()));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SPECIAL_NUMBER_UNSUPPORTED, val.ToString()));
 
 			return TransObjectForInput(new BigDecimal(val));
 		}
@@ -712,7 +712,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			if (!IsDBNull(mem))
-				return mem.ReadASCII(m_bufpos, m_logicalLength).TrimStart();
+				return mem.ReadASCII(m_bufpos, m_logicalLength).TrimEnd('\0');
 			else
 				return null;
 		}
@@ -816,7 +816,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			if (!IsDBNull(mem))
-				return m_enc.GetString(mem.ReadBytes(m_bufpos, m_logicalLength * Consts.unicodeWidth)).TrimStart();
+				return m_enc.GetString(mem.ReadBytes(m_bufpos, m_logicalLength * Consts.unicodeWidth)).TrimEnd('\0');
 			else
 				return null;
 		}
@@ -1199,7 +1199,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					case (DBTechTranslator.nullDefineByte):
 						return result;
 					case (DBTechTranslator.specialNullValueDefineByte):
-						throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSIONSpecialNullValue), "", -10811);
+						throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSpecialNullValue), "", -10811);
 				}
 				result = VDNNumber.Number2BigDecimal(mem.ReadBytes(m_bufpos, m_physicalLength - 1));
 				result = result.setScale(scale);
@@ -1221,7 +1221,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					case DBTechTranslator.nullDefineByte:
 						return result;
 					case DBTechTranslator.specialNullValueDefineByte:
-						throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSIONSpecialNullValue), "" , -10811);
+						throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSpecialNullValue), "" , -10811);
 				}
 				result = VDNNumber.Number2BigDecimal(mem.ReadBytes(m_bufpos, m_physicalLength - 1));
 				if (!isFloatingPoint)
@@ -1280,7 +1280,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				case DBTechTranslator.nullDefineByte:
 					return 0;
 				case DBTechTranslator.specialNullValueDefineByte:
-					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSIONSpecialNullValue), "" , -10811);
+					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSpecialNullValue), "" , -10811);
 			}
 			return VDNNumber.Number2Long(mem.ReadBytes(m_bufpos, m_physicalLength - 1));
 		}
@@ -1355,7 +1355,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				// Detect nasty double values, and throw an SQL exception.
 				if(double.IsInfinity(val) || double.IsNaN(val)) 
-					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_SPECIAL_NUMBER_UNSUPPORTED, val.ToString()));
+					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SPECIAL_NUMBER_UNSUPPORTED, val.ToString()));
 				else 
 					throw;
 			}
@@ -1375,7 +1375,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				// Detect nasty double values, and throw an SQL exception.
 				if(float.IsInfinity(val) || float.IsNaN(val)) 
-					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_SPECIAL_NUMBER_UNSUPPORTED, val.ToString()));
+					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SPECIAL_NUMBER_UNSUPPORTED, val.ToString()));
 				else 
 					throw;
 			}
@@ -2033,14 +2033,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public object TransObjectArrayForInput(object[] objectArray) 
 		{
 			if(objectArray.Length != structConverter.Length)
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STRUCTURE_ARRAYWRONGLENTGH, 
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCTURE_ARRAYWRONGLENTGH, 
 					structConverter.Length, objectArray.Length));
 		
 			ByteArray sb = new ByteArray(m_physicalLength - 1);
 			for(int i=0; i < objectArray.Length; i++) 
 			{
 				if (objectArray[i] == null) 
-					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STRUCT_ELEMENT_NULL, i+1));
+					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_NULL, i+1));
 			
 				structConverter[i].PutValue(sb, objectArray[i]);
 			}
@@ -2137,7 +2137,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	
 		protected void throwConversionError(string srcObj)
 		{
-			throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STRUCT_ELEMENT_CONVERSION, structElement.SQLTypeName, srcObj));
+			throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_CONVERSION, structElement.SQLTypeName, srcObj));
 		}
 	
 		public static StructMemberTranslator createStructMemberTranslator(DBProcParameterInfo paramInfo, int index, bool unicode) 
@@ -2191,7 +2191,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			else if(s.TypeName.ToUpper().Trim() == "BOOLEAN") 
 				return new BooleanStructureElementTranslator(s, index, unicode);
 
-			throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSION_STRUCTURETYPE, index, s.SQLTypeName));
+			throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSION_STRUCTURETYPE, index, s.SQLTypeName));
 		}
 
 		/**
@@ -2368,7 +2368,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				if (obj is float && ((float)obj > short.MaxValue || (float)obj < short.MinValue) 
 					|| (obj is double && ((double)obj > short.MaxValue || (double)obj < short.MinValue)
 					|| (obj is decimal && ((decimal)obj > short.MaxValue || (decimal)obj < short.MinValue))))
-					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
+					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
 				else
 					throwConversionError(obj.GetType().FullName);
 			}
@@ -2403,7 +2403,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				if (obj is float && ((float)obj > int.MaxValue || (float)obj < int.MinValue) 
 					|| (obj is double && ((double)obj > int.MaxValue || (double)obj < int.MinValue)
 					|| (obj is decimal && ((decimal)obj > int.MaxValue || (decimal)obj < int.MinValue))))
-					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
+					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
 				else
 					throwConversionError(obj.GetType().FullName);
 			}
@@ -2439,7 +2439,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				if (obj is float && ((float)obj > long.MaxValue || (float)obj < long.MinValue) 
 					|| (obj is double && ((double)obj > long.MaxValue || (double)obj < long.MinValue)
 					|| (obj is decimal && ((decimal)obj > long.MaxValue || (decimal)obj < long.MinValue))))
-					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
+					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
 				else
 					throwConversionError(obj.GetType().FullName);
 			}
@@ -2473,7 +2473,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				if ((obj is double && ((double)obj > long.MaxValue || (double)obj < float.MinValue)
 					|| (obj is decimal && ((decimal)obj > long.MaxValue))))
-					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
+					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
 				else
 					throwConversionError(obj.GetType().FullName);
 			}
@@ -2536,7 +2536,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				return new BinaryProcedurePutValue(this, stream, length);
 			} 
 			else 
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSION_BYTESTREAM));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSION_BYTESTREAM));
 		}
     
 		public override object TransStringForInput(string val)
@@ -2547,7 +2547,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if(IsASCII) 
 				return new ASCIIProcedurePutValue(this, Encoding.ASCII.GetBytes(val));
 			else 
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSION_STRINGSTREAM));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSION_STRINGSTREAM));
 		}
 
 		public override object TransCharacterStreamForInput(Stream stream, int length) 
@@ -2560,7 +2560,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					return new ASCIIProcedurePutValue(this, stream, length);            
 			} 
 			else 
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSION_STRINGSTREAM));            
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSION_STRINGSTREAM));            
 		}
     
 		public override object TransBytesForInput(byte[] val)
@@ -2595,7 +2595,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				return new ASCIIProcedurePutValue(this, stream, length);
 			} 
 			else 
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSION_STRINGSTREAM));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSION_STRINGSTREAM));
 		}
 
 		private bool IsASCII
@@ -2643,7 +2643,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if(IsBinary)
 				return GetStream(controller, mem, longData);
 			else
-				throw new MaxDBConversionException(MessageTranslator.Translate(MessageKey.ERROR_BINARYREADFROMLONG));
+				throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_BINARYREADFROMLONG));
 		}
 
 		public override byte GetByte(ISQLParamController controller, ByteArray mem)
@@ -2935,7 +2935,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
 		{
-			throw new MaxDBConversionException(MessageTranslator.Translate(MessageKey.ERROR_ASCIIREADFROMLONG));
+			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_ASCIIREADFROMLONG));
 		}
 
 		public override Stream GetBinaryStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
@@ -3104,12 +3104,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public virtual object TransASCIIStreamForInput(Stream stream, int length)
 		{
-			throw new MaxDBConversionException(MessageTranslator.Translate(MessageKey.ERROR_ASCIIPUTTOLONG));
+			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_ASCIIPUTTOLONG));
 		}
 
 		public override object TransBinaryStreamForInput(Stream stream, int length)
 		{
-			throw new MaxDBConversionException(MessageTranslator.Translate(MessageKey.ERROR_BINARYPUTTOLONG));
+			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_BINARYPUTTOLONG));
 		}
 
 		/**
@@ -3121,7 +3121,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		 */
 		public override object TransBytesForInput(byte [] val)
 		{
-			throw new MaxDBConversionException(MessageTranslator.Translate(MessageKey.ERROR_BINARYPUTTOLONG));
+			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_BINARYPUTTOLONG));
 		}
     
 		protected override object TransSpecificForInput(object obj)
@@ -3144,7 +3144,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
    
 		public override object TransStringForInput(string val)
 		{
-			throw new MaxDBConversionException(MessageTranslator.Translate(MessageKey.ERROR_ASCIIPUTTOLONG));
+			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_ASCIIPUTTOLONG));
 		}
 	}
 

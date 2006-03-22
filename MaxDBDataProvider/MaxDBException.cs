@@ -132,8 +132,8 @@ namespace MaxDBDataProvider
 	public class DatabaseException : MaxDBSQLException 
 	{
 		public DatabaseException(string message, string sqlState, int vendorCode, int errpos) : base((errpos > 1) 
-			? MessageTranslator.Translate(MessageKey.ERROR_DATABASEEXCEPTION, vendorCode.ToString(), errpos.ToString(), message)
-			: MessageTranslator.Translate(MessageKey.ERROR_DATABASEEXCEPTION_WOERRPOS, vendorCode.ToString(), message),
+			? MaxDBMessages.Extract(MaxDBMessages.ERROR_DATABASEEXCEPTION, vendorCode.ToString(), errpos.ToString(), message)
+			: MaxDBMessages.Extract(MaxDBMessages.ERROR_DATABASEEXCEPTION_WOERRPOS, vendorCode.ToString(), message),
 			sqlState, vendorCode, errpos)
 		{     
 		}
@@ -160,7 +160,7 @@ namespace MaxDBDataProvider
 
 	public class TimeoutException : DatabaseException
 	{
-		public TimeoutException() : base(MessageTranslator.Translate(MessageKey.ERROR_TIMEOUT), "08000", 700, 0)
+		public TimeoutException() : base(MaxDBMessages.Extract(MaxDBMessages.ERROR_TIMEOUT), "08000", 700, 0)
 		{
 		}
 
@@ -175,7 +175,7 @@ namespace MaxDBDataProvider
 
 	public class ObjectIsClosedException : DataException 
 	{
-		public ObjectIsClosedException() : base(MessageTranslator.Translate(MessageKey.ERROR_OBJECTISCLOSED)) 
+		public ObjectIsClosedException() : base(MaxDBMessages.Extract(MaxDBMessages.ERROR_OBJECTISCLOSED)) 
 		{
 		}
 	}
@@ -189,25 +189,25 @@ namespace MaxDBDataProvider
 
 	public class MaxDBValueOverflowException : MaxDBException
 	{
-		public MaxDBValueOverflowException(string typeName, int colIndex) : base(MessageTranslator.Translate(MessageKey.ERROR_VALUEOVERFLOW, colIndex.ToString()))
+		public MaxDBValueOverflowException(string typeName, int colIndex) : base(MaxDBMessages.Extract(MaxDBMessages.ERROR_VALUEOVERFLOW, colIndex.ToString()))
 		{
 		}
 	}
 
 	public class StreamIOException : IOException 
 	{
-		private DataException sqlException;
+		private DataException m_sqlException;
 
 		public StreamIOException(DataException sqlEx) : base()
 		{
-			this.sqlException = sqlEx;
+			m_sqlException = sqlEx;
 		}
 
 		public DataException SqlException 
 		{
 			get
 			{
-				return sqlException;
+				return m_sqlException;
 			}
 		}
 	}
@@ -215,12 +215,12 @@ namespace MaxDBDataProvider
 	public class InvalidColumnException : DataException 
 	{
 		public InvalidColumnException(int columnIndex) :
-			base(MessageTranslator.Translate(MessageKey.ERROR_INVALIDCOLUMNINDEX, columnIndex))
+			base(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALID_COLUMNINDEX, columnIndex))
 		{
 		}
 
 		public InvalidColumnException(string columnName) :
-			base(MessageTranslator.Translate(MessageKey.ERROR_INVALIDCOLUMNNAME, columnName))
+			base(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALID_COLUMNNAME, columnName))
 		{
 		}
 	}

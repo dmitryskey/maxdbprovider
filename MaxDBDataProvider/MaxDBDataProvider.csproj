@@ -23,7 +23,7 @@
                 StartupObject = ""
             >
                 <Config
-                    Name = "Debug"
+                    Name = "Debug_Unsafe"
                     AllowUnsafeBlocks = "true"
                     BaseAddress = "285212672"
                     CheckForOverflowUnderflow = "false"
@@ -43,7 +43,7 @@
                     WarningLevel = "4"
                 />
                 <Config
-                    Name = "Release"
+                    Name = "Release_Unsafe"
                     AllowUnsafeBlocks = "true"
                     BaseAddress = "285212672"
                     CheckForOverflowUnderflow = "false"
@@ -63,12 +63,12 @@
                     WarningLevel = "4"
                 />
                 <Config
-                    Name = "Debug_Native"
+                    Name = "Debug_Safe"
                     AllowUnsafeBlocks = "false"
                     BaseAddress = "285212672"
                     CheckForOverflowUnderflow = "false"
                     ConfigurationOverrideFile = ""
-                    DefineConstants = "DEBUG;TRACE;NATIVE"
+                    DefineConstants = "DEBUG;TRACE;SAFE"
                     DocumentationFile = ""
                     DebugSymbols = "true"
                     FileAlignment = "4096"
@@ -83,12 +83,12 @@
                     WarningLevel = "4"
                 />
                 <Config
-                    Name = "Release_Native"
+                    Name = "Release_Safe"
                     AllowUnsafeBlocks = "false"
                     BaseAddress = "285212672"
                     CheckForOverflowUnderflow = "false"
                     ConfigurationOverrideFile = ""
-                    DefineConstants = "TRACE;NATIVE"
+                    DefineConstants = "TRACE;SAFE"
                     DocumentationFile = ""
                     DebugSymbols = "false"
                     FileAlignment = "4096"

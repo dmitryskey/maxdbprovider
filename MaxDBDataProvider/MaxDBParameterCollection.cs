@@ -201,7 +201,7 @@ namespace MaxDBDataProvider
 				return val;
 			}
 			else
-				throw new ArgumentException(MessageTranslator.Translate(MessageKey.ERROR_UNNAMED_PARAMETER));
+				throw new ArgumentException(MaxDBMessages.Extract(MaxDBMessages.ERROR_UNNAMED_PARAMETER));
 		}
 
 		public MaxDBParameter Add(string parameterName, MaxDBType type)

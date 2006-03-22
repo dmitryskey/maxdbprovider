@@ -98,7 +98,7 @@ namespace MaxDBDataProvider
 						return DbType.String;
 
 					default:
-						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSIONSQLNET, 
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
 							DataType.stringValues[(int)m_dbType], string.Empty));
 				}
 			}
@@ -154,7 +154,7 @@ namespace MaxDBDataProvider
 						m_dbType = MaxDBType.CharE;//?? unicode
 						break;
 					default:
-						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSIONNETSQL, value.ToString(), string.Empty));
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONNETSQL, value.ToString(), string.Empty));
 				}
 
 			}

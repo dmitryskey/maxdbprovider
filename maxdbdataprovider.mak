@@ -5,7 +5,7 @@ else
 endif
 
 MCS=mcs
-MCSFLAGS=-debug --stacktrace -d:NATIVE
+MCSFLAGS=-debug --stacktrace -d:SAFE
 
 RESGEN=resgen
 
@@ -26,6 +26,7 @@ MAXDBDATAPROVIDER_SRC=MaxDBDataProvider/AssemblyInfo.cs \
 	MaxDBDataProvider/MaxDBDataAdapter.cs \
 	MaxDBDataProvider/MaxDBDataReader.cs \
 	MaxDBDataProvider/MaxDBException.cs \
+	MaxDBDataProvider/MaxDBMessages.cs \
 	MaxDBDataProvider/MaxDBParameter.cs \
 	MaxDBDataProvider/MaxDBParameterCollection.cs \
 	MaxDBDataProvider/MaxDBTransaction.cs \

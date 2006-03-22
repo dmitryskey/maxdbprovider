@@ -17,7 +17,7 @@ namespace MaxDBDataProvider
 		{
 			get 
 			{
-#if NATIVE
+#if SAFE
 				return m_connection.m_isolationLevel;
 #else
 				switch (SQLDBC.SQLDBC_Connection_getTransactionIsolation(m_connection.m_connHandler))
@@ -39,7 +39,7 @@ namespace MaxDBDataProvider
 
 		public void Commit()
 		{
-#if NATIVE
+#if SAFE
 			m_connection.Commit();
 #else
 			if(SQLDBC.SQLDBC_Connection_commit(m_connection.m_connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
@@ -50,7 +50,7 @@ namespace MaxDBDataProvider
 
 		public void Rollback()
 		{
-#if NATIVE
+#if SAFE
 			m_connection.Rollback();
 #else
 			if(SQLDBC.SQLDBC_Connection_rollback(m_connection.m_connHandler) != SQLDBC_Retcode.SQLDBC_OK) 

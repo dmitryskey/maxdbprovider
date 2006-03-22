@@ -4,7 +4,7 @@ using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider.Utils
 {
-#if NATIVE
+#if SAFE
 
 	internal abstract class VDNNumber 
 	{
@@ -218,7 +218,7 @@ namespace MaxDBDataProvider.Utils
 			}
 			catch (Exception) 
 			{
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSIONVDNnumber, Logger.ToHexString(rawNumber)));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber, Logger.ToHexString(rawNumber)));
 			}
 		}
 
@@ -314,7 +314,7 @@ namespace MaxDBDataProvider.Utils
 			}
 			catch(Exception) 
 			{
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSIONVDNnumber, Logger.ToHexString(rawNumber)));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber, Logger.ToHexString(rawNumber)));
 			}
 		}
 
@@ -522,7 +522,7 @@ namespace MaxDBDataProvider.Utils
 			} 
 			catch(Exception) 
 			{
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_CONVERSIONVDNnumber,  Logger.ToHexString(number)));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber,  Logger.ToHexString(number)));
 			}
 		}
 

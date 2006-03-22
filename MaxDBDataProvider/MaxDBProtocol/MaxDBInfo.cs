@@ -8,7 +8,7 @@ using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
-#if NATIVE
+#if SAFE
 	#region "Parse information class"
 
 	internal class MaxDBParseInfo 
@@ -497,7 +497,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 						{
 							if (paramInfoIdx == m_paramInfos.Length) 
 							{
-								throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_INTERNAL_UNEXPECTEDINPUT, paramInfoIdx));
+								throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INTERNAL_UNEXPECTEDINPUT, paramInfoIdx));
 							}
 							current.ColumnIndex = paramInfoIdx;
 							m_paramInfos[paramInfoIdx] = current;
@@ -507,7 +507,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 						else 
 						{
 							if (colInfoIdx == m_columnInfos.Length) 
-								throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_INTERNAL_UNEXPECTEDOUTPUT, colInfoIdx));
+								throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INTERNAL_UNEXPECTEDOUTPUT, colInfoIdx));
 							m_columnInfos[colInfoIdx] = current;
 							current.ColumnIndex = colInfoIdx;
 							current.ColumnName = columnNames[colInfoIdx];
@@ -582,7 +582,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					return m_columnMap;
 
 				if (m_columnNames == null)
-					throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_NO_COLUMNNAMES));
+					throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_NO_COLUMNNAMES));
 
 				m_columnMap = new Hashtable(m_columnNames.Length);
 				for (int i = 0; i < m_paramInfos.Length; ++i) 
@@ -1097,7 +1097,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				case DataType.INTEGER:
 					return DataType.stringValues[DataType.INTEGER];
 				default:
-					return MessageTranslator.Translate(MessageKey.UNKNOWNTYPE);
+					return MaxDBMessages.Extract(MaxDBMessages.UNKNOWNTYPE);
 			}
 		}
 
