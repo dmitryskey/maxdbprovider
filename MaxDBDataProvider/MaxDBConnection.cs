@@ -23,7 +23,7 @@ namespace MaxDBDataProvider
 
 		private ConnectArgs m_ConnArgs;
 
-#if NATIVE
+#if SAFE
 		#region "Native implementation parameters"
 
 		internal MaxDBComm m_comm = null;
@@ -119,7 +119,7 @@ namespace MaxDBDataProvider
 							if (param.Split('=')[1].Trim().ToUpper() == "TRUE")
 								m_spaceOption = true;
 							break;
-#if NATIVE
+#if SAFE
 						case "CACHE":
 							m_cache = param.Split('=')[1].Trim();
 							break;
@@ -226,7 +226,7 @@ namespace MaxDBDataProvider
 		{
 			get 
 			{
-#if NATIVE
+#if SAFE
 				return m_sessionID >= 0 ? ConnectionState.Open : ConnectionState.Closed;
 #else
 				if (m_connHandler != IntPtr.Zero && SQLDBC.SQLDBC_Connection_isConnected(m_connHandler) == SQLDBC_BOOL.SQLDBC_TRUE)
@@ -248,9 +248,9 @@ namespace MaxDBDataProvider
 			get
 			{
 				if (State != ConnectionState.Open)
-					throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_CONNECTIONNOTOPENED));
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONNECTIONNOTOPENED));
 
-#if NATIVE
+#if SAFE
 				return m_autocommit;
 #else
 				return SQLDBC.SQLDBC_Connection_getAutoCommit(m_connHandler) == SQLDBC_BOOL.SQLDBC_TRUE;
@@ -259,9 +259,9 @@ namespace MaxDBDataProvider
 			set
 			{
 				if (State != ConnectionState.Open)
-					throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_CONNECTIONNOTOPENED));
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONNECTIONNOTOPENED));
 
-#if NATIVE
+#if SAFE
 				m_autocommit = value;
 #else
 				SQLDBC.SQLDBC_Connection_setAutoCommit(m_connHandler, value ? SQLDBC_BOOL.SQLDBC_TRUE : SQLDBC_BOOL.SQLDBC_FALSE);
@@ -325,7 +325,7 @@ namespace MaxDBDataProvider
 
 		private void SetIsolationLevel(IsolationLevel level)
 		{
-#if NATIVE
+#if SAFE
 			if (m_isolationLevel != level)
 			{
 				AssertOpen ();
@@ -374,7 +374,7 @@ namespace MaxDBDataProvider
 			 * If the provider also supports automatic enlistment in 
 			 * distributed transactions, it should enlist during Open().
 			 */
-#if NATIVE
+#if SAFE
 			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout));
 			DoConnect();
 #else
@@ -392,7 +392,7 @@ namespace MaxDBDataProvider
 			 * property. If the underlying connection to the server is
 			 * being pooled, Close() will release it back to the pool.
 			 */
-#if NATIVE
+#if SAFE
 			m_sessionID = -1;
 			if (m_comm != null)
 			{
@@ -445,7 +445,7 @@ namespace MaxDBDataProvider
 			System.GC.SuppressFinalize(this);
 		}
 
-#if NATIVE
+#if SAFE
 		#region "Methods to support native protocol"
 
 		private string TermID
@@ -581,13 +581,13 @@ namespace MaxDBDataProvider
 		{
 			string username = m_ConnArgs.username;
 			if (username == null)
-				throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_NOUSER));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_NOUSER));
 
 			username = stripString(username);
 
 			string password = m_ConnArgs.password;
 			if (password == null)
-				throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_NOPASSWORD));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_NOPASSWORD));
 
 			password = stripString(password);
 
@@ -630,7 +630,7 @@ namespace MaxDBDataProvider
 				}
 			}
 			if (m_auth && !isChallengeResponseSupported)
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_CONNECTION_CHALLENGERESPONSENOTSUPPORTED));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONNECTION_CHALLENGERESPONSENOTSUPPORTED));
 		
 			/*
 			* build connect statement
@@ -658,7 +658,7 @@ namespace MaxDBDataProvider
 				}
 				catch 
 				{
-					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_INVALIDPASSWORD));
+					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALIDPASSWORD));
 				}
 				requestPacket.NewPart(PartKind.Data);
 				requestPacket.AddData(crypted);

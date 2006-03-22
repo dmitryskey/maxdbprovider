@@ -6,7 +6,7 @@ using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
-#if NATIVE
+#if SAFE
 
 	#region "DataPart class"
 
@@ -559,7 +559,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					} 
 					catch (IOException ioex) 
 					{
-						throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STREAM_IOEXCEPTION, ioex.Message));
+						throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ioex.Message));
 					}
 					// if the stream is exhausted, we have to look whether it is wholly written.
 					if (currCharsRead == -1) 
@@ -626,7 +626,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					} 
 					catch (IOException ioex) 
 					{
-						throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STREAM_IOEXCEPTION, ioex.Message));
+						throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ioex.Message));
 					}
 					// if the stream is exhausted, we have to look
 					// whether it is wholly written.
@@ -696,7 +696,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					} 
 					catch (IOException ioEx) 
 					{
-						throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STREAM_IOEXCEPTION, ioEx.Message));
+						throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ioEx.Message));
 					}
 					if (currBytesRead == -1) 
 					{

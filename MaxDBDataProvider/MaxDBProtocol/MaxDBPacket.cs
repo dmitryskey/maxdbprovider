@@ -4,7 +4,7 @@ using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
-#if NATIVE
+#if SAFE
 	#region "MaxDB Packet"
 
 	/// <summary>
@@ -640,7 +640,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 			else
 			{
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_INTERNAL_INVALIDPARSEID));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INTERNAL_INVALIDPARSEID));
 			}
 		}
 
@@ -1165,7 +1165,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				}
 				catch(PartNotFound) 
 				{
-					return MessageTranslator.Translate(MessageKey.ERROR);
+					return MaxDBMessages.Extract(MaxDBMessages.ERROR);
 				}
 			}
 		}

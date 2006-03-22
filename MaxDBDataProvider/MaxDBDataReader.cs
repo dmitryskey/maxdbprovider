@@ -10,14 +10,14 @@ using MaxDBDataProvider.Utils;
 namespace MaxDBDataProvider
 {
 	public sealed class MaxDBDataReader : IDataReader, IDataRecord 
-#if NATIVE 
+#if SAFE 
 		, ISQLParamController 
 #endif
 	{
 		// The DataReader should always be open when returned to the user.
 		private bool m_fOpen = true;
 
-#if NATIVE
+#if SAFE
 		
 		private FetchInfo       m_fetchInfo;	// The fetch details.
 		private FetchChunk      m_currentChunk;		// The data of the last fetch operation.
@@ -180,7 +180,7 @@ namespace MaxDBDataProvider
 		public void Close()
 		{
 			m_fOpen = false;
-#if NATIVE
+#if SAFE
 			m_currentChunk = null;
 			m_fetchInfo = null;
 #else
@@ -195,7 +195,7 @@ namespace MaxDBDataProvider
 
 		public bool Read()
 		{
-#if NATIVE
+#if SAFE
 			AssertNotClosed();
 			// if we have nothing, there is nothing to do.
 			if(m_empty) 
@@ -276,7 +276,7 @@ namespace MaxDBDataProvider
 			schema.Columns.Add(new DataColumn("AllowDBNull", typeof(bool)));
 			schema.Columns.Add(new DataColumn("IsReadOnly", typeof(bool)));
 
-#if NATIVE
+#if SAFE
 			for (int cnt = 0; cnt < FieldCount; cnt++)
 			{
 				DBTechTranslator info = m_fetchInfo.GetColumnInfo(cnt);
@@ -325,7 +325,7 @@ namespace MaxDBDataProvider
 			// this case is the size of the column metadata array.
 			get
 			{
-#if NATIVE
+#if SAFE
 				return m_fetchInfo.NumberOfColumns;
 #else
 				return SQLDBC.SQLDBC_ResultSetMetaData_getColumnCount(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset)); 
@@ -335,7 +335,7 @@ namespace MaxDBDataProvider
 
 		public string GetName(int i)
 		{
-#if NATIVE
+#if SAFE
 			return m_fetchInfo.GetColumnInfo(i).ColumnName;
 #else
 			return Encoding.Unicode.GetString(GetNameBytes((short)(i + 1))).TrimEnd('\0');
@@ -349,7 +349,7 @@ namespace MaxDBDataProvider
 			 * as used on the back end, for example 'smallint' or 'varchar'.
 			 * The sample returns the simple name of the .NET Framework type.
 			 */
-#if NATIVE
+#if SAFE
 			return m_fetchInfo.GetColumnInfo(i).ColumnTypeName;
 #else
 			return GeneralColumnInfo.GetTypeName(
@@ -359,7 +359,7 @@ namespace MaxDBDataProvider
 
 		public Type GetFieldType(int i)
 		{
-#if NATIVE
+#if SAFE
 			return m_fetchInfo.GetColumnInfo(i).ColumnType;
 #else
 			return GeneralColumnInfo.GetType(
@@ -369,7 +369,7 @@ namespace MaxDBDataProvider
 
 		public object GetValue(int i)
 		{
-#if NATIVE
+#if SAFE
 			DBTechTranslator info = FindColumnInfo(i);
 			return info.IsDBNull(CurrentRecord)? DBNull.Value : info.GetValue(this, CurrentRecord);
 #else
@@ -454,7 +454,7 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-#if NATIVE
+#if SAFE
 			return FindColumnInfo(i).GetBoolean(CurrentRecord);
 #else
 			int columnType;
@@ -500,7 +500,7 @@ namespace MaxDBDataProvider
 
 		public byte GetByte(int i)
 		{
-#if NATIVE
+#if SAFE
 			return FindColumnInfo(i).GetByte(this, CurrentRecord);
 #else
 			/*
@@ -513,7 +513,7 @@ namespace MaxDBDataProvider
 
 		public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferOffset, int length)
 		{
-#if NATIVE
+#if SAFE
 			return FindColumnInfo(i).GetBytes(this, CurrentRecord, fieldOffset, buffer, bufferOffset, length);
 #else
 			int columnType;
@@ -532,7 +532,7 @@ namespace MaxDBDataProvider
 
 		public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
 		{
-#if NATIVE
+#if SAFE
 			return FindColumnInfo(i).GetChars(this, CurrentRecord, fieldoffset, buffer, bufferoffset, length);
 #else
 			int columnType;
@@ -560,7 +560,7 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-#if NATIVE
+#if SAFE
 			return FindColumnInfo(i).GetInt16(CurrentRecord);
 #else
 			int columnType;
@@ -610,7 +610,7 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-#if NATIVE
+#if SAFE
 			return FindColumnInfo(i).GetInt32(CurrentRecord);
 #else
 			int columnType;
@@ -660,7 +660,7 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-#if NATIVE
+#if SAFE
 			return FindColumnInfo(i).GetInt64(CurrentRecord);
 #else
 			int columnType;
@@ -710,7 +710,7 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-#if NATIVE
+#if SAFE
 			return FindColumnInfo(i).GetFloat(CurrentRecord);
 #else
 			int columnType;
@@ -760,7 +760,7 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-#if NATIVE
+#if SAFE
 			return FindColumnInfo(i).GetDouble(CurrentRecord);
 #else
 			int columnType;
@@ -810,7 +810,7 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-#if NATIVE
+#if SAFE
 			return FindColumnInfo(i).GetString(this, CurrentRecord);
 #else
 			int columnType;
@@ -865,7 +865,7 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-#if NATIVE
+#if SAFE
 			return FindColumnInfo(i).GetDecimal(CurrentRecord);
 #else
 			int columnType;
@@ -916,7 +916,7 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-#if NATIVE
+#if SAFE
 			return FindColumnInfo(i).GetDateTime(CurrentRecord);
 #else
 			int columnType;
@@ -977,7 +977,7 @@ namespace MaxDBDataProvider
 
 		public bool IsDBNull(int i)
 		{
-#if NATIVE
+#if SAFE
 			return FindColumnInfo(i).IsDBNull(CurrentRecord);
 #else
 			return (GetValue(i) == DBNull.Value);
@@ -1009,7 +1009,7 @@ namespace MaxDBDataProvider
 			}
 		}
 
-#if NATIVE
+#if SAFE
 		#region "Methods to support native protocol"
 
 		MaxDBConnection ISQLParamController.Connection
@@ -1147,9 +1147,9 @@ namespace MaxDBDataProvider
 			get
 			{
 				if(m_positionState == PositionType.BEFORE_FIRST) 
-					throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_RESULTSET_BEFOREFIRST));
+					throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_RESULTSET_BEFOREFIRST));
 				if(m_positionState == PositionType.AFTER_LAST) 
-					throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_RESULTSET_AFTERLAST));
+					throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_RESULTSET_AFTERLAST));
 				return m_currentChunk.CurrentRecord;
 			}
 }
@@ -1216,7 +1216,7 @@ namespace MaxDBDataProvider
 					val_length = sizeof(byte);
 					if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT1, new IntPtr(&byte_val), 
 						ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " + 
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " + 
 							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
@@ -1229,7 +1229,7 @@ namespace MaxDBDataProvider
 					{
 						if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, new IntPtr(dt_ptr), 
 							ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " + 
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " + 
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
@@ -1243,7 +1243,7 @@ namespace MaxDBDataProvider
 					{
 						if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, new IntPtr(tm_ptr), 
 							ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
@@ -1257,7 +1257,7 @@ namespace MaxDBDataProvider
 					{
 						if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, new IntPtr(ts_ptr), 
 							ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
@@ -1271,7 +1271,7 @@ namespace MaxDBDataProvider
 					val_length = sizeof(double);
 					if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_DOUBLE, new IntPtr(&double_val), 
 						ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
@@ -1282,7 +1282,7 @@ namespace MaxDBDataProvider
 					val_length = sizeof(int);
 					if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, new IntPtr(&int_val), 
 						ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
@@ -1293,7 +1293,7 @@ namespace MaxDBDataProvider
 					val_length = sizeof(short);
 					if(SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT2, new IntPtr(&short_val), 
 						ref val_length, val_length, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
@@ -1318,7 +1318,7 @@ namespace MaxDBDataProvider
 							return null;
 
 						if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
@@ -1331,7 +1331,7 @@ namespace MaxDBDataProvider
 							new IntPtr(valuePtr), ref val_length, val_length, 0);
 
 						if (rc != SQLDBC_Retcode.SQLDBC_OK)
-							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
@@ -1351,7 +1351,7 @@ namespace MaxDBDataProvider
 							return null;
 
 						if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
@@ -1363,7 +1363,7 @@ namespace MaxDBDataProvider
 							new IntPtr(valuePtr), ref val_length, val_length, 0);
 
 						if (rc != SQLDBC_Retcode.SQLDBC_OK)
-							throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
@@ -1416,7 +1416,7 @@ namespace MaxDBDataProvider
 						return 0;
 
 					if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-						throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 
 					if (rc == SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
@@ -1443,7 +1443,7 @@ namespace MaxDBDataProvider
 					new IntPtr(valuePtr + bufferIndex), ref val_length, length, 0);
 
 				if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC && rc != SQLDBC_Retcode.SQLDBC_OK)
-					throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_GETOBJECT_FAILED) + ": " +
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 						SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 			}
 

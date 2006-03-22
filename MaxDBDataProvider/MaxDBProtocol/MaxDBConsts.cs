@@ -496,20 +496,20 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	{
 		public static readonly string[] ErrorText = 
 			{
-				MessageTranslator.Translate(MessageKey.COMMERROR_OK),
-				MessageTranslator.Translate(MessageKey.COMMERROR_CONNECTDOWN),
-				MessageTranslator.Translate(MessageKey.COMMERROR_TASKLIMIT),
-				MessageTranslator.Translate(MessageKey.COMMERROR_TIMEOUT),
-				MessageTranslator.Translate(MessageKey.COMMERROR_CRASH),
-				MessageTranslator.Translate(MessageKey.COMMERROR_RESTARTREQUIRED),
-				MessageTranslator.Translate(MessageKey.COMMERROR_SHUTDOWN),
-				MessageTranslator.Translate(MessageKey.COMMERROR_SENDLINEDOWN),
-				MessageTranslator.Translate(MessageKey.COMMERROR_RECVLINEDOWN),
-				MessageTranslator.Translate(MessageKey.COMMERROR_PACKETLIMIT),
-				MessageTranslator.Translate(MessageKey.COMMERROR_RELEASED),
-				MessageTranslator.Translate(MessageKey.COMMERROR_WOULDBLOCK),
-				MessageTranslator.Translate(MessageKey.COMMERROR_UNKNOWNREQUEST),
-				MessageTranslator.Translate(MessageKey.COMMERROR_SERVERDBUNKNOWN)
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_OK),
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_CONNECTDOWN),
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_TASKLIMIT),
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_TIMEOUT),
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_CRASH),
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_RESTARTREQUIRED),
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_SHUTDOWN),
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_SENDLINEDOWN),
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_RECVLINEDOWN),
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_PACKETLIMIT),
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_RELEASED),
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_WOULDBLOCK),
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_UNKNOWNREQUEST),
+				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_SERVERDBUNKNOWN)
 			};
 	}
 

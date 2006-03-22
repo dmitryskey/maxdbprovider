@@ -7,7 +7,7 @@ using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
-#if NATIVE
+#if SAFE
 	#region "Put Value class"
 
 	public class PutValue
@@ -292,7 +292,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			} 
 			catch(Exception ex) 
 			{
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STREAM_IOEXCEPTION, ex.Message));                   
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ex.Message));                   
 			}
 		}
 	}
@@ -367,7 +367,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			} 
 			catch(Exception ex) 
 			{
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STREAM_IOEXCEPTION, ex.Message));                   
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ex.Message));                   
 			}
 		}
 	}
@@ -430,14 +430,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				int dataPos = replyPacket.PartDataPos;
 				descriptor = replyPacket.ReadDataBytes(dataPos, LongDesc.Size + 1);
 				if(descriptor[LongDesc.ValMode] == LongDesc.StartposInvalid) 
-					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_INVALID_STARTPOSITION));
+					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALID_STARTPOSITION));
             
 				SetupStreamBuffer(descriptor, replyPacket.Clone(dataPos));
 				return true;
 			}
 			catch(PartNotFound) 
 			{
-				throw new IOException(MessageTranslator.Translate(MessageKey.ERROR_LONGDATAEXPECTED));
+				throw new IOException(MaxDBMessages.Extract(MaxDBMessages.ERROR_LONGDATAEXPECTED));
 			}
 			catch(DataException ex) 
 			{
@@ -509,7 +509,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				}
 				catch(PartNotFound) 
 				{
-					throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_LONGDATAEXPECTED));
+					throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_LONGDATAEXPECTED));
 				}
 
 				int dataPos = replyPacket.PartDataPos;
@@ -734,7 +734,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			try 
 			{
 				if (pos < longPosition) 
-					throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_MOVEBACKWARDINBLOB));
+					throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_MOVEBACKWARDINBLOB));
             
 				Stream stream = BinaryStream;
 				if (pos > longPosition) 
@@ -882,7 +882,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			try 
 			{
 				if (pos < longPosition) 
-					throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_MOVEBACKWARDINBLOB));
+					throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_MOVEBACKWARDINBLOB));
 
 				TextReader reader = CharacterStream;
 				if (pos > longPosition)

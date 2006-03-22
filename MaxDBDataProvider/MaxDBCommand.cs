@@ -9,7 +9,7 @@ using MaxDBDataProvider.Utils;
 namespace MaxDBDataProvider
 {
 	public class MaxDBCommand : IDbCommand
-#if NATIVE 
+#if SAFE 
 		, ISQLParamController 
 #endif
 	{
@@ -20,7 +20,7 @@ namespace MaxDBDataProvider
 		MaxDBParameterCollection m_parameters = new MaxDBParameterCollection();
 		CommandType m_sCmdType = CommandType.Text;
 
-#if NATIVE
+#if SAFE
 		#region "Native implementation parameters"
 
 		private ArrayList m_inputProcedureLongs;
@@ -50,7 +50,7 @@ namespace MaxDBDataProvider
 		// Implement the default constructor here.
 		public MaxDBCommand()
 		{
-#if !NATIVE
+#if !SAFE
 			m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
 #endif
 		}
@@ -65,7 +65,7 @@ namespace MaxDBDataProvider
 		{
 			m_connection  = connection;
 			
-#if !NATIVE
+#if !SAFE
 			m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
 #endif
 		}
@@ -73,7 +73,7 @@ namespace MaxDBDataProvider
 		public MaxDBCommand(string cmdText, MaxDBConnection connection, MaxDBTransaction txn) : this(cmdText, connection)
 		{
 			m_txn      = txn;
-#if !NATIVE
+#if !SAFE
 			m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
 #endif
 		}
@@ -189,7 +189,7 @@ namespace MaxDBDataProvider
 		 ****/
 		public void Cancel()
 		{
-#if NATIVE
+#if SAFE
 			AssertOpen ();
 			m_canceled = true;
 			m_connection.Cancel(this);
@@ -213,14 +213,14 @@ namespace MaxDBDataProvider
       
 			// Execute the command.
 
-#if NATIVE
+#if SAFE
 			// There must be a valid and open connection.
 			AssertOpen();
 
 			m_parseInfo = DoParse(m_sCmdText, false);
 
 			if (m_parseInfo != null && m_parseInfo.m_isSelect) 
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_SQLSTATEMENT_RESULTSET));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SQLSTATEMENT_RESULTSET));
 			else 
 			{
 				Execute();
@@ -238,7 +238,7 @@ namespace MaxDBDataProvider
 				sql = "CALL " + sql;
 
 			if (m_sCmdType == CommandType.TableDirect)
-				throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_TABLEDIRECT_UNSUPPORTED));
+				throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_TABLEDIRECT_UNSUPPORTED));
 
 			try
 			{
@@ -249,7 +249,7 @@ namespace MaxDBDataProvider
 					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(m_stmt, sql);
 			
 				if(rc != SQLDBC_Retcode.SQLDBC_OK) 
-					throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 						SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(m_stmt)));
 
 				BindAndExecute(m_stmt, m_parameters);
@@ -277,7 +277,7 @@ namespace MaxDBDataProvider
 		{
 			// Execute the command.
 
-#if NATIVE
+#if SAFE
 			// There must be a valid and open connection.
 			AssertOpen();
 
@@ -294,7 +294,7 @@ namespace MaxDBDataProvider
 				sql = "CALL " + sql;
 
 			if (m_sCmdType == CommandType.TableDirect)
-				throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_TABLEDIRECT_UNSUPPORTED));
+				throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_TABLEDIRECT_UNSUPPORTED));
 
 			try
 			{
@@ -305,7 +305,7 @@ namespace MaxDBDataProvider
 					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(m_stmt, sql);
 			
 				if(rc != SQLDBC_Retcode.SQLDBC_OK) 
-					throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 						SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(m_stmt)));
 
 				BindAndExecute(m_stmt, m_parameters);
@@ -344,7 +344,7 @@ namespace MaxDBDataProvider
 
 		void IDisposable.Dispose() 
 		{
-#if NATIVE
+#if SAFE
 			m_replyMem = null;
 			if (m_connection != null && (m_parseInfo != null && !m_parseInfo.IsCached)) 
 			{
@@ -361,7 +361,7 @@ namespace MaxDBDataProvider
 			System.GC.SuppressFinalize(this);
 		}
 
-#if NATIVE
+#if SAFE
 		#region "Methods to support native protocol"
 
 		private MaxDBReplyPacket SendCommand(MaxDBRequestPacket requestPacket, string sqlCmd, int gcFlags, bool parseAgain)
@@ -385,7 +385,7 @@ namespace MaxDBDataProvider
 			catch (IndexOutOfRangeException) 
 			{
 				// tbd: info about current length?
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_SQLSTATEMENT_TOOLONG), "42000");
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SQLSTATEMENT_TOOLONG), "42000");
 			}
 
 			return replyPacket;
@@ -415,7 +415,7 @@ namespace MaxDBDataProvider
 		public bool Execute(int afterParseAgain)
 		{
 			if (m_connection == null) 
-				throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_INTERNAL_CONNECTIONNULL));
+				throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INTERNAL_CONNECTIONNULL));
 
 			MaxDBRequestPacket requestPacket;
 			MaxDBReplyPacket replyPacket;
@@ -428,7 +428,7 @@ namespace MaxDBDataProvider
 			{
 				m_replyMem = null;
 				if (m_connection == null) 
-					throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_INTERNAL_CONNECTIONNULL));
+					throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INTERNAL_CONNECTIONNULL));
 				Reparse();
 				m_rowsAffected=0;
 				return false;
@@ -517,9 +517,9 @@ namespace MaxDBDataProvider
 							if (m_parseInfo.m_paramInfos[i].IsInput && m_initialParamValue == m_inputArgs[i].ToString())
 							{
 								if (m_parseInfo.m_paramInfos[i].IsStreamKind)
-									throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
+									throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_OMS_UNSUPPORTED));
 								else
-									throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_MISSINGINOUT, i + 1, "02000"));
+									throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_MISSINGINOUT, i + 1, "02000"));
 							}
 							else 
 								m_parseInfo.m_paramInfos[i].Put(dataPart, m_inputArgs[i]);
@@ -533,10 +533,10 @@ namespace MaxDBDataProvider
 								HandleStreamsForExecute(dataPart, m_inputArgs);
 						}
 						if (m_parseInfo.m_hasStreams) 
-							throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
+							throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_OMS_UNSUPPORTED));
 					} 
 					else 
-						throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
+						throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_OMS_UNSUPPORTED));
 					dataPart.Close();
 				}
 				// add a decribe order if command rturns a resultset
@@ -582,7 +582,7 @@ namespace MaxDBDataProvider
 					if(m_inputProcedureLongs != null) 
 						replyPacket = ProcessProcedureStreams(replyPacket);
 					else if (m_parseInfo.m_hasStreams) 
-						throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
+						throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_OMS_UNSUPPORTED));
 					isQuery = ParseResult(replyPacket, null, m_parseInfo.m_columnInfos, m_parseInfo.m_columnNames);
 					int returnCode = replyPacket.ReturnCode;
 					if (replyPacket.ExistsPart(PartKind.Data)) 
@@ -793,13 +793,13 @@ namespace MaxDBDataProvider
 		private MaxDBParseInfo DoParse(string sql, bool parseAgain)
 		{
 			if (sql == null) 
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_SQLSTATEMENT_NULL), "42000");
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SQLSTATEMENT_NULL), "42000");
 
 			if (m_sCmdType == CommandType.StoredProcedure && !sql.Trim().ToUpper().StartsWith("CALL"))
 				sql = "CALL " + sql;
 
 			if (m_sCmdType == CommandType.TableDirect)
-				throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_TABLEDIRECT_UNSUPPORTED));
+				throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_TABLEDIRECT_UNSUPPORTED));
 
 			MaxDBReplyPacket replyPacket;
 			MaxDBParseInfo result = null;
@@ -915,7 +915,7 @@ namespace MaxDBDataProvider
 			{
 				PutValue putval = (PutValue)m_inputLongs[i];
 				if (putval.AtEnd)
-					throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STREAM_ISATEND));  
+					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_ISATEND));  
 				putval.TransferStream(dataPart, i);
 			}
 		}
@@ -945,7 +945,7 @@ namespace MaxDBDataProvider
 		private MaxDBReplyPacket ProcessProcedureStreams(MaxDBReplyPacket packet)
 		{
 			if (packet.ExistsPart(PartKind.AbapIStream)) 
-				throw new NotSupportedException(MessageTranslator.Translate(MessageKey.ERROR_OMS_UNSUPPORTED));
+				throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_OMS_UNSUPPORTED));
 
 			foreach (AbstractProcedurePutValue pv in m_inputProcedureLongs)
 				pv.CloseStream();
@@ -1024,7 +1024,7 @@ namespace MaxDBDataProvider
 				}
 			}
 			if (m_canceled) 
-				throw new MaxDBSQLException(MessageTranslator.Translate(MessageKey.ERROR_STATEMENT_CANCELLED), "42000", -102);
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STATEMENT_CANCELLED), "42000", -102);
 		}
 
 		private void GetChangedPutValueDescriptors(MaxDBReplyPacket replyPacket)
@@ -1054,7 +1054,7 @@ namespace MaxDBDataProvider
 			}
 			catch(IndexOutOfRangeException) 
 			{
-				throw new DataException(MessageTranslator.Translate(MessageKey.ERROR_COLINDEX_NOTFOUND, colIndex, this));
+				throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLINDEX_NOTFOUND, colIndex, this));
 			}
 		}
 
@@ -1118,7 +1118,7 @@ namespace MaxDBDataProvider
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_UINT1, 
 								new IntPtr(buffer_ptr + buffer_offset), ref val_size[i - 1], sizeof(byte), SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							break;
 						case MaxDBType.CharA: 
@@ -1140,7 +1140,7 @@ namespace MaxDBDataProvider
 							
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, 
 								new IntPtr(buffer_ptr + buffer_offset),	ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							break;
 						case MaxDBType.CharB: 
@@ -1157,7 +1157,7 @@ namespace MaxDBDataProvider
 							
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY, 
 								new IntPtr(buffer_ptr + buffer_offset),	ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							break;
 						case MaxDBType.Date:
@@ -1177,7 +1177,7 @@ namespace MaxDBDataProvider
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, 
 								new IntPtr(buffer_ptr + buffer_offset), ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							
 							break;
@@ -1193,7 +1193,7 @@ namespace MaxDBDataProvider
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_DOUBLE, 
 								new IntPtr(buffer_ptr + buffer_offset), ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							break;
 						case MaxDBType.Integer:
@@ -1204,7 +1204,7 @@ namespace MaxDBDataProvider
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, 
 								new IntPtr(buffer_ptr + buffer_offset), ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							break;
 						case MaxDBType.SmallInt:
@@ -1215,7 +1215,7 @@ namespace MaxDBDataProvider
 							
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT2, 
 								new IntPtr(buffer_ptr + buffer_offset), ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							break;
 						case MaxDBType.Time:
@@ -1235,7 +1235,7 @@ namespace MaxDBDataProvider
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, 
 								new IntPtr(buffer_ptr + buffer_offset), ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							break;
 						case MaxDBType.TimeStamp:
@@ -1259,7 +1259,7 @@ namespace MaxDBDataProvider
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, 
 								new IntPtr(buffer_ptr + buffer_offset),	ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
-								throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							break;
 						case MaxDBType.Unicode: 
@@ -1280,7 +1280,7 @@ namespace MaxDBDataProvider
 							
 								if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, 
 									new IntPtr(buffer_ptr + buffer_offset),	ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
-									throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+									throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 										SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							}
 							else
@@ -1299,7 +1299,7 @@ namespace MaxDBDataProvider
 								if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, 
 									Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2, 
 									new IntPtr(buffer_ptr + buffer_offset), ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
-									throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+									throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 										SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 							}
 							break;
@@ -1432,7 +1432,7 @@ namespace MaxDBDataProvider
 					}
 
 				if(rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND) 
-					throw new MaxDBException(MessageTranslator.Translate(MessageKey.ERROR_EXEC_FAILED) + ": " + 
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 						SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
 			}
 		}

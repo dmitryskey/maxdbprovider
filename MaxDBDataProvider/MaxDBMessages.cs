@@ -4,10 +4,12 @@ using System.Text;
 
 namespace MaxDBDataProvider
 {
-	#region "Message keys"
+	#region "Message translator class"
 
-	public struct MessageKey
+	public class MaxDBMessages
 	{
+		private static ResourceManager rm = new ResourceManager("MaxDBMessages", typeof(MaxDBMessages).Assembly);
+
 		public const string 
 
 			// Connection is not opened
@@ -23,10 +25,10 @@ namespace MaxDBDataProvider
 			ERROR_DATABASEEXCEPTION_WOERRPOS = "error.databaseexception.woerrpos",
 
 			// Invalid column index.
-			ERROR_INVALIDCOLUMNINDEX = "error.invalidcolumnindex",
+			ERROR_INVALID_COLUMNINDEX = "error.invalid.columnindex",
 
 			// Invalid column name.
-			ERROR_INVALIDCOLUMNNAME = "error.invalidcolumnname",
+			ERROR_INVALID_COLUMNNAME = "error.invalid.columnname",
 
 			// An object is closed but shouldn't.
 			ERROR_OBJECTISCLOSED = "error.objectisclosed",
@@ -189,37 +191,29 @@ namespace MaxDBDataProvider
 			// the rest
 			ERROR = "error",
 			UNKNOWNTYPE = "unknowntype";
-	}
 
-	#endregion
 
-	#region "Message translator class"
-
-	public class MessageTranslator
-	{
-		private static ResourceManager rm = new ResourceManager("MaxDBMessages", typeof(MessageTranslator).Assembly);
-
-		public static string Translate(string key)
+		public static string Extract(string key)
 		{
-			return Translate(key, null);
+			return Extract(key, null);
 		}
 
-		public static string Translate(string key, object o1)
+		public static string Extract(string key, object o1)
 		{
-			return Translate(key, new object[]{ o1 });
+			return Extract(key, new object[]{ o1 });
 		}
 
-		public static string Translate(string key, object o1, object o2)
+		public static string Extract(string key, object o1, object o2)
 		{
-			return Translate(key, new object[]{ o1, o2 });
+			return Extract(key, new object[]{ o1, o2 });
 		}
 
-		public static string Translate(string key, object o1, object o2, object o3)
+		public static string Extract(string key, object o1, object o2, object o3)
 		{
-			return Translate(key, new object[]{ o1, o2, o3 });
+			return Extract(key, new object[]{ o1, o2, o3 });
 		}
 
-		public static string Translate(string key, object[] args) 
+		public static string Extract(string key, object[] args) 
 		{
 			try 
 			{

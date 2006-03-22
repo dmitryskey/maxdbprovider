@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
-#if NATIVE
+#if SAFE
 
 	public class GarbageParseid 
 	{

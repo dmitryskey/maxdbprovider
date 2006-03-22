@@ -9,28 +9,28 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaxDBConsole", "MaxDBConsol
 EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
-		Debug = Debug
-		Debug_Native = Debug_Native
-		Release = Release
-		Release_Native = Release_Native
+		Debug_Unsafe = Debug_Unsafe
+		Debug_Safe = Debug_Safe
+		Release_Unsafe = Release_Unsafe
+		Release_Safe = Release_Safe
 	EndGlobalSection
 	GlobalSection(ProjectConfiguration) = postSolution
-		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Debug.ActiveCfg = Debug|.NET
-		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Debug.Build.0 = Debug|.NET
-		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Debug_Native.ActiveCfg = Debug_Native|.NET
-		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Debug_Native.Build.0 = Debug_Native|.NET
-		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Release.ActiveCfg = Release|.NET
-		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Release.Build.0 = Release|.NET
-		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Release_Native.ActiveCfg = Release_Native|.NET
-		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Release_Native.Build.0 = Release_Native|.NET
-		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Debug.ActiveCfg = Debug|.NET
-		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Debug.Build.0 = Debug|.NET
-		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Debug_Native.ActiveCfg = Debug_Native|.NET
-		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Debug_Native.Build.0 = Debug_Native|.NET
-		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Release.ActiveCfg = Release|.NET
-		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Release.Build.0 = Release|.NET
-		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Release_Native.ActiveCfg = Release_Native|.NET
-		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Release_Native.Build.0 = Release_Native|.NET
+		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Debug_Unsafe.ActiveCfg = Debug_Unsafe|.NET
+		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Debug_Unsafe.Build.0 = Debug_Unsafe|.NET
+		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Debug_Safe.ActiveCfg = Debug_Safe|.NET
+		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Debug_Safe.Build.0 = Debug_Safe|.NET
+		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Release_Unsafe.ActiveCfg = Release_Unsafe|.NET
+		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Release_Unsafe.Build.0 = Release_Unsafe|.NET
+		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Release_Safe.ActiveCfg = Release_Safe|.NET
+		{96EABFAC-9C28-40C6-AD1F-08121496C11E}.Release_Safe.Build.0 = Release_Safe|.NET
+		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Debug_Unsafe.ActiveCfg = Debug_Unsafe|.NET
+		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Debug_Unsafe.Build.0 = Debug_Unsafe|.NET
+		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Debug_Safe.ActiveCfg = Debug_Safe|.NET
+		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Debug_Safe.Build.0 = Debug_Safe|.NET
+		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Release_Unsafe.ActiveCfg = Release_Unsafe|.NET
+		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Release_Unsafe.Build.0 = Release_Unsafe|.NET
+		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Release_Safe.ActiveCfg = Release_Safe|.NET
+		{78C374CB-3D0C-4EC7-B670-C8190B4E844B}.Release_Safe.Build.0 = Release_Safe|.NET
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

@@ -112,11 +112,11 @@
 		<value>[{0}]: {1}</value>
 		<comment>{0} - vendor code, {1} - reason (localized)</comment>
 	</data>
-	<data name="error.invalidcolumnindex">
+	<data name="error.invalid.columnindex">
 		<value>Invalid column index {0}.</value>
 		<comment>{0} - the column index</comment>
 	</data>
-	<data name="error.invalidcolumnname">
+	<data name="error.invalid.columnname">
 		<value>Invalid column {0}.</value>
 		<comment>{0} - the column name</comment>
 	</data>

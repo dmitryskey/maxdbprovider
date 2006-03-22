@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace MaxDBDataProvider.MaxDBProtocol
 {
-#if NATIVE
+#if SAFE
 
 	#region "Least-Recently-Used cache class"
 
