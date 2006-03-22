@@ -712,7 +712,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			if (!IsDBNull(mem))
-				return mem.ReadASCII(m_bufpos, m_logicalLength).TrimEnd('\0');
+				return mem.ReadASCII(m_bufpos, m_logicalLength);
 			else
 				return null;
 		}
@@ -816,7 +816,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			if (!IsDBNull(mem))
-				return m_enc.GetString(mem.ReadBytes(m_bufpos, m_logicalLength * Consts.unicodeWidth)).TrimEnd('\0');
+				return m_enc.GetString(mem.ReadBytes(m_bufpos, m_logicalLength * Consts.unicodeWidth));
 			else
 				return null;
 		}

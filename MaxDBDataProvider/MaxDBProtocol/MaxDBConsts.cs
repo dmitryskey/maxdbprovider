@@ -821,8 +821,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				zeroBytes[i] = zeroBytes [i + 1] = 0;
 				blankBytes[i] = blankBytes[i + 1] = Encoding.ASCII.GetBytes(blankChar)[0];
-				Encoding.Unicode.GetBytes(blankChar).CopyTo(blankUnicodeBytes, 0);
-				Encoding.BigEndianUnicode.GetBytes(blankChar).CopyTo(blankBigEndianUnicodeBytes, 0);
+				Encoding.Unicode.GetBytes(blankChar).CopyTo(blankUnicodeBytes, i);
+				Encoding.BigEndianUnicode.GetBytes(blankChar).CopyTo(blankBigEndianUnicodeBytes, i);
 			}
 		}
 	}

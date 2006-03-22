@@ -725,31 +725,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#endregion
 
-	#region "MaxDB Unicode Request Packet"
-
-	public class MaxDBRequestPacketUnicode : MaxDBRequestPacket
-	{
-		public MaxDBRequestPacketUnicode(byte[] data, String applID, String applVers) : base(data, Consts.UnicodeSwapClient, applID, applVers) 
-		{
-		}
-
-		public override void AddDataString(string data) 
-		{
-			WriteByte(Vsp00Consts.DefinedUnicode, DataPos);
-			m_partLength++;
-			AddString(data);
-		}
-
-		public override void AddString(string data) 
-		{
-			int lenInBytes = data.Length * Consts.unicodeWidth;
-			WriteBytes(Encoding.Unicode.GetBytes(data), DataPos, lenInBytes, Consts.blankUnicodeBytes);
-			m_partLength += lenInBytes;
-		}
-	}
-
-	#endregion
-
 	#region "MaxDB Reply Packet"
 
 	internal class MaxDBReplyPacket : MaxDBPacket
@@ -1334,55 +1309,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				result[i] = ReadBytes(PartDataPos +  pos, LongDesc.Size);
 			}
 			return result;
-		}
-	}
-
-	#endregion
-
-	#region "MaxDB Unicode Reply Packet"
-
-	internal class MaxDBReplyPacketUnicode : MaxDBReplyPacket
-	{
-		public MaxDBReplyPacketUnicode(byte[] data) : base(data)
-		{
-		}
-
-		protected override DBTechTranslator GetTranslator(int mode, int ioType, int dataType, int frac, int len, int ioLen,
-			int bufpos, bool spaceoption, bool isDBProcedure, DBProcParameterInfo procParamInfo)
-		{
-			switch (dataType) 
-			{
-				case DataType.CHA:
-				case DataType.CHE:
-				case DataType.VARCHARA:
-				case DataType.VARCHARE:
-					if (spaceoption)
-						return new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, m_swapMode);
-					else
-						return new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, m_swapMode);
-				case DataType.CHB: 
-					if(procParamInfo != null && procParamInfo.ElementType == DBProcParameterInfo.STRUCTURE) 
-						return new StructureTranslator(mode, ioType, dataType, len, ioLen, bufpos, true);
-					else 
-						return new BytesTranslator (mode, ioType, dataType, len, ioLen, bufpos);
-				case DataType.STRA:
-				case DataType.STRE:
-				case DataType.LONGA:
-				case DataType.LONGE:
-					if(isDBProcedure) 
-						return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-					else 
-						return new UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-				case DataType.TIME:
-					return new UnicodeTimeTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-				case DataType.TIMESTAMP:
-					return new UnicodeTimestampTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-				case DataType.DATE:
-					return new UnicodeDateTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-				default:
-					return base.GetTranslator(mode, ioType, dataType, frac, len, ioLen, bufpos, spaceoption, isDBProcedure, procParamInfo);
-			}
-
 		}
 	}
 

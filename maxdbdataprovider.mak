@@ -5,7 +5,7 @@ else
 endif
 
 MCS=mcs
-MCSFLAGS=-debug --stacktrace -d:SAFE
+MCSFLAGS=-debug --stacktrace -unsafe #-d:SAFE
 
 RESGEN=resgen
 
@@ -53,7 +53,7 @@ MAXDBDATAPROVIDER_RES=MaxDBDataProvider/MaxDBMessages.resources
 
 $(MAXDBCONSOLE_EXE): $(MAXDBCONSOLE_SRC) $(MAXDBDATAPROVIDER_DLL)
 	-mkdir -p $(TARGET)
-	$(MCS) $(MCSFLAGS) $(LIBS) -r:System.dll -r:System.Data.dll -r:System.Xml.dll -r:$(MAXDBDATAPROVIDER_DLL) -r:nunit.framework.dll -target:exe -out:$(MAXDBCONSOLE_EXE) $(MAXDBCONSOLE_SRC)
+	$(MCS) $(MCSFLAGS) $(LIBS) -r:System.dll -r:System.Data.dll -r:System.Xml.dll -r:System.Windows.Forms -r:$(MAXDBDATAPROVIDER_DLL) -r:nunit.framework.dll -target:exe -out:$(MAXDBCONSOLE_EXE) $(MAXDBCONSOLE_SRC)
 
 $(MAXDBDATAPROVIDER_DLL): $(MAXDBDATAPROVIDER_SRC) 
 	-mkdir -p $(TARGET)
