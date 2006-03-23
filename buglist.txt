@@ -1,6 +1,5 @@
 1. What does 'ODB' mean for AppID?
 2. How to determine the size of the output LOB parameter (SQLDBC)?
-3. Mono: Input Unicode value is damaged
 4. Mono(wrapper): perfomance test fails - Packet execution failed : POS(38) Invalid keyword or missing delimiter
 
 
