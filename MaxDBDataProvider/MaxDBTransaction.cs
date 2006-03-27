@@ -39,6 +39,7 @@ namespace MaxDBDataProvider
 
 		public void Commit()
 		{
+			m_connection.AssertOpen();
 #if SAFE
 			m_connection.Commit();
 #else
@@ -50,6 +51,7 @@ namespace MaxDBDataProvider
 
 		public void Rollback()
 		{
+			m_connection.AssertOpen();
 #if SAFE
 			m_connection.Rollback();
 #else
@@ -80,13 +82,9 @@ namespace MaxDBDataProvider
 		private void Dispose(bool disposing) 
 		{
 			if (disposing) 
-			{
-				if (null != this.Connection) 
-				{
+				if (null != m_connection) 
 					// implicitly rollback if transaction still valid
-					this.Rollback();
-				}                
-			}
+					Rollback();
 		}
 
 	}
