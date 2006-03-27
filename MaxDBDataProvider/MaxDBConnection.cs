@@ -239,8 +239,14 @@ namespace MaxDBDataProvider
 
 		public int SQLMode
 		{
-			get{return m_mode;}
-			set{m_mode = value;}
+			get
+			{
+				return m_mode;
+			}
+			set
+			{
+				m_mode = value;
+			}
 		}
 
 		public bool AutoCommit
@@ -392,37 +398,35 @@ namespace MaxDBDataProvider
 			 * property. If the underlying connection to the server is
 			 * being pooled, Close() will release it back to the pool.
 			 */
-#if SAFE
-			m_sessionID = -1;
-			if (m_comm != null)
+			if (State == ConnectionState.Open)
 			{
-				try 
+#if SAFE
+				m_sessionID = -1;
+				if (m_comm != null)
 				{
-					if (m_garbageParseids != null)
-						m_garbageParseids.emptyCan();
-					ExecSQLString ("ROLLBACK WORK RELEASE", GCMode.GC_NONE);
+					try 
+					{
+						if (m_garbageParseids != null)
+							m_garbageParseids.emptyCan();
+						ExecSQLString ("ROLLBACK WORK RELEASE", GCMode.GC_NONE);
+					}
+					catch(Exception) 
+					{
+						// ignore
+					}
+					finally
+					{
+						m_comm.Close();
+						m_comm = null;
+					}
 				}
-				catch(Exception) 
-				{
-					// ignore
-				}
-				finally
-				{
-					m_comm.Close();
-					m_comm = null;
-				}
-			}
 #else
-			SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(m_connPropHandler);
-			m_connPropHandler = IntPtr.Zero;
+				SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(m_connPropHandler);
+				m_connPropHandler = IntPtr.Zero;
 
-			SQLDBC.SQLDBC_Connection_close(m_connHandler);
-
-			SQLDBC.SQLDBC_Environment_releaseConnection(m_envHandler, m_connHandler);
-			m_connHandler = IntPtr.Zero;
-			SQLDBC.SQLDBC_Environment_delete_SQLDBC_Environment(m_envHandler);
-			m_envHandler = IntPtr.Zero;
+				SQLDBC.SQLDBC_Connection_close(m_connHandler);
 #endif
+			}
 		}
 
 		public MaxDBCommand CreateCommand()
@@ -437,10 +441,28 @@ namespace MaxDBDataProvider
 			return new MaxDBCommand();
 		}
 
-		public void Dispose() 
+		internal void AssertOpen()
+		{
+			if (State == ConnectionState.Closed) 
+				throw new ObjectIsClosedException();
+		}
+
+		public void Dispose()
+		{
+			((IDisposable)this).Dispose();
+		}
+
+		void IDisposable.Dispose() 
 		{
 			if (State == ConnectionState.Open)
 				Close();
+
+#if !SAFE
+			SQLDBC.SQLDBC_Environment_releaseConnection(m_envHandler, m_connHandler);
+			m_connHandler = IntPtr.Zero;
+			SQLDBC.SQLDBC_Environment_delete_SQLDBC_Environment(m_envHandler);
+			m_envHandler = IntPtr.Zero;
+#endif
 
 			System.GC.SuppressFinalize(this);
 		}
@@ -792,14 +814,7 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		private void AssertOpen ()
-		{
-			if (m_comm == null) 
-				throw new ObjectIsClosedException();
-		}
-
 		#endregion
-
 #else
 		#region "Unsafe methods"
 

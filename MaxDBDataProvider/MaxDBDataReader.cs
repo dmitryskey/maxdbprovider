@@ -15,22 +15,25 @@ namespace MaxDBDataProvider
 #endif
 	{
 		// The DataReader should always be open when returned to the user.
-		private bool m_fOpen = true;
+		private bool m_fOpened = true;
+		internal bool m_fCloseConn = false; //close connection after data reader closing
+		internal bool m_fSingleRow = false; //return single row
+		internal bool m_fSchemaOnly = false; //return column information only
+		private MaxDBConnection m_connection;			 //connection handle
+		private PositionType m_positionState;
 
 #if SAFE
 		
 		private FetchInfo       m_fetchInfo;	// The fetch details.
 		private FetchChunk      m_currentChunk;		// The data of the last fetch operation.
 		// The status of the position, i.e. one of the <code>POSITION_XXX</code> constants.
-		private PositionType	m_positionState;
 		private PositionType    m_positionStateOfChunk;  // The status of the current chunk.
 		private bool	        m_empty;                 // is this result set totally empty
 		private ArrayList       m_openStreams;           // a vector of all streams that went outside.
 		private int             m_rowsInResultSet;       // the number of rows in this result set, or -1 if not known
 		private int             m_largestKnownAbsPos;    // largest known absolute position to be inside.
 		private int             m_modifiedKernelPos;     // contains 0 if the kernel pos is not modified
-														 // or the current kernel position.
-		private MaxDBConnection m_connection;			 //connection handle
+		// or the current kernel position.
 
 		internal MaxDBDataReader()
 		{
@@ -43,7 +46,7 @@ namespace MaxDBDataProvider
 			m_connection = connection;
 			m_fetchInfo = fetchInfo;
 
-			m_fOpen = true;
+			m_fOpened = true;
 	
 			InitializeFields();
 			m_openStreams = new ArrayList(5);
@@ -82,10 +85,10 @@ namespace MaxDBDataProvider
 			m_positionState = m_positionStateOfChunk = PositionType.INSIDE;
 			m_currentChunk = newChunk;
 			m_modifiedKernelPos = 0; // clear this out, until someone will de
-			updateRowStatistics();
+			UpdateRowStatistics();
 		}
 
-		private void updateRowStatistics()
+		private void UpdateRowStatistics()
 		{
 			if(!RowsInResultSetKnown) 
 			{
@@ -134,10 +137,16 @@ namespace MaxDBDataProvider
 		}
 
 #else
-		private IntPtr  m_resultset = IntPtr.Zero;
-		internal MaxDBDataReader(IntPtr resultset)
+		private IntPtr m_resultset = IntPtr.Zero;
+		internal MaxDBDataReader(IntPtr resultset, MaxDBConnection conn, bool closeConn, bool singleRow, bool schemaOnly)
 		{
 			m_resultset = resultset;
+			m_connection = conn;
+			m_fCloseConn = closeConn;
+			m_fSingleRow = singleRow;
+			m_fSchemaOnly = schemaOnly;
+
+			m_positionState = PositionType.BEFORE_FIRST;
 		}
 #endif
 
@@ -160,7 +169,7 @@ namespace MaxDBDataProvider
 			 */
 			get
 			{ 
-				return !m_fOpen; 
+				return !m_fOpened; 
 			}
 		}
 
@@ -179,13 +188,15 @@ namespace MaxDBDataProvider
 
 		public void Close()
 		{
-			m_fOpen = false;
+			m_fOpened = false;
 #if SAFE
 			m_currentChunk = null;
 			m_fetchInfo = null;
 #else
 			SQLDBC.SQLDBC_ResultSet_close(m_resultset);
 #endif
+			if (m_fCloseConn && m_connection != null)
+				m_connection.Close();
 		}
 
 		public bool NextResult()
@@ -198,7 +209,7 @@ namespace MaxDBDataProvider
 #if SAFE
 			AssertNotClosed();
 			// if we have nothing, there is nothing to do.
-			if(m_empty) 
+			if(m_empty || m_fSchemaOnly) 
 			{
 				m_positionState = PositionType.AFTER_LAST;
 				return false;
@@ -222,7 +233,7 @@ namespace MaxDBDataProvider
 				else 
 					result = FetchFirst();
 			} 
-			else if(m_positionState == PositionType.INSIDE) 
+			else if(m_positionState == PositionType.INSIDE && !m_fSingleRow) 
 			{
 				if(m_currentChunk.Move(1)) 
 					result = true;
@@ -236,20 +247,24 @@ namespace MaxDBDataProvider
 					result = FetchNextChunk();
 				}
 			} 
-			else if(m_positionState == PositionType.AFTER_LAST) 
-			{
-				// ignore
-			}
 
 			return result;
 #else
+			if (m_fSingleRow && m_positionState != PositionType.BEFORE_FIRST)
+				return false;
+
+			if (m_fSchemaOnly)
+				return false;
+
 			SQLDBC_Retcode rc = SQLDBC.SQLDBC_ResultSet_next(m_resultset);
 
 			switch (rc)
 			{
 				case SQLDBC_Retcode.SQLDBC_OK:
+					m_positionState = PositionType.INSIDE;
 					return true;
 				case SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND:
+					m_positionState = PositionType.AFTER_LAST;
 					return false;
 				default:
 					throw new MaxDBException("Error fetching data " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
@@ -519,7 +534,7 @@ namespace MaxDBDataProvider
 			int columnType;
 			return GetValueBytes(i, out columnType, fieldOffset, buffer, bufferOffset, length);
 #endif
-}
+		}
 
 		public char GetChar(int i)
 		{
@@ -1030,7 +1045,7 @@ namespace MaxDBDataProvider
 
 		private void AssertNotClosed()
 		{
-			if(!m_fOpen) 
+			if(!m_fOpened) 
 				throw new ObjectIsClosedException();
 		}
 
@@ -1124,7 +1139,7 @@ namespace MaxDBDataProvider
 				{
 					// fine, we are at the end.
 					m_currentChunk.IsLast = true;
-					updateRowStatistics();
+					UpdateRowStatistics();
 					// but invalidate it, as it is thrown away by the kernel
 					m_currentChunk = null;
 					m_positionStateOfChunk = PositionType.NOT_AVAILABLE;
@@ -1152,7 +1167,7 @@ namespace MaxDBDataProvider
 					throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_RESULTSET_AFTERLAST));
 				return m_currentChunk.CurrentRecord;
 			}
-}
+		}
 
 		private DBTechTranslator FindColumnInfo(int colIndex)
 		{
