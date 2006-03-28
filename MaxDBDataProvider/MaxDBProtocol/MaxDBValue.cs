@@ -911,56 +911,33 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	#region "Fetch chunk class"
 
 	/*
-  The outcome of a particular fetch operation.  A fetch operation
-  results in one (when the fetch size is 1) or more (when the fetch
-  size is >1) data rows returned from the database server. Depending on
-  the kind of the fetch, the positioning in the result at the database
-  server and the start and end index computation does differ.
- */
+		The outcome of a particular fetch operation.  A fetch operation
+		results in one (when the fetch size is 1) or more (when the fetch
+		size is >1) data rows returned from the database server. Depending on
+		the kind of the fetch, the positioning in the result at the database
+		server and the start and end index computation does differ.
+	*/
 	class FetchChunk
 	{
-		// The data packet from the fetch operation.
-		private MaxDBReplyPacket replyPacket;
+		private MaxDBReplyPacket m_replyPacket;	// The data packet from the fetch operation.
+		private ByteArray m_replyData;	// The data part of replyPacket.
+		private ByteArray m_currentRecord;	// The current record inside the data part (replyData).
+		private FetchType m_type;	// type of fetch chunk
+		private int m_startIndex;	// The index of the first row in this chunk.
+		private int m_endIndex;	// The index of the last row in this chunk.
+		private int m_currentOffset;	//The current index within this chunk, starting with 0.
+		private bool m_first;	// A flag indicating that this chunk is the first chunk of the result set.
+		private bool m_last;	// A flag indicating that this chunk is the last chunk of the result set.
+		private int m_recordSize;	// The number of bytes in a row.
+		private int m_chunkSize;	// The number of elements in this chunk.
+		private int m_rowsInResultSet;	// The number of rows in the complete result set, or -1 if this is not known.
 
-		// The data part of replyPacket.
-		private ByteArray replyData;
-
-		// The current record inside the data part (replyData).
-		private ByteArray currentRecord;
-
-		// The type of the fetch operation (one of the TYPE_XXX constants).
-		private FetchType type; // type of fetch chunk
-
-		// The index of the first row in this chunk.
-		private int start_index;
-
-		// The index of the last row in this chunk.
-		private int end_index;
-		
-		//The current index within this chunk, starting with 0.
-		private int currentOffset;
-
-		// A flag indicating that this chunk is the first chunk of the result set.
-		private bool first;
-
-		// A flag indicating that this chunk is the last chunk of the result set.
-		private bool last;
-
-		// The number of bytes in a row.
-		private int recordSize;
-		
-		// The number of elements in this chunk.
-		private int chunkSize;
-		
-		// The number of rows in the complete result set, or -1 if this is not known.
-		private int rowsInResultSet;
-
-		public FetchChunk(FetchType type, int absoluteStartRow, MaxDBReplyPacket replyPacket, int recordSize, int rowsInResultSet)
+		public FetchChunk(FetchType type, int absoluteStartRow, MaxDBReplyPacket replyPacket, int recordSize, int maxRows, int rowsInResultSet)
 		{
-			this.replyPacket = replyPacket;
-			this.type = type;
-			this.recordSize = recordSize;
-			this.rowsInResultSet = rowsInResultSet;
+			m_replyPacket = replyPacket;
+			m_type = type;
+			m_recordSize = recordSize;
+			m_rowsInResultSet = rowsInResultSet;
 			try 
 			{
 				replyPacket.FirstSegment();
@@ -968,72 +945,81 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			} 
 			catch(PartNotFound) 
 			{
-				throw new DataException("Fetch operation delivered no data part.");
+				throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_FETCH_NODATAPART));
 			}
-			this.chunkSize = replyPacket.PartArgs;
+			m_chunkSize = replyPacket.PartArgs;
 			int dataPos=replyPacket.PartDataPos;
-			this.replyData = replyPacket.Clone(dataPos);
-			currentOffset=0;
-			currentRecord = replyData.Clone(currentOffset * this.recordSize);
+			m_replyData = replyPacket.Clone(dataPos);
+			m_currentOffset=0;
+			m_currentRecord = m_replyData.Clone(m_currentOffset * m_recordSize);
 			if (absoluteStartRow > 0) 
 			{
-				start_index = absoluteStartRow;
-				end_index = absoluteStartRow + chunkSize - 1;
+				m_startIndex = absoluteStartRow;
+				m_endIndex = absoluteStartRow + m_chunkSize - 1;
 			} 
 			else 
 			{
 				if(rowsInResultSet != -1) 
 				{
 					if(absoluteStartRow < 0) 
-						start_index = rowsInResultSet + absoluteStartRow + 1; // - 1 is last
+						m_startIndex = rowsInResultSet + absoluteStartRow + 1; // - 1 is last
 					else 
-						start_index = rowsInResultSet - absoluteStartRow + chunkSize ;
+						m_startIndex = rowsInResultSet - absoluteStartRow + m_chunkSize ;
 
-					end_index = start_index + chunkSize -1;
+					m_endIndex = m_startIndex + m_chunkSize -1;
 				} 
 				else 
 				{
-					start_index = absoluteStartRow;
-					end_index = absoluteStartRow + chunkSize -1;
+					m_startIndex = absoluteStartRow;
+					m_endIndex = absoluteStartRow + m_chunkSize -1;
 				}
 			}
-			DetermineFlags();
+			DetermineFlags(maxRows);
 		}
 
 		/*
-		Determines whether this chunk is the first and/or last of
-		a result set. This is done by checking the index boundaries,
-		and also the LAST PART information of the reply packet.
-		A forward chunk is also the last if it contains the record at
-		the maxRows row, as the user decided to make
-		the limit here.
+			Determines whether this chunk is the first and/or last of
+			a result set. This is done by checking the index boundaries,
+			and also the LAST PART information of the reply packet.
+			A forward chunk is also the last if it contains the record at
+			the maxRows row, as the user decided to make
+			the limit here.
 		*/
 
-		private void DetermineFlags()
+		private void DetermineFlags(int maxRows)
 		{
-			if(replyPacket.WasLastPart) 
+			if(m_replyPacket.WasLastPart) 
 			{
-				switch(this.type) 
+				switch(m_type) 
 				{
 					case FetchType.FIRST:
 					case FetchType.LAST:
 					case FetchType.RELATIVE_DOWN:
-						first = true;
-						last = true;
+						m_first = true;
+						m_last = true;
 						break;
 					case FetchType.ABSOLUTE_UP:
 					case FetchType.ABSOLUTE_DOWN:
 					case FetchType.RELATIVE_UP:
-						last = true;
+						m_last = true;
 						break;
 				}
 			}
 
-			if(start_index == 1) 
-				first = true;
+			if(m_startIndex == 1) 
+				m_first = true;
 
-			if(end_index == -1) 
-				last=true;
+			if(m_endIndex == -1) 
+				m_last = true;
+
+			// one special last for maxRows set
+			if(maxRows != 0 && IsForward && m_endIndex >= maxRows) 
+			{
+				// if we have fetched too much, we have to cut here ...
+				m_endIndex = maxRows;
+				m_chunkSize = maxRows + 1 - m_startIndex;
+				m_last = true;
+			}
 		}
     
 		// Gets the reply packet.
@@ -1041,7 +1027,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return this.replyPacket;
+				return m_replyPacket;
 			}
 		}
 
@@ -1050,7 +1036,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return this.currentRecord;
+				return m_currentRecord;
 			}
 		}
 
@@ -1062,34 +1048,30 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		*/
 		public bool ContainsRow(int row)
 		{
-			if(start_index <= row && end_index >= row) 
+			if(m_startIndex <= row && m_endIndex >= row) 
 				return true;
 
 			// some tricks depending on whether we are on last/first chunk
-			if(IsForward && last && row < 0) 
-				return row >= start_index - end_index - 1;
+			if(IsForward && m_last && row < 0) 
+				return row >= m_startIndex - m_endIndex - 1;
 
-			if(!IsForward && first && row > 0) 
-				return row <= end_index - start_index + 1;
+			if(!IsForward && m_first && row > 0) 
+				return row <= m_endIndex - m_startIndex + 1;
 
 			// if we know the number of rows, we can compute this anyway by inverting the row
-			if(rowsInResultSet != -1 && ((start_index<0 && row>0) || (start_index>0 && row<0))) 
+			if(m_rowsInResultSet != -1 && ((m_startIndex<0 && row > 0) || (m_startIndex > 0 && row < 0))) 
 			{
-				int inverted_row = (row > 0) ? (row - rowsInResultSet - 1) : (row + rowsInResultSet + 1);
-				return start_index <= inverted_row && end_index >= inverted_row;
+				int inverted_row = (row > 0) ? (row - m_rowsInResultSet - 1) : (row + m_rowsInResultSet + 1);
+				return m_startIndex <= inverted_row && m_endIndex >= inverted_row;
 			}
 
 			return false;
 		}
 
-		/*
-			Moves the position inside the chunk by a relative offset.
-			@param relativepos the relative moving offset.
-			@return true if it was moved, false otherwise.
-		*/
+		//Moves the position inside the chunk by a relative offset.
 		public bool Move(int relativepos)
 		{
-			if(currentOffset + relativepos < 0 || currentOffset + relativepos >= chunkSize )  
+			if(m_currentOffset + relativepos < 0 || m_currentOffset + relativepos >= m_chunkSize )  
 				return false;
 			else 
 			{
@@ -1098,64 +1080,53 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		/*
-			Moves the position inside the chunk by a relative offset, but unchecked.
-			@param relativepos the relative moving offset.
-		*/
+		//	Moves the position inside the chunk by a relative offset, but unchecked.
 		private void UnsafeMove(int relativepos)
 		{
-			currentOffset += relativepos;
-			currentRecord = currentRecord.Clone(relativepos * recordSize);
+			m_currentOffset += relativepos;
+			m_currentRecord = m_currentRecord.Clone(relativepos * m_recordSize);
 		}
 
-		/*
-			 Sets the current record to the supplied absolute position.
-			 @param row the absolute row.
-			 @return true if the row was set, false otherwise.
-		*/
+		// Sets the current record to the supplied absolute position.
 		public bool setRow(int row)
 		{
-			if(start_index <= row  && end_index >= row) 
+			if(m_startIndex <= row && m_endIndex >= row) 
 			{
-				UnsafeMove(row - start_index - currentOffset);
+				UnsafeMove(row - m_startIndex - m_currentOffset);
 				return true;
 			}
 			// some tricks depending on whether we are on last/first chunk
-			if(IsForward && last && row < 0 && row >= start_index - end_index - 1 ) 
+			if(IsForward && m_last && row < 0 && row >= m_startIndex - m_endIndex - 1 ) 
 			{
 				// move backward to the row from the end index, but
 				// honor the row number start at 1, make this
 				// relative to chunk by subtracting start index
 				// and relative for the move by subtracting the
 				// current offset
-				UnsafeMove(end_index + row + 1 - start_index - currentOffset);
+				UnsafeMove(m_endIndex + row + 1 - m_startIndex - m_currentOffset);
 				return true;
 			}
-			if(!IsForward && first && row > 0 && row <= end_index - start_index + 1) 
+			if(!IsForward && m_first && row > 0 && row <= m_endIndex - m_startIndex + 1) 
 			{
-				// simple. row is > 0. start_index if positive were 1 ...
-				UnsafeMove(row - 1 - currentOffset);
+				// simple. row is > 0. m_startIndex if positive were 1 ...
+				UnsafeMove(row - 1 - m_currentOffset);
 			}
-			// if we know the number of rows, we can compute this anyway
-			// by inverting the row
-			if(rowsInResultSet != -1 && ((start_index<0 && row>0) || (start_index>0 && row<0))) 
+			// if we know the number of rows, we can compute this anyway by inverting the row
+			if(m_rowsInResultSet != -1 && ((m_startIndex < 0 && row > 0) || (m_startIndex > 0 && row < 0))) 
 			{
-				int inverted_row = (row > 0) ? (row - rowsInResultSet - 1) : (row + rowsInResultSet + 1);
+				int inverted_row = (row > 0) ? (row - m_rowsInResultSet - 1) : (row + m_rowsInResultSet + 1);
 				return setRow(inverted_row);
 			}
 
 			return false;
 		}
 
-		/*
-			Get the reply data.
-			@return the replyData property.
-		*/
+		// Get the reply data.
 		public ByteArray ReplyData
 		{
 			get
 			{
-				return replyData;
+				return m_replyData;
 			}
 		}
 
@@ -1169,11 +1140,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return first;
+				return m_first;
 			}
 			set
 			{
-				first = value;
+				m_first = value;
 			}
 		}
 
@@ -1187,96 +1158,75 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return last;
+				return m_last;
 			}
 			set
 			{
-				last = value;
+				m_last = value;
 			}
 		}
 
-		/*
-			Gets the size of this chunk.
-			@return the number of rows in this chunk.
-		*/
+		//	Gets the size of this chunk.
 		public int Size
 		{
 			get
 			{
-				return chunkSize;
+				return m_chunkSize;
 			}
 		}
 
-		/*
-			Gets whether the current position is the first in the result set.
-			@return true if the current position is the first row
-			of the result set.
-		*/
-		public bool positionedAtFirst
+		//	Gets whether the current position is the first in the result set.
+		public bool PositionedAtFirst
 		{
 			get
 			{
-				return first && currentOffset == 0;
+				return m_first && m_currentOffset == 0;
 			}
 		}
 
-		/*
-			Gets whether the current position is the last in the result set.
-			@return true if the current position is the last row
-			of the result set.
-		*/
-		public bool positionedAtLast
+		//	Gets whether the current position is the last in the result set.
+		public bool PositionedAtLast
 		{
 			get
 			{
-				return last && currentOffset == chunkSize-1;
+				return m_last && m_currentOffset == m_chunkSize-1;
 			}
 		}
 
-		/*
-			Get the current position within the result set.
-			@return the current position in the result set.
-		*/
+		//	Get the current position within the result set.
 		public int LogicalPos
 		{
 			get
 			{
-				return start_index + currentOffset;
+				return m_startIndex + m_currentOffset;
 			}
 		}
 
-		/*
-			Gets the current offset in this chunk.
-			@return the current position in this chunk (starts with 0).
-		*/
+		//	Gets the current offset in this chunk.
 		public int Pos
 		{
 			get
 			{
-				return currentOffset;
+				return m_currentOffset;
 			}
 		}
 
-		/*
-			Retrieves the position where the internal position is after the
-			fetch if this chunk is the current chunk.
-			@return the internal position - either the start or the end of this chunk.
-		*/
+		//	Retrieves the position where the internal position is after the fetch if this chunk is the current chunk.
 		public int KernelPos
 		{
 			get
 			{
-				switch(type) 
+				switch(m_type) 
 				{
 					case FetchType.ABSOLUTE_DOWN:
 					case FetchType.RELATIVE_UP:
 					case FetchType.LAST:
-						return start_index;
+						return m_startIndex;
 					case FetchType.FIRST:
 					case FetchType.ABSOLUTE_UP:
 					case FetchType.RELATIVE_DOWN:
 					default:
-						return end_index;
+						return m_endIndex;
 				}
 			}
 		}
@@ -1285,47 +1235,38 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return (type == FetchType.FIRST || type == FetchType.ABSOLUTE_UP || type == FetchType.RELATIVE_UP);
+				return (m_type == FetchType.FIRST || m_type == FetchType.ABSOLUTE_UP || m_type == FetchType.RELATIVE_UP);
 			}
 		}
 
-		/*
-			Updates the number of rows in the result set.
-			@param rows the number of rows in the result set.
-		*/
+		//	Get the number of rows in the result set.
 		public int RowsInResultSet
 		{
 			get
 			{
-				return rowsInResultSet;
+				return m_rowsInResultSet;
 			}
 			set
 			{
-				rowsInResultSet = value;
+				m_rowsInResultSet = value;
 			}
 		}
 
-		/*
-			Gets the start index of the fetch chunk.
-			@return The start index (smallest valid index).
-		*/
+		//	Gets the start index of the fetch chunk.
 		public int Start
 		{
 			get
 			{
-				return start_index;
+				return m_startIndex;
 			}
 		}
 
-		/*
-			Gets the end index of the fetch chunk.
-			@return The end index (largest valid index).
-		*/
+		//	Gets the end index of the fetch chunk.
 		public int End
 		{
 			get
 			{
-				return end_index;
+				return m_endIndex;
 			}
 		}
 	}

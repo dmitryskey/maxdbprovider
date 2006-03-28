@@ -87,6 +87,9 @@ namespace MaxDBDataProvider
 			// A statement executed as update delivered a result set.
 			ERROR_SQLSTATEMENT_RESULTSET = "error.sqlstatement.resultset",
 
+			// SQL command doesn't return a result set.
+			ERROR_SQLCOMMAND_NORESULTSET = "error.sqlcommand.noresultset",
+
 			// A statement assumed to be a procedure call is not one.
 			ERROR_SQLSTATEMENT_NOPROCEDURE = "error.sqlstatement.noprocedure",
 
@@ -129,6 +132,9 @@ namespace MaxDBDataProvider
 			// getObject function failed
 			ERROR_GETOBJECT_FAILED = "error.getobject.failed",
 
+			//Fetch operation delivered no data part.
+			ERROR_FETCH_NODATAPART = "error.fetch.nodatapart",
+
 			// Runtime: connect to host failed.
 			ERROR_HOST_CONNECT = "error.host.connect",
 
@@ -152,6 +158,9 @@ namespace MaxDBDataProvider
 
 			// Column nullable unknown
 			ERROR_DBNULL_UNKNOWN = "error.dbnull.unknown",
+
+			// Output parameter value truncated
+			ERROR_PARAM_TRUNC = "error.param.trunc",
 
 			// Unsupported database features
 			ERROR_SPECIAL_NUMBER_UNSUPPORTED = "error.special.number.unsupported",

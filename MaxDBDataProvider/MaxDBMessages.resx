@@ -182,6 +182,9 @@
 	<data name="error.sqlstatement.resultset">
 		<value>SQL statement would generate a result set.</value>
 	</data>
+	<data name="error.sqlcommand.noresultset">
+		<value>SQL command doesn't return a result set.</value>
+	</data>
 	<data name="error.colindex.notfound">
 		<value>Column index {0} was not found.</value>
 		<comment>{0} - the column index (number)</comment>
@@ -273,6 +276,9 @@
 	<data name="error.invalid.startposition">
 		<value>Internal error: Invalid start position for LONG data.</value>
 	</data>
+	<data name="error.fetch.nodatapart">
+		<value>Fetch operation delivered no data part.</value>
+	</data>
 	<data name="error.connection.wrongserverchallengereceived">
 		<value>Connect failed, wrong format of server challenge [{0}] </value>
 	</data>
@@ -329,6 +335,9 @@
 	</data>
 	<data name="error.dbnull.unknown">
 		<value>Column nullable unknown</value>
+	</data>
+	<data name="error.param.trunc">
+		<value>Parameter truncated</value>
 	</data>
 	<data name="error.oms.unsupported">
 		<value>OMS stream object is not supported</value>
