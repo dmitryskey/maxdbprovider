@@ -326,6 +326,9 @@ namespace MaxDBDataProvider.Utils
 		#region "Statement"
 
 		[DllImport("libSQLDBC_C")]
+		public extern static void SQLDBC_Statement_setMaxRows(IntPtr stmt, uint rows);  
+
+		[DllImport("libSQLDBC_C")]
 		public extern static SQLDBC_Retcode SQLDBC_Statement_executeASCII(IntPtr stmt, string query);
 
 		[DllImport("libSQLDBC_C")]

@@ -50,21 +50,23 @@ namespace MaxDBDataProvider
 //                    cmd.Transaction.Commit();
 //                }
 
-				using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM HOTEL --WHERE zip = :b", maxdbconn))
+
+				using (MaxDBCommand cmd = new MaxDBCommand("SELECT infouni INTO :a FROM hotel where zip=:b", maxdbconn))
 				{
-					//cmd.Parameters.Add(":a", MaxDBType.LongA).Direction = ParameterDirection.Output;
-					cmd.Parameters.Add(":b", MaxDBType.VarCharA).Value = "20005";
+					cmd.Parameters.Add(":a", MaxDBType.LongUni).Direction = ParameterDirection.Output;
+					cmd.Parameters[0].Size = 32000;
+					cmd.Parameters.Add(":b", MaxDBType.VarCharUni).Value = "20005";
 
 					//cmd.Transaction = trans;
 
-					//cmd.ExecuteNonQuery();
+					cmd.ExecuteNonQuery();
 
-					//string sdf = cmd.Parameters[0].Value.ToString();
+					string sdf = cmd.Parameters[0].Value.ToString();
 
-					//                    MaxDBDataReader reader = cmd.ExecuteReader();
-					//                    while (reader.Read())
-					//                        System.Windows.Forms.MessageBox.Show(reader.GetString(0), "Name",
-					//                            System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+//					MaxDBDataReader reader = cmd.ExecuteReader(CommandBehavior.Default);
+//					while (reader.Read())
+//					    System.Windows.Forms.MessageBox.Show(reader.GetString(0), "Name",
+//					        System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
 
 					//DataTable dt = reader.GetSchemaTable();
 
@@ -72,11 +74,11 @@ namespace MaxDBDataProvider
 					//											
 					//					DataTable dt = reader.GetSchemaTable();
 					//
-					DataSet ds = new DataSet();
-					MaxDBDataAdapter da = new MaxDBDataAdapter();
-					da.SelectCommand = cmd;
-					da.Fill(ds, "List");
-					DataTable dt = ds.Tables[0];
+//					DataSet ds = new DataSet();
+//					MaxDBDataAdapter da = new MaxDBDataAdapter();
+//					da.SelectCommand = cmd;
+//					da.Fill(ds, "List");
+//					DataTable dt = ds.Tables[0];
 					//					
 					//					
 					//					foreach(DataRow row in ds.Tables[0].Rows)
