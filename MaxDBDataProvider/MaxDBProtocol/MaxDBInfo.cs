@@ -21,7 +21,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		internal DBProcParameterInfo[] m_procParamInfos;
 		internal short m_inputCount;
 
-		private bool isMassCmd; // flag is set to true if command is a mass command
+		private bool m_isMassCmd; // flag is set to true if command is a mass command
 		internal bool m_isSelect; // flag is set to true if command is a select command 
 		internal bool m_isDBProc; // flag is set to true if command is a call dbproc command 
 		internal bool m_hasLongs; // flag is set to true if command handle long columns 
@@ -41,7 +41,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		private const int applicationCodeByte = 10;
 
 		// tablename used for updateable resultsets
-		internal string updTableName;
+		internal string m_updTableName;
 
 		public MaxDBParseInfo(MaxDBConnection connection, string sqlCmd, int functionCode)
 		{
@@ -54,10 +54,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_isDBProc = false;
 			m_hasLongs = false;
 			m_hasStreams = false;
-			isMassCmd = false;
+			m_isMassCmd = false;
 			m_funcCode = functionCode;
 			m_sessionID = -1;
-			updTableName = null;
+			m_updTableName = null;
 			m_cached = false;
 			m_varDataInput = false;
 			if ((m_funcCode == FunctionCode.Select) || (m_funcCode == FunctionCode.Show) 
@@ -339,7 +339,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				{
 					if (value[applicationCodeByte] == FunctionCode.massCmdAppCodes[i]) 
 					{
-						this.isMassCmd = true;
+						m_isMassCmd = true;
 						return;
 					}
 				}
@@ -353,7 +353,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return this.isMassCmd;
+				return m_isMassCmd;
 			}
 		}
 

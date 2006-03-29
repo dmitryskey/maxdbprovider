@@ -334,6 +334,13 @@ namespace MaxDBDataProvider.Utils
 		[DllImport("libSQLDBC_C")]
 		public extern static IntPtr SQLDBC_Statement_getResultSet(IntPtr stmt);
 
+		[DllImport("libSQLDBC_C")]
+		public extern static SQLDBC_Retcode SQLDBC_Statement_getTableName(IntPtr stmt, IntPtr buffer, SQLDBC_StringEncodingType encoding, 
+			int bufferSize, ref int bufferLength); 
+
+		[DllImport("libSQLDBC_C")]
+		public extern static IntPtr SQLDBC_Statement_getError(IntPtr stmt);
+
 		#endregion
 
 		#region "Prepared Statement"
@@ -342,7 +349,7 @@ namespace MaxDBDataProvider.Utils
 		public extern static IntPtr SQLDBC_PreparedStatement_getError(IntPtr stmt);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareNTS(IntPtr stmt, byte[] query , SQLDBC_StringEncodingType type);
+		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareNTS(IntPtr stmt, byte[] query, SQLDBC_StringEncodingType encoding);
 
 		[DllImport("libSQLDBC_C")]
 		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareASCII(IntPtr stmt, string query);

@@ -18,7 +18,8 @@ namespace MaxDBDataProvider
 		private bool m_fOpened = true;
 		internal bool m_fCloseConn = false; //close connection after data reader closing
 		internal bool m_fSchemaOnly = false; //return column information only
-		private MaxDBConnection m_connection;			 //connection handle
+		private MaxDBConnection m_connection; //connection handle
+		private string	m_updTableName;	// tablename used for updateable resultsets 
 
 #if SAFE
 		
@@ -39,7 +40,7 @@ namespace MaxDBDataProvider
 			m_connection = null;
 		}
 
-		internal MaxDBDataReader(MaxDBConnection connection, FetchInfo fetchInfo, MaxDBCommand  command, int maxRows, MaxDBReplyPacket reply)
+		internal MaxDBDataReader(MaxDBConnection connection, FetchInfo fetchInfo, MaxDBCommand cmd, int maxRows, MaxDBReplyPacket reply)
 		{
 			m_connection = connection;
 			m_fetchInfo = fetchInfo;
@@ -47,6 +48,8 @@ namespace MaxDBDataProvider
 			m_fOpened = true;
 
 			m_maxRows = maxRows;
+
+			m_updTableName = cmd.m_parseInfo.m_updTableName;
 	
 			InitializeFields();
 			m_openStreams = new ArrayList(5);
@@ -139,12 +142,13 @@ namespace MaxDBDataProvider
 
 #else
 		private IntPtr m_resultset = IntPtr.Zero;
-		internal MaxDBDataReader(IntPtr resultset, MaxDBConnection conn, bool closeConn, bool schemaOnly)
+		internal MaxDBDataReader(IntPtr resultset, MaxDBConnection conn, MaxDBCommand cmd, bool closeConn, bool schemaOnly)
 		{
 			m_resultset = resultset;
 			m_connection = conn;
 			m_fCloseConn = closeConn;
 			m_fSchemaOnly = schemaOnly;
+			m_updTableName = cmd.UpdTableName;			 
 		}
 #endif
 
@@ -156,7 +160,10 @@ namespace MaxDBDataProvider
 			/*
 			 * Always return a value of zero if nesting is not supported.
 			 */
-			get { return 0;  }
+			get 
+			{ 
+				return 0;  
+			}
 		}
 
 		public bool IsClosed
@@ -283,12 +290,16 @@ namespace MaxDBDataProvider
 			schema.Columns.Add(new DataColumn("IsLong", typeof(bool)));
 			schema.Columns.Add(new DataColumn("AllowDBNull", typeof(bool)));
 			schema.Columns.Add(new DataColumn("IsReadOnly", typeof(bool)));
+			schema.Columns.Add(new DataColumn("BaseSchemaName", typeof(string)));
+			schema.Columns.Add(new DataColumn("BaseTableName", typeof(string)));
+
+			DataRow row;
 
 #if SAFE
 			for (int cnt = 0; cnt < FieldCount; cnt++)
 			{
 				DBTechTranslator info = m_fetchInfo.GetColumnInfo(cnt);
-				DataRow row = schema.NewRow();
+				row = schema.NewRow();
 
 				row["ColumnName"] = info.ColumnName;
 				row["ColumnOrdinal"] = cnt + 1;
@@ -299,14 +310,12 @@ namespace MaxDBDataProvider
 				row["IsLong"] = info.IsLongKind;
 				row["AllowDBNull"] = info.IsNullable;
 				row["IsReadOnly"] = !info.IsWritable;
-				schema.Rows.Add(row);
-			}
 #else
 			IntPtr meta = SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset);
 
 			for (int cnt = 0; cnt < FieldCount; cnt++)
 			{
-				DataRow row = schema.NewRow();
+				row = schema.NewRow();
 				row["ColumnName"] = GetName(cnt);
 				row["ColumnOrdinal"] = cnt + 1;
 				row["ColumnSize"] = SQLDBC.SQLDBC_ResultSetMetaData_getPhysicalLength(meta, (short)(cnt + 1));
@@ -317,9 +326,20 @@ namespace MaxDBDataProvider
 					SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(cnt + 1)));
 				row["AllowDBNull"] = (SQLDBC.SQLDBC_ResultSetMetaData_isNullable(meta, (short)(cnt + 1)) == ColumnNullBehavior.columnNullable);
 				row["IsReadOnly"] = (SQLDBC.SQLDBC_ResultSetMetaData_isWritable(meta, (short)(cnt + 1)) == 0);
+#endif
+
+				if (m_updTableName != null)
+				{
+					string[] schemaName = m_updTableName.Split('.');
+					if (schemaName.Length > 1)
+					{
+						row["BaseSchemaName"] = schemaName[0].Replace("\"", "");
+						row["BaseTableName"] = schemaName[1].Replace("\"", "");
+					}
+				}
+
 				schema.Rows.Add(row);
 			}
-#endif
 
 			return schema;
 		}
