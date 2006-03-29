@@ -29,7 +29,7 @@ namespace MaxDBDataProvider
 		private bool m_hasRowCount;
 		private static int m_maxParseAgainCnt = 10;
 		private ArrayList m_inputLongs;
-		private MaxDBParseInfo m_parseInfo;
+		internal MaxDBParseInfo m_parseInfo;
 		private MaxDBDataReader m_currentDataReader;
 		private object[] m_inputArgs;
 		private string m_cursorName;
@@ -331,7 +331,7 @@ namespace MaxDBDataProvider
 					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SQLCOMMAND_NORESULTSET) + " " 
 						+ SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(m_stmt)));
 
-				return new MaxDBDataReader(result, m_connection, 
+				return new MaxDBDataReader(result, m_connection, this,
 					(behavior & CommandBehavior.CloseConnection) != 0,
 					(behavior & CommandBehavior.SchemaOnly) != 0
 					);				
@@ -915,7 +915,7 @@ namespace MaxDBDataProvider
 								m_cursorName = replyPacket.ReadString(replyPacket.PartDataPos, cursorLength);
 							break;
 						case PartKind.TableName:
-							result.updTableName = replyPacket.ReadString(replyPacket.PartDataPos, replyPacket.PartLength);
+							result.m_updTableName = replyPacket.ReadString(replyPacket.PartDataPos, replyPacket.PartLength);
 							break;
 						case PartKind.ColumnNames:
 							columnNames = replyPacket.ParseColumnNames();
@@ -1820,6 +1820,37 @@ namespace MaxDBDataProvider
 				if(rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND) 
 					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 						SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
+			}
+		}
+
+		internal unsafe string UpdTableName
+		{
+			get
+			{
+				byte[] buffer = new byte[1];
+				int bufferSize = 0;
+				SQLDBC_Retcode rc;
+
+				fixed(byte* bufferPtr = buffer)
+				{
+					rc = SQLDBC.SQLDBC_Statement_getTableName(m_stmt, (IntPtr)bufferPtr, SQLDBC_StringEncodingType.Ascii, bufferSize, ref bufferSize);
+					if(rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC) 
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
+							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_Statement_getError(m_stmt)));
+				}
+
+				bufferSize++;//increase buffer for the last zero
+
+				buffer = new byte[bufferSize];
+				fixed(byte* bufferPtr = buffer)
+				{
+					rc = SQLDBC.SQLDBC_Statement_getTableName(m_stmt, (IntPtr)bufferPtr, SQLDBC_StringEncodingType.Ascii, bufferSize, ref bufferSize);
+					if(rc != SQLDBC_Retcode.SQLDBC_OK) 
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
+							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_Statement_getError(m_stmt)));
+				}
+
+				return bufferSize > 1 ? Encoding.ASCII.GetString(buffer, 0, bufferSize - 1) : null;//skip last zero
 			}
 		}
 
