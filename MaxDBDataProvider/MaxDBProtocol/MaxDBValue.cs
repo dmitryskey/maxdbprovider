@@ -838,7 +838,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					if (!m_value.atEnd) 
 					{
 						chunkChars = Math.Min(count, m_value.itemsInBuffer);
-						chunkBytes = chunkChars * Consts.unicodeWidth;
+						chunkBytes = chunkChars * Consts.UnicodeWidth;
 						chunk = m_value.streamBuffer.ReadUnicode(0, chunkBytes).ToCharArray();
 						Array.Copy(chunk, 0, b, offset, chunkChars);
 						count -= chunkChars;

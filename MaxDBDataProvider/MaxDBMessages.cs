@@ -13,7 +13,7 @@ namespace MaxDBDataProvider
 		public const string 
 
 			// Connection is not opened
-			ERROR_CONNECTIONNOTOPENED = "error.connection.notopened",
+			ERROR_CONNECTION_NOTOPENED = "error.connection.notopened",
 
 			// Value overflow.
 			ERROR_VALUEOVERFLOW = "error.valueoverflow",

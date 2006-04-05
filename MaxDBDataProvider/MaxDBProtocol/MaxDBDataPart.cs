@@ -98,7 +98,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public virtual void WriteBytes(byte[] val, int offset, int len)
 		{
-			m_origData.WriteBytes(val, offset, len, Consts.zeroBytes);
+			m_origData.WriteBytes(val, offset, len, Consts.ZeroBytes);
 		}
 
 		public virtual void WriteBytes(byte[] val, int offset)
@@ -108,12 +108,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public void WriteASCIIBytes(byte[] val, int offset, int len)
 		{
-			m_origData.WriteBytes(val, offset, len, Consts.blankBytes);
+			m_origData.WriteBytes(val, offset, len, Consts.BlankBytes);
 		}
 
 		public void WriteUnicodeBytes(byte[] val, int offset, int len)
 		{
-			m_origData.WriteBytes(val, offset, len, Consts.blankUnicodeBytes);
+			m_origData.WriteBytes(val, offset, len, Consts.BlankUnicodeBytes);
 		}
 
 		public virtual void WriteInt16(short val, int offset) 

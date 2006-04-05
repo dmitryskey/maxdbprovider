@@ -6,12 +6,13 @@ using System.Net.Sockets;
 namespace MaxDBDataProvider.Utils
 {
 	/// <summary>
-	/// Summary description for SocketIntf.
+	/// Interface to support tcp and ssl connection.
 	/// </summary>
 	public interface ISocketIntf
 	{
 		bool ReopenSocketAfterInfoPacket{get;}
-		NetworkStream Stream{get;}
+		bool DataAvailable{get;}
+		Stream Stream{get;}
 		string Host{get;}
 		int Port{get;}
 
@@ -25,12 +26,14 @@ namespace MaxDBDataProvider.Utils
 		private int m_port;
         private int m_timeout;
         private TcpClient m_client;
+		private bool m_secure;
 
-		public SocketClass(string host, int port, int timeout) 
+		public SocketClass(string host, int port, int timeout, bool secure) 
 		{
 			m_host = host;
 			m_port = port;
             m_timeout = timeout;
+			m_secure = secure;
 
             m_client = new TcpClient(host, port);
             m_client.ReceiveTimeout = m_timeout;
@@ -46,7 +49,18 @@ namespace MaxDBDataProvider.Utils
 			}
 		}
 
-		NetworkStream ISocketIntf.Stream
+		bool ISocketIntf.DataAvailable
+		{
+			get
+			{
+				if (m_client != null)
+					return m_client.GetStream().DataAvailable;
+				else
+					return false;
+			}
+		}
+
+		Stream ISocketIntf.Stream
 		{
 			get
 			{
@@ -75,7 +89,7 @@ namespace MaxDBDataProvider.Utils
 
 		ISocketIntf ISocketIntf.Clone()
 		{
-			return new SocketClass(m_host, m_port, m_timeout);
+			return new SocketClass(m_host, m_port, m_timeout, m_secure);
 		}
 
 		void ISocketIntf.Close()

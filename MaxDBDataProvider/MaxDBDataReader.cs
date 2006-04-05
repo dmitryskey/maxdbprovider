@@ -564,12 +564,12 @@ namespace MaxDBDataProvider
 			return FindColumnInfo(i).GetChars(this, CurrentRecord, fieldoffset, buffer, bufferoffset, length);
 #else
 			int columnType;
-			byte[] byte_buffer = new byte[buffer.Length * Consts.unicodeWidth]; 
+			byte[] byte_buffer = new byte[buffer.Length * Consts.UnicodeWidth]; 
 			long result_length = GetValueBytes(i, out columnType,
-				fieldoffset * Consts.unicodeWidth, byte_buffer, bufferoffset * Consts.unicodeWidth, length * Consts.unicodeWidth);
-			for (int k = 0; k < byte_buffer.Length / Consts.unicodeWidth; k++)
-				buffer[k] = BitConverter.ToChar(byte_buffer, k * Consts.unicodeWidth);
-			return result_length / Consts.unicodeWidth;
+				fieldoffset * Consts.UnicodeWidth, byte_buffer, bufferoffset * Consts.UnicodeWidth, length * Consts.UnicodeWidth);
+			for (int k = 0; k < byte_buffer.Length / Consts.UnicodeWidth; k++)
+				buffer[k] = BitConverter.ToChar(byte_buffer, k * Consts.UnicodeWidth);
+			return result_length / Consts.UnicodeWidth;
 #endif
 		}
 

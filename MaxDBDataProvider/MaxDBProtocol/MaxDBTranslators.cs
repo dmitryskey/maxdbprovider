@@ -816,7 +816,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			if (!IsDBNull(mem))
-				return m_enc.GetString(mem.ReadBytes(m_bufpos, m_logicalLength * Consts.unicodeWidth));
+				return m_enc.GetString(mem.ReadBytes(m_bufpos, m_logicalLength * Consts.UnicodeWidth));
 			else
 				return null;
 		}
@@ -1070,7 +1070,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Boolean data translator class"
 
-	class BooleanTranslator : BinaryDataTranslator 
+	internal class BooleanTranslator : BinaryDataTranslator 
 	{
 		public BooleanTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos) :
 			base(mode, ioType, dataType, len, ioLen, bufpos)
@@ -1166,7 +1166,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Numeric data translator"
 
-	class NumericTranslator : BinaryDataTranslator
+	internal class NumericTranslator : BinaryDataTranslator
 	{
 		protected int frac;
 		protected bool isFloatingPoint = false;
@@ -2111,7 +2111,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public override void SetProcParamInfo(DBProcParameterInfo info) 
 		{
 			parameterStructure = info;
-			structConverter = StructMemberTranslator.createStructMemberTranslators(info, unicode);
+			structConverter = StructMemberTranslator.CreateStructMemberTranslators(info, unicode);
 		}
 	}
 
@@ -2119,7 +2119,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Structured member data translator"
 
-	public abstract class StructMemberTranslator
+	internal abstract class StructMemberTranslator
 	{
 		protected StructureElement structElement;
 		protected int index;
@@ -2135,12 +2135,19 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public abstract object GetValue(ByteArray memory, int recordOffset);
 		public abstract void PutValue(ByteArray memory, object obj);
 	
-		protected void throwConversionError(string srcObj)
+		protected void ThrowConversionError(string srcObj)
 		{
 			throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_CONVERSION, structElement.SQLTypeName, srcObj));
 		}
 	
-		public static StructMemberTranslator createStructMemberTranslator(DBProcParameterInfo paramInfo, int index, bool unicode) 
+		/// <summary>
+		/// Creates the translator for a structure. 
+		/// </summary>
+		/// <param name="paramInfo">The extended parameter info</param>
+		/// <param name="index">Parameter index.</param>
+		/// <param name="unicode">Whether this is an unicode connection.</param>
+		/// <returns>Element translator.</returns>
+		public static StructMemberTranslator CreateStructMemberTranslator(DBProcParameterInfo paramInfo, int index, bool unicode) 
 		{
 			StructureElement s = paramInfo[index];
 			if(s.TypeName.ToUpper().Trim() == "CHAR") 
@@ -2194,18 +2201,18 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSION_STRUCTURETYPE, index, s.SQLTypeName));
 		}
 
-		/**
-		 * Creates the translators for a structure.
-		 * @param info The extended parameter info.
-		 * @param unicode Whether this is an unicode connection.
-		 * @return The converter array.
-		 */
-		public static StructMemberTranslator[] createStructMemberTranslators(DBProcParameterInfo info, bool unicode) 
+		/// <summary>
+		/// Creates the translators for a structure.
+		/// </summary>
+		/// <param name="info">The extended parameter info.</param>
+		/// <param name="unicode">Whether this is an unicode connection.</param>
+		/// <returns>The converter array.</returns>
+		public static StructMemberTranslator[] CreateStructMemberTranslators(DBProcParameterInfo info, bool unicode) 
 		{
 			StructMemberTranslator[] result = new StructMemberTranslator[info.MemberCount];
 		
 			for(int i = 0; i< result.Length; ++i) 
-				result[i] = createStructMemberTranslator(info, i, unicode);
+				result[i] = CreateStructMemberTranslator(info, i, unicode);
 		
 			return result;
 		}
@@ -2215,7 +2222,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "BOOLEAN structure element data translator"
 
-	public class BooleanStructureElementTranslator : StructMemberTranslator 
+	internal class BooleanStructureElementTranslator : StructMemberTranslator 
 	{
 		public BooleanStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
 		{
@@ -2231,7 +2238,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if(obj is bool)
 				memory.WriteByte((byte)((bool)obj ? 1 : 0), offset);
 			else
-				throwConversionError(obj.GetType().FullName);
+				ThrowConversionError(obj.GetType().FullName);
 		}
 	}
 
@@ -2239,7 +2246,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "CHAR BYTE structure element data translator"
 
-	public class ByteStructureElementTranslator : StructMemberTranslator 
+	internal class ByteStructureElementTranslator : StructMemberTranslator 
 	{
 		public ByteStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
 		{
@@ -2264,7 +2271,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				ba[0] = (byte)obj;
 			} 
 			else 
-				throwConversionError(obj.GetType().FullName);
+				ThrowConversionError(obj.GetType().FullName);
 		}
 	}		
 
@@ -2273,7 +2280,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "CHAR ASCII structure element data translator"
 
-	class CharASCIIStructureElementTranslator : StructMemberTranslator 
+	internal class CharASCIIStructureElementTranslator : StructMemberTranslator 
 	{
 
 		public CharASCIIStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
@@ -2299,7 +2306,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			else if(obj is char) 
 				convStr = new string(new char[]{(char)obj});
 			else 
-				throwConversionError(obj.GetType().FullName);
+				ThrowConversionError(obj.GetType().FullName);
 			
 			memory.WriteASCII(convStr, offset);
 		}
@@ -2309,7 +2316,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "WYDE structure element data translator"
 
-	public class WydeStructureElementTranslator : StructMemberTranslator 
+	internal class WydeStructureElementTranslator : StructMemberTranslator 
 	{
 		public WydeStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
 		{
@@ -2334,7 +2341,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			else if(obj is char) 
 				convStr = new string(new char[]{(char)obj});
 			else 
-				throwConversionError(obj.GetType().FullName);
+				ThrowConversionError(obj.GetType().FullName);
 			
 			memory.WriteUnicode(convStr, offset);
 		}
@@ -2344,7 +2351,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "SMALLINT structure element data translator"
 
-	public class ShortStructureElementTranslator : StructMemberTranslator 
+	internal class ShortStructureElementTranslator : StructMemberTranslator 
 	{
 		public ShortStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
 		{
@@ -2370,7 +2377,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					|| (obj is decimal && ((decimal)obj > short.MaxValue || (decimal)obj < short.MinValue))))
 					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
 				else
-					throwConversionError(obj.GetType().FullName);
+					ThrowConversionError(obj.GetType().FullName);
 			}
 		}
 	}
@@ -2379,7 +2386,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "INTEGER structure element data translator"
 
-	public class IntStructureElementTranslator : StructMemberTranslator 
+	internal class IntStructureElementTranslator : StructMemberTranslator 
 	{
 		public IntStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
 		{
@@ -2405,7 +2412,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					|| (obj is decimal && ((decimal)obj > int.MaxValue || (decimal)obj < int.MinValue))))
 					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
 				else
-					throwConversionError(obj.GetType().FullName);
+					ThrowConversionError(obj.GetType().FullName);
 			}
 		}
 	}
@@ -2414,7 +2421,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "LONG structure element data translator"
 
-	public class LongStructureElementTranslator : StructMemberTranslator 
+	internal class LongStructureElementTranslator : StructMemberTranslator 
 	{
 
 		public LongStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
@@ -2441,7 +2448,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					|| (obj is decimal && ((decimal)obj > long.MaxValue || (decimal)obj < long.MinValue))))
 					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
 				else
-					throwConversionError(obj.GetType().FullName);
+					ThrowConversionError(obj.GetType().FullName);
 			}
 		}
 	}
@@ -2450,9 +2457,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "FLOAT structure element data translator"
 
-	public class FloatStructureElementTranslator : StructMemberTranslator 
+	internal class FloatStructureElementTranslator : StructMemberTranslator 
 	{
-
 		public FloatStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
 		{
 		}
@@ -2475,7 +2481,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					|| (obj is decimal && ((decimal)obj > long.MaxValue))))
 					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
 				else
-					throwConversionError(obj.GetType().FullName);
+					ThrowConversionError(obj.GetType().FullName);
 			}
 		}
 	}
@@ -2484,9 +2490,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "DOUBLE structure element data translator"
 
-	public class DoubleStructureElementTranslator : StructMemberTranslator 
+	internal class DoubleStructureElementTranslator : StructMemberTranslator 
 	{
-
 		public DoubleStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
 		{
 		}
@@ -2503,7 +2508,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				|| (obj is decimal && (decimal)obj <= long.MaxValue && (decimal)obj >= long.MinValue))
 				memory.WriteBytes(BitConverter.GetBytes((double)obj), offset);
 			else
-				throwConversionError(obj.GetType().FullName);
+				ThrowConversionError(obj.GetType().FullName);
 		}
 	}
 
@@ -3357,5 +3362,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	}
 
 	#endregion
+
 #endif
 }
