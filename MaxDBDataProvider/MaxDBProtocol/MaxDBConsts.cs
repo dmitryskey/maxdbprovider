@@ -135,26 +135,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	}
 
 	//
-	// copy of vsp001::tsp1_sqlmode
-	//
-	public class SqlMode 
-	{
-		public const byte 
-			Nil               =   0,
-			SessionSqlmode    =   1,
-			Internal          =   2,
-			Ansi              =   3,
-			Db2               =   4,
-			Oracle            =   5,
-			SAPR3			  =   6;
-	}
-
-	public class SqlModeName
-	{
-		public static readonly string[] Value = {"NULL", "SESSION", "INTERNAL", "ANSI", "DB2", "ORACLE", "SAPR3"};
-	}
-
-	//
 	// copy of vsp001::tsp1_producer
 	//
 	internal class Producer 
@@ -295,7 +275,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	//
 	// The _E-values can be used to build a set by ORing them
 	//
-	public class PartAttributes 
+	internal class PartAttributes 
 	{
 		public const byte 
 			LastPacket              =   0,
@@ -311,10 +291,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			FirstPacket_Ext         =   4;
 	}
 
-	//
-	// copy of gsp00::tsp00_LongDescBlock and related constants
-	//
-	public class LongDesc 
+	/// <summary>
+	/// copy of gsp00::tsp00_LongDescBlock and related constants
+	/// </summary>
+	internal class LongDesc 
 	{
 		// tsp00_LdbChange
 		public const byte 
@@ -415,7 +395,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			GC_NONE    = 3;
 	}
 
-	public class FunctionCode 
+	internal class FunctionCode 
 	{
 		public const int 
 			Nil          =   0,
@@ -794,21 +774,19 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const byte UnicodeClient			   =     20;
 		public const byte RSQL_DOTNET              =     13;
 
-		public static readonly int unicodeWidth = System.Text.Encoding.Unicode.GetByteCount(" ");
-		public const int fillBufSize = 1024;
-		public const string blankChar = " ";
-		public static readonly byte[] zeroBytes = new byte [fillBufSize];
-		public static readonly byte[] blankBytes = new byte[fillBufSize];
-		public static readonly byte[] blankUnicodeBytes = new byte[fillBufSize * unicodeWidth];
-		public static readonly byte[] blankBigEndianUnicodeBytes = new byte[fillBufSize * unicodeWidth];
+		public static readonly int UnicodeWidth = System.Text.Encoding.Unicode.GetByteCount(" ");
+		public const int FillBufSize = 1024;
+		public const string BlankChar = " ";
+		public static readonly byte[] ZeroBytes = new byte [FillBufSize];
+		public static readonly byte[] BlankBytes = new byte[FillBufSize];
+		public static readonly byte[] BlankUnicodeBytes = new byte[FillBufSize * UnicodeWidth];
+		public static readonly byte[] BlankBigEndianUnicodeBytes = new byte[FillBufSize * UnicodeWidth];
 
 		public const int AlignValue	= 8;
 
 		public const int ReserveFor2ndSegment = 8192; //8kB reserve size in order packet if more than 1 segment will be used
 		public const int ReserveForReply = SegmentHeaderOffset.Part - PartHeaderOffset.Data + 200;
 		public const int defaultmaxNumberOfSegm = 6; //default maximum number of segments for a request packet
-
-		public const int reserveForReply = SegmentHeaderOffset.Part - PartHeaderOffset.Data + 200;
 
 		public const string AppID = "ODB";
 		public const string AppVersion = "70400";//"10100";
@@ -817,12 +795,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		static Consts()
 		{
-			for (int i = 0; i < fillBufSize; i += unicodeWidth) 
+			for (int i = 0; i < FillBufSize; i += UnicodeWidth) 
 			{
-				zeroBytes[i] = zeroBytes [i + 1] = 0;
-				blankBytes[i] = blankBytes[i + 1] = Encoding.ASCII.GetBytes(blankChar)[0];
-				Encoding.Unicode.GetBytes(blankChar).CopyTo(blankUnicodeBytes, i);
-				Encoding.BigEndianUnicode.GetBytes(blankChar).CopyTo(blankBigEndianUnicodeBytes, i);
+				ZeroBytes[i] = ZeroBytes [i + 1] = 0;
+				BlankBytes[i] = BlankBytes[i + 1] = Encoding.ASCII.GetBytes(BlankChar)[0];
+				Encoding.Unicode.GetBytes(BlankChar).CopyTo(BlankUnicodeBytes, i);
+				Encoding.BigEndianUnicode.GetBytes(BlankChar).CopyTo(BlankBigEndianUnicodeBytes, i);
 			}
 		}
 	}

@@ -8,7 +8,10 @@ using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider
 {
-	public class MaxDBCommand : IDbCommand
+	/// <summary>
+	/// Represents a SQL statement to execute against a MaxDB database. This class cannot be inherited.
+	/// </summary>
+	sealed public class MaxDBCommand : IDbCommand
 #if SAFE 
 		, ISQLParamController 
 #endif
@@ -47,7 +50,9 @@ namespace MaxDBDataProvider
 		#endregion
 #endif
 
-		// Implement the default constructor here.
+		/// <summary>
+		/// Implement the default constructor here.
+		/// </summary>
 		public MaxDBCommand()
 		{
 #if !SAFE

@@ -351,13 +351,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public virtual void AddDataString(string data)
 		{
 			WriteByte(0x20, DataPos);
-			WriteBytes(Encoding.ASCII.GetBytes(data), DataPos + 1, data.Length, Consts.blankBytes);
+			WriteBytes(Encoding.ASCII.GetBytes(data), DataPos + 1, data.Length, Consts.BlankBytes);
 			m_partLength += data.Length + 1;
 		}
 
 		public virtual void AddString(string data)
 		{
-			WriteBytes(Encoding.ASCII.GetBytes(data), DataPos, data.Length, Consts.blankBytes);
+			WriteBytes(Encoding.ASCII.GetBytes(data), DataPos, data.Length, Consts.BlankBytes);
 			m_partLength += data.Length;
 		}
 
@@ -371,7 +371,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_partArgs++;
 		}
 
-		public bool dropPid(byte [] pid, bool reset) 
+		public bool DropPid(byte [] pid, bool reset) 
 		{
 			if (reset) 
 				Reset();
@@ -381,7 +381,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					CloseSegment();
 
 				int remainingSpace = Length - m_length - SegmentHeaderOffset.Part - PartHeaderOffset.Data
-					- m_replyReserve - Consts.reserveForReply	- 12 // length("drop parseid")
+					- m_replyReserve - Consts.ReserveForReply	- 12 // length("drop parseid")
 					- SegmentHeaderOffset.Part - PartHeaderOffset.Data - 12; // pid.length
 				if (remainingSpace <=0 || m_segments >= maxNumberOfSeg) 
 					return false;
@@ -397,10 +397,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return true;
 		}
 
-		public bool dropPidAddtoParsidPart(byte[] pid) 
+		public bool DropPidAddtoParsidPart(byte[] pid) 
 		{
 			int remainingSpace = Length - m_length - SegmentHeaderOffset.Part - PartHeaderOffset.Data
-				- m_replyReserve - Consts.reserveForReply - m_partLength - 12; // pid.length
+				- m_replyReserve - Consts.ReserveForReply - m_partLength - 12; // pid.length
 			if(remainingSpace <=0) 
 				return false;
 			AddBytes(pid);

@@ -124,13 +124,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if (actLen < 0 || actLen > 500 * 1024)
 				throw new Exception(MaxDBMessages.Extract(MaxDBMessages.ERROR_REPLY_GARBLED));
 
-			while (m_socket.Stream.DataAvailable)
+			while(m_socket.DataAvailable)
 			{
 				if (len < actLen)
 					len += m_socket.Stream.Read(replyPacket.arrayData, len, actLen - len);
 				else
 					throw new Exception(MaxDBMessages.Extract(MaxDBMessages.ERROR_CHUNKOVERFLOW, actLen, len, replyBuffer.Length));
-			}
+			};
 
 			m_sender = replyPacket.PacketSender;
 
@@ -193,7 +193,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 				byte[] packetBuf = new byte[header.MaxSendLength - HeaderOffset.END];
 				int replyLen = HeaderOffset.END;
-				while(m_socket.Stream.DataAvailable)
+				
+				while(m_socket.DataAvailable)
 				{
 					if (replyLen < header.ActSendLength)
 						replyLen += m_socket.Stream.Read(packetBuf, replyLen - HeaderOffset.END, header.ActSendLength - replyLen);
@@ -201,7 +202,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 						throw new Exception(MaxDBMessages.Extract(MaxDBMessages.ERROR_CHUNKOVERFLOW, 
 							header.ActSendLength, replyLen, packetBuf.Length + HeaderOffset.END));
 	
-				}
+				};
 
 				return new MaxDBReplyPacket(packetBuf);
 			}

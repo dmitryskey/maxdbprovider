@@ -124,7 +124,7 @@ namespace MaxDBDataProvider.Utils
 
 			if (copyLen > len) 
 				copyLen = len;
-			else if (copyLen <  len) 
+			else if (copyLen < len) 
 				fillLen = len - copyLen;
 			Array.Copy(values, 0, m_data, offset, copyLen);
 			
@@ -133,9 +133,9 @@ namespace MaxDBDataProvider.Utils
 				int chunkLen;
 				offset += copyLen;
 
-				while (fillLen > 0) 
+				while(fillLen > 0) 
 				{
-					chunkLen = Math.Min(fillLen, MaxDBProtocol.Consts.fillBufSize);
+					chunkLen = Math.Min(fillLen, Consts.FillBufSize);
 					Array.Copy(filler, 0, m_data, offset, chunkLen);
 					fillLen -= chunkLen;
 					offset += chunkLen;
@@ -160,10 +160,15 @@ namespace MaxDBDataProvider.Utils
 		public ushort ReadUInt16(int offset)
 		{
 			offset += m_offset;
-			if (m_swapMode)
-				return (ushort)(m_data[offset + 1] * 0x100 + m_data[offset]);
+			if (BitConverter.IsLittleEndian == m_swapMode)
+				return BitConverter.ToUInt16(m_data, offset);
 			else
-				return (ushort)(m_data[offset] * 0x100 + m_data[offset + 1]);
+			{
+				if (m_swapMode)
+					return (ushort)(m_data[offset + 1] * 0x100 + m_data[offset]);
+				else
+					return (ushort)(m_data[offset] * 0x100 + m_data[offset + 1]);
+			}
 		}
 
 		public void WriteUInt16(ushort val, int offset)
@@ -174,7 +179,10 @@ namespace MaxDBDataProvider.Utils
 		public short ReadInt16(int offset)
 		{
 			offset += m_offset;
-			return (short)ReadUInt16(offset);
+			if (BitConverter.IsLittleEndian == m_swapMode)
+				return BitConverter.ToInt16(m_data, offset);
+			else
+				return (short)ReadUInt16(offset);
 		}
 
 		public void WriteInt16(short val, int offset)
@@ -185,10 +193,15 @@ namespace MaxDBDataProvider.Utils
 		public uint ReadUInt32(int offset)
 		{
 			offset += m_offset;
-			if (m_swapMode)
-				return (uint)(ReadUInt16(offset + 2) * 0x10000 + ReadUInt16(offset));
+			if (BitConverter.IsLittleEndian == m_swapMode)
+				return BitConverter.ToUInt32(m_data, offset);
 			else
-				return (uint)(ReadUInt16(offset) * 0x10000 + ReadUInt16(offset + 2));
+			{
+				if (m_swapMode)
+					return (uint)(ReadUInt16(offset + 2) * 0x10000 + ReadUInt16(offset));
+				else
+					return (uint)(ReadUInt16(offset) * 0x10000 + ReadUInt16(offset + 2));
+			}
 		}
 
 		public void WriteUInt32(uint val, int offset)
@@ -199,7 +212,10 @@ namespace MaxDBDataProvider.Utils
 		public int ReadInt32(int offset)
 		{
 			offset += m_offset;
-			return (int)ReadUInt32(offset);
+			if (BitConverter.IsLittleEndian == m_swapMode)
+				return BitConverter.ToInt32(m_data, offset);
+			else
+				return (int)ReadUInt32(offset);
 		}
 
 		public void WriteInt32(int val, int offset)
@@ -209,10 +225,15 @@ namespace MaxDBDataProvider.Utils
 
 		public ulong ReadUInt64(int offset)
 		{
-			if (m_swapMode)
-				return (ulong)(ReadUInt32(offset + 4) * 0x100000000 + ReadUInt32(offset));
+			if (BitConverter.IsLittleEndian == m_swapMode)
+				return BitConverter.ToUInt64(m_data, offset);
 			else
-				return (ulong)(ReadUInt32(offset) * 0x100000000 + ReadUInt32(offset + 4));
+			{
+				if (m_swapMode)
+					return (ulong)(ReadUInt32(offset + 4) * 0x100000000 + ReadUInt32(offset));
+				else
+					return (ulong)(ReadUInt32(offset) * 0x100000000 + ReadUInt32(offset + 4));
+			}
 		}
 
 		public void WriteUInt64(ulong val, int offset)
@@ -223,7 +244,10 @@ namespace MaxDBDataProvider.Utils
 		public long ReadInt64(int offset)
 		{
 			offset += m_offset;
-			return (long)ReadUInt64(offset);
+			if (BitConverter.IsLittleEndian == m_swapMode)
+				return BitConverter.ToInt64(m_data, offset);
+			else
+				return (long)ReadUInt64(offset);
 		}
 
 		public void WriteInt64(long val, int offset)
@@ -266,7 +290,7 @@ namespace MaxDBDataProvider.Utils
 
 		public void WriteASCII(string val, int offset, int len)
 		{
-			WriteBytes(Encoding.ASCII.GetBytes(val), offset, len, Consts.blankBytes);
+			WriteBytes(Encoding.ASCII.GetBytes(val), offset, len, Consts.BlankBytes);
 		}
 
 		public string ReadUnicode(int offset, int len)
@@ -280,18 +304,15 @@ namespace MaxDBDataProvider.Utils
 
 		public void WriteUnicode(string val, int offset)
 		{
-			if (m_swapMode)
-				WriteBytes(Encoding.Unicode.GetBytes(val), offset);
-			else
-				WriteBytes(Encoding.BigEndianUnicode.GetBytes(val), offset);
+			WriteUnicode(val, offset, val.Length);
 		}
 
 		public void WriteUnicode(string val, int offset, int len)
 		{
 			if (m_swapMode)
-				WriteBytes(Encoding.Unicode.GetBytes(val), offset, len, Consts.blankUnicodeBytes);
+				WriteBytes(Encoding.Unicode.GetBytes(val), offset, len, Consts.BlankUnicodeBytes);
 			else
-				WriteBytes(Encoding.BigEndianUnicode.GetBytes(val), offset, len, Consts.blankBigEndianUnicodeBytes);
+				WriteBytes(Encoding.BigEndianUnicode.GetBytes(val), offset, len, Consts.BlankBigEndianUnicodeBytes);
 		}
 
 		protected void WriteValue(ulong val, int offset, int bytes)

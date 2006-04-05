@@ -90,7 +90,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				{
 						object obj = m_garbage[sz - 1];
 						m_garbage.RemoveAt(sz - 1);
-						packetActionFailed = !requestPacket.dropPid((byte[])obj, false);
+						packetActionFailed = !requestPacket.DropPid((byte[])obj, false);
 						if(packetActionFailed) 
 							m_garbage.Add(obj);
 						sz--;
@@ -101,7 +101,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				{
 					object obj = m_garbage[sz - 1];
 					m_garbage.RemoveAt(sz - 1);
-					packetActionFailed = !requestPacket.dropPid((byte[])obj, false);
+					packetActionFailed = !requestPacket.DropPid((byte[])obj, false);
 					if(packetActionFailed) 
 						m_garbage.Add(obj);
 					else 
@@ -111,7 +111,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 						{
 							obj = m_garbage[sz - 1];
 							m_garbage.RemoveAt(sz - 1);
-							packetActionFailed = !requestPacket.dropPidAddtoParsidPart((byte[])obj);
+							packetActionFailed = !requestPacket.DropPidAddtoParsidPart((byte[])obj);
 							if(packetActionFailed) 
 								m_garbage.Add(obj);
 							sz--;

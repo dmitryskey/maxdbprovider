@@ -8,7 +8,7 @@ using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider
 {
-	struct ConnectArgs 
+	internal struct ConnectArgs 
 	{
 		public string username;
 		public string password;
@@ -16,6 +16,32 @@ namespace MaxDBDataProvider
 		public string host;
 		public int port;
 	};
+
+	/// <summary>
+	/// SQL Mode
+	/// </summary>
+	/// <remarks>
+	/// copy of vsp001::tsp1_sqlmode
+	/// </remarks>
+	public class SqlMode 
+	{
+		public const byte 
+			Nil               =   0,
+			SessionSqlmode    =   1,
+			Internal          =   2,
+			Ansi              =   3,
+			Db2               =   4,
+			Oracle            =   5,
+			SAPR3			  =   6;
+	}
+
+	/// <summary>
+	/// SQL Mode name
+	/// </summary>
+	public class SqlModeName
+	{
+		public static readonly string[] Value = {"NULL", "SESSION", "INTERNAL", "ANSI", "DB2", "ORACLE", "SAPR3"};
+	}
 
 	public class MaxDBConnection : IDbConnection
 	{
@@ -254,7 +280,7 @@ namespace MaxDBDataProvider
 			get
 			{
 				if (State != ConnectionState.Open)
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONNECTIONNOTOPENED));
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONNECTION_NOTOPENED));
 
 #if SAFE
 				return m_autocommit;
@@ -265,7 +291,7 @@ namespace MaxDBDataProvider
 			set
 			{
 				if (State != ConnectionState.Open)
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONNECTIONNOTOPENED));
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONNECTION_NOTOPENED));
 
 #if SAFE
 				m_autocommit = value;
@@ -381,7 +407,7 @@ namespace MaxDBDataProvider
 			 * distributed transactions, it should enlist during Open().
 			 */
 #if SAFE
-			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout));
+			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout, false));
 			DoConnect();
 #else
 			OpenConnection();
@@ -846,8 +872,8 @@ namespace MaxDBDataProvider
 
 			if (SQLDBC.SQLDBC_Connection_connectASCII(m_connHandler, m_ConnArgs.host, m_ConnArgs.dbname, m_ConnArgs.username, 
 				m_ConnArgs.password, m_connPropHandler) != SQLDBC_Retcode.SQLDBC_OK) 
-				throw new MaxDBException("Connecting to the database failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-					SQLDBC.SQLDBC_Connection_getError(m_connHandler)));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_HOST_CONNECT, m_ConnArgs.host, m_ConnArgs.port) + ": " 
+					+ SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_Connection_getError(m_connHandler)));
 		}
 
 		#endregion

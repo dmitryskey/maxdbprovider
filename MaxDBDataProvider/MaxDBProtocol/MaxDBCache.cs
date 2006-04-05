@@ -7,23 +7,36 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Least-Recently-Used cache class"
 
+	/// <summary>
+	/// Least-Recently-Used cache class
+	/// </summary>
 	public class LRUCache
 	{
+		/// <summary>
+		/// double list class for internal purpuses
+		/// </summary>
 		private class DoubleList
 		{
-			private DoubleList prevLink, nextLink;
-			private object data;
+			private DoubleList m_prevLink, m_nextLink;
+			private object m_data;
 
+			/// <summary>
+			/// class costructor
+			/// </summary>
+			/// <param name="data">list element</param>
 			public DoubleList(object data)
 			{
-				this.data = data;
+				m_data = data;
 			}
 
+			/// <summary>
+			/// property to get list element
+			/// </summary>
 			public object Data
 			{
 				get
 				{
-					return data;
+					return m_data;
 				}
 			}
 
@@ -31,7 +44,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				get
 				{
-					return nextLink;
+					return m_nextLink;
 				}
 			}
 
@@ -39,58 +52,58 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				get
 				{
-					return prevLink;
+					return m_prevLink;
 				}
 			}
 
-			public bool	atStart
+			public bool	AtStart
 			{
 				get
 				{
-					return prevLink == null;
+					return m_prevLink == null;
 				}
 			}
 
-			public bool atEnd
+			public bool AtEnd
 			{
 				get
 				{
-					return nextLink == null;
+					return m_nextLink == null;
 				}
 			}
 
 			public void Remove()
 			{
-				if (prevLink != null) 
-					prevLink.nextLink = nextLink;
+				if (m_prevLink != null) 
+					m_prevLink.m_nextLink = m_nextLink;
 
-				if (nextLink != null) 
-					nextLink.prevLink = prevLink;
+				if (m_nextLink != null) 
+					m_nextLink.m_prevLink = m_prevLink;
 			
-				prevLink = null;
-				nextLink = null;
+				m_prevLink = null;
+				m_nextLink = null;
 			}
 
 			public void Prepend(DoubleList newHead)
 			{
-				newHead.nextLink = this;
-				prevLink = newHead;
+				newHead.m_nextLink = this;
+				m_prevLink = newHead;
 			}
 
 			public void Append(DoubleList newTail)
 			{
-				nextLink = newTail;
-				newTail.prevLink = this;
+				m_nextLink = newTail;
+				newTail.m_prevLink = this;
 			}
 
 			public void InsertAfter(DoubleList newHead)
 			{
-				DoubleList newTail = newHead.nextLink;
-				newHead.nextLink = this;
-				prevLink = newHead;
-				nextLink = newTail;
+				DoubleList newTail = newHead.m_nextLink;
+				newHead.m_nextLink = this;
+				m_prevLink = newHead;
+				m_nextLink = newTail;
 				if (newTail != null) 
-					newTail.prevLink = this;
+					newTail.m_prevLink = this;
 			}
 		}
 
