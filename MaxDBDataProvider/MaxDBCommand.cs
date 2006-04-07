@@ -448,8 +448,7 @@ namespace MaxDBDataProvider
 			bool isQuery;
 			DataPart dataPart;
 
-			// if this is one of the statements that is executed during parse instead of execution, execute it
-			// by doing a reparse
+			// if this is one of the statements that is executed during parse instead of execution, execute it by doing a reparse
 			if(m_parseInfo.IsAlreadyExecuted) 
 			{
 				m_replyMem = null;

@@ -172,6 +172,15 @@
 	<data name="error.sqlstatement.null">
 		<value>SQL statement is null.</value>
 	</data>
+	<data name="error.adapter.null">
+		<value>Data adapter is null.</value>
+	</data>
+	<data name="error.select.null">
+		<value>Select command is null.</value>
+	</data>
+	<data name="error.basetable.notfound">
+		<value>Base table name is not found. Propably FOR UPDATE suffix is not specified.</value>
+	</data>
 	<data name="error.sqlstatement.toolong">
 		<value>SQL statement is too long. Increase the DB parameter PACKET_SIZE.</value>
 	</data>

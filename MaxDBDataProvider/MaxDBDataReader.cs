@@ -287,6 +287,7 @@ namespace MaxDBDataProvider
 			schema.Columns.Add(new DataColumn("NumericPrecision", typeof(int)));
 			schema.Columns.Add(new DataColumn("NumericScale", typeof(int)));
 			schema.Columns.Add(new DataColumn("DataType", typeof(Type)));
+			schema.Columns.Add(new DataColumn("ProviderType", typeof(MaxDBType)));
 			schema.Columns.Add(new DataColumn("IsLong", typeof(bool)));
 			schema.Columns.Add(new DataColumn("AllowDBNull", typeof(bool)));
 			schema.Columns.Add(new DataColumn("IsReadOnly", typeof(bool)));
@@ -306,7 +307,8 @@ namespace MaxDBDataProvider
 				row["ColumnSize"] = info.PhysicalLength;
 				row["NumericPrecision"] = info.Precision;
 				row["NumericScale"] = info.Scale;
-				row["DataType"] = GetFieldType(cnt);
+				row["DataType"] = info.ColumnDataType;
+				row["ProviderType"] = info.ColumnProviderType;
 				row["IsLong"] = info.IsLongKind;
 				row["AllowDBNull"] = info.IsNullable;
 				row["IsReadOnly"] = !info.IsWritable;
@@ -322,6 +324,8 @@ namespace MaxDBDataProvider
 				row["NumericPrecision"] = SQLDBC.SQLDBC_ResultSetMetaData_getPrecision(meta, (short)(cnt + 1));
 				row["NumericScale"] = SQLDBC.SQLDBC_ResultSetMetaData_getScale(meta, (short)(cnt + 1));
 				row["DataType"] = GetFieldType(cnt);
+				row["ProviderType"] =  GeneralColumnInfo.GetMaxDBType(
+					SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(cnt + 1)));
 				row["IsLong"] = GeneralColumnInfo.IsLong(
 					SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(cnt + 1)));
 				row["AllowDBNull"] = (SQLDBC.SQLDBC_ResultSetMetaData_isNullable(meta, (short)(cnt + 1)) == ColumnNullBehavior.columnNullable);
@@ -388,7 +392,7 @@ namespace MaxDBDataProvider
 		public Type GetFieldType(int i)
 		{
 #if SAFE
-			return m_fetchInfo.GetColumnInfo(i).ColumnType;
+			return m_fetchInfo.GetColumnInfo(i).ColumnDataType;
 #else
 			return GeneralColumnInfo.GetType(
 				SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1)));

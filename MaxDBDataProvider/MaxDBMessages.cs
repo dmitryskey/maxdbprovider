@@ -78,6 +78,15 @@ namespace MaxDBDataProvider
 			// Try to execute null statement.
 			ERROR_SQLSTATEMENT_NULL = "error.sqlstatement.null",
 
+			// Try to use null data adapter
+			ERROR_ADAPTER_NULL = "error.adapter.null",
+
+			// Try to use null select command
+			ERROR_SELECT_NULL = "error.select.null",
+
+			// Base table is not found
+			ERROR_BASETABLE_NOTFOUND = "error.basetable.notfound",
+
 			// Try to execute too long statement.
 			ERROR_SQLSTATEMENT_TOOLONG = "error.sqlstatement.toolong",
 
