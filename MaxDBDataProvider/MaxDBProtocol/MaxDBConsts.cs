@@ -676,16 +676,16 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const int Output			= 1;
 		public const int InOut			= 2;
 		// layout of tsp1_param_info
-		public const int ModeOffset		= 0;     // Set 1
-		public const int IOTypeOffset	= 1;   // enum 1
-		public const int DataTypeOffset = 2; // enum1
-		public const int FracOffset		= 3;     // int1
-		public const int LengthOffset	= 4;   // int2
-		public const int InOutLenOffset = 6; // int2
-		public const int BufPosOffset	= 8;   // int4
-		public const int ParamNoOffset  = 8;    // int2
-		public const int ReadOnlyOffset = 10;   // int1
-		public const int SerialOffset   = 11;   // int1
+		public const int ModeOffset		= 0;  // Set 1
+		public const int IOTypeOffset	= 1;  // enum 1
+		public const int DataTypeOffset = 2;  // enum1
+		public const int FracOffset		= 3;  // int1
+		public const int LengthOffset	= 4;  // int2
+		public const int InOutLenOffset = 6;  // int2
+		public const int BufPosOffset	= 8;  // int4
+		public const int ParamNoOffset  = 8;  // int2
+		public const int ReadOnlyOffset = 10; // int1
+		public const int SerialOffset   = 11; // int1
 		// The size of tsp1_param_info 
 		public const int END			= 12;
 	}

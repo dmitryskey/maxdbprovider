@@ -110,15 +110,16 @@ namespace MaxDBDataProvider
             try
             {
                 maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
+				maxdbconn.SQLMode = SqlMode.Oracle;
 				maxdbconn.Open();
 
                 DateTime start_time = DateTime.Now;
 
                 for(int i=0;i<1000;i++)
                 {
-                    using(MaxDBCommand cmd = new MaxDBCommand("SELECT NAME FROM HOTEL WHERE zip LIKE :b", maxdbconn))
+                    using(MaxDBCommand cmd = new MaxDBCommand("SELECT NAME FROM HOTEL WHERE zip LIKE ?", maxdbconn))
                     {
-                        cmd.Parameters.Add(":b", MaxDBType.VarCharUni).Value = "2%";
+                        cmd.Parameters.Add("?", MaxDBType.VarCharUni).Value = "2%";
 
                         MaxDBDataReader reader = cmd.ExecuteReader();
                         while(reader.Read());

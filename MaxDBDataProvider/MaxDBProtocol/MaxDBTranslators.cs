@@ -97,11 +97,19 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public Type ColumnType
+		public Type ColumnDataType
 		{
 			get
 			{
 				return GeneralColumnInfo.GetType(m_dataType);
+			}
+		}
+
+		public MaxDBType ColumnProviderType
+		{
+			get
+			{
+				return GeneralColumnInfo.GetMaxDBType(m_dataType);
 			}
 		}
 
@@ -176,7 +184,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public virtual bool GetBoolean(ByteArray mem)
 		{
-			throw CreateGetException("boolean");
+			throw CreateGetException("bool");
 		}
 
 		public virtual byte GetByte(ISQLParamController controller, ByteArray mem)

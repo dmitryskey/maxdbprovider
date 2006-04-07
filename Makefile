@@ -22,6 +22,7 @@ MAXDBDATAPROVIDER_DLL=$(TARGET)/MaxDBDataProvider.dll
 MAXDBDATAPROVIDER_PDB=$(TARGET)/MaxDBDataProvider.pdb
 MAXDBDATAPROVIDER_SRC=MaxDBDataProvider/AssemblyInfo.cs \
 	MaxDBDataProvider/MaxDBCommand.cs \
+	MaxDBDataProvider/MaxDBCommandBuilder.cs \
 	MaxDBDataProvider/MaxDBConnection.cs \
 	MaxDBDataProvider/MaxDBDataAdapter.cs \
 	MaxDBDataProvider/MaxDBDataReader.cs \

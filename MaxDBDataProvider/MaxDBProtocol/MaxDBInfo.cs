@@ -1160,6 +1160,88 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					return typeof(object);
 			}
 		}
+
+		public static MaxDBType GetMaxDBType(int columnType)
+		{
+			switch(columnType)
+			{
+				case DataType.FIXED:
+					return MaxDBType.Fixed;
+				case DataType.FLOAT:
+					return MaxDBType.Float;
+				case DataType.VFLOAT:
+					return MaxDBType.VFloat;
+				case DataType.NUMBER:
+					return MaxDBType.Number;
+				case DataType.NONUMBER:
+					return MaxDBType.NoNumber;
+				case DataType.CHA:
+					return MaxDBType.CharA;
+				case DataType.CHE:
+					return MaxDBType.CharE;
+				case DataType.CHB:
+					return MaxDBType.CharB;
+				case DataType.ROWID:
+					return MaxDBType.RowID;
+				case DataType.DATE:
+					return MaxDBType.Date;
+				case DataType.TIME:
+					return MaxDBType.Time;
+				case DataType.TIMESTAMP:
+					return MaxDBType.TimeStamp;
+				case DataType.UNKNOWN:
+					return MaxDBType.Unknown;
+				case DataType.DURATION:
+					return MaxDBType.Duration;
+				case DataType.DBYTEEBCDIC:
+					return MaxDBType.DByteEBCDIC;
+				case DataType.STRA:
+					return MaxDBType.StrA;
+				case DataType.STRE:
+					return MaxDBType.StrE;
+				case DataType.LONGA:
+					return MaxDBType.LongA;
+				case DataType.LONGE:
+					return MaxDBType.LongE;
+				case DataType.STRUNI:
+					return MaxDBType.StrUni;
+				case DataType.STRB:
+					return MaxDBType.StrB;
+				case DataType.LONGB:
+					return MaxDBType.LongB;
+				case DataType.LONGDB:
+					return MaxDBType.LongDB;
+				case DataType.LONGUNI:
+					return MaxDBType.LongUni;
+				case DataType.BOOLEAN:
+					return MaxDBType.Boolean;
+				case DataType.UNICODE:
+					return MaxDBType.Unicode;
+				case DataType.VARCHARUNI:
+					return MaxDBType.VarCharUni;
+				case DataType.DTFILLER1:
+					return MaxDBType.DTFiller1;
+				case DataType.DTFILLER2:
+					return MaxDBType.DTFiller2;
+				case DataType.DTFILLER3:
+					return MaxDBType.DTFiller3;
+				case DataType.DTFILLER4:
+					return MaxDBType.DTFiller4;
+				case DataType.SMALLINT:
+					return MaxDBType.SmallInt;
+				case DataType.INTEGER:
+					return MaxDBType.Integer;
+				case DataType.VARCHARA:
+					return MaxDBType.VarCharA;
+				case DataType.VARCHARE:
+					return MaxDBType.VarCharE;
+				case DataType.VARCHARB:
+					return MaxDBType.VarCharB;
+				default:
+					return MaxDBType.Unknown;
+			}
+		}
+
 	}
 
 	#endregion
