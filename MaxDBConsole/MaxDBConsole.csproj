@@ -158,7 +158,7 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "Tests\TestMaxDB.cs"
+                    RelPath = "UnitTesting\ConnectionTests.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
