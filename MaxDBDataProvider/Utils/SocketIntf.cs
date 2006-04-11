@@ -2,6 +2,9 @@ using System;
 using System.IO;
 using System.Text;
 using System.Net.Sockets;
+using System.Reflection;
+using System.Net;
+using System.Collections;
 
 namespace MaxDBDataProvider.Utils
 {
@@ -28,12 +31,49 @@ namespace MaxDBDataProvider.Utils
         private TcpClient m_client;
 		private bool m_secure;
 
-		public SocketClass(string host, int port, int timeout, bool secure) 
+		public SocketClass(string host, int port, int timeout, bool secure, bool checksocket) 
 		{
 			m_host = host;
 			m_port = port;
             m_timeout = timeout;
 			m_secure = secure;
+
+			if (checksocket && timeout > 0)
+			{
+				Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+				bool connect_succeeded = false;
+				IPHostEntry entries = Dns.GetHostByName(host);
+				foreach(IPAddress ipAddr in entries.AddressList)
+				{
+					sock.Blocking = false;
+					try 
+					{
+						sock.Connect(new IPEndPoint(ipAddr, m_port));
+					}
+					catch (SocketException ex)
+					{
+						if (ex.ErrorCode != 10035 && ex.ErrorCode != 10036)
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_HOST_CONNECT, m_host, m_port), ex);
+					}
+
+					ArrayList checkWrite = new ArrayList();
+					checkWrite.Add(sock);
+					ArrayList checkError = new ArrayList();
+					checkError.Add(sock);
+
+					Socket.Select(null, checkWrite, checkError, m_timeout * 1000000);
+					sock.Close();
+
+					if (checkWrite.Count > 0)
+					{
+						connect_succeeded = true;
+						break;
+					}
+				}
+
+				if (!connect_succeeded)
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_HOST_CONNECT, m_host, m_port));
+			}
 
             m_client = new TcpClient(host, port);
             m_client.ReceiveTimeout = m_timeout;
@@ -89,7 +129,7 @@ namespace MaxDBDataProvider.Utils
 
 		ISocketIntf ISocketIntf.Clone()
 		{
-			return new SocketClass(m_host, m_port, m_timeout, m_secure);
+			return new SocketClass(m_host, m_port, m_timeout, m_secure, false);
 		}
 
 		void ISocketIntf.Close()

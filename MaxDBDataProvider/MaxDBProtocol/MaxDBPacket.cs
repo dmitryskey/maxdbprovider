@@ -215,6 +215,28 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
+		public string ServerDB
+		{
+			get
+			{
+				string dbname = ReadASCII(HeaderOffset.END + ConnectPacketOffset.ServerDB, 8);
+				if (dbname.IndexOf("\0") >= 0)
+					dbname = dbname.Substring(0, dbname.IndexOf("\0"));
+				return dbname;
+			}
+		}
+
+		public string ClientDB
+		{
+			get
+			{
+				string dbname = ReadASCII(HeaderOffset.END + ConnectPacketOffset.ClientDB, 8);
+				if (dbname.IndexOf("\0") >= 0)
+					dbname = dbname.Substring(0, dbname.IndexOf("\0"));
+				return dbname;
+			}
+		}
+
 		public int PortNumber
 		{
 			get
@@ -1256,7 +1278,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 						case FunctionCode.FetchPos:
 						case FunctionCode.FetchSame:
 						case FunctionCode.FetchRelative:
-							/* keep result */
+							// keep result 
 							break;
 						default:
 							result = 0;
@@ -1267,7 +1289,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public MaxDBSQLException CreateException() 
+		public MaxDBException CreateException() 
 		{
 			string state = SqlState;
 			int rc = ReturnCode;
@@ -1275,9 +1297,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			int errorPos = ErrorPos;
 
 			if (rc == -8000) 
-				errmsg = "RESTART REQUIRED";
+				errmsg = MaxDBMessages.Extract(MaxDBMessages.COMMERROR_RESTARTREQUIRED);
 
-			return new MaxDBSQLException(errmsg, state, rc, errorPos);
+			return new MaxDBException(errmsg, new MaxDBSQLException(errmsg, state, rc, errorPos));
 		}
 
 		public byte[] ReadDataBytes(int pos, int len) 
