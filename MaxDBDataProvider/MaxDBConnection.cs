@@ -407,7 +407,7 @@ namespace MaxDBDataProvider
 			 * distributed transactions, it should enlist during Open().
 			 */
 #if SAFE
-			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout, false));
+			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout, false, true));
 			DoConnect();
 #else
 			OpenConnection();
@@ -612,7 +612,7 @@ namespace MaxDBDataProvider
 			return replyPacket;
 		}
 
-		private string stripString(string str)
+		private string StripString(string str)
 		{
 			if (!(str.StartsWith("\"") && str.EndsWith("\"")))
 				return str.ToUpper();
@@ -626,13 +626,13 @@ namespace MaxDBDataProvider
 			if (username == null)
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_NOUSER));
 
-			username = stripString(username);
+			username = StripString(username);
 
 			string password = m_ConnArgs.password;
 			if (password == null)
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_NOPASSWORD));
 
-			password = stripString(password);
+			password = StripString(password);
 
 			byte[] passwordBytes = m_enc.GetBytes(password);
  

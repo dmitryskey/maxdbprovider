@@ -225,7 +225,7 @@ namespace MaxDBDataProvider
 			m_parseInfo = DoParse(m_sCmdText, false);
 
 			if (m_parseInfo != null && m_parseInfo.m_isSelect) 
-				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SQLSTATEMENT_RESULTSET));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SQLSTATEMENT_RESULTSET));
 			else 
 			{
 				Execute(CommandBehavior.Default);

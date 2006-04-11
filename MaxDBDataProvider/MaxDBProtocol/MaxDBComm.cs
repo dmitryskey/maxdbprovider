@@ -63,6 +63,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					throw new CommunicationException(returnCode);
 				}
 
+				if (dbname.Trim().ToUpper() != reply.ClientDB.Trim().ToUpper())
+				{
+					Close();
+					throw new CommunicationException(RTEReturnCodes.SQLSERVER_DB_UNKNOWN);
+				}
+
 				if (m_socket.ReopenSocketAfterInfoPacket)
 				{
 					ISocketIntf new_socket = m_socket.Clone();
@@ -105,8 +111,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if (m_session)
 				Connect(m_dbname, m_port);
 			else
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_ADMIN_RECONNECT, 
-					CommError.ErrorText[RTEReturnCodes.SQLTIMEOUT]));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_ADMIN_RECONNECT, CommError.ErrorText[RTEReturnCodes.SQLTIMEOUT]));
 		}
 
 		private MaxDBConnectPacket GetConnectReply()

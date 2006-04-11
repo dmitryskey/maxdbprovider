@@ -38,7 +38,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			ClientDB        =	  32,   // C8
 			VarPart			=	  40,   // C256
 			END             =	 296,
-		// other connect header constants
+			// other connect header constants
 			DBNameSize        =      8,
 			MinSize           =     64;   // for Unix vserver
 	}
