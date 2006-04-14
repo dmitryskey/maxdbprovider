@@ -60,13 +60,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				if (returnCode != 0)
 				{
 					Close();
-					throw new CommunicationException(returnCode);
+					throw new MaxDBCommunicationException(returnCode);
 				}
 
 				if (dbname.Trim().ToUpper() != reply.ClientDB.Trim().ToUpper())
 				{
 					Close();
-					throw new CommunicationException(RTEReturnCodes.SQLSERVER_DB_UNKNOWN);
+					throw new MaxDBCommunicationException(RTEReturnCodes.SQLSERVER_DB_UNKNOWN);
 				}
 
 				if (m_socket.ReopenSocketAfterInfoPacket)
@@ -188,13 +188,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				int headerLength = m_socket.Stream.Read(headerBuf, 0, headerBuf.Length);
 
 				if (headerLength != HeaderOffset.END)
-					throw new CommunicationException(RTEReturnCodes.SQLRECEIVE_LINE_DOWN);
+					throw new MaxDBCommunicationException(RTEReturnCodes.SQLRECEIVE_LINE_DOWN);
 
 				MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf, true);
 					//headerBuf[HeaderOffset.END + PacketHeaderOffset.MessSwap] == SwapMode.Swapped); //???
 				int returnCode = header.ReturnCode;
 				if (returnCode != 0)
-					throw new CommunicationException(returnCode);
+					throw new MaxDBCommunicationException(returnCode);
 
 				byte[] packetBuf = new byte[header.MaxSendLength - HeaderOffset.END];
 				int replyLen = HeaderOffset.END;

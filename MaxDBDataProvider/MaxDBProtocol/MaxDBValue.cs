@@ -419,7 +419,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				longpart.Close();
 				try 
 				{
-					replyPacket = connection.Exec(requestPacket, this, GCMode.GC_DELAYED);
+					replyPacket = connection.Execute(requestPacket, this, GCMode.GC_DELAYED);
 				}
 				catch(MaxDBSQLException sqlEx) 
 				{
@@ -454,7 +454,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			longpart.WriteInt32(int.MaxValue - 1, 1 + LongDesc.ValLen);
 			longpart.AddArg(1, LongDesc.Size);
 			longpart.Close();
-			return connection.Exec(requestPacket, this, GCMode.GC_DELAYED);
+			return connection.Execute(requestPacket, this, GCMode.GC_DELAYED);
 		}
 
 		private void SetupStreamBuffer(byte[] descriptor, ByteArray dataPart)

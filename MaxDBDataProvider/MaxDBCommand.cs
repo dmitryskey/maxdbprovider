@@ -11,7 +11,7 @@ namespace MaxDBDataProvider
 	/// <summary>
 	/// Represents a SQL statement to execute against a MaxDB database. This class cannot be inherited.
 	/// </summary>
-	sealed public class MaxDBCommand : IDbCommand
+	sealed public class MaxDBCommand : IDbCommand, ICloneable
 #if SAFE 
 		, ISQLParamController 
 #endif
@@ -55,9 +55,6 @@ namespace MaxDBDataProvider
 		/// </summary>
 		public MaxDBCommand()
 		{
-#if !SAFE
-			m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
-#endif
 		}
 
 		// Implement other constructors here.
@@ -71,7 +68,8 @@ namespace MaxDBDataProvider
 			m_connection  = connection;
 			
 #if !SAFE
-			m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
+			if (m_connection != null)
+				m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
 #endif
 		}
 
@@ -79,7 +77,8 @@ namespace MaxDBDataProvider
 		{
 			m_txn      = txn;
 #if !SAFE
-			m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
+			if (m_connection != null)
+				m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
 #endif
 		}
 
@@ -396,7 +395,7 @@ namespace MaxDBDataProvider
 			requestPacket.InitParseCommand(sqlCmd, true, parseAgain);
 			if (m_setWithInfo)
 				requestPacket.SetWithInfo();
-			replyPacket = m_connection.Exec(requestPacket, false, true, this, gcFlags);
+			replyPacket = m_connection.Execute(requestPacket, false, true, this, gcFlags);
 			return replyPacket;
 		}
 
@@ -420,7 +419,7 @@ namespace MaxDBDataProvider
 		private void AssertOpen() 
 		{
 			if (m_connection == null || m_connection.m_comm == null) 
-				throw new ObjectIsClosedException();
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_OBJECTISCLOSED));
 		}
 
 		private void Reparse()
@@ -430,7 +429,7 @@ namespace MaxDBDataProvider
 			m_inputArgs = tmpArgs;
 		}
 
-		public bool Execute(CommandBehavior behavior)
+		internal bool Execute(CommandBehavior behavior)
 		{
 			AssertOpen();
 			m_cursorName = m_connection.NextCursorName;
@@ -438,7 +437,7 @@ namespace MaxDBDataProvider
 			return Execute(m_maxParseAgainCnt, behavior);
 		}
 
-		public bool Execute(int afterParseAgain, CommandBehavior behavior)
+		internal bool Execute(int afterParseAgain, CommandBehavior behavior)
 		{
 			if (m_connection == null) 
 				throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INTERNAL_CONNECTIONNULL));
@@ -598,7 +597,7 @@ namespace MaxDBDataProvider
 
 				try 
 				{
-					replyPacket = m_connection.Exec(requestPacket, this,                                              
+					replyPacket = m_connection.Execute(requestPacket, this,                                              
 						(!m_parseInfo.m_hasStreams && m_inputProcedureLongs == null) ? GCMode.GC_ALLOWED : GCMode.GC_NONE);
 					// Recycling of parse infos and cursor names is not allowed
 					// if streams are in the command. Even sending it just behind
@@ -702,7 +701,7 @@ namespace MaxDBDataProvider
 
 				return isQuery;
 			}
-			catch (TimeoutException timeout) 
+			catch (MaxDBTimeoutException timeout) 
 			{
 				if (m_connection.IsInTransaction) 
 					throw timeout;
@@ -884,7 +883,7 @@ namespace MaxDBDataProvider
 					m_setWithInfo = true;
 					replyPacket = SendSQL(sql, parseAgain);
 				} 
-				catch(TimeoutException)
+				catch(MaxDBTimeoutException)
 				{
 					replyPacket = SendSQL(sql, parseAgain);
 				}
@@ -901,7 +900,8 @@ namespace MaxDBDataProvider
 					{
 						case PartKind.Parsid:
 							int parseidPos = replyPacket.PartDataPos;
-							result.SetParseIDAndSession(replyPacket.ReadBytes(parseidPos, 12), replyPacket.ReadInt32(parseidPos));
+							result.SetParseIDAndSession(replyPacket.ReadBytes(parseidPos, 12), 
+								replyPacket.Clone(replyPacket.Offset, false).ReadInt32(parseidPos));//session id is always BigEndian number
 							break;
 						case PartKind.ShortInfo:
 							shortInfos = replyPacket.ParseShortFields(m_connection.m_spaceOption,
@@ -1074,7 +1074,7 @@ namespace MaxDBDataProvider
 				// at end: patch last descriptor
 				dataPart.Close();
 				// execute and get descriptors
-				replyPacket = m_connection.Exec(requestPacket, this, GCMode.GC_DELAYED);
+				replyPacket = m_connection.Execute(requestPacket, this, GCMode.GC_DELAYED);
 				
 				//  write trailing end of LONGs marker
 				if (requiresTrailingPacket && !m_canceled) 
@@ -1083,7 +1083,7 @@ namespace MaxDBDataProvider
 					dataPart = requestPacket.InitPutValue(m_connection.AutoCommit);
 					lastStream.MarkAsLast(dataPart);
 					dataPart.Close();
-					m_connection.Exec(requestPacket, this, GCMode.GC_DELAYED);
+					m_connection.Execute(requestPacket, this, GCMode.GC_DELAYED);
 				}
 			}
 			if (m_canceled) 
@@ -1860,5 +1860,17 @@ namespace MaxDBDataProvider
 
 		#endregion
 #endif
+
+		#region ICloneable Members
+
+		public object Clone()
+		{
+			MaxDBCommand clone = new MaxDBCommand(m_sCmdText, m_connection, m_txn);
+			foreach (MaxDBParameter p in Parameters) 
+				clone.Parameters.Add((MaxDBParameter)(p as ICloneable).Clone());
+			return clone;
+		}
+
+		#endregion
 	}
 }

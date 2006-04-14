@@ -109,7 +109,7 @@ namespace MaxDBDataProvider
 
             try
             {
-                maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
+				maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
 				maxdbconn.SQLMode = SqlMode.Oracle;
 				maxdbconn.Open();
 
@@ -123,7 +123,7 @@ namespace MaxDBDataProvider
 
                         MaxDBDataReader reader = cmd.ExecuteReader();
                         while(reader.Read());
-                            //Console.Out.WriteLine(reader.GetString(0));
+                            Console.Out.WriteLine(reader.GetString(0));
 						reader.Close();
                     }
                 }

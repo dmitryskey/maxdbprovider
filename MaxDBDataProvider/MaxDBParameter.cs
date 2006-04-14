@@ -4,11 +4,11 @@ using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider
 {
-	public class MaxDBParameter : IDataParameter
+	public class MaxDBParameter : IDataParameter, ICloneable
 	{
 		internal MaxDBType m_dbType = MaxDBType.VarCharA;
 		internal ParameterDirection m_direction = ParameterDirection.Input;
-		private bool m_fNullable  = false;
+		private bool m_fNullable = false;
 		private string m_sParamName;
 		private string m_sSourceColumn;
 		private int m_size;
@@ -329,6 +329,15 @@ namespace MaxDBDataProvider
 					throw new MaxDBException("Value is of unknown data type");
 			}
 		}
+
+		#region ICloneable Members
+
+		public object Clone()
+		{
+			return new MaxDBParameter(m_sParamName, m_dbType, m_size, m_direction, m_fNullable, 0, 0, m_sSourceColumn, m_sourceVersion, m_value);
+		}
+
+		#endregion
 	}
 }
 

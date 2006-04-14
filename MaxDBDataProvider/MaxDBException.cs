@@ -8,6 +8,7 @@ namespace MaxDBDataProvider
 	/// <summary>
 	/// Summary description for MaxDBException.
 	/// </summary>
+	[Serializable]
 	public class MaxDBException : DataException
 	{
 		private int m_detailErrorCode = -708;
@@ -45,13 +46,15 @@ namespace MaxDBDataProvider
 		}
 	}
 
-	public class CommunicationException : DataException
+	[Serializable]
+	public class MaxDBCommunicationException : DataException
 	{
-		public CommunicationException(int code) : base(CommError.ErrorText[code])
+		public MaxDBCommunicationException(int code) : base(CommError.ErrorText[code])
 		{
 		}
 	}
 
+	[Serializable]
 	public class MaxDBSQLException : DataException
 	{
 		private int m_errPos = -10899;
@@ -108,7 +111,7 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		public virtual bool isConnectionReleasing
+		public virtual bool IsConnectionReleasing
 		{
 			get
 			{
@@ -139,17 +142,18 @@ namespace MaxDBDataProvider
 		}
 	}
 
-	public class ConnectionException : MaxDBSQLException 
+	[Serializable]
+	public class MaxDBConnectionException : MaxDBSQLException 
 	{
-		public ConnectionException(MaxDBException ex) : base("[" + ex.DetailErrorCode + "] " + ex.Message, "08000", ex.DetailErrorCode, 0)
+		public MaxDBConnectionException(MaxDBException ex) : base("[" + ex.DetailErrorCode + "] " + ex.Message, "08000", ex.DetailErrorCode, 0)
 		{
 		}
     
-		public ConnectionException(MaxDBSQLException ex) : base(ex.Message, "08000", ex.VendorCode) 
+		public MaxDBConnectionException(MaxDBSQLException ex) : base(ex.Message, "08000", ex.VendorCode) 
 		{
 		}
 
-		public override bool isConnectionReleasing
+		public override bool IsConnectionReleasing
 		{
 			get
 			{
@@ -158,25 +162,19 @@ namespace MaxDBDataProvider
 		}
 	}
 
-	public class TimeoutException : DatabaseException
+	[Serializable]
+	public class MaxDBTimeoutException : DatabaseException
 	{
-		public TimeoutException() : base(MaxDBMessages.Extract(MaxDBMessages.ERROR_TIMEOUT), "08000", 700, 0)
+		public MaxDBTimeoutException() : base(MaxDBMessages.Extract(MaxDBMessages.ERROR_TIMEOUT), "08000", 700, 0)
 		{
 		}
 
-		public override bool isConnectionReleasing
+		public override bool IsConnectionReleasing
 		{
 			get
 			{
 				return true;
 			}
-		}
-	}
-
-	public class ObjectIsClosedException : DataException 
-	{
-		public ObjectIsClosedException() : base(MaxDBMessages.Extract(MaxDBMessages.ERROR_OBJECTISCLOSED)) 
-		{
 		}
 	}
 

@@ -367,9 +367,9 @@ namespace MaxDBDataProvider
 				requestPacket.InitDbsCommand(m_autocommit, cmd);
 				try 
 				{
-					Exec(requestPacket, this, GCMode.GC_ALLOWED);
+					Execute(requestPacket, this, GCMode.GC_ALLOWED);
 				}
-				catch (TimeoutException) 
+				catch (MaxDBTimeoutException) 
 				{
 					requestPacket.SwitchSqlMode(oldMode);
 				}
@@ -470,7 +470,7 @@ namespace MaxDBDataProvider
 		internal void AssertOpen()
 		{
 			if (State == ConnectionState.Closed) 
-				throw new ObjectIsClosedException();
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_OBJECTISCLOSED));
 		}
 
 		public void Dispose()
@@ -508,7 +508,7 @@ namespace MaxDBDataProvider
 		{
 			if (requestPacket.InitChallengeResponse(user, auth.ClientChallenge))
 			{
-				MaxDBReplyPacket replyPacket = Exec(requestPacket, this, GCMode.GC_DELAYED); 
+				MaxDBReplyPacket replyPacket = Execute(requestPacket, this, GCMode.GC_DELAYED); 
 				auth.ParseServerChallenge(replyPacket.VarDataPart);
 				return true;
 			}  
@@ -536,13 +536,13 @@ namespace MaxDBDataProvider
 			m_packetPool.Push(requestPacket);
 		}
 
-		internal MaxDBReplyPacket Exec(MaxDBRequestPacket requestPacket, object execObj, int gcFlags)
+		internal MaxDBReplyPacket Execute(MaxDBRequestPacket requestPacket, object execObj, int gcFlags)
 		{
-			return Exec(requestPacket, false, false, execObj, gcFlags);
+			return Execute(requestPacket, false, false, execObj, gcFlags);
 		}
 
 		[MethodImpl(MethodImplOptions.Synchronized)]
-		internal MaxDBReplyPacket Exec(MaxDBRequestPacket requestPacket, bool ignoreErrors, bool isParse, object execObj, int gcFlags)
+		internal MaxDBReplyPacket Execute(MaxDBRequestPacket requestPacket, bool ignoreErrors, bool isParse, object execObj, int gcFlags)
 		{
 			int requestLen;
 			MaxDBReplyPacket replyPacket = null;
@@ -551,12 +551,12 @@ namespace MaxDBDataProvider
 			if (State != ConnectionState.Open)	
 				if (gcFlags == GCMode.GC_ALLOWED) 
 				{
-					if (m_garbageParseids != null && m_garbageParseids.isPending) 
-						m_garbageParseids.emptyCan(requestPacket);
+					if (m_garbageParseids != null && m_garbageParseids.IsPending) 
+						m_garbageParseids.EmptyCan(requestPacket);
 				} 
 				else 
 				{
-					if(m_garbageParseids != null && m_garbageParseids.isPending) 
+					if(m_garbageParseids != null && m_garbageParseids.IsPending) 
 						m_nonRecyclingExecutions++;
 				}
 
@@ -584,8 +584,8 @@ namespace MaxDBDataProvider
 					if(m_nonRecyclingExecutions > 20 && localWeakReturnCode == 0) 
 					{
 						m_nonRecyclingExecutions = 0;
-						if (m_garbageParseids != null && m_garbageParseids.isPending) 
-							m_garbageParseids.emptyCan(this);
+						if (m_garbageParseids != null && m_garbageParseids.IsPending) 
+							m_garbageParseids.EmptyCan(this);
 						m_nonRecyclingExecutions = 0;
 					}
 				}
@@ -662,7 +662,7 @@ namespace MaxDBDataProvider
 						}
 						catch(MaxDBException exc)
 						{
-							throw new ConnectionException(exc);
+							throw new MaxDBConnectionException(exc);
 						}
 					else
 						throw;
@@ -721,7 +721,7 @@ namespace MaxDBDataProvider
 			requestPacket.AddFeatureRequestPart(m_kernelFeatures);
 
 			// execute
-			MaxDBReplyPacket replyPacket = Exec(requestPacket, this, GCMode.GC_DELAYED);
+			MaxDBReplyPacket replyPacket = Execute(requestPacket, this, GCMode.GC_DELAYED);
 			m_sessionID = replyPacket.SessionID;
 			m_enc = replyPacket.IsUnicode ? Encoding.Unicode : Encoding.ASCII;
 			
@@ -744,7 +744,7 @@ namespace MaxDBDataProvider
 
 		internal void Cancel(object reqObj)
 		{
-			if (m_execObj == reqObj) 
+			if (m_execObj == reqObj)
 				m_comm.Cancel();
 		}
 
@@ -755,7 +755,7 @@ namespace MaxDBDataProvider
 
 		private void TryReconnect(MaxDBException ex)
 		{
-			lock (syncObj)
+			lock(syncObj)
 			{
 				if (m_parseCache != null) 
 					m_parseCache.Clear();
@@ -768,13 +768,13 @@ namespace MaxDBDataProvider
 				}
 				catch (MaxDBException conn_ex) 
 				{
-					throw new ConnectionException(conn_ex);
+					throw new MaxDBConnectionException(conn_ex);
 				}
 				finally 
 				{
 					m_inReconnect = false;
 				}
-				throw new TimeoutException();
+				throw new MaxDBTimeoutException();
 			}
 		}
 
@@ -797,9 +797,9 @@ namespace MaxDBDataProvider
 			requestPacket.AddString(cmd);
 			try 
 			{
-				Exec(requestPacket, this, gcFlags);
+				Execute(requestPacket, this, gcFlags);
 			}
-			catch (TimeoutException) 
+			catch (MaxDBTimeoutException) 
 			{
 				//ignore
 			}

@@ -289,7 +289,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			int currentIndex = 0;
 			do 
 			{
-				int index = rs.GetInt32(1);
+				int index = rs.GetInt32(0);
 				// Check if we have a structure element or a new parameter.
 				if (index != currentIndex) 
 				{
@@ -308,13 +308,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				} 
 				else 
 				{
-					string datatype = rs.GetString(2);
-					string code = rs.GetString(3);
-					int len = rs.GetInt32(4);
-					int dec = rs.GetInt32(5);
-					int offset = rs.GetInt32(7);
-					int asciiOffset = rs.GetInt32(8);
-					int unicodeOffset = rs.GetInt32(9);
+					string datatype = rs.GetString(1);
+					string code = rs.GetString(2);
+					int len = rs.GetInt32(3);
+					int dec = rs.GetInt32(4);
+					int offset = rs.GetInt32(6);
+					int asciiOffset = rs.GetInt32(7);
+					int unicodeOffset = rs.GetInt32(8);
 					currentInfo.addStructureElement(datatype, code, len, dec, offset, asciiOffset, unicodeOffset);
 				}
 			} 
@@ -927,7 +927,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			MaxDBRequestPacket request = c.GetRequestPacket();
 			request.InitDbsCommand(false, "DESCRIBE \"" + m_cursorName + "\"");
-			MaxDBReplyPacket reply = c.Exec(request, this, GCMode.GC_ALLOWED);
+			MaxDBReplyPacket reply = c.Execute(request, this, GCMode.GC_ALLOWED);
 			reply.ClearPartOffset();
 			for(int i = 0; i < reply.PartCount; i++) 
 			{
@@ -969,7 +969,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			try 
 			{
-				return m_connection.Exec(request, this, GCMode.GC_DELAYED);
+				return m_connection.Execute(request, this, GCMode.GC_DELAYED);
 			} 
 			finally 
 			{

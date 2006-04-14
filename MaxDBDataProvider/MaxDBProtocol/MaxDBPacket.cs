@@ -1196,7 +1196,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				try 
 				{
 					FindPart(PartKind.SessionInfoReturned);
-					return Clone(0, false).ReadInt32(PartDataPos + 1);//??? session ID is always BigEndian
+					return Clone(m_offset, false).ReadInt32(PartDataPos + 1);//session ID is always BigEndian
 				}
 				catch(PartNotFound) 
 				{
