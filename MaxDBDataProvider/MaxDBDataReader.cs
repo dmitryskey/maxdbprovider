@@ -1063,7 +1063,7 @@ namespace MaxDBDataProvider
 		private void AssertNotClosed()
 		{
 			if(!m_fOpened) 
-				throw new ObjectIsClosedException();
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_OBJECTISCLOSED));
 		}
 
 		private void CloseOpenStreams()

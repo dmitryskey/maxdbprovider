@@ -8,56 +8,56 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	public class GarbageParseid 
 	{
-		protected int canTreshold = 20;
-		protected bool objPending = false;
-		protected bool currentEmptyRun = false;
-		protected bool currentEmptyRun2 = false;
+		protected int m_canTreshold = 20;
+		protected bool m_objPending = false;
+		protected bool m_currentEmptyRun = false;
+		protected bool m_currentEmptyRun2 = false;
 		private ArrayList m_garbage;
-		private bool supportsMultipleDropParseIDs;
+		private bool m_supportsMultipleDropParseIDs;
 
 		public GarbageParseid(bool asupportsMultipleDropParseIDs) : base() 
 		{
-			supportsMultipleDropParseIDs = asupportsMultipleDropParseIDs;
-			m_garbage = new ArrayList(canTreshold);
+			m_supportsMultipleDropParseIDs = asupportsMultipleDropParseIDs;
+			m_garbage = new ArrayList(m_canTreshold);
 		}
 
-		public bool isPending 
+		public bool IsPending 
 		{
 			get
 			{
-				objPending = (GarbageSize >= canTreshold);
-				return objPending;
+				m_objPending = (GarbageSize >= m_canTreshold);
+				return m_objPending;
 			}
 		}
 
-		public void forceGarbageCollection()
+		public void ForceGarbageCollection()
 		{
-			objPending = true;
+			m_objPending = true;
 		}
 
-		public void emptyCan(MaxDBConnection conn) 
+		public void EmptyCan(MaxDBConnection conn) 
 		{
-			if(currentEmptyRun)
+			if(m_currentEmptyRun)
 				return;
-			currentEmptyRun=true;
+			m_currentEmptyRun=true;
 
 			MaxDBRequestPacket requestPacket;
-			objPending = false;
+			m_objPending = false;
 			while(GarbageSize > 0) 
 			{
 				try 
 				{
 					requestPacket = conn.GetRequestPacket();
 					requestPacket.Init(short.MaxValue);
-					emptyCan(requestPacket);
-					conn.Exec(requestPacket, this, GCMode.GC_NONE);
+					EmptyCan(requestPacket);
+					conn.Execute(requestPacket, this, GCMode.GC_NONE);
 				} 
 				catch  
 				{ 
 					/* ignore */
 				}
 			}
-			currentEmptyRun = false;
+			m_currentEmptyRun = false;
 		}
 
 
@@ -75,17 +75,17 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		}
 
 		[MethodImpl(MethodImplOptions.Synchronized)]
-		public bool emptyCan(MaxDBRequestPacket requestPacket)
+		public bool EmptyCan(MaxDBRequestPacket requestPacket)
 		{
-			if (currentEmptyRun2)
+			if (m_currentEmptyRun2)
 				return false;
 			
-			currentEmptyRun2 = true;
+			m_currentEmptyRun2 = true;
 
 			bool packetActionFailed = false;
 			int sz = GarbageSize;
 
-			if (!supportsMultipleDropParseIDs)
+			if (!m_supportsMultipleDropParseIDs)
 				while(sz > 0 && !packetActionFailed) 
 				{
 						object obj = m_garbage[sz - 1];
@@ -120,7 +120,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				}
 			}
 
-			currentEmptyRun2 = false;
+			m_currentEmptyRun2 = false;
 			return !packetActionFailed;
 		}
 
