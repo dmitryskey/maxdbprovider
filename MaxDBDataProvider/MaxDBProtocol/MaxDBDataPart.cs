@@ -16,7 +16,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return m_origData.Length - m_extent - 8;
+				return m_origData.Length - m_origData.Offset - m_extent - 8;
 			}
 		}
 
@@ -215,10 +215,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				while (!streamExhausted && maxDataSize > 0)
 				{
-					bytesRead = stream.Read(readBuf, 0, Math.Min(maxDataSize, 4096));
+					bytesRead = stream.Read(readBuf, 0, Math.Min(maxDataSize, readBuf.Length));
 					if (bytesRead > 0)
 					{
-						m_origData.WriteBytes(readBuf, m_extent);
+						m_origData.WriteBytes(readBuf, m_extent, bytesRead);
 						m_extent += bytesRead;
 						maxDataSize -= bytesRead;
 					}
@@ -228,7 +228,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 			catch (Exception ex)
 			{
-				throw new MaxDBException("Reading from a stream resulted in an IOException", ex);
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ex.Message));
 			}
 
 			// patch pos, length and kind

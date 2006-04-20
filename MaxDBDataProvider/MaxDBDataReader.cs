@@ -142,6 +142,7 @@ namespace MaxDBDataProvider
 
 #else
 		private IntPtr m_resultset = IntPtr.Zero;
+		private Hashtable m_ValArrays = new Hashtable();
 		internal MaxDBDataReader(IntPtr resultset, MaxDBConnection conn, MaxDBCommand cmd, bool closeConn, bool schemaOnly)
 		{
 			m_resultset = resultset;
@@ -155,11 +156,12 @@ namespace MaxDBDataProvider
 		/****
 		 * METHODS / PROPERTIES FROM IDataReader.
 		 ****/
+
+		/// <summary>
+		/// Always return a value of zero since nesting is not supported.
+		/// </summary>
 		public int Depth 
 		{
-			/*
-			 * Always return a value of zero if nesting is not supported.
-			 */
 			get 
 			{ 
 				return 0;  
@@ -169,8 +171,7 @@ namespace MaxDBDataProvider
 		public bool IsClosed
 		{
 			/*
-			 * Keep track of the reader state - some methods should be
-			 * disallowed if the reader is closed.
+			 Keep track of the reader state - some methods should be disallowed if the reader is closed.
 			 */
 			get
 			{ 
@@ -255,6 +256,7 @@ namespace MaxDBDataProvider
 
 			return result;
 #else
+			m_ValArrays.Clear();
 			if (m_fSchemaOnly)
 				return false;
 
@@ -421,7 +423,8 @@ namespace MaxDBDataProvider
 						return new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, tm_val.hour, tm_val.minute, tm_val.second);
 					case DataType.TIMESTAMP:
 						ODBCTIMESTAMP ts_val = ODBCConverter.GetTimeStamp(data);
-						return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second, (int)(ts_val.fraction/1000000)).AddTicks((int)(ts_val.fraction/100000));
+						return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second).AddTicks(
+							(ts_val.fraction / 1000) * (TimeSpan.TicksPerMillisecond / 1000));
 					case DataType.FIXED:
 					case DataType.FLOAT:
 					case DataType.VFLOAT:
@@ -477,7 +480,10 @@ namespace MaxDBDataProvider
 		public object this[string name]
 		{
 			// Look up the ordinal and return the value at that position.
-			get { return GetValue(GetOrdinal(name)); }
+			get 
+			{ 
+				return GetValue(GetOrdinal(name)); 
+			}
 		}
 
 		public bool GetBoolean(int i)
@@ -535,11 +541,10 @@ namespace MaxDBDataProvider
 #if SAFE
 			return FindColumnInfo(i).GetByte(this, CurrentRecord);
 #else
-			/*
-			 * Force the cast to return the type. InvalidCastException
-			 * should be thrown if the data is not already of the correct type.
-			 */
-			return (byte)GetValue(i);
+			byte[] buffer = new byte[1];
+			int columnType = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1));
+			GetValueBytes(i, columnType, 0, buffer, 0, 1);
+			return buffer[0];
 #endif
 		}
 
@@ -548,8 +553,8 @@ namespace MaxDBDataProvider
 #if SAFE
 			return FindColumnInfo(i).GetBytes(this, CurrentRecord, fieldOffset, buffer, bufferOffset, length);
 #else
-			int columnType;
-			return GetValueBytes(i, out columnType, fieldOffset, buffer, bufferOffset, length);
+			int columnType = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1));
+			return GetValueBytes(i, columnType, fieldOffset, buffer, bufferOffset, length);
 #endif
 		}
 
@@ -559,7 +564,7 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-			return (char)GetValue(i);
+			return ((string)GetValue(i))[0];
 		}
 
 		public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
@@ -567,13 +572,32 @@ namespace MaxDBDataProvider
 #if SAFE
 			return FindColumnInfo(i).GetChars(this, CurrentRecord, fieldoffset, buffer, bufferoffset, length);
 #else
-			int columnType;
-			byte[] byte_buffer = new byte[buffer.Length * Consts.UnicodeWidth]; 
-			long result_length = GetValueBytes(i, out columnType,
-				fieldoffset * Consts.UnicodeWidth, byte_buffer, bufferoffset * Consts.UnicodeWidth, length * Consts.UnicodeWidth);
-			for (int k = 0; k < byte_buffer.Length / Consts.UnicodeWidth; k++)
-				buffer[k] = BitConverter.ToChar(byte_buffer, k * Consts.UnicodeWidth);
-			return result_length / Consts.UnicodeWidth;
+			int columnType = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1));
+			int elemSize;
+			switch(columnType)
+			{
+				case DataType.LONGUNI:
+				case DataType.STRA:
+				case DataType.STRUNI:
+				case DataType.VARCHARA:
+				case DataType.VARCHARUNI:
+				case DataType.CHA:
+				case DataType.UNICODE:
+					elemSize = Consts.UnicodeWidth;
+					break;
+				default:
+					elemSize = 1;
+					break;
+			}
+
+			byte[] byte_buffer = new byte[buffer.Length * elemSize]; 
+			long result_length = GetValueBytes(i, columnType, fieldoffset * elemSize, byte_buffer, bufferoffset * elemSize, length * elemSize);
+			if (elemSize == Consts.UnicodeWidth)
+				Encoding.Unicode.GetChars(byte_buffer, 0, byte_buffer.Length, buffer, 0);
+			else
+				Encoding.ASCII.GetChars(byte_buffer, 0, byte_buffer.Length, buffer, 0);
+					
+			return result_length / elemSize;
 #endif
 		}
 
@@ -861,8 +885,8 @@ namespace MaxDBDataProvider
 						return (new DateTime(0, 0, 0, tm_val.hour, tm_val.minute, tm_val.second)).ToShortTimeString();
 					case DataType.TIMESTAMP:
 						ODBCTIMESTAMP ts_val = ODBCConverter.GetTimeStamp(data);
-						return (new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second, 
-							(int)(ts_val.fraction/1000000))).ToString();
+						return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second).AddTicks(
+							(ts_val.fraction / 1000) * (TimeSpan.TicksPerMillisecond / 1000)).ToString();
 					case DataType.FIXED:
 					case DataType.FLOAT:
 					case DataType.VFLOAT:
@@ -887,7 +911,7 @@ namespace MaxDBDataProvider
 				}
 			}
 			else
-				throw new InvalidCastException("Can't get the String value since column's value is NULL");
+				return null;
 #endif
 		}
 
@@ -967,8 +991,8 @@ namespace MaxDBDataProvider
 						return new DateTime(0, 0, 0, tm_val.hour, tm_val.minute, tm_val.second);
 					case DataType.TIMESTAMP:
 						ODBCTIMESTAMP ts_val = ODBCConverter.GetTimeStamp(data);
-						return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second, 
-							(int)(ts_val.fraction/1000000));
+						return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second).AddTicks(
+							(ts_val.fraction / 1000) * (TimeSpan.TicksPerMillisecond / 1000));
 					case DataType.FIXED:
 					case DataType.FLOAT:
 					case DataType.VFLOAT:
@@ -1014,6 +1038,21 @@ namespace MaxDBDataProvider
 #else
 			return (GetValue(i) == DBNull.Value);
 #endif
+		}
+
+		public bool HasRows
+		{
+			get
+			{
+#if SAFE
+				return m_rowsInResultSet > 0;
+#else
+				if (m_resultset != IntPtr.Zero)
+					return SQLDBC.SQLDBC_ResultSet_getResultCount(m_resultset) > 0;
+				else
+					return false;
+#endif
+			}
 		}
 
 		/*
@@ -1181,9 +1220,9 @@ namespace MaxDBDataProvider
 			get
 			{
 				if(m_positionState == PositionType.BEFORE_FIRST) 
-					throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_RESULTSET_BEFOREFIRST));
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_RESULTSET_BEFOREFIRST));
 				if(m_positionState == PositionType.AFTER_LAST) 
-					throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_RESULTSET_AFTERLAST));
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_RESULTSET_AFTERLAST));
 				return m_currentChunk.CurrentRecord;
 			}
 		}
@@ -1243,6 +1282,10 @@ namespace MaxDBDataProvider
 			int val_length;
 			SQLDBC_Retcode rc;
 			columnType = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1));
+
+			if (m_ValArrays[i] != null)
+				return (byte[])m_ValArrays[i];
+
 			switch(columnType)
 			{
 				case DataType.BOOLEAN:
@@ -1255,7 +1298,11 @@ namespace MaxDBDataProvider
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
 					else
-						return new byte[]{byte_val};
+					{
+						byte[] result = new byte[]{byte_val};
+						m_ValArrays[i] = result;
+						return result;
+					}
 				case DataType.DATE:
 					byte[] dt_val = new byte[sizeof(ODBCDATE)];
 					val_length = dt_val.Length;
@@ -1269,7 +1316,10 @@ namespace MaxDBDataProvider
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
 					else
+					{
+						m_ValArrays[i] = dt_val;
 						return dt_val;
+					}
 				case DataType.TIME:
 					byte[] tm_val = new byte[sizeof(ODBCTIME)];
 					val_length = tm_val.Length;
@@ -1283,7 +1333,10 @@ namespace MaxDBDataProvider
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
 					else
+					{
+						m_ValArrays[i] = tm_val;
 						return tm_val;
+					}
 				case DataType.TIMESTAMP:
 					byte[] ts_val = new byte[sizeof(ODBCTIMESTAMP)];
 					val_length = ts_val.Length;
@@ -1297,7 +1350,10 @@ namespace MaxDBDataProvider
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
 					else
+					{
+						m_ValArrays[i] = ts_val;
 						return ts_val;
+					}
 				case DataType.FIXED:
 				case DataType.FLOAT:
 				case DataType.VFLOAT:
@@ -1310,7 +1366,11 @@ namespace MaxDBDataProvider
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
 					else
-						return BitConverter.GetBytes(double_val);
+					{
+						byte[] result = BitConverter.GetBytes(double_val);
+						m_ValArrays[i] = result;
+						return result;
+					}
 				case DataType.INTEGER:
 					int int_val;
 					val_length = sizeof(int);
@@ -1321,7 +1381,11 @@ namespace MaxDBDataProvider
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
 					else
-						return BitConverter.GetBytes(int_val);
+					{
+						byte[] result = BitConverter.GetBytes(int_val);
+						m_ValArrays[i] = result;
+						return result;
+					}
 				case DataType.SMALLINT:
 					short short_val;
 					val_length = sizeof(short);
@@ -1332,17 +1396,21 @@ namespace MaxDBDataProvider
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 						return null;
 					else
-						return BitConverter.GetBytes(short_val);
+					{
+						byte[] result = BitConverter.GetBytes(short_val);
+						m_ValArrays[i] = result;
+						return result;
+					}
 				case DataType.STRA:
 				case DataType.STRUNI:
 				case DataType.VARCHARA:
 				case DataType.VARCHARUNI:
 				case DataType.CHA:
 				case DataType.UNICODE:
-					byte[] columnValue = new byte[sizeof(char)];
+					byte[] strValue = new byte[sizeof(char)];
 					val_length = 0;
 
-					fixed(byte *valuePtr = columnValue)
+					fixed(byte *valuePtr = strValue)
 					{
 						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, 
 							Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2, 
@@ -1351,14 +1419,17 @@ namespace MaxDBDataProvider
 						if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 							return null;
 
+						if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_NODATA_FOUND));
+
 						if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
 							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
-					columnValue = new byte[val_length];
+					strValue = new byte[val_length];
 
-					fixed(byte *valuePtr = columnValue)
+					fixed(byte *valuePtr = strValue)
 					{
 						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, 
 							Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2, 
@@ -1369,7 +1440,8 @@ namespace MaxDBDataProvider
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
-					return columnValue;
+					m_ValArrays[i] = strValue;
+					return strValue;
 				case DataType.STRB:
 				case DataType.VARCHARB:
 				case DataType.CHB:
@@ -1383,6 +1455,9 @@ namespace MaxDBDataProvider
 
 						if (val_length == SQLDBC.SQLDBC_NULL_DATA)
 							return null;
+
+						if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_NODATA_FOUND));
 
 						if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
 							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
@@ -1401,84 +1476,54 @@ namespace MaxDBDataProvider
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
+					m_ValArrays[i] = binValue;
 					return binValue;
 				default:
 					return null;
 			}
 		}
 
-		private unsafe long GetValueBytes(int i, out int columnType, long dataIndex, byte[] buffer, int bufferIndex, int length)
+		private unsafe long GetValueBytes(int i, int columnType, long dataIndex, byte[] buffer, int bufferIndex, int length)
 		{
 			SQLDBC_Retcode rc;
 			SQLDBC_HostType hostType;
-			columnType = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1));
 			switch(columnType)
 			{
 				case DataType.STRA:
-				case DataType.VARCHARA:
-				case DataType.CHA:
+				case DataType.LONGA:
 					hostType = SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII;
 					break;
-				case DataType.VARCHARUNI:
 				case DataType.STRUNI:
-				case DataType.UNICODE:
+				case DataType.LONGUNI:
 					hostType = Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2;
 					break;
 				case DataType.STRB:
-				case DataType.VARCHARB:
-				case DataType.CHB:
+				case DataType.LONGB:
 					hostType = SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY;
 					break;
 				default:
 					byte[] byte_buffer = GetValueBytes(i, out columnType);
-					Array.Copy(byte_buffer, dataIndex, buffer, bufferIndex, length);
+					Array.Copy(byte_buffer, dataIndex, buffer, bufferIndex, Math.Min(length, byte_buffer.Length - dataIndex));
 					return length;
 			}
 
-			byte[] columnValue = new byte[4096];
-			int val_length = 0;
-			int alreadyRead = 0;
-
-			fixed(byte *valuePtr = columnValue)
-			{
-				for(;;)
-				{
-					rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, hostType, new IntPtr(valuePtr), ref val_length, 
-						(int)(alreadyRead + columnValue.Length < dataIndex ? columnValue.Length : dataIndex - alreadyRead), 0);
-
-					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
-						return 0;
-
-					if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
-							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
-
-					if (rc == SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-					{
-						if(alreadyRead + columnValue.Length < dataIndex)
-						{
-							alreadyRead += columnValue.Length;
-							continue;
-						}
-						else
-							break;
-					}
-
-					if (rc == SQLDBC_Retcode.SQLDBC_OK)
-						break;
-				}
-			}
-
-			length = Math.Min(length, buffer.Length - bufferIndex);
+			length = buffer.Length - bufferIndex;
 
 			fixed(byte *valuePtr = buffer)
 			{
+				int ref_length = 0;
 				rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, hostType, 
-					new IntPtr(valuePtr + bufferIndex), ref val_length, length, 0);
+					new IntPtr(valuePtr + bufferIndex), ref ref_length, length, (int)dataIndex, SQLDBC_BOOL.SQLDBC_FALSE);
+
+				if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_NODATA_FOUND));
 
 				if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC && rc != SQLDBC_Retcode.SQLDBC_OK)
 					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 						SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+
+				if (rc == SQLDBC_Retcode.SQLDBC_OK)
+					length = ref_length;
 			}
 
 			return length;

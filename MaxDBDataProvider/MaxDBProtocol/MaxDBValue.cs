@@ -59,7 +59,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public void writeDescriptor(DataPart mem, int pos)
+		public void WriteDescriptor(DataPart mem, int pos)
 		{
 			if (m_desc == null) 
 				m_desc = new byte[LongDesc.Size];
@@ -67,7 +67,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_descMark = mem.WriteDescriptor(pos, m_desc);
 		}
 
-		private byte[] newDescriptor
+		private byte[] NewDescriptor
 		{
 			get
 			{
@@ -75,15 +75,15 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public void putDescriptor(DataPart mem, int pos)
+		public void PutDescriptor(DataPart mem, int pos)
 		{
 			if (m_desc == null) 
-				m_desc = newDescriptor;
+				m_desc = NewDescriptor;
 			
 			m_descMark = mem.WriteDescriptor(pos, m_desc);
 		}
 
-		public void setDescriptor(byte[] desc)
+		public void SetDescriptor(byte[] desc)
 		{
 			m_desc = desc;
 		}
@@ -94,17 +94,17 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				dataPart.MarkEmptyStream(m_descMark);
 			else 
 				if (dataPart.FillWithStream(m_stream, m_descMark, this)) 
-			{
-				try 
 				{
-					m_stream.Close();
+					try 
+					{
+						m_stream.Close();
+					}
+					catch 
+					{
+						// ignore
+					}
+					m_stream = null;
 				}
-				catch 
-				{
-					// ignore
-				}
-				m_stream = null;
-			}
 		}
 
 		public void TransferStream(DataPart dataPart, short streamIndex)
@@ -120,7 +120,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				throw new IndexOutOfRangeException();
         
 			int descriptorPos = dataPart.Extent;
-			writeDescriptor(dataPart, descriptorPos);
+			WriteDescriptor(dataPart, descriptorPos);
 			dataPart.AddArg(descriptorPos, LongDesc.Size + 1);
 			m_descMark.WriteByte(LongDesc.LastPutval, LongDesc.ValMode);
 		}

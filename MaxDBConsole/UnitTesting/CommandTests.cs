@@ -58,7 +58,7 @@ namespace MaxDBConsole.UnitTesting
 		}
 
 		[Test()]
-		public void InsertTest()
+		public void TestInsert()
 		{
 			try 
 			{
@@ -94,7 +94,7 @@ namespace MaxDBConsole.UnitTesting
 		}
 
 		[Test()]
-		public void UpdateTest()
+		public void TestUpdate()
 		{
 			try 
 			{
@@ -139,7 +139,7 @@ namespace MaxDBConsole.UnitTesting
 		}
 
 		[Test()]
-		public void DeleteTest()
+		public void TestDelete()
 		{
 			try 
 			{
@@ -164,7 +164,7 @@ namespace MaxDBConsole.UnitTesting
 		}
 
 		[Test]
-		public void InsertNullParameter()
+		public void TestInsertNullParameter()
 		{
 			ClearTestTable();
 			MaxDBCommand cmd = new MaxDBCommand("INSERT INTO test VALUES(1, :str)", m_conn);
@@ -191,7 +191,7 @@ namespace MaxDBConsole.UnitTesting
 		}
 
 		[Test]
-		public void InsertUsingReader()
+		public void TestInsertUsingReader()
 		{
 			ClearTestTable();
 			MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES(1, 'Test')", m_conn);
@@ -217,7 +217,7 @@ namespace MaxDBConsole.UnitTesting
 		}
 
 		[Test]
-		public void CloneCommand() 
+		public void TestCloneCommand() 
 		{
 			MaxDBTransaction txn = m_conn.BeginTransaction();
 			MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test WHERE id = :id", m_conn, txn);
@@ -238,7 +238,7 @@ namespace MaxDBConsole.UnitTesting
 		}
 
 		//[Test]
-		public void CancelTest() 
+		public void TestCancel() 
 		{
 			m_cmd = new MaxDBCommand("CALL ForEver(5000)", m_conn);
         
@@ -251,13 +251,8 @@ namespace MaxDBConsole.UnitTesting
 
 				Assert.Fail("Execution should not have finished.");
 			}            
-			catch(MaxDBException ex) 
+			catch(MaxDBException) 
 			{
-				int d = ex.DetailErrorCode;
-			}
-			catch(Exception ex)
-			{
-				string msg = ex.Message;
 			}
 		}
 

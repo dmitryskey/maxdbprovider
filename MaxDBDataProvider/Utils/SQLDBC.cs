@@ -384,6 +384,9 @@ namespace MaxDBDataProvider.Utils
 		public extern static void SQLDBC_ResultSet_close(IntPtr result);
 
 		[DllImport("libSQLDBC_C")]
+		public extern static int SQLDBC_ResultSet_getResultCount(IntPtr result); 
+
+		[DllImport("libSQLDBC_C")]
 		public extern static SQLDBC_Retcode SQLDBC_ResultSet_next(IntPtr result);
 
 		[DllImport("libSQLDBC_C")]
@@ -403,7 +406,11 @@ namespace MaxDBDataProvider.Utils
 
 		[DllImport("libSQLDBC_C")]
 		public extern static SQLDBC_Retcode SQLDBC_ResultSet_getObject(IntPtr result, int index, SQLDBC_HostType type, IntPtr paramAddr, 
-			ref int length, int size, int terminate);
+			ref int length, int size, SQLDBC_BOOL terminate);
+
+		[DllImport("libSQLDBC_C")]
+		public extern static SQLDBC_Retcode SQLDBC_ResultSet_getObject(IntPtr result, int index, SQLDBC_HostType type, IntPtr paramAddr, 
+			ref int length, int size, int startPos, SQLDBC_BOOL terminate);
 
 		#endregion
 
