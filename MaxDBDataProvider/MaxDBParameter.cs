@@ -236,7 +236,7 @@ namespace MaxDBDataProvider
 						case MaxDBType.Date:
 						case MaxDBType.Time:
 						case MaxDBType.TimeStamp:
-							m_InputValue = DateTime.Parse(value.ToString());
+							m_InputValue = (DateTime)value;
 							break;
 
 						case MaxDBType.Fixed:
@@ -282,7 +282,7 @@ namespace MaxDBDataProvider
 				case TypeCode.Empty:
 				case TypeCode.Object:
 				case TypeCode.DBNull:
-					throw new MaxDBException("Invalid data type");
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALID_DATATYPE));
 
 				case TypeCode.Char:
 					return MaxDBType.CharB;
@@ -326,7 +326,7 @@ namespace MaxDBDataProvider
 					return MaxDBType.StrUni;
 
 				default:
-					throw new MaxDBException("Value is of unknown data type");
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_UNKNOWN_DATATYPE));
 			}
 		}
 

@@ -99,6 +99,7 @@ namespace MaxDBDataProvider
 		// Have a constructor that takes a connection string.
 		public MaxDBConnection(string sConnString) 
 		{
+			m_sConnString = sConnString;
 			ParseConnectionString(sConnString);
 		}
 

@@ -114,6 +114,15 @@ namespace MaxDBDataProvider
 			// Password invalid.
 			ERROR_INVALIDPASSWORD = "error.invalidpassword",
 
+			//No data found
+			ERROR_NODATA_FOUND = "error.nodata.found",
+
+			//Invalid data type
+			ERROR_INVALID_DATATYPE = "error.invalid.datatype",
+
+			//Unknown data type
+			ERROR_UNKNOWN_DATATYPE = "error.unknown.datatype",
+
 			// Try to get record at position < first.
 			ERROR_RESULTSET_BEFOREFIRST = "error.resultset.beforefirst",
 

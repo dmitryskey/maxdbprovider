@@ -214,6 +214,15 @@
 	<data name="error.invalidpassword">
 		<value>The password is invalid.</value>
 	</data>
+	<data name="error.nodata.found">
+		<value>No data found.</value>
+	</data>
+	<data name="error.invalid.datatype">
+		<value>Invalid data type.</value>
+	</data>
+	<data name="error.unknown.datatype">
+		<value>Unknown data type.</value>
+	</data>
 	<data name="error.resultset.beforefirst">
 		<value>Result set is positioned before first row.</value>
 	</data>

@@ -21,34 +21,40 @@ namespace MaxDBDataProvider
 			// TODO: Add code to start application here
 			//
 
-			PerfomanceTest();
+//			PerfomanceTest();
 
-//            MaxDBConnection maxdbconn = null;
-//            MaxDBTransaction trans = null;
-//
-//            try
-//            {
-//                maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
-//                maxdbconn.Open();
-//
-//                trans = maxdbconn.BeginTransaction(IsolationLevel.ReadCommitted);
-//
-////                using (MaxDBCommand cmd = new MaxDBCommand("DELETE FROM ruscity WHERE zip = :a", maxdbconn))
-////                {
-////                    cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Value = "42600";
-////                    cmd.Transaction = trans;
-////                    cmd.ExecuteNonQuery();
-////                }
-////
-////                using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO ruscity (zip,name,state) VALUES (:a,:b, :c)", maxdbconn))
-////                {
-////                    cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Value = "42600";
-////                    cmd.Parameters.Add(":b", MaxDBType.VarCharUni).Value = "Ижевск";
-////                    cmd.Parameters.Add(":c", MaxDBType.VarCharUni).Value = DBNull.Value;
-////                    cmd.Transaction = trans;
-////                    cmd.ExecuteNonQuery();
-////                    cmd.Transaction.Commit();
-////                }
+            MaxDBConnection maxdbconn = null;
+            MaxDBTransaction trans = null;
+
+            try
+            {
+                maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
+                maxdbconn.Open();
+
+                trans = maxdbconn.BeginTransaction(IsolationLevel.ReadCommitted);
+
+                using (MaxDBCommand cmd = new MaxDBCommand("DELETE FROM ruscity WHERE zip = :a", maxdbconn))
+                {
+                    cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Value = "42600";
+                    cmd.Transaction = trans;
+                    cmd.ExecuteNonQuery();
+                }
+
+				int len = 50000;
+				char[] chars = new char[len];
+				for (int i = 0; i < len; i++)
+					chars[i] = (char)(i % 128);
+
+                using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO ruscity (zip,name,state,info) VALUES (:a, :b, :c, :d)", maxdbconn))
+                {
+                    cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Value = "42600";
+                    cmd.Parameters.Add(":b", MaxDBType.VarCharUni).Value = "Ижевск";
+                    cmd.Parameters.Add(":c", MaxDBType.VarCharUni).Value = DBNull.Value;
+					cmd.Parameters.Add(":d", MaxDBType.LongA).Value = chars;
+                    cmd.Transaction = trans;
+                    cmd.ExecuteNonQuery();
+                    cmd.Transaction.Commit();
+                }
 //
 ////				using (MaxDBCommand cmd = new MaxDBCommand("EXISTS TABLE hotel", maxdbconn))
 ////				{
@@ -88,60 +94,60 @@ namespace MaxDBDataProvider
 //					//						Console.WriteLine(row[0].ToString());
 //					//				}
 //				}
-//            }
-//            catch (Exception ex)
-//            {
-//                if (trans != null) trans.Rollback();
-//                Console.WriteLine(ex.Message);
-//            }
-//            finally
-//            {
-//				if (maxdbconn != null)
-//					maxdbconn.Dispose();
-//            }
-
-            return;
-		}
-
-        static void PerfomanceTest()
-        {
-            MaxDBConnection maxdbconn = null;
-
-            try
-            {
-				maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
-				maxdbconn.SQLMode = SqlMode.Oracle;
-				maxdbconn.Open();
-
-                DateTime start_time = DateTime.Now;
-
-                for(int i=0;i<1000;i++)
-                {
-                    using(MaxDBCommand cmd = new MaxDBCommand("SELECT NAME FROM HOTEL WHERE zip LIKE ?", maxdbconn))
-                    {
-                        cmd.Parameters.Add("?", MaxDBType.VarCharUni).Value = "2%";
-
-                        MaxDBDataReader reader = cmd.ExecuteReader();
-                        while(reader.Read());
-                            Console.Out.WriteLine(reader.GetString(0));
-						reader.Close();
-                    }
-                }
-
-                Console.WriteLine(DateTime.Now - start_time);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
+                if (trans != null) trans.Rollback();
                 Console.WriteLine(ex.Message);
             }
             finally
             {
-                if (maxdbconn != null)
-                    maxdbconn.Close();
+				if (maxdbconn != null)
+					maxdbconn.Dispose();
             }
 
             return;
-        }
+		}
+
+//        static void PerfomanceTest()
+//        {
+//            MaxDBConnection maxdbconn = null;
+//
+//            try
+//            {
+//				maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
+//				maxdbconn.SQLMode = SqlMode.Oracle;
+//				maxdbconn.Open();
+//
+//                DateTime start_time = DateTime.Now;
+//
+//                for(int i=0;i<1000;i++)
+//                {
+//                    using(MaxDBCommand cmd = new MaxDBCommand("SELECT NAME FROM HOTEL WHERE zip LIKE ?", maxdbconn))
+//                    {
+//                        cmd.Parameters.Add("?", MaxDBType.VarCharUni).Value = "2%";
+//
+//                        MaxDBDataReader reader = cmd.ExecuteReader();
+//                        while(reader.Read());
+//                            Console.Out.WriteLine(reader.GetString(0));
+//						reader.Close();
+//                    }
+//                }
+//
+//                Console.WriteLine(DateTime.Now - start_time);
+//            }
+//            catch(Exception ex)
+//            {
+//                Console.WriteLine(ex.Message);
+//            }
+//            finally
+//            {
+//                if (maxdbconn != null)
+//                    maxdbconn.Close();
+//            }
+//
+//            return;
+//        }
 
 	}
 }
