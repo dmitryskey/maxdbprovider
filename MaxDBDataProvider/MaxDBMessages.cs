@@ -1,3 +1,20 @@
+//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//	Copyright (C) 2002-2003 SAP AG
+//
+//	This program is free software; you can redistribute it and/or
+//	modify it under the terms of the GNU General Public License
+//	as published by the Free Software Foundation; either version 2
+//	of the License, or (at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program; if not, write to the Free Software
+//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
 using System;
 using System.Resources;
 using System.Text;
@@ -78,6 +95,9 @@ namespace MaxDBDataProvider
 			// Try to execute null statement.
 			ERROR_SQLSTATEMENT_NULL = "error.sqlstatement.null",
 
+			// Column value is null.
+			ERROR_COLUMNVALUE_NULL = "error.columnvalue.null",
+
 			// Try to use null data adapter
 			ERROR_ADAPTER_NULL = "error.adapter.null",
 
@@ -104,6 +124,9 @@ namespace MaxDBDataProvider
 
 			// Column index not found.
 			ERROR_COLINDEX_NOTFOUND = "error.colindex.notfound",
+
+			// Column name not found.
+			ERROR_COLNAME_NOTFOUND = "error.colname.notfound",
 
 			// User name missing.
 			ERROR_NOUSER = "error.nouser",

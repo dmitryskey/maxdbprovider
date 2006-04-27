@@ -1,3 +1,20 @@
+//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//	Copyright (C) 2002-2003 SAP AG
+//
+//	This program is free software; you can redistribute it and/or
+//	modify it under the terms of the GNU General Public License
+//	as published by the Free Software Foundation; either version 2
+//	of the License, or (at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program; if not, write to the Free Software
+//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
 using System;
 using System.IO;
 using System.Text;
@@ -22,7 +39,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		protected byte m_ioType;
 		protected byte m_dataType;
 		protected bool m_writeAllowed = false;
-		protected string m_charDatatypePostfix = "";
+		protected string m_charDatatypePostfix = string.Empty;
 		private string m_colName;
 		private int m_colIndex;
 
@@ -208,6 +225,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public virtual DateTime GetDateTime(ByteArray mem)
 		{
 			throw this.CreateGetException("DateTime");
+		}
+
+		public virtual TimeSpan GetTimeSpan(ByteArray mem)
+		{
+			throw this.CreateGetException("TimeSpan");
 		}
 
 		public virtual double GetDouble(ByteArray mem)
@@ -487,6 +509,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		}
 
 		public virtual object TransDateTimeForInput(DateTime val)
+		{
+			return TransObjectForInput(val);
+		}
+
+		public virtual object TransTimeSpanForInput(TimeSpan val)
 		{
 			return TransObjectForInput(val);
 		}
@@ -1211,7 +1238,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					case (DBTechTranslator.nullDefineByte):
 						return result;
 					case (DBTechTranslator.specialNullValueDefineByte):
-						throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSpecialNullValue), "", -10811);
+						throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSpecialNullValue), string.Empty, -10811);
 				}
 				result = VDNNumber.Number2BigDecimal(mem.ReadBytes(m_bufpos, m_physicalLength - 1));
 				result = result.setScale(scale);
@@ -1233,7 +1260,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					case DBTechTranslator.nullDefineByte:
 						return result;
 					case DBTechTranslator.specialNullValueDefineByte:
-						throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSpecialNullValue), "" , -10811);
+						throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSpecialNullValue), string.Empty , -10811);
 				}
 				result = VDNNumber.Number2BigDecimal(mem.ReadBytes(m_bufpos, m_physicalLength - 1));
 				if (!isFloatingPoint)
@@ -1292,7 +1319,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				case DBTechTranslator.nullDefineByte:
 					return 0;
 				case DBTechTranslator.specialNullValueDefineByte:
-					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSpecialNullValue), "" , -10811);
+					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSpecialNullValue), string.Empty , -10811);
 			}
 			return VDNNumber.Number2Long(mem.ReadBytes(m_bufpos, m_physicalLength - 1));
 		}
@@ -1305,11 +1332,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			switch (m_dataType) 
 			{
 				case DataType.FLOAT:
-					if(m_logicalLength <15)
+				case DataType.VFLOAT:
+					if(m_logicalLength < 15)
 						return GetFloat(mem);
 					else
 						return GetDouble(mem);
-				case DataType.INTEGER: // isNull catched before
+				case DataType.INTEGER: 
 					return GetInt32(mem);
 				case DataType.SMALLINT:
 					return GetInt16(mem);
@@ -1486,6 +1514,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override DateTime GetDateTime(ByteArray mem)
 		{
+			return DateTime.MinValue.AddTicks(GetTimeSpan(mem).Ticks);
+		}
+
+		public override TimeSpan GetTimeSpan(ByteArray mem)
+		{
 			if (!IsDBNull(mem)) 
 			{
 				byte[] raw = mem.ReadBytes(m_bufpos, m_physicalLength - 1);
@@ -1494,10 +1527,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				int min = ((int)raw[3] - '0') * 10 + ((int)raw[4] - '0');
 				int sec = ((int)raw[6] - '0') * 10 + ((int)raw[7] - '0');
 
-				return new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, hour, min, sec);
+				return new TimeSpan(hour, min, sec);
 			}
 			else
-				return DateTime.MinValue;
+				return TimeSpan.MinValue;
 		}
 
 		public override bool IsCaseSensitive
@@ -1524,6 +1557,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			formattedTime[7] = (byte)('0'+(dt.Second%10));
 
 			return formattedTime;
+		}
+
+		public virtual object TransTimeForInput(TimeSpan dt)
+		{
+			return TransDateTimeForInput(DateTime.MinValue.AddTicks(dt.Ticks));
 		}
 
 		protected override object TransSpecificForInput(object obj)
@@ -1573,7 +1611,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return (!IsDBNull(mem) ? mem.ReadUnicode(m_bufpos, m_physicalLength - 1) : null);
 		}
 
-		public override DateTime GetDateTime(ByteArray mem)
+		public override TimeSpan GetTimeSpan(ByteArray mem)
 		{
 			if (!IsDBNull(mem)) 
 			{
@@ -1583,10 +1621,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				int min = ((int)raw[7] - '0') * 10 + ((int)raw[9] - '0');
 				int sec = ((int)raw[13] - '0') * 10 + ((int)raw[15] - '0');
 
-				return new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, hour, min, sec);
+				return new TimeSpan(hour, min, sec);
 			}
 			else
-				return DateTime.MinValue;
+				return TimeSpan.MinValue;
 		}
 
 		protected override void PutSpecific(DataPart dataPart, object data)
@@ -1649,6 +1687,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 			else
 				return DateTime.MinValue;
+		}
+
+		public override TimeSpan GetTimeSpan(ByteArray mem)
+		{
+			return GetDateTime(mem).TimeOfDay;
 		}
 
 		public override bool IsCaseSensitive
@@ -1823,6 +1866,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
 			return (!IsDBNull(mem) ? mem.ReadASCII(m_bufpos, m_physicalLength - 1) : null);
+		}
+
+		public override TimeSpan GetTimeSpan(ByteArray mem)
+		{
+			return GetDateTime(mem).TimeOfDay;
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)

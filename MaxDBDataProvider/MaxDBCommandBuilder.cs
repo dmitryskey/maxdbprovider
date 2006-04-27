@@ -1,3 +1,19 @@
+//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//
+//	This program is free software; you can redistribute it and/or
+//	modify it under the terms of the GNU General Public License
+//	as published by the Free Software Foundation; either version 2
+//	of the License, or (at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program; if not, write to the Free Software
+//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
 using System;
 using System.ComponentModel;
 using System.Data;
@@ -15,11 +31,12 @@ namespace MaxDBDataProvider
 		private string m_suffix = "'";
 		private MaxDBDataAdapter m_adapter;
 		private DataTable m_schema = null;
-		private string m_marker = "?";
 		private string m_baseTable = null;
 		private MaxDBCommand m_delCmd = null;
 		private MaxDBCommand m_insCmd = null;
 		private MaxDBCommand m_updCmd = null;
+		private string[] m_keyFields = null;
+		private string[] m_serialFields = null;
 
 		public MaxDBCommandBuilder()
 		{
@@ -30,7 +47,20 @@ namespace MaxDBDataProvider
 
 		public MaxDBCommandBuilder(MaxDBDataAdapter adapter)
 		{
-			m_adapter = adapter;
+			DataAdapter = adapter;
+		}
+
+		public MaxDBCommandBuilder(MaxDBDataAdapter adapter, string[] keyFields)
+		{
+			DataAdapter = adapter;
+			KeyFields = keyFields;
+		}
+
+		public MaxDBCommandBuilder(MaxDBDataAdapter adapter, string[] keyFields, string[] serialFields)
+		{
+			DataAdapter = adapter;
+			KeyFields = keyFields;
+			SerialFields = serialFields;
 		}
 
 		public string QuotePrefix
@@ -75,6 +105,36 @@ namespace MaxDBDataProvider
 			}
 		}
 
+		public string[] KeyFields
+		{
+			get
+			{
+				return m_keyFields;
+			}
+			set
+			{
+				m_keyFields = value;
+				if (m_keyFields != null)
+					for(int i = 0; i < m_keyFields.Length; i++)
+						m_keyFields[i] = m_keyFields[i].Trim().ToUpper();
+			}
+		}
+
+		public string[] SerialFields
+		{
+			get
+			{
+				return m_serialFields;
+			}
+			set
+			{
+				m_serialFields = value;
+				if (m_serialFields != null)
+					for(int i = 0; i < m_serialFields.Length; i++)
+						m_serialFields[i] = m_serialFields[i].Trim().ToUpper();
+			}
+		}
+
 		public void RefreshSchema()
 		{
 			if (m_adapter == null)
@@ -84,6 +144,7 @@ namespace MaxDBDataProvider
 		
 			MaxDBDataReader dr = m_adapter.SelectCommand.ExecuteReader(CommandBehavior.SchemaOnly);
 			m_schema = dr.GetSchemaTable();
+
 			if (m_schema.Rows.Count > 0 && !m_schema.Rows[0].IsNull("BaseTableName"))
 				m_baseTable = m_schema.Rows[0]["BaseTableName"].ToString();
 			else
@@ -92,11 +153,24 @@ namespace MaxDBDataProvider
 
 		private MaxDBCommand CreateCommand()
 		{
-			MaxDBCommand cmd = new MaxDBCommand();
-			cmd.Connection = m_adapter.SelectCommand.Connection;
+			MaxDBCommand cmd = new MaxDBCommand(string.Empty, m_adapter.SelectCommand.Connection, m_adapter.SelectCommand.Transaction);
 			cmd.CommandTimeout = m_adapter.SelectCommand.CommandTimeout;
-			cmd.Transaction = m_adapter.SelectCommand.Transaction;
 			return cmd;
+		}
+
+		private MaxDBParameter CreateParameter(DataRow row, DataRowVersion version)
+		{
+			return new MaxDBParameter(
+				row["ColumnName"].ToString(),
+				(MaxDBType)row["ProviderType"],
+				(int)row["ColumnSize"],
+				ParameterDirection.Input,
+				(bool)row["AllowDBNull"],
+				(byte)(int)row["NumericPrecision"],
+				(byte)(int)row["NumericScale"],
+				row["ColumnName"].ToString(),
+				version,
+				DBNull.Value);
 		}
 
 		public MaxDBCommand GetDeleteCommand()
@@ -109,25 +183,29 @@ namespace MaxDBDataProvider
 
 			MaxDBCommand cmd = CreateCommand();
 
+			StringBuilder whereStmt = new StringBuilder();
+	
+			foreach(DataRow row in m_schema.Rows)
+			{
+				string columnName = row["ColumnName"].ToString();
+
+				if (m_keyFields != null && Array.IndexOf(m_keyFields, columnName.Trim().ToUpper()) >= 0)
+				{
+					if (whereStmt.Length > 0)
+						whereStmt.Append(" AND ");
+					
+					whereStmt.Append(columnName + "= :" + columnName);
+
+					cmd.Parameters.Add(CreateParameter(row, DataRowVersion.Original));
+				}
+			}
+
 			cmd.CommandText = "DELETE FROM " + m_baseTable;
+			if (whereStmt.Length > 0)
+				cmd.CommandText += " WHERE " + whereStmt.ToString();
 
 			m_delCmd = cmd;
 			return m_delCmd;
-		}
-
-		private MaxDBParameter CreateParameter(DataRow row)
-		{
-			return new MaxDBParameter(
-					row["ColumnName"].ToString(),
-					(MaxDBType)row["ProviderType"],
-					(int)row["ColumnSize"],
-					ParameterDirection.Input,
-					(bool)row["AllowDBNull"],
-					(byte)row["NumericPrecision"],
-					(byte)row["NumericScale"],
-					row["ColumnName"].ToString(),
-					DataRowVersion.Current,
-					DBNull.Value);
 		}
 
 		public MaxDBCommand GetInsertCommand()
@@ -145,16 +223,20 @@ namespace MaxDBDataProvider
 
 			foreach(DataRow row in m_schema.Rows)
 			{
-				if (columns.Length > 0 && markers.Length > 0)
+				string columnName = row["ColumnName"].ToString();
+				if (m_serialFields == null || Array.IndexOf(m_serialFields, columnName.Trim().ToUpper()) == -1)
 				{
-					columns.Append(", ");
-					markers.Append(", ");
+					if (columns.Length > 0 && markers.Length > 0)
+					{
+						columns.Append(", ");
+						markers.Append(", ");
+					}
+
+					columns.Append(columnName);
+					markers.Append(":" + columnName);
+
+					cmd.Parameters.Add(CreateParameter(row, DataRowVersion.Current));
 				}
-
-				columns.Append(row["ColumnName"].ToString());
-				markers.Append(m_marker);
-
-				m_insCmd.Parameters.Add(CreateParameter(row));
 			}
 
 			cmd.CommandType = CommandType.Text;
@@ -174,20 +256,43 @@ namespace MaxDBDataProvider
 
 			MaxDBCommand cmd = CreateCommand();
 
-			StringBuilder setstmt = new StringBuilder();
+			StringBuilder setStmt = new StringBuilder();
+			MaxDBParameterCollection setParams = new MaxDBParameterCollection();
+			StringBuilder whereStmt = new StringBuilder();
+			MaxDBParameterCollection whereParams = new MaxDBParameterCollection();
 
 			foreach(DataRow row in m_schema.Rows)
 			{
-				if (setstmt.Length > 0)
-					setstmt.Append(", ");
+				string columnName = row["ColumnName"].ToString();
 
-				setstmt.Append(row["ColumnName"].ToString() + "=" + m_marker);
+				if (m_keyFields != null && Array.IndexOf(m_keyFields, columnName.Trim().ToUpper()) >= 0)
+				{
+					if (whereStmt.Length > 0)
+						whereStmt.Append(" AND ");
+					
+					whereStmt.Append(columnName + "= :" + columnName);
+					whereParams.Add(CreateParameter(row, DataRowVersion.Current));
+				}
+				else
+				{
+					if (setStmt.Length > 0)
+						setStmt.Append(", ");
 
-				m_insCmd.Parameters.Add(CreateParameter(row));
+					setStmt.Append(columnName + "= :" + columnName);
+					setParams.Add(CreateParameter(row, DataRowVersion.Current));
+				}
 			}
 
 			cmd.CommandType = CommandType.Text;
-			cmd.CommandText = "UPDATE " + m_baseTable + " SET " + setstmt.ToString();
+			cmd.CommandText = "UPDATE " + m_baseTable + " SET " + setStmt.ToString();
+			foreach(MaxDBParameter param in setParams)
+				cmd.Parameters.Add(param);
+			if (whereStmt.Length > 0)
+			{
+				cmd.CommandText += " WHERE " + whereStmt.ToString();
+				foreach(MaxDBParameter param in whereParams)
+					cmd.Parameters.Add(param);
+			}
 
 			m_updCmd = cmd;
 			return m_updCmd;

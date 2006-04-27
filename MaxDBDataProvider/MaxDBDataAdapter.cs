@@ -1,3 +1,19 @@
+//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//
+//	This program is free software; you can redistribute it and/or
+//	modify it under the terms of the GNU General Public License
+//	as published by the Free Software Foundation; either version 2
+//	of the License, or (at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program; if not, write to the Free Software
+//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
 using System;
 using System.Data;
 using System.Data.Common;
@@ -11,12 +27,6 @@ namespace MaxDBDataProvider
 		private MaxDBCommand m_updateCommand;
 		private MaxDBCommand m_deleteCommand;
 
-		/*
-		 * Inherit from Component through DbDataAdapter. The event
-		 * mechanism is designed to work with the Component.Events
-		 * property. These variables are the keys used to find the
-		 * events in the components list of events.
-		 */
 		static private readonly object EventRowUpdated = new object(); 
 		static private readonly object EventRowUpdating = new object(); 
 
@@ -24,52 +34,19 @@ namespace MaxDBDataProvider
 		{
 		}
 
-		public MaxDBCommand SelectCommand 
+		public MaxDBDataAdapter(MaxDBCommand selectCommand)
 		{
-			get { return m_selectCommand; }
-			set { m_selectCommand = value; }
+			m_selectCommand = selectCommand;
 		}
 
-		IDbCommand IDbDataAdapter.SelectCommand 
+		public MaxDBDataAdapter(string selectCmdText, MaxDBConnection connection) 
 		{
-			get { return m_selectCommand; }
-			set { m_selectCommand = (MaxDBCommand)value; }
+			m_selectCommand = new MaxDBCommand(selectCmdText, connection);
 		}
 
-		public MaxDBCommand InsertCommand 
+		public MaxDBDataAdapter(string selectCmdText, string selectConnString) 
 		{
-			get { return m_insertCommand; }
-			set { m_insertCommand = value; }
-		}
-
-		IDbCommand IDbDataAdapter.InsertCommand 
-		{
-			get { return m_insertCommand; }
-			set { m_insertCommand = (MaxDBCommand)value; }
-		}
-
-		public MaxDBCommand UpdateCommand 
-		{
-			get { return m_updateCommand; }
-			set { m_updateCommand = value; }
-		}
-
-		IDbCommand IDbDataAdapter.UpdateCommand 
-		{
-			get { return m_updateCommand; }
-			set { m_updateCommand = (MaxDBCommand)value; }
-		}
-
-		public MaxDBCommand DeleteCommand 
-		{
-			get { return m_deleteCommand; }
-			set { m_deleteCommand = value; }
-		}
-
-		IDbCommand IDbDataAdapter.DeleteCommand 
-		{
-			get { return m_deleteCommand; }
-			set { m_deleteCommand = (MaxDBCommand)value; }
+			m_selectCommand = new MaxDBCommand(selectCmdText, new MaxDBConnection(selectConnString));
 		}
 
 		/*
@@ -89,31 +66,139 @@ namespace MaxDBDataProvider
 		{
 			MaxDBRowUpdatingEventHandler handler = (MaxDBRowUpdatingEventHandler) Events[EventRowUpdating];
 			if ((null != handler) && (value is MaxDBRowUpdatingEventArgs)) 
-			{
 				handler(this, (MaxDBRowUpdatingEventArgs) value);
-			}
 		}
 
 		override protected void OnRowUpdated(RowUpdatedEventArgs value)
 		{
 			MaxDBRowUpdatedEventHandler handler = (MaxDBRowUpdatedEventHandler) Events[EventRowUpdated];
 			if ((null != handler) && (value is MaxDBRowUpdatedEventArgs)) 
-			{
 				handler(this, (MaxDBRowUpdatedEventArgs) value);
-			}
 		}
 
 		public event MaxDBRowUpdatingEventHandler RowUpdating
 		{
-			add { Events.AddHandler(EventRowUpdating, value); }
-			remove { Events.RemoveHandler(EventRowUpdating, value); }
+			add 
+			{ 
+				Events.AddHandler(EventRowUpdating, value); 
+			}
+			remove 
+			{ 
+				Events.RemoveHandler(EventRowUpdating, value); 
+			}
 		}
 
 		public event MaxDBRowUpdatedEventHandler RowUpdated
 		{
-			add { Events.AddHandler(EventRowUpdated, value); }
-			remove { Events.RemoveHandler(EventRowUpdated, value); }
+			add 
+			{ 
+				Events.AddHandler(EventRowUpdated, value); 
+			}
+			remove 
+			{ 
+				Events.RemoveHandler(EventRowUpdated, value); 
+			}
 		}
+
+		#region IDbDataAdapter Members
+
+		public MaxDBCommand UpdateCommand 
+		{
+			get 
+			{ 
+				return m_updateCommand; 
+			}
+			set 
+			{ 
+				m_updateCommand = value; 
+			}
+		}
+
+		IDbCommand IDbDataAdapter.UpdateCommand
+		{
+			get 
+			{ 
+				return UpdateCommand; 
+			}
+			set 
+			{ 
+				UpdateCommand = (MaxDBCommand)value; 
+			}
+		}
+
+		public MaxDBCommand SelectCommand 
+		{
+			get 
+			{ 
+				return m_selectCommand; 
+			}
+			set 
+			{ 
+				m_selectCommand = value; 
+			}
+		}
+
+		IDbCommand IDbDataAdapter.SelectCommand
+		{
+			get
+			{
+				return SelectCommand;
+			}
+			set
+			{
+				SelectCommand = (MaxDBCommand)value; 
+			}
+		}
+
+		public MaxDBCommand DeleteCommand 
+		{
+			get 
+			{ 
+				return m_deleteCommand; 
+			}
+			set 
+			{ 
+				m_deleteCommand = value; 
+			}
+		}
+
+		IDbCommand IDbDataAdapter.DeleteCommand
+		{
+			get 
+			{ 
+				return DeleteCommand; 
+			}
+			set 
+			{ 
+				DeleteCommand = (MaxDBCommand)value; 
+			}
+		}
+
+		public MaxDBCommand InsertCommand 
+		{
+			get 
+			{ 
+				return m_insertCommand; 
+			}
+			set 
+			{ 
+				m_insertCommand = value; 
+			}
+		}
+
+		IDbCommand IDbDataAdapter.InsertCommand
+		{
+			get 
+			{ 
+				return InsertCommand; 
+			}
+			set 
+			{ 
+				InsertCommand = (MaxDBCommand)value; 
+			}
+		}
+
+		#endregion
 	}
 
 	public delegate void MaxDBRowUpdatingEventHandler(object sender, MaxDBRowUpdatingEventArgs e);
@@ -129,8 +214,14 @@ namespace MaxDBDataProvider
 		// Hide the inherited implementation of the command property.
 		new public MaxDBCommand Command
 		{
-			get  { return (MaxDBCommand)base.Command; }
-			set  { base.Command = value; }
+			get  
+			{ 
+				return (MaxDBCommand)base.Command; 
+			}
+			set  
+			{ 
+				base.Command = value; 
+			}
 		}
 	}
 
@@ -144,7 +235,10 @@ namespace MaxDBDataProvider
 		// Hide the inherited implementation of the command property.
 		new public MaxDBCommand Command
 		{
-			get  { return (MaxDBCommand)base.Command; }
+			get  
+			{ 
+				return (MaxDBCommand)base.Command; 
+			}
 		}
 	}
 }

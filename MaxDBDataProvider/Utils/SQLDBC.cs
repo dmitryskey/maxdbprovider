@@ -1,3 +1,19 @@
+//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//
+//	This program is free software; you can redistribute it and/or
+//	modify it under the terms of the GNU General Public License
+//	as published by the Free Software Foundation; either version 2
+//	of the License, or (at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program; if not, write to the Free Software
+//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
 using System;
 using System.Runtime.InteropServices;
 
@@ -202,6 +218,28 @@ namespace MaxDBDataProvider.Utils
 
 			return ts_val;
 		}
+
+		public static DateTime GetDateTime(ODBCDATE dt_val)
+		{
+			return new DateTime(dt_val.year, dt_val.month, dt_val.day);
+		}
+
+		public static DateTime GetDateTime(ODBCTIME tm_val)
+		{
+			return new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, 
+				tm_val.hour, tm_val.minute, tm_val.second);
+		}
+
+		public static DateTime GetDateTime(ODBCTIMESTAMP ts_val)
+		{
+			return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second).AddTicks(
+				(ts_val.fraction / 1000) * (TimeSpan.TicksPerMillisecond / 1000));
+		}
+
+		public static TimeSpan GetTimeSpan(ODBCTIME tm_val)
+		{
+			return new TimeSpan(tm_val.hour, tm_val.minute, tm_val.second);
+		}
 	}
 
 	#endregion
@@ -330,6 +368,9 @@ namespace MaxDBDataProvider.Utils
 
 		[DllImport("libSQLDBC_C")]
 		public extern static SQLDBC_Retcode SQLDBC_Statement_executeASCII(IntPtr stmt, string query);
+
+		[DllImport("libSQLDBC_C")]
+		public extern static SQLDBC_BOOL SQLDBC_Statement_isQuery(IntPtr stmt);
 
 		[DllImport("libSQLDBC_C")]
 		public extern static IntPtr SQLDBC_Statement_getResultSet(IntPtr stmt);
