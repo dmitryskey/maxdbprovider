@@ -1,10 +1,26 @@
+//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//
+//	This program is free software; you can redistribute it and/or
+//	modify it under the terms of the GNU General Public License
+//	as published by the Free Software Foundation; either version 2
+//	of the License, or (at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program; if not, write to the Free Software
+//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
 using System;
 using System.Data;
 using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider
 {
-	public class MaxDBParameter : IDataParameter, ICloneable
+	public class MaxDBParameter : ICloneable, IDataParameter
 	{
 		internal MaxDBType m_dbType = MaxDBType.VarCharA;
 		internal ParameterDirection m_direction = ParameterDirection.Input;
@@ -53,7 +69,97 @@ namespace MaxDBDataProvider
 			Value = val;
 		}
 
-		public DbType DbType 
+		public int Size
+		{
+			get
+			{
+				return m_size;
+			}
+			set
+			{
+				m_size = value;
+			}
+		}
+
+		private MaxDBType _inferType(TypeCode type)
+		{
+			switch (type)
+			{
+				case TypeCode.Empty:
+				case TypeCode.Object:
+				case TypeCode.DBNull:
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALID_DATATYPE));
+
+				case TypeCode.Char:
+					return MaxDBType.CharB;
+
+				case TypeCode.SByte:
+					return MaxDBType.CharA;
+
+				case TypeCode.UInt16:
+				case TypeCode.UInt32:
+				case TypeCode.UInt64:
+					return MaxDBType.Fixed;
+
+				case TypeCode.Boolean:
+					return MaxDBType.Boolean;
+
+				case TypeCode.Byte:
+					return MaxDBType.CharB;
+
+				case TypeCode.Int16:
+					return MaxDBType.SmallInt;
+
+				case TypeCode.Int32:
+					return MaxDBType.Integer;
+
+				case TypeCode.Int64:
+					return MaxDBType.Fixed;
+
+				case TypeCode.Single:
+					return MaxDBType.Float;
+
+				case TypeCode.Double:
+					return MaxDBType.Float;
+
+				case TypeCode.Decimal:
+					return MaxDBType.Float;
+
+				case TypeCode.DateTime:
+					return MaxDBType.TimeStamp;
+
+				case TypeCode.String:
+					return MaxDBType.StrUni;
+
+				default:
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_UNKNOWN_DATATYPE));
+			}
+		}
+
+		#region ICloneable Members
+
+		public object Clone()
+		{
+			return new MaxDBParameter(m_sParamName, m_dbType, m_size, m_direction, m_fNullable, 0, 0, m_sSourceColumn, m_sourceVersion, m_value);
+		}
+
+		#endregion
+
+		#region IDataParameter Members
+
+		public ParameterDirection Direction
+		{
+			get 
+			{ 
+				return m_direction; 
+			}
+			set 
+			{ 
+				m_direction = value; 
+			}
+		}
+
+		public DbType DbType
 		{
 			get  
 			{ 
@@ -157,63 +263,7 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		public ParameterDirection Direction 
-		{
-			get 
-			{ 
-				return m_direction; 
-			}
-			set 
-			{ 
-				m_direction = value; 
-			}
-		}
-
-		public bool IsNullable 
-		{
-			get 
-			{ 
-				return m_fNullable; 
-			}
-		}
-
-		public string ParameterName 
-		{
-			get 
-			{ 
-				return m_sParamName; 
-			}
-			set 
-			{ 
-				m_sParamName = value; 
-			}
-		}
-
-		public string SourceColumn 
-		{
-			get 
-			{ 
-				return m_sSourceColumn; 
-			}
-			set 
-			{ 
-				m_sSourceColumn = value; 
-			}
-		}
-
-		public DataRowVersion SourceVersion 
-		{
-			get 
-			{ 
-				return m_sourceVersion; 
-			}
-			set 
-			{ 
-				m_sourceVersion = value; 
-			}
-		}
-
-		public object Value 
+		public object Value
 		{
 			get
 			{
@@ -223,7 +273,7 @@ namespace MaxDBDataProvider
 			{
 				m_value = value;
 
-				if (value == null)
+				if (value == null || value == DBNull.Value)
 					m_InputValue = DBNull.Value;
 				else
 				{
@@ -231,12 +281,6 @@ namespace MaxDBDataProvider
 					{
 						case MaxDBType.Boolean:
 							m_InputValue = bool.Parse(value.ToString());
-							break;
-
-						case MaxDBType.Date:
-						case MaxDBType.Time:
-						case MaxDBType.TimeStamp:
-							m_InputValue = (DateTime)value;
 							break;
 
 						case MaxDBType.Fixed:
@@ -263,78 +307,48 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		public int Size
+		public bool IsNullable
 		{
-			get
-			{
-				return m_size;
-			}
-			set
-			{
-				m_size = value;
+			get 
+			{ 
+				return m_fNullable; 
 			}
 		}
 
-		private MaxDBType _inferType(TypeCode type)
+		public DataRowVersion SourceVersion
 		{
-			switch (type)
-			{
-				case TypeCode.Empty:
-				case TypeCode.Object:
-				case TypeCode.DBNull:
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALID_DATATYPE));
-
-				case TypeCode.Char:
-					return MaxDBType.CharB;
-
-				case TypeCode.SByte:
-					return MaxDBType.CharA;
-
-				case TypeCode.UInt16:
-				case TypeCode.UInt32:
-				case TypeCode.UInt64:
-					return MaxDBType.Fixed;
-
-				case TypeCode.Boolean:
-					return MaxDBType.Boolean;
-
-				case TypeCode.Byte:
-					return MaxDBType.CharB;
-
-				case TypeCode.Int16:
-					return MaxDBType.SmallInt;
-
-				case TypeCode.Int32:
-					return MaxDBType.Integer;
-
-				case TypeCode.Int64:
-					return MaxDBType.Fixed;
-
-				case TypeCode.Single:
-					return MaxDBType.Float;
-
-				case TypeCode.Double:
-					return MaxDBType.Float;
-
-				case TypeCode.Decimal:
-					return MaxDBType.Float;
-
-				case TypeCode.DateTime:
-					return MaxDBType.TimeStamp;
-
-				case TypeCode.String:
-					return MaxDBType.StrUni;
-
-				default:
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_UNKNOWN_DATATYPE));
+			get 
+			{ 
+				return m_sourceVersion; 
+			}
+			set 
+			{ 
+				m_sourceVersion = value; 
 			}
 		}
 
-		#region ICloneable Members
-
-		public object Clone()
+		public string ParameterName
 		{
-			return new MaxDBParameter(m_sParamName, m_dbType, m_size, m_direction, m_fNullable, 0, 0, m_sSourceColumn, m_sourceVersion, m_value);
+			get 
+			{ 
+				return m_sParamName; 
+			}
+			set 
+			{ 
+				m_sParamName = value; 
+			}
+		}
+
+		public string SourceColumn
+		{
+			get 
+			{ 
+				return m_sSourceColumn; 
+			}
+			set 
+			{ 
+				m_sSourceColumn = value; 
+			}
 		}
 
 		#endregion

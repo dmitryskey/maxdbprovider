@@ -166,16 +166,17 @@ namespace MaxDBConsole.UnitTesting
 		[Test]
 		public void TestInsertNullParameter()
 		{
-			ClearTestTable();
-			MaxDBCommand cmd = new MaxDBCommand("INSERT INTO test VALUES(1, :str)", m_conn);
-			cmd.Parameters.Add(":str", MaxDBType.VarCharA);
-			cmd.Parameters[0].Value = null;
-			cmd.ExecuteNonQuery();
-
-			cmd.CommandText = "SELECT * FROM test";
 			MaxDBDataReader reader = null;
 			try 
 			{
+				ClearTestTable();
+				MaxDBCommand cmd = new MaxDBCommand("INSERT INTO test VALUES(1, :str)", m_conn);
+				cmd.Parameters.Add(":str", MaxDBType.VarCharA);
+				cmd.Parameters[0].Value = null;
+				cmd.ExecuteNonQuery();
+
+				cmd.CommandText = "SELECT * FROM test";
+
 				reader = cmd.ExecuteReader();
 				Assert.IsTrue(reader.Read());
 				Assert.AreEqual(DBNull.Value, reader[1]);
@@ -193,14 +194,14 @@ namespace MaxDBConsole.UnitTesting
 		[Test]
 		public void TestInsertUsingReader()
 		{
-			ClearTestTable();
-			MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES(1, 'Test')", m_conn);
-			cmd.ExecuteNonQuery();
-
-			cmd.CommandText = "SELECT * FROM Test";
 			MaxDBDataReader reader = null;
 			try 
 			{
+				ClearTestTable();
+				MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES(1, 'Test')", m_conn);
+				cmd.ExecuteNonQuery();
+
+				cmd.CommandText = "SELECT * FROM Test";
 				reader = cmd.ExecuteReader();
 				Assert.IsTrue(reader.Read());
 				Assert.IsFalse(reader.Read());
@@ -217,17 +218,61 @@ namespace MaxDBConsole.UnitTesting
 		}
 
 		[Test]
-		public void TestCloneCommand() 
+		public void TestTransaction()
 		{
-			MaxDBTransaction txn = m_conn.BeginTransaction();
-			MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test WHERE id = :id", m_conn, txn);
-			cmd.Parameters.Add(":test", 1);
+			MaxDBTransaction trans = null;
+			try
+			{
+				ClearTestTable();
+				m_conn.AutoCommit = false;
 
-			IDbCommand cmd2 = ((ICloneable)cmd).Clone() as IDbCommand;
-			cmd2.ToString();
-			txn.Rollback();
+				MaxDBCommand cnt_cmd = new MaxDBCommand("SELECT count(*) FROM Test", m_conn);
+
+				trans = m_conn.BeginTransaction();
+				MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES(1, 'Test1')", m_conn, trans);
+				cmd.ExecuteNonQuery();
+				trans.Commit();
+
+				Assert.AreEqual(1, cnt_cmd.ExecuteScalar());
+
+				trans = m_conn.BeginTransaction();
+				cmd = new MaxDBCommand("INSERT INTO Test VALUES(2, 'Test2')", m_conn, trans);
+				cmd.ExecuteNonQuery();
+				trans.Rollback();
+
+				Assert.AreEqual(1, cnt_cmd.ExecuteScalar());
+			}
+			catch (Exception ex)
+			{
+				if (trans != null) trans.Rollback();
+				Assert.Fail(ex.Message);
+			}
+			finally
+			{
+				m_conn.AutoCommit = true;
+			}
 		}
 
+		[Test]
+		public void TestCloneCommand() 
+		{
+			try
+			{
+				MaxDBTransaction txn = m_conn.BeginTransaction();
+				MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test WHERE id = :id", m_conn, txn);
+				cmd.Parameters.Add(":test", 1);
+
+				IDbCommand cmd2 = ((ICloneable)cmd).Clone() as IDbCommand;
+				cmd2.ToString();
+				txn.Rollback();
+			}
+			catch (Exception ex)
+			{
+				Assert.Fail(ex.Message);
+			}
+		}
+
+		/*
 		private MaxDBCommand m_cmd;
 
 		public void CancelQuery() 
@@ -237,7 +282,7 @@ namespace MaxDBConsole.UnitTesting
 			m_cmd.Cancel();
 		}
 
-		//[Test]
+		[Test]
 		public void TestCancel() 
 		{
 			m_cmd = new MaxDBCommand("CALL ForEver(5000)", m_conn);
@@ -255,6 +300,7 @@ namespace MaxDBConsole.UnitTesting
 			{
 			}
 		}
+		*/
 
 		private void ClearTestTable()
 		{

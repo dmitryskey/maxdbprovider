@@ -1,3 +1,20 @@
+//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//	Copyright (C) 2002-2003 SAP AG
+//
+//	This program is free software; you can redistribute it and/or
+//	modify it under the terms of the GNU General Public License
+//	as published by the Free Software Foundation; either version 2
+//	of the License, or (at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program; if not, write to the Free Software
+//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
 using System;
 using System.Data;
 using System.Text;
@@ -43,7 +60,7 @@ namespace MaxDBDataProvider
 		public static readonly string[] Value = {"NULL", "SESSION", "INTERNAL", "ANSI", "DB2", "ORACLE", "SAPR3"};
 	}
 
-	public class MaxDBConnection : IDbConnection
+	public class MaxDBConnection : IDbConnection, IDisposable
 	{
 		private string m_sConnString;
 
@@ -203,64 +220,11 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		/****
-		 * IMPLEMENT THE REQUIRED PROPERTIES.
-		 ****/
-		public string ConnectionString
-		{
-			get
-			{
-				// Always return exactly what the user set.
-				// Security-sensitive information may be removed.
-				return m_sConnString;
-			}
-			set
-			{
-				m_sConnString = value;
-				ParseConnectionString(value);
-			}
-		}
-
-		public int ConnectionTimeout
-		{
-			get
-			{
-				// Returns the connection time-out value set in the connection
-				// string. Zero indicates an indefinite time-out period.
-				return m_timeout;
-			}
-		}
-
-		public string Database
-		{
-			get
-			{
-				// Returns an initial database as set in the connection string.
-				// An empty string indicates not set - do not return a null reference.
-				return m_ConnArgs.dbname;
-			}
-		}
-
 		public Encoding DatabaseEncoding
 		{
 			get
 			{
 				return m_enc;
-			}
-		}
-
-		public ConnectionState State
-		{
-			get 
-			{
-#if SAFE
-				return m_sessionID >= 0 ? ConnectionState.Open : ConnectionState.Closed;
-#else
-				if (m_connHandler != IntPtr.Zero && SQLDBC.SQLDBC_Connection_isConnected(m_connHandler) == SQLDBC_BOOL.SQLDBC_TRUE)
-					return ConnectionState.Open;
-				else
-					return ConnectionState.Closed;
-#endif
 			}
 		}
 
@@ -313,32 +277,6 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		/****
-		 * IMPLEMENT THE REQUIRED METHODS.
-		 ****/
-
-		IDbTransaction IDbConnection.BeginTransaction()
-		{
-			return new MaxDBTransaction(this);
-		}
-
-		public MaxDBTransaction BeginTransaction()
-		{
-			return new MaxDBTransaction(this);
-		}
-
-		public MaxDBTransaction BeginTransaction(IsolationLevel level)
-		{
-			SetIsolationLevel(level);
-			return new MaxDBTransaction(this);
-		}
-
-		IDbTransaction IDbConnection.BeginTransaction(IsolationLevel level)
-		{
-			SetIsolationLevel(level);
-			return new MaxDBTransaction(this);
-		}
-
 		private int MapIsolationLevel(IsolationLevel level)
 		{
 			switch (level)
@@ -386,112 +324,10 @@ namespace MaxDBDataProvider
 #endif
 		}
 
-		public void ChangeDatabase(string dbName)
-		{
-			/*
-			 * Change the database setting on the back-end. Note that it is a method
-			 * and not a property because the operation requires an expensive
-			 * round trip.
-			 */
-			m_ConnArgs.dbname = dbName;
-		}
-
-		public void Open()
-		{
-			/*
-			 * Open the database connection and set the ConnectionState
-			 * property. If the underlying connection to the server is 
-			 * expensive to obtain, the implementation should provide
-			 * implicit pooling of that connection.
-			 * 
-			 * If the provider also supports automatic enlistment in 
-			 * distributed transactions, it should enlist during Open().
-			 */
-#if SAFE
-			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout, false, true));
-			DoConnect();
-#else
-			OpenConnection();
-			m_enc = SQLDBC.SQLDBC_Connection_isUnicodeDatabase(m_connHandler) == 1 ? Encoding.Unicode : Encoding.ASCII;
-			m_kernelVersion = SQLDBC.SQLDBC_Connection_getKernelVersion(m_connHandler);
-#endif
-		}
-
-		[MethodImpl(MethodImplOptions.Synchronized)]
-		public void Close()
-		{
-			/*
-			 * Close the database connection and set the ConnectionState
-			 * property. If the underlying connection to the server is
-			 * being pooled, Close() will release it back to the pool.
-			 */
-			if (State == ConnectionState.Open)
-			{
-#if SAFE
-				m_sessionID = -1;
-				if (m_comm != null)
-				{
-					try 
-					{
-						if (m_garbageParseids != null)
-							m_garbageParseids.emptyCan();
-						ExecSQLString ("ROLLBACK WORK RELEASE", GCMode.GC_NONE);
-					}
-					catch(Exception) 
-					{
-						// ignore
-					}
-					finally
-					{
-						m_comm.Close();
-						m_comm = null;
-					}
-				}
-#else
-				SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(m_connPropHandler);
-				m_connPropHandler = IntPtr.Zero;
-
-				SQLDBC.SQLDBC_Connection_close(m_connHandler);
-#endif
-			}
-		}
-
-		public MaxDBCommand CreateCommand()
-		{
-			// Return a new instance of a command object.
-			return new MaxDBCommand();
-		}
-
-		IDbCommand IDbConnection.CreateCommand()
-		{
-			// Return a new instance of a command object.
-			return new MaxDBCommand();
-		}
-
 		internal void AssertOpen()
 		{
 			if (State == ConnectionState.Closed) 
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_OBJECTISCLOSED));
-		}
-
-		public void Dispose()
-		{
-			((IDisposable)this).Dispose();
-		}
-
-		void IDisposable.Dispose() 
-		{
-			if (State == ConnectionState.Open)
-				Close();
-
-#if !SAFE
-			SQLDBC.SQLDBC_Environment_releaseConnection(m_envHandler, m_connHandler);
-			m_connHandler = IntPtr.Zero;
-			SQLDBC.SQLDBC_Environment_delete_SQLDBC_Environment(m_envHandler);
-			m_envHandler = IntPtr.Zero;
-#endif
-
-			System.GC.SuppressFinalize(this);
 		}
 
 #if SAFE
@@ -879,7 +715,230 @@ namespace MaxDBDataProvider
 
 		#endregion
 #endif
-		
+
+		#region IDbConnection Members
+
+		public MaxDBTransaction BeginTransaction(IsolationLevel il)
+		{
+			SetIsolationLevel(il);
+			return new MaxDBTransaction(this);
+		}
+
+		IDbTransaction IDbConnection.BeginTransaction(IsolationLevel il)
+		{
+			return BeginTransaction(il);
+		}
+
+		public MaxDBTransaction BeginTransaction()
+		{
+			return new MaxDBTransaction(this);
+		}
+
+		IDbTransaction IDbConnection.BeginTransaction()
+		{
+			return BeginTransaction();
+		}
+
+		public void ChangeDatabase(string dbName)
+		{
+			/*
+			 * Change the database setting on the back-end. Note that it is a method
+			 * and not a property because the operation requires an expensive round trip.
+			 */
+			m_ConnArgs.dbname = dbName;
+		}
+
+		void IDbConnection.ChangeDatabase(string dbName)
+		{
+			ChangeDatabase(dbName);
+		}
+
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		public void Close()
+		{
+			/*
+			 * Close the database connection and set the ConnectionState
+			 * property. If the underlying connection to the server is
+			 * being pooled, Close() will release it back to the pool.
+			 */
+			if (State == ConnectionState.Open)
+			{
+#if SAFE
+				m_sessionID = -1;
+				if (m_comm != null)
+				{
+					try 
+					{
+						if (m_garbageParseids != null)
+							m_garbageParseids.emptyCan();
+						ExecSQLString ("ROLLBACK WORK RELEASE", GCMode.GC_NONE);
+					}
+					catch(Exception) 
+					{
+						// ignore
+					}
+					finally
+					{
+						m_comm.Close();
+						m_comm = null;
+					}
+				}
+#else
+				SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(m_connPropHandler);
+				m_connPropHandler = IntPtr.Zero;
+
+				SQLDBC.SQLDBC_Connection_close(m_connHandler);
+#endif
+			}
+		}
+
+		void IDbConnection.Close()
+		{
+			Close();
+		}
+
+		public string ConnectionString
+		{
+			get
+			{
+				// Always return exactly what the user set. Security-sensitive information may be removed.
+				return m_sConnString;
+			}
+			set
+			{
+				m_sConnString = value;
+				ParseConnectionString(value);
+			}
+		}
+
+		string IDbConnection.ConnectionString
+		{
+			get
+			{
+				return ConnectionString;
+			}
+			set
+			{
+				ConnectionString = value;
+			}
+		}
+
+		public int ConnectionTimeout
+		{
+			get
+			{
+				// Returns the connection time-out value set in the connection
+				// string. Zero indicates an indefinite time-out period.
+				return m_timeout;
+			}
+		}
+
+		int IDbConnection.ConnectionTimeout
+		{
+			get
+			{
+				return m_timeout;
+			}
+		}
+
+		public MaxDBCommand CreateCommand()
+		{
+			// Return a new instance of a command object.
+			return new MaxDBCommand();
+		}
+
+		IDbCommand IDbConnection.CreateCommand()
+		{
+			return CreateCommand();
+		}
+
+		public string Database
+		{
+			get
+			{
+				// Returns an initial database as set in the connection string.
+				// An empty string indicates not set - do not return a null reference.
+				return m_ConnArgs.dbname;
+			}
+		}
+
+		string IDbConnection.Database
+		{
+			get
+			{
+				return Database;
+			}
+		}
+
+		public void Open()
+		{
+			/*
+			 * Open the database connection and set the ConnectionState
+			 * property. If the underlying connection to the server is 
+			 * expensive to obtain, the implementation should provide
+			 * implicit pooling of that connection.
+			 * 
+			 * If the provider also supports automatic enlistment in 
+			 * distributed transactions, it should enlist during Open().
+			 */
+#if SAFE
+			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout, false, true));
+			DoConnect();
+#else
+			OpenConnection();
+			m_enc = SQLDBC.SQLDBC_Connection_isUnicodeDatabase(m_connHandler) == 1 ? Encoding.Unicode : Encoding.ASCII;
+			m_kernelVersion = SQLDBC.SQLDBC_Connection_getKernelVersion(m_connHandler);
+#endif
+		}
+
+		void IDbConnection.Open()
+		{
+			Open();
+		}
+
+		public ConnectionState State
+		{
+			get 
+			{
+#if SAFE
+				return m_sessionID >= 0 ? ConnectionState.Open : ConnectionState.Closed;
+#else
+				if (m_connHandler != IntPtr.Zero && SQLDBC.SQLDBC_Connection_isConnected(m_connHandler) == SQLDBC_BOOL.SQLDBC_TRUE)
+					return ConnectionState.Open;
+				else
+					return ConnectionState.Closed;
+#endif
+			}
+		}
+
+		ConnectionState IDbConnection.State
+		{
+			get
+			{
+				return State;
+			}
+		}
+
+		#endregion
+
+		#region IDisposable Members
+
+		public void Dispose()
+		{
+			if (State == ConnectionState.Open)
+				Close();
+
+#if !SAFE
+			SQLDBC.SQLDBC_Environment_releaseConnection(m_envHandler, m_connHandler);
+			m_connHandler = IntPtr.Zero;
+			SQLDBC.SQLDBC_Environment_delete_SQLDBC_Environment(m_envHandler);
+			m_envHandler = IntPtr.Zero;
+#endif
+
+			GC.SuppressFinalize(this);
+		}
+
+		#endregion
 	}
 }
 

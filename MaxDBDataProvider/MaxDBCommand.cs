@@ -1,3 +1,20 @@
+//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//	Copyright (C) 2002-2003 SAP AG
+//
+//	This program is free software; you can redistribute it and/or
+//	modify it under the terms of the GNU General Public License
+//	as published by the Free Software Foundation; either version 2
+//	of the License, or (at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program; if not, write to the Free Software
+//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
 using System;
 using System.Data;
 using System.Text;
@@ -11,7 +28,7 @@ namespace MaxDBDataProvider
 	/// <summary>
 	/// Represents a SQL statement to execute against a MaxDB database. This class cannot be inherited.
 	/// </summary>
-	sealed public class MaxDBCommand : IDbCommand, ICloneable
+	sealed public class MaxDBCommand : IDbCommand, ICloneable, IDisposable
 #if SAFE 
 		, ISQLParamController 
 #endif
@@ -22,12 +39,12 @@ namespace MaxDBDataProvider
 		UpdateRowSource m_updatedRowSource = UpdateRowSource.None;
 		MaxDBParameterCollection m_parameters = new MaxDBParameterCollection();
 		CommandType m_sCmdType = CommandType.Text;
+		internal int m_rowsAffected = -1;
 
 #if SAFE
 		#region "Native implementation parameters"
 
 		private ArrayList m_inputProcedureLongs;
-		private int m_rowsAffected = -1;
 		private bool m_setWithInfo = false;
 		private bool m_hasRowCount;
 		private static int m_maxParseAgainCnt = 10;
@@ -80,313 +97,6 @@ namespace MaxDBDataProvider
 			if (m_connection != null)
 				m_stmt = SQLDBC.SQLDBC_Connection_createPreparedStatement(m_connection.m_connHandler);
 #endif
-		}
-
-		/****
-		 * IMPLEMENT THE REQUIRED PROPERTIES.
-		 ****/
-		public string CommandText
-		{
-			get 
-			{ 
-				return m_sCmdText;  
-			}
-			set  
-			{ 
-				m_sCmdText = value;  
-			}
-		}
-
-		public int CommandTimeout
-		{
-			get  
-			{ 
-				return 0; 
-			}
-			set  
-			{ 
-				if (value != 0) throw new NotSupportedException(); 
-			}
-		}
-
-		public CommandType CommandType
-		{
-			get 
-			{ 
-				return m_sCmdType; 
-			}
-			set 
-			{ 
-				m_sCmdType = value; 
-			}
-		}
-
-		public IDbConnection Connection
-		{
-			/*
-			 * The user should be able to set or change the connection at any time.
-			 */
-			get 
-			{ 
-				return m_connection;  
-			}
-			set
-			{
-				/*
-				 * The connection is associated with the transaction
-				 * so set the transaction object to return a null reference if the connection 
-				 * is reset.
-				 */
-				if (m_connection != value)
-					this.Transaction = null;
-
-				m_connection = (MaxDBConnection)value;
-			}
-		}
-
-		public MaxDBParameterCollection Parameters
-		{
-			get  
-			{ 
-				return m_parameters; 
-			}
-		}
-
-		IDataParameterCollection IDbCommand.Parameters
-		{
-			get  
-			{ 
-				return m_parameters; 
-			}
-		}
-
-		public IDbTransaction Transaction
-		{
-			/*
-			 * Set the transaction. Consider additional steps to ensure that the transaction
-			 * is compatible with the connection, because the two are usually linked.
-			 */
-			get 
-			{ 
-				return m_txn; 
-			}
-			set 
-			{ 
-				m_txn = (MaxDBTransaction)value; 
-			}
-		}
-
-		public UpdateRowSource UpdatedRowSource
-		{
-			get 
-			{ 
-				return m_updatedRowSource;  
-			}
-			set 
-			{ 
-				m_updatedRowSource = value; 
-			}
-		}
-
-		/****
-		 * IMPLEMENT THE REQUIRED METHODS.
-		 ****/
-		public void Cancel()
-		{
-#if SAFE
-			AssertOpen ();
-			m_canceled = true;
-			m_connection.Cancel(this);
-#else
-			SQLDBC.SQLDBC_Connection_cancel(m_connection.m_connHandler);
-#endif
-		}
-
-		public IDbDataParameter CreateParameter()
-		{
-			return (IDbDataParameter)(new MaxDBParameter());
-		}
-
-		public int ExecuteNonQuery()
-		{
-			/*
-			 * ExecuteNonQuery is intended for commands that do
-			 * not return results, instead returning only the number
-			 * of records affected.
-			 */
-      
-			// Execute the command.
-
-#if SAFE
-			// There must be a valid and open connection.
-			AssertOpen();
-
-			m_parseInfo = DoParse(m_sCmdText, false);
-
-			if (m_parseInfo != null && m_parseInfo.m_isSelect) 
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SQLSTATEMENT_RESULTSET));
-			else 
-			{
-				Execute(CommandBehavior.Default);
-				if(m_hasRowCount) 
-					return m_rowsAffected;
-				else 
-					return 0;
-			}
-#else
-			SQLDBC_Retcode rc;
-
-			string sql = m_sCmdText;
-
-			if (m_sCmdType == CommandType.StoredProcedure && !sql.Trim().ToUpper().StartsWith("CALL"))
-				sql = "CALL " + sql;
-
-			if (m_sCmdType == CommandType.TableDirect)
-				throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_TABLEDIRECT_UNSUPPORTED));
-
-			try
-			{
-				if (m_connection.DatabaseEncoding is UnicodeEncoding)
-					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(m_stmt, m_connection.DatabaseEncoding.GetBytes(sql), 
-						SQLDBC_StringEncodingType.UCS2Swapped);
-				else
-					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(m_stmt, sql);
-			
-				if(rc != SQLDBC_Retcode.SQLDBC_OK) 
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
-						SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(m_stmt)));
-
-				BindAndExecute(m_stmt, m_parameters);
-			}
-			catch
-			{
-				throw;
-			}
-
-			return SQLDBC.SQLDBC_PreparedStatement_getRowsAffected(m_stmt);
-#endif
-		}
-
-		IDataReader IDbCommand.ExecuteReader()
-		{
-			return ExecuteReader(CommandBehavior.Default);
-		}
-
-		IDataReader IDbCommand.ExecuteReader(CommandBehavior behavior)
-		{
-			return ExecuteReader(behavior);
-		}
-
-		public MaxDBDataReader ExecuteReader()
-		{
-			return ExecuteReader(CommandBehavior.Default);
-		}
-
-		public MaxDBDataReader ExecuteReader(CommandBehavior behavior)
-		{
-			// Execute the command.
-
-#if SAFE
-			// There must be a valid and open connection.
-			AssertOpen();
-
-			m_parseInfo = DoParse(m_sCmdText, false);
-
-			Execute(behavior);
-
-			if (m_currentDataReader == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SQLCOMMAND_NORESULTSET));
-
-			m_currentDataReader.m_fCloseConn = ((behavior & CommandBehavior.CloseConnection) != 0);
-			m_currentDataReader.m_fSchemaOnly = ((behavior & CommandBehavior.SchemaOnly) != 0);
-			return m_currentDataReader;
-#else
-			SQLDBC_Retcode rc;
-
-			string sql = m_sCmdText;
-
-			if (m_sCmdType == CommandType.StoredProcedure && !sql.Trim().ToUpper().StartsWith("CALL"))
-				sql = "CALL " + sql;
-
-			if (m_sCmdType == CommandType.TableDirect)
-				throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_TABLEDIRECT_UNSUPPORTED));
-
-			try
-			{
-				if (m_connection.DatabaseEncoding is UnicodeEncoding)
-					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(m_stmt, m_connection.DatabaseEncoding.GetBytes(sql), 
-						SQLDBC_StringEncodingType.UCS2Swapped);
-				else
-					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(m_stmt, sql);
-			
-				if(rc != SQLDBC_Retcode.SQLDBC_OK) 
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
-						SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(m_stmt)));
-
-				if ((behavior & CommandBehavior.SingleRow) != 0)
-					SQLDBC.SQLDBC_Statement_setMaxRows(m_stmt, 1);
-				else
-					SQLDBC.SQLDBC_Statement_setMaxRows(m_stmt, 0);
-
-				BindAndExecute(m_stmt, m_parameters);
-
-				/*
-				* Check if the SQL command return a resultset and get a result set object.
-				*/  
-				IntPtr result = SQLDBC.SQLDBC_PreparedStatement_getResultSet(m_stmt);
-				if(result == IntPtr.Zero) 
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SQLCOMMAND_NORESULTSET) + " " 
-						+ SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(m_stmt)));
-
-				return new MaxDBDataReader(result, m_connection, this,
-					(behavior & CommandBehavior.CloseConnection) != 0,
-					(behavior & CommandBehavior.SchemaOnly) != 0
-					);				
-			}
-			catch
-			{
-				throw;
-			}
-#endif
-		}
-
-		public object ExecuteScalar()
-		{
-			IDataReader result = ExecuteReader(CommandBehavior.SingleResult);
-			if (result.FieldCount > 0 && result.Read())
-				return result.GetValue(0);
-			else
-				return null;
-		}
-
-		void IDbCommand.Prepare()
-		{
-			// The Prepare is a no-op since parameter preparing and query execution
-			// has to be in the single "fixed" block of code
-		}
-
-		public void Dispose()
-		{
-			((IDisposable)this).Dispose();
-		}
-
-		void IDisposable.Dispose() 
-		{
-#if SAFE
-			m_replyMem = null;
-			if (m_connection != null && (m_parseInfo != null && !m_parseInfo.IsCached)) 
-			{
-				m_connection.DropParseID(m_parseInfo.ParseID);
-				m_parseInfo.SetParseIDAndSession(null, -1);
-				m_connection.DropParseID(m_parseInfo.MassParseID);
-				m_parseInfo.MassParseID = null;
-				m_connection = null;
-			}
-#else
-			if (m_stmt != IntPtr.Zero)
-				SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.m_connHandler, m_stmt);
-#endif
-			System.GC.SuppressFinalize(this);
 		}
 
 #if SAFE
@@ -457,7 +167,7 @@ namespace MaxDBDataProvider
 				if (m_connection == null) 
 					throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INTERNAL_CONNECTIONNULL));
 				Reparse();
-				m_rowsAffected=0;
+				m_rowsAffected = 0;
 				return false;
 			}
 
@@ -519,10 +229,20 @@ namespace MaxDBDataProvider
 								m_inputArgs[i] = null;
 							break;
 						case MaxDBType.Date:
-						case MaxDBType.Time:
 						case MaxDBType.TimeStamp:
 							if (param.m_InputValue != DBNull.Value)
 								m_inputArgs[i] = FindColInfo(i).TransDateTimeForInput((DateTime)param.m_InputValue);
+							else
+								m_inputArgs[i] = null;
+							break;
+						case MaxDBType.Time:
+							if (param.m_InputValue != DBNull.Value)
+							{
+								if (param.m_InputValue is DateTime)
+									m_inputArgs[i] = FindColInfo(i).TransDateTimeForInput((DateTime)param.m_InputValue);
+								else
+									m_inputArgs[i] = FindColInfo(i).TransTimeSpanForInput((TimeSpan)param.m_InputValue);
+							}
 							else
 								m_inputArgs[i] = null;
 							break;
@@ -681,8 +401,10 @@ namespace MaxDBDataProvider
 								break;
 							case MaxDBType.Date:
 							case MaxDBType.Time:
-							case MaxDBType.TimeStamp:
 								param.m_value = FindColInfo(i).GetDateTime(m_replyMem);
+								break;
+							case MaxDBType.TimeStamp:
+								param.m_value = FindColInfo(i).GetTimeSpan(m_replyMem);
 								break;
 							case MaxDBType.Fixed: 
 							case MaxDBType.Float: 
@@ -1128,7 +850,7 @@ namespace MaxDBDataProvider
 				throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLINDEX_NOTFOUND, colIndex, this));
 			}
 		}
-
+		
 		MaxDBConnection ISQLParamController.Connection
 		{
 			get
@@ -1677,17 +1399,35 @@ namespace MaxDBDataProvider
 							{
 								if (param.m_InputValue != DBNull.Value)
 								{
-									DateTime tm = (DateTime)param.m_InputValue;
 									//ODBC time format
 									ODBCTIME tm_odbc = new ODBCTIME();
-									tm_odbc.hour = (ushort)(tm.Hour % 0x10000);
-									tm_odbc.minute = (ushort)(tm.Minute % 0x10000);
-									tm_odbc.second = (ushort)(tm.Second % 0x10000);
+
+									if (param.m_InputValue is DateTime)
+									{
+										DateTime tm = (DateTime)param.m_InputValue;
+									
+										tm_odbc.hour = (ushort)(tm.Hour % 0x10000);
+										tm_odbc.minute = (ushort)(tm.Minute % 0x10000);
+										tm_odbc.second = (ushort)(tm.Second % 0x10000);
+									}
+									else
+									{
+										TimeSpan ts = (TimeSpan)param.m_InputValue;
+									
+										tm_odbc.hour = (ushort)(ts.Hours % 0x10000);
+										tm_odbc.minute = (ushort)(ts.Minutes % 0x10000);
+										tm_odbc.second = (ushort)(ts.Seconds % 0x10000);
+									}
 							
 									paramArr.WriteBytes(ODBCConverter.GetBytes(tm_odbc), buffer_offset);
 
 									val_length = sizeof(ODBCTIME);
 									val_size[i - 1] = val_length;
+								}
+								else
+								{
+									val_length = 0;
+									val_size[i - 1] = SQLDBC.SQLDBC_NULL_DATA;
 								}
 							}
 							else
@@ -1715,11 +1455,17 @@ namespace MaxDBDataProvider
 									ts_odbc.hour = (ushort)(ts.Hour % 0x10000);
 									ts_odbc.minute = (ushort)(ts.Minute % 0x10000);
 									ts_odbc.second = (ushort)(ts.Second % 0x10000);
-									ts_odbc.fraction = (uint) (((ts.Ticks % TimeSpan.TicksPerSecond) / (TimeSpan.TicksPerMillisecond / 1000)) * 1000);
+									ts_odbc.fraction = (uint) (((ts.Ticks % TimeSpan.TicksPerSecond) 
+										/ (TimeSpan.TicksPerMillisecond / 1000)) * 1000);
 
 									paramArr.WriteBytes(ODBCConverter.GetBytes(ts_odbc), buffer_offset);
 									val_length = sizeof(ODBCTIMESTAMP);
 									val_size[i - 1] = val_length;
+								}
+								else
+								{
+									val_length = 0;
+									val_size[i - 1] = SQLDBC.SQLDBC_NULL_DATA;
 								}
 							}
 							else
@@ -1859,7 +1605,7 @@ namespace MaxDBDataProvider
 								{
 									//??? LONG ASCII parameter contains extra zeros
 									if (val_size[i - 1] != SQLDBC.SQLDBC_NULL_DATA)
-										param.m_value = paramArr.ReadASCII(buffer_offset, val_size[i - 1]).Replace("\0","");
+										param.m_value = paramArr.ReadASCII(buffer_offset, val_size[i - 1]).Replace("\0", string.Empty);
 									else
 										param.m_value = DBNull.Value;
 								}
@@ -1874,7 +1620,7 @@ namespace MaxDBDataProvider
 								{
 									//??? LONG ASCII parameter contains extra zeros
 									if (val_size[i - 1] != SQLDBC.SQLDBC_NULL_DATA)
-										param.m_value = paramArr.ReadUnicode(buffer_offset, val_size[i - 1]).Replace("\0","");
+										param.m_value = paramArr.ReadUnicode(buffer_offset, val_size[i - 1]).Replace("\0", string.Empty);
 									else
 										param.m_value = DBNull.Value;
 								}								
@@ -1901,10 +1647,8 @@ namespace MaxDBDataProvider
 								if (output_val)
 								{
 									if (val_size[i - 1] != SQLDBC.SQLDBC_NULL_DATA)
-									{
-										ODBCDATE dt_odbc = ODBCConverter.GetDate(paramArr.ReadBytes(buffer_offset, val_size[i - 1]));
-										param.m_value = new DateTime(dt_odbc.year, dt_odbc.month, dt_odbc.day);
-									}
+										param.m_value = ODBCConverter.GetDateTime(
+											ODBCConverter.GetDate(paramArr.ReadBytes(buffer_offset, val_size[i - 1])));
 									else
 										param.m_value = DBNull.Value;
 								}
@@ -1916,11 +1660,8 @@ namespace MaxDBDataProvider
 								if (output_val)
 								{
 									if (val_size[i - 1] != SQLDBC.SQLDBC_NULL_DATA)
-									{
-										ODBCTIME tm_odbc = ODBCConverter.GetTime(paramArr.ReadBytes(buffer_offset, val_size[i - 1]));
-										param.m_value = new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, 
-											tm_odbc.hour, tm_odbc.minute, tm_odbc.second);
-									}
+										param.m_value = ODBCConverter.GetTimeSpan(
+											ODBCConverter.GetTime(paramArr.ReadBytes(buffer_offset, val_size[i - 1])));
 									else
 										param.m_value = DBNull.Value;
 								}
@@ -1931,11 +1672,8 @@ namespace MaxDBDataProvider
 								if (output_val)
 								{
 									if (val_size[i - 1] != SQLDBC.SQLDBC_NULL_DATA)
-									{
-										ODBCTIMESTAMP ts_val = ODBCConverter.GetTimeStamp(paramArr.ReadBytes(buffer_offset, val_size[i - 1]));
-										param.m_value = new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second).AddTicks(
-											(ts_val.fraction / 1000) * (TimeSpan.TicksPerMillisecond / 1000));;
-									}
+										param.m_value = ODBCConverter.GetDateTime(
+											ODBCConverter.GetTimeStamp(paramArr.ReadBytes(buffer_offset, val_size[i - 1])));
 									else
 										param.m_value = DBNull.Value;
 								}
@@ -2031,6 +1769,362 @@ namespace MaxDBDataProvider
 			foreach (MaxDBParameter p in Parameters) 
 				clone.Parameters.Add((MaxDBParameter)(p as ICloneable).Clone());
 			return clone;
+		}
+
+		#endregion
+
+		#region IDbCommand Members
+
+		public void Cancel()
+		{
+#if SAFE
+			AssertOpen ();
+			m_canceled = true;
+			m_connection.Cancel(this);
+#else
+			SQLDBC.SQLDBC_Connection_cancel(m_connection.m_connHandler);
+#endif
+		}
+
+		public string CommandText
+		{
+			get 
+			{ 
+				return m_sCmdText;  
+			}
+			set  
+			{ 
+				m_sCmdText = value;  
+			}
+		}
+
+		public int CommandTimeout
+		{
+			get  
+			{ 
+				return 0; 
+			}
+			set  
+			{ 
+				if (value != 0) throw new NotSupportedException(); 
+			}
+		}
+
+		public CommandType CommandType
+		{
+			get 
+			{ 
+				return m_sCmdType; 
+			}
+			set 
+			{ 
+				m_sCmdType = value; 
+			}
+		}
+
+		public MaxDBConnection Connection
+		{
+			get 
+			{ 
+				return m_connection;  
+			}
+			set
+			{
+				if (m_connection != value)
+					Transaction = null;
+
+				m_connection = value;
+			}
+		}
+
+		IDbConnection IDbCommand.Connection
+		{
+			get
+			{
+				return Connection;
+			}
+			set
+			{
+				Connection = (MaxDBConnection)value;
+			}
+		}
+
+		public MaxDBParameter CreateParameter()
+		{
+			return new MaxDBParameter();
+		}
+
+		IDbDataParameter IDbCommand.CreateParameter()
+		{
+			return (IDbDataParameter)CreateParameter();
+		}
+
+		public int ExecuteNonQuery()
+		{
+			/*
+			 * ExecuteNonQuery is intended for commands that do
+			 * not return results, instead returning only the number
+			 * of records affected.
+			 */
+      
+			// Execute the command.
+
+#if SAFE
+			// There must be a valid and open connection.
+			AssertOpen();
+
+			m_parseInfo = DoParse(m_sCmdText, false);
+
+			if (m_parseInfo != null && m_parseInfo.m_isSelect) 
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SQLSTATEMENT_RESULTSET));
+			else 
+			{
+				Execute(CommandBehavior.Default);
+				if(m_hasRowCount) 
+					return m_rowsAffected;
+				else 
+					return 0;
+			}
+#else
+			SQLDBC_Retcode rc;
+
+			string sql = m_sCmdText;
+
+			if (m_sCmdType == CommandType.StoredProcedure && !sql.Trim().ToUpper().StartsWith("CALL"))
+				sql = "CALL " + sql;
+
+			if (m_sCmdType == CommandType.TableDirect)
+				throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_TABLEDIRECT_UNSUPPORTED));
+
+			try
+			{
+				if (m_connection.DatabaseEncoding is UnicodeEncoding)
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(m_stmt, m_connection.DatabaseEncoding.GetBytes(sql), 
+						SQLDBC_StringEncodingType.UCS2Swapped);
+				else
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(m_stmt, sql);
+			
+				if(rc != SQLDBC_Retcode.SQLDBC_OK) 
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
+						SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(m_stmt)));
+
+				BindAndExecute(m_stmt, m_parameters);
+			}
+			catch
+			{
+				throw;
+			}
+
+			return SQLDBC.SQLDBC_PreparedStatement_getRowsAffected(m_stmt);
+#endif
+		}
+
+		int IDbCommand.ExecuteNonQuery()
+		{
+			return ExecuteNonQuery();
+		}
+
+		public MaxDBDataReader ExecuteReader()
+		{
+			return ExecuteReader(CommandBehavior.Default);
+		}
+
+		IDataReader IDbCommand.ExecuteReader()
+		{
+			return ExecuteReader(CommandBehavior.Default);
+		}
+
+		public MaxDBDataReader ExecuteReader(CommandBehavior behavior)
+		{
+			// Execute the command.
+
+#if SAFE
+			// There must be a valid and open connection.
+			AssertOpen();
+
+			m_parseInfo = DoParse(m_sCmdText, false);
+
+			Execute(behavior);
+
+			if (m_parseInfo.m_isSelect)
+			{
+				if (m_currentDataReader == null)
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SQLCOMMAND_NORESULTSET));
+
+				m_currentDataReader.m_fCloseConn = ((behavior & CommandBehavior.CloseConnection) != 0);
+				m_currentDataReader.m_fSchemaOnly = ((behavior & CommandBehavior.SchemaOnly) != 0);
+				return m_currentDataReader;
+			}
+			else
+				return new MaxDBDataReader(this);
+#else
+			SQLDBC_Retcode rc;
+
+			string sql = m_sCmdText;
+
+			if (m_sCmdType == CommandType.StoredProcedure && !sql.Trim().ToUpper().StartsWith("CALL"))
+				sql = "CALL " + sql;
+
+			if (m_sCmdType == CommandType.TableDirect)
+				throw new NotSupportedException(MaxDBMessages.Extract(MaxDBMessages.ERROR_TABLEDIRECT_UNSUPPORTED));
+
+			try
+			{
+				if (m_connection.DatabaseEncoding is UnicodeEncoding)
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareNTS(m_stmt, m_connection.DatabaseEncoding.GetBytes(sql), 
+						SQLDBC_StringEncodingType.UCS2Swapped);
+				else
+					rc = SQLDBC.SQLDBC_PreparedStatement_prepareASCII(m_stmt, sql);
+			
+				if(rc != SQLDBC_Retcode.SQLDBC_OK) 
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
+						SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(m_stmt)));
+
+				if ((behavior & CommandBehavior.SingleRow) != 0 || (behavior & CommandBehavior.SchemaOnly) != 0)
+					SQLDBC.SQLDBC_Statement_setMaxRows(m_stmt, 1);
+				else
+					SQLDBC.SQLDBC_Statement_setMaxRows(m_stmt, 0);
+
+				BindAndExecute(m_stmt, m_parameters);
+
+				m_rowsAffected = SQLDBC.SQLDBC_PreparedStatement_getRowsAffected(m_stmt);
+
+				if (SQLDBC.SQLDBC_Statement_isQuery(m_stmt) == SQLDBC_BOOL.SQLDBC_TRUE)
+				{
+					IntPtr result = SQLDBC.SQLDBC_PreparedStatement_getResultSet(m_stmt);
+					if(result == IntPtr.Zero) 
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SQLCOMMAND_NORESULTSET) + " " 
+							+ SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(m_stmt)));
+
+					return new MaxDBDataReader(result, m_connection, this,
+						(behavior & CommandBehavior.CloseConnection) != 0,
+						(behavior & CommandBehavior.SchemaOnly) != 0
+						);
+				}
+				else
+					return new MaxDBDataReader(this);
+			}
+			catch
+			{
+				throw;
+			}
+#endif
+		}
+
+		IDataReader IDbCommand.ExecuteReader(CommandBehavior behavior)
+		{
+			return ExecuteReader(behavior);
+		}
+
+		public object ExecuteScalar()
+		{
+			IDataReader result = ExecuteReader(CommandBehavior.SingleResult);
+			if (result.FieldCount > 0 && result.Read())
+				return result.GetValue(0);
+			else
+				return null;
+		}
+
+		object IDbCommand.ExecuteScalar()
+		{
+			return ExecuteScalar();
+		}
+
+		public MaxDBParameterCollection Parameters
+		{
+			get  
+			{ 
+				return m_parameters; 
+			}
+		}
+
+		IDataParameterCollection IDbCommand.Parameters
+		{
+			get  
+			{ 
+				return m_parameters; 
+			}
+		}
+
+		void IDbCommand.Prepare()
+		{
+			// The Prepare is a no-op since parameter preparing and query execution
+			// has to belong to the common block of "fixed" code
+		}
+
+		public MaxDBTransaction Transaction
+		{
+			/*
+			 * Set the transaction. Consider additional steps to ensure that the transaction
+			 * is compatible with the connection, because the two are usually linked.
+			 */
+			get 
+			{ 
+				return m_txn; 
+			}
+			set 
+			{ 
+				m_txn = value; 
+			}
+		}
+
+		IDbTransaction IDbCommand.Transaction
+		{
+			get
+			{
+				return Transaction;
+			}
+			set
+			{
+				Transaction = (MaxDBTransaction)value;
+			}
+		}
+
+		public UpdateRowSource UpdatedRowSource
+		{
+			get 
+			{ 
+				return m_updatedRowSource;  
+			}
+			set 
+			{ 
+				m_updatedRowSource = value; 
+			}
+		}
+
+		UpdateRowSource IDbCommand.UpdatedRowSource
+		{
+			get 
+			{ 
+				return m_updatedRowSource;  
+			}
+			set 
+			{ 
+				m_updatedRowSource = value; 
+			}
+		}
+
+		#endregion
+
+		#region IDisposable Members
+
+		public void Dispose()
+		{
+#if SAFE
+			m_replyMem = null;
+			if (m_connection != null && (m_parseInfo != null && !m_parseInfo.IsCached)) 
+			{
+				m_connection.DropParseID(m_parseInfo.ParseID);
+				m_parseInfo.SetParseIDAndSession(null, -1);
+				m_connection.DropParseID(m_parseInfo.MassParseID);
+				m_parseInfo.MassParseID = null;
+				m_connection = null;
+			}
+#else
+			if (m_stmt != IntPtr.Zero)
+				SQLDBC.SQLDBC_Connection_releasePreparedStatement(m_connection.m_connHandler, m_stmt);
+#endif
+			GC.SuppressFinalize(this);
 		}
 
 		#endregion

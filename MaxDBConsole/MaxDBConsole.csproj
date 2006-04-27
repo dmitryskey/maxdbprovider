@@ -168,6 +168,11 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "UnitTesting\DataAdapterTests.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
                     RelPath = "UnitTesting\DataReaderTests.cs"
                     SubType = "Code"
                     BuildAction = "Compile"

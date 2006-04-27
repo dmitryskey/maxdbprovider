@@ -1,6 +1,7 @@
 //************************************************************************************
 // BigInteger Class Version 1.03
 //
+// Copyright (C) 2005-2006 Dmitry S. Kataev
 // Copyright (c) 2002 Chew Keong TAN
 // All rights reserved.
 //
@@ -1392,7 +1393,7 @@ namespace MaxDBDataProvider.Utils
 				throw (new ArgumentException("Radix must be >= 2 and <= 36"));
 
 			string charSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-			string result = "";
+			string result = string.Empty;
 
 			BigInteger a = this;
 
@@ -2320,8 +2321,9 @@ namespace MaxDBDataProvider.Utils
 				s_num = s_num.PadLeft(s_scale + 1, '0');
 
 			s_num = (m_int >= 0 ? string.Empty : "-") + s_num.Insert(s_num.Length - s_scale, m_sep);
+			
 			if (s_num.EndsWith(m_sep))
-				s_num += "0";
+				s_num = s_num.Remove(s_num.Length - m_sep.Length, m_sep.Length);
 
 			return s_num;
 		}

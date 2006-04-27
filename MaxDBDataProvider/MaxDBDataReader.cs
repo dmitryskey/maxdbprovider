@@ -1,3 +1,20 @@
+//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//	Copyright (C) 2002-2003 SAP AG
+//
+//	This program is free software; you can redistribute it and/or
+//	modify it under the terms of the GNU General Public License
+//	as published by the Free Software Foundation; either version 2
+//	of the License, or (at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program; if not, write to the Free Software
+//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
 using System;
 using System.Data;
 using System.Text;
@@ -9,35 +26,43 @@ using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider
 {
-	public sealed class MaxDBDataReader : IDataReader, IDataRecord 
+	public sealed class MaxDBDataReader : IDataReader, IDataRecord, IDisposable 
 #if SAFE 
 		, ISQLParamController 
 #endif
 	{
 		// The DataReader should always be open when returned to the user.
 		private bool m_fOpened = true;
-		internal bool m_fCloseConn = false; //close connection after data reader closing
-		internal bool m_fSchemaOnly = false; //return column information only
-		private MaxDBConnection m_connection; //connection handle
-		private string	m_updTableName;	// tablename used for updateable resultsets 
+		internal bool m_fCloseConn = false;		//close connection after data reader closing
+		internal bool m_fSchemaOnly = false;	//return column information only
+		private MaxDBConnection m_connection;	//connection handle
+		private MaxDBCommand m_cmd;				//command handle
+		private string	m_updTableName;			// tablename used for updateable resultsets 
 
 #if SAFE
 		
-		private FetchInfo       m_fetchInfo;	// The fetch details.
-		private FetchChunk      m_currentChunk;		// The data of the last fetch operation.
-		private PositionType	m_positionState; //the status of the position
-		private PositionType    m_positionStateOfChunk;  // The status of the current chunk.
-		private bool	        m_empty;                 // is this result set totally empty
-		private ArrayList       m_openStreams;           // a vector of all streams that went outside.
-		private int             m_rowsInResultSet;       // the number of rows in this result set, or -1 if not known
-		private int             m_largestKnownAbsPos;    // largest known absolute position to be inside.
-		private int             m_modifiedKernelPos;     // contains 0 if the kernel pos is not modified or the current kernel position.
-		internal int			m_maxRows;	//how many rows fetch
+		private FetchInfo       m_fetchInfo;			// The fetch details.
+		private FetchChunk      m_currentChunk;			// The data of the last fetch operation.
+		private PositionType	m_positionState;		//the status of the position
+		private PositionType    m_positionStateOfChunk; // The status of the current chunk.
+		private bool	        m_empty;                // is this result set totally empty
+		private ArrayList       m_openStreams;          // a vector of all streams that went outside.
+		private int             m_rowsInResultSet;      // the number of rows in this result set, or -1 if not known
+		private int             m_largestKnownAbsPos;   // largest known absolute position to be inside.
+		private int             m_modifiedKernelPos;    // contains 0 if the kernel pos is not modified or the current kernel position.
+		internal int			m_maxRows;				//how many rows fetch
 
 		internal MaxDBDataReader()
 		{
 			m_empty = true;
 			m_connection = null;
+		}
+
+		internal MaxDBDataReader(MaxDBCommand cmd)
+		{
+			m_empty = true;
+			m_connection = cmd.Connection;
+			m_cmd = cmd;
 		}
 
 		internal MaxDBDataReader(MaxDBConnection connection, FetchInfo fetchInfo, MaxDBCommand cmd, int maxRows, MaxDBReplyPacket reply)
@@ -49,6 +74,7 @@ namespace MaxDBDataProvider
 
 			m_maxRows = maxRows;
 
+			m_cmd = cmd;
 			m_updTableName = cmd.m_parseInfo.m_updTableName;
 	
 			InitializeFields();
@@ -143,10 +169,18 @@ namespace MaxDBDataProvider
 #else
 		private IntPtr m_resultset = IntPtr.Zero;
 		private Hashtable m_ValArrays = new Hashtable();
+
+		internal MaxDBDataReader(MaxDBCommand cmd)
+		{
+			m_connection = cmd.Connection;
+			m_cmd = cmd;
+		}
+		
 		internal MaxDBDataReader(IntPtr resultset, MaxDBConnection conn, MaxDBCommand cmd, bool closeConn, bool schemaOnly)
 		{
 			m_resultset = resultset;
 			m_connection = conn;
+			m_cmd = cmd;
 			m_fCloseConn = closeConn;
 			m_fSchemaOnly = schemaOnly;
 			m_updTableName = cmd.UpdTableName;			 
@@ -170,9 +204,7 @@ namespace MaxDBDataProvider
 
 		public bool IsClosed
 		{
-			/*
-			 Keep track of the reader state - some methods should be disallowed if the reader is closed.
-			 */
+			 //Keep track of the reader state - some methods should be disallowed if the reader is closed.
 			get
 			{ 
 				return !m_fOpened; 
@@ -181,14 +213,9 @@ namespace MaxDBDataProvider
 
 		public int RecordsAffected 
 		{
-			/*
-			 * RecordsAffected is only applicable to batch statements
-			 * that include inserts/updates/deletes. The sample always
-			 * returns -1.
-			 */
 			get 
-			{ 
-				return -1; 
+			{
+				return m_cmd.m_rowsAffected;
 			}
 		}
 
@@ -199,7 +226,8 @@ namespace MaxDBDataProvider
 			m_currentChunk = null;
 			m_fetchInfo = null;
 #else
-			SQLDBC.SQLDBC_ResultSet_close(m_resultset);
+			if (m_resultset != IntPtr.Zero)
+				SQLDBC.SQLDBC_ResultSet_close(m_resultset);
 #endif
 			if (m_fCloseConn && m_connection != null)
 				m_connection.Close();
@@ -339,8 +367,8 @@ namespace MaxDBDataProvider
 					string[] schemaName = m_updTableName.Split('.');
 					if (schemaName.Length > 1)
 					{
-						row["BaseSchemaName"] = schemaName[0].Replace("\"", "");
-						row["BaseTableName"] = schemaName[1].Replace("\"", "");
+						row["BaseSchemaName"] = schemaName[0].Replace("\"", string.Empty);
+						row["BaseTableName"] = schemaName[1].Replace("\"", string.Empty);
 					}
 				}
 
@@ -416,15 +444,11 @@ namespace MaxDBDataProvider
 					case DataType.BOOLEAN:
 						return (data[0] == 1);
 					case DataType.DATE:
-						ODBCDATE dt_val = ODBCConverter.GetDate(data);
-						return new DateTime(dt_val.year, dt_val.month, dt_val.day);
+						return ODBCConverter.GetDateTime(ODBCConverter.GetDate(data));
 					case DataType.TIME:
-						ODBCTIME tm_val = ODBCConverter.GetTime(data);
-						return new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, tm_val.hour, tm_val.minute, tm_val.second);
+						return ODBCConverter.GetDateTime(ODBCConverter.GetTime(data));
 					case DataType.TIMESTAMP:
-						ODBCTIMESTAMP ts_val = ODBCConverter.GetTimeStamp(data);
-						return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second).AddTicks(
-							(ts_val.fraction / 1000) * (TimeSpan.TicksPerMillisecond / 1000));
+						return ODBCConverter.GetDateTime(ODBCConverter.GetTimeStamp(data));
 					case DataType.FIXED:
 					case DataType.FLOAT:
 					case DataType.VFLOAT:
@@ -466,7 +490,7 @@ namespace MaxDBDataProvider
 			for (short cnt = 0; cnt <= FieldCount - 1; cnt++)
 				if (GetName(cnt).Trim().ToUpper() == name.Trim().ToUpper())
 					return cnt;
-			throw new MaxDBException("Can't find field '" + name + "'");
+			throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLNAME_NOTFOUND, name));
 		}
 
 		public object this[int i]
@@ -503,12 +527,6 @@ namespace MaxDBDataProvider
 				{
 					case DataType.BOOLEAN:
 						return (data[0] == 1);
-					case DataType.DATE:
-						throw new InvalidCastException("Can't convert date value to boolean");
-					case DataType.TIME:
-						throw new InvalidCastException("Can't convert time value to boolean");
-					case DataType.TIMESTAMP:
-						throw new InvalidCastException("Can't convert timestamp value to boolean");
 					case DataType.FIXED:
 					case DataType.FLOAT:
 					case DataType.VFLOAT:
@@ -528,11 +546,12 @@ namespace MaxDBDataProvider
 					case DataType.UNICODE:
 						return bool.Parse(Encoding.Unicode.GetString(data));
 					default:
-						throw new InvalidCastException("Unknown column type");
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
+							DataType.stringValues[columnType], "Boolean"));
 				}
 			}
 			else
-				throw new InvalidCastException("Can't get the boolean value since column's value is NULL");
+				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLUMNVALUE_NULL));
 #endif
 		}
 
@@ -627,12 +646,6 @@ namespace MaxDBDataProvider
 				{
 					case DataType.BOOLEAN:
 						return data[0];
-					case DataType.DATE:
-						throw new InvalidCastException("Can't convert date value to Int16");
-					case DataType.TIME:
-						throw new InvalidCastException("Can't convert time value to Int16");
-					case DataType.TIMESTAMP:
-						throw new InvalidCastException("Can't convert timestamp value to Int16");
 					case DataType.FIXED:
 					case DataType.FLOAT:
 					case DataType.VFLOAT:
@@ -641,22 +654,13 @@ namespace MaxDBDataProvider
 						return (short)BitConverter.ToInt32(data, 0);
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0);
-					case DataType.STRA:
-					case DataType.STRB:
-					case DataType.STRUNI:
-					case DataType.VARCHARA:
-					case DataType.VARCHARB:
-					case DataType.VARCHARUNI:
-					case DataType.CHA:
-					case DataType.CHB:
-					case DataType.UNICODE:
-						return short.Parse(Encoding.Unicode.GetString(data));
 					default:
-						throw new InvalidCastException("Unknown column type");
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
+							DataType.stringValues[columnType], "Int16"));
 				}
 			}
 			else
-				throw new InvalidCastException("Can't get the Int16 value since column's value is NULL");
+				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLUMNVALUE_NULL));
 #endif
 		}
 
@@ -677,12 +681,6 @@ namespace MaxDBDataProvider
 				{
 					case DataType.BOOLEAN:
 						return data[0];
-					case DataType.DATE:
-						throw new InvalidCastException("Can't convert date value to Int32");
-					case DataType.TIME:
-						throw new InvalidCastException("Can't convert time value to Int32");
-					case DataType.TIMESTAMP:
-						throw new InvalidCastException("Can't convert timestamp value to Int32");
 					case DataType.FIXED:
 					case DataType.FLOAT:
 					case DataType.VFLOAT:
@@ -691,22 +689,13 @@ namespace MaxDBDataProvider
 						return BitConverter.ToInt32(data, 0);
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0);
-					case DataType.STRA:
-					case DataType.STRB:
-					case DataType.STRUNI:
-					case DataType.VARCHARA:
-					case DataType.VARCHARB:
-					case DataType.VARCHARUNI:
-					case DataType.CHA:
-					case DataType.CHB:
-					case DataType.UNICODE:
-						return int.Parse(Encoding.Unicode.GetString(data));
 					default:
-						throw new InvalidCastException("Unknown column type");
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
+							DataType.stringValues[columnType], "Int32"));
 				}
 			}
 			else
-				throw new InvalidCastException("Can't get the Int32 value since column's value is NULL");
+				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLUMNVALUE_NULL));
 #endif
 		}
 
@@ -727,12 +716,6 @@ namespace MaxDBDataProvider
 				{
 					case DataType.BOOLEAN:
 						return data[0];
-					case DataType.DATE:
-						throw new InvalidCastException("Can't convert date value to Int64");
-					case DataType.TIME:
-						throw new InvalidCastException("Can't convert time value to Int64");
-					case DataType.TIMESTAMP:
-						throw new InvalidCastException("Can't convert timestamp value to Int64");
 					case DataType.FIXED:
 					case DataType.FLOAT:
 					case DataType.VFLOAT:
@@ -741,22 +724,13 @@ namespace MaxDBDataProvider
 						return BitConverter.ToInt32(data, 0);
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0);
-					case DataType.STRA:
-					case DataType.STRB:
-					case DataType.STRUNI:
-					case DataType.VARCHARA:
-					case DataType.VARCHARB:
-					case DataType.VARCHARUNI:
-					case DataType.CHA:
-					case DataType.CHB:
-					case DataType.UNICODE:
-						return long.Parse(Encoding.Unicode.GetString(data));
 					default:
-						throw new InvalidCastException("Unknown column type");
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
+							DataType.stringValues[columnType], "Int64"));
 				}
 			}
 			else
-				throw new InvalidCastException("Can't get the Int64 value since column's value is NULL");
+				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLUMNVALUE_NULL));
 #endif
 		}
 
@@ -777,12 +751,6 @@ namespace MaxDBDataProvider
 				{
 					case DataType.BOOLEAN:
 						return data[0];
-					case DataType.DATE:
-						throw new InvalidCastException("Can't convert date value to Float");
-					case DataType.TIME:
-						throw new InvalidCastException("Can't convert time value to Float");
-					case DataType.TIMESTAMP:
-						throw new InvalidCastException("Can't convert timestamp value to Float");
 					case DataType.FIXED:
 					case DataType.FLOAT:
 					case DataType.VFLOAT:
@@ -791,22 +759,13 @@ namespace MaxDBDataProvider
 						return BitConverter.ToInt32(data, 0);
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0);
-					case DataType.STRA:
-					case DataType.STRB:
-					case DataType.STRUNI:
-					case DataType.VARCHARA:
-					case DataType.VARCHARB:
-					case DataType.VARCHARUNI:
-					case DataType.CHA:
-					case DataType.CHB:
-					case DataType.UNICODE:
-						return float.Parse(Encoding.Unicode.GetString(data));
 					default:
-						throw new InvalidCastException("Unknown column type");
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
+							DataType.stringValues[columnType], "Float"));
 				}
 			}
 			else
-				throw new InvalidCastException("Can't get the Float value since column's value is NULL");
+				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLUMNVALUE_NULL));
 #endif
 		}
 
@@ -827,12 +786,6 @@ namespace MaxDBDataProvider
 				{
 					case DataType.BOOLEAN:
 						return data[0];
-					case DataType.DATE:
-						throw new InvalidCastException("Can't convert date value to Double");
-					case DataType.TIME:
-						throw new InvalidCastException("Can't convert time value to Double");
-					case DataType.TIMESTAMP:
-						throw new InvalidCastException("Can't convert timestamp value to Double");
 					case DataType.FIXED:
 					case DataType.FLOAT:
 					case DataType.VFLOAT:
@@ -841,22 +794,13 @@ namespace MaxDBDataProvider
 						return BitConverter.ToInt32(data, 0);
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0);
-					case DataType.STRA:
-					case DataType.STRB:
-					case DataType.STRUNI:
-					case DataType.VARCHARA:
-					case DataType.VARCHARB:
-					case DataType.VARCHARUNI:
-					case DataType.CHA:
-					case DataType.CHB:
-					case DataType.UNICODE:
-						return double.Parse(Encoding.Unicode.GetString(data));
 					default:
-						throw new InvalidCastException("Unknown column type");
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
+							DataType.stringValues[columnType], "Double"));
 				}
 			}
 			else
-				throw new InvalidCastException("Can't get the Double value since column's value is NULL");
+				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLUMNVALUE_NULL));
 #endif
 		}
 
@@ -878,15 +822,11 @@ namespace MaxDBDataProvider
 					case DataType.BOOLEAN:
 						return (data[0] == 1).ToString();
 					case DataType.DATE:
-						ODBCDATE dt_val = ODBCConverter.GetDate(data);
-						return (new DateTime(dt_val.year, dt_val.month, dt_val.day)).ToShortDateString();
+						return ODBCConverter.GetDateTime(ODBCConverter.GetDate(data)).ToShortDateString();
 					case DataType.TIME:
-						ODBCTIME tm_val = ODBCConverter.GetTime(data);
-						return (new DateTime(0, 0, 0, tm_val.hour, tm_val.minute, tm_val.second)).ToShortTimeString();
+						return ODBCConverter.GetDateTime(ODBCConverter.GetTime(data)).ToShortTimeString();
 					case DataType.TIMESTAMP:
-						ODBCTIMESTAMP ts_val = ODBCConverter.GetTimeStamp(data);
-						return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second).AddTicks(
-							(ts_val.fraction / 1000) * (TimeSpan.TicksPerMillisecond / 1000)).ToString();
+						return ODBCConverter.GetDateTime(ODBCConverter.GetTimeStamp(data)).ToString();
 					case DataType.FIXED:
 					case DataType.FLOAT:
 					case DataType.VFLOAT:
@@ -907,7 +847,7 @@ namespace MaxDBDataProvider
 					case DataType.CHB:
 						return Encoding.ASCII.GetString(data);
 					default:
-						throw new InvalidCastException("Unknown column type");
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_UNKNOWN_DATATYPE));
 				}
 			}
 			else
@@ -932,12 +872,6 @@ namespace MaxDBDataProvider
 				{
 					case DataType.BOOLEAN:
 						return data[0];
-					case DataType.DATE:
-						throw new InvalidCastException("Can't convert date value to Decimal");
-					case DataType.TIME:
-						throw new InvalidCastException("Can't convert time value to Decimal");
-					case DataType.TIMESTAMP:
-						throw new InvalidCastException("Can't convert timestamp value to Decimal");
 					case DataType.FIXED:
 					case DataType.FLOAT:
 					case DataType.VFLOAT:
@@ -946,23 +880,13 @@ namespace MaxDBDataProvider
 						return BitConverter.ToInt32(data, 0);
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0);
-					case DataType.STRA:
-					case DataType.STRUNI:
-					case DataType.VARCHARA:
-					case DataType.VARCHARUNI:
-					case DataType.CHA:
-					case DataType.UNICODE:
-						return decimal.Parse(Encoding.Unicode.GetString(data));
-					case DataType.STRB:
-					case DataType.VARCHARB:
-					case DataType.CHB:
-						return decimal.Parse(Encoding.ASCII.GetString(data));
 					default:
-						throw new InvalidCastException("Unknown column type");
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
+							DataType.stringValues[columnType], "Decimal"));
 				}
 			}
 			else
-				throw new InvalidCastException("Can't get the Decimal value since column's value is NULL");
+				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLUMNVALUE_NULL));
 #endif
 		}
 
@@ -981,43 +905,46 @@ namespace MaxDBDataProvider
 			{
 				switch(columnType)
 				{
-					case DataType.BOOLEAN:
-						throw new InvalidCastException("Can't convert Boolean value to DateTime");
 					case DataType.DATE:
-						ODBCDATE dt_val = ODBCConverter.GetDate(data);
-						return new DateTime(dt_val.year, dt_val.month, dt_val.day);
+						return ODBCConverter.GetDateTime(ODBCConverter.GetDate(data));
 					case DataType.TIME:
-						ODBCTIME tm_val = ODBCConverter.GetTime(data);
-						return new DateTime(0, 0, 0, tm_val.hour, tm_val.minute, tm_val.second);
+						return ODBCConverter.GetDateTime(ODBCConverter.GetTime(data));
 					case DataType.TIMESTAMP:
-						ODBCTIMESTAMP ts_val = ODBCConverter.GetTimeStamp(data);
-						return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second).AddTicks(
-							(ts_val.fraction / 1000) * (TimeSpan.TicksPerMillisecond / 1000));
-					case DataType.FIXED:
-					case DataType.FLOAT:
-					case DataType.VFLOAT:
-						throw new InvalidCastException("Can't convert Double value to DateTime");
-					case DataType.INTEGER:
-						throw new InvalidCastException("Can't convert Int32 value to DateTime");
-					case DataType.SMALLINT:
-						throw new InvalidCastException("Can't convert Int16 value to DateTime");
-					case DataType.STRA:
-					case DataType.STRUNI:
-					case DataType.VARCHARA:
-					case DataType.VARCHARUNI:
-					case DataType.CHA:
-					case DataType.UNICODE:
-						return DateTime.Parse(Encoding.Unicode.GetString(data));
-					case DataType.STRB:
-					case DataType.VARCHARB:
-					case DataType.CHB:
-						return DateTime.Parse(Encoding.ASCII.GetString(data));
+						return ODBCConverter.GetDateTime(ODBCConverter.GetTimeStamp(data));
 					default:
-						throw new InvalidCastException("Unknown column type");
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
+							DataType.stringValues[columnType], "DateTime"));
 				}
 			}
 			else
-				throw new InvalidCastException("Can't get the DateTime value since column's value is NULL");
+				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLUMNVALUE_NULL));
+#endif
+		}
+
+		public TimeSpan GetTimeSpan(int i)
+		{
+			/*
+			 * Force the cast to return the type. InvalidCastException
+			 * should be thrown if the data is not already of the correct type.
+			 */
+#if SAFE
+			return FindColumnInfo(i).GetTimeSpan(CurrentRecord);
+#else
+			int columnType;
+			byte[] data = GetValueBytes(i, out columnType);
+			if (data != null)
+			{
+				switch(columnType)
+				{
+					case DataType.TIME:
+						return ODBCConverter.GetTimeSpan(ODBCConverter.GetTime(data));
+					default:
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
+							DataType.stringValues[columnType], "TimeSpan"));
+				}
+			}
+			else
+				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLUMNVALUE_NULL));
 #endif
 		}
 
@@ -1054,32 +981,6 @@ namespace MaxDBDataProvider
 #endif
 			}
 		}
-
-		/*
-		 * Implementation specific methods.
-		 */
-
-		void IDisposable.Dispose() 
-		{
-			this.Dispose(true);
-			System.GC.SuppressFinalize(this);
-		}
-
-		private void Dispose(bool disposing) 
-		{
-			if (disposing) 
-			{
-				try 
-				{
-					this.Close();
-				}
-				catch (Exception e) 
-				{
-					throw new SystemException("An exception of type " + e.GetType() + " was encountered while closing the MaxDBDataReader.");
-				}
-			}
-		}
-
 #if SAFE
 		#region "Methods to support native protocol"
 
@@ -1296,13 +1197,13 @@ namespace MaxDBDataProvider
 						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " + 
 							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
-						return null;
+						m_ValArrays[i] = null;
 					else
 					{
 						byte[] result = new byte[]{byte_val};
 						m_ValArrays[i] = result;
-						return result;
 					}
+					return (byte[])m_ValArrays[i];
 				case DataType.DATE:
 					byte[] dt_val = new byte[sizeof(ODBCDATE)];
 					val_length = dt_val.Length;
@@ -1314,12 +1215,10 @@ namespace MaxDBDataProvider
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
-						return null;
+						m_ValArrays[i] = null;
 					else
-					{
 						m_ValArrays[i] = dt_val;
-						return dt_val;
-					}
+					return (byte[])m_ValArrays[i];
 				case DataType.TIME:
 					byte[] tm_val = new byte[sizeof(ODBCTIME)];
 					val_length = tm_val.Length;
@@ -1331,12 +1230,10 @@ namespace MaxDBDataProvider
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
-						return null;
+						m_ValArrays[i] = null;
 					else
-					{
 						m_ValArrays[i] = tm_val;
-						return tm_val;
-					}
+					return (byte[])m_ValArrays[i];
 				case DataType.TIMESTAMP:
 					byte[] ts_val = new byte[sizeof(ODBCTIMESTAMP)];
 					val_length = ts_val.Length;
@@ -1348,12 +1245,10 @@ namespace MaxDBDataProvider
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
-						return null;
+						m_ValArrays[i] = null;
 					else
-					{
 						m_ValArrays[i] = ts_val;
-						return ts_val;
-					}
+					return (byte[])m_ValArrays[i];
 				case DataType.FIXED:
 				case DataType.FLOAT:
 				case DataType.VFLOAT:
@@ -1364,13 +1259,10 @@ namespace MaxDBDataProvider
 						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
-						return null;
+						m_ValArrays[i] = null;
 					else
-					{
-						byte[] result = BitConverter.GetBytes(double_val);
-						m_ValArrays[i] = result;
-						return result;
-					}
+						m_ValArrays[i] = BitConverter.GetBytes(double_val);
+					return (byte[])m_ValArrays[i];
 				case DataType.INTEGER:
 					int int_val;
 					val_length = sizeof(int);
@@ -1379,13 +1271,10 @@ namespace MaxDBDataProvider
 						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
-						return null;
+						m_ValArrays[i] = null;
 					else
-					{
-						byte[] result = BitConverter.GetBytes(int_val);
-						m_ValArrays[i] = result;
-						return result;
-					}
+						m_ValArrays[i] = BitConverter.GetBytes(int_val);
+					return (byte[])m_ValArrays[i];
 				case DataType.SMALLINT:
 					short short_val;
 					val_length = sizeof(short);
@@ -1394,13 +1283,10 @@ namespace MaxDBDataProvider
 						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					if (val_length == SQLDBC.SQLDBC_NULL_DATA)
-						return null;
+						m_ValArrays[i] = null;
 					else
-					{
-						byte[] result = BitConverter.GetBytes(short_val);
-						m_ValArrays[i] = result;
-						return result;
-					}
+						m_ValArrays[i] = BitConverter.GetBytes(short_val);
+					return (byte[])m_ValArrays[i];
 				case DataType.STRA:
 				case DataType.STRUNI:
 				case DataType.VARCHARA:
@@ -1417,28 +1303,32 @@ namespace MaxDBDataProvider
 							new IntPtr(valuePtr), ref val_length, val_length, 0);
 
 						if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+						{
+							m_ValArrays[i] = null;
 							return null;
+						}
 
 						if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
 							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_NODATA_FOUND));
 
-						if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+						if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
 							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
 					strValue = new byte[val_length];
 
-					fixed(byte *valuePtr = strValue)
-					{
-						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, 
-							Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2, 
-							new IntPtr(valuePtr), ref val_length, val_length, 0);
+					if (val_length > 0)
+						fixed(byte *valuePtr = strValue)
+						{
+							rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, 
+								Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2, 
+								new IntPtr(valuePtr), ref val_length, val_length, SQLDBC_BOOL.SQLDBC_FALSE);
 
-						if (rc != SQLDBC_Retcode.SQLDBC_OK)
-							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
-								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
-					}
+							if (rc != SQLDBC_Retcode.SQLDBC_OK)
+								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
+									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+						}
 
 					m_ValArrays[i] = strValue;
 					return strValue;
@@ -1454,27 +1344,31 @@ namespace MaxDBDataProvider
 							new IntPtr(valuePtr), ref val_length, val_length, 0);
 
 						if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+						{
+							m_ValArrays[i] = null;
 							return null;
+						}
 
 						if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
 							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_NODATA_FOUND));
 
-						if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+						if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
 							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
 								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 					}
 
 					binValue = new byte[val_length];
 
-					fixed(byte *valuePtr = binValue)
-					{
-						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY, 
-							new IntPtr(valuePtr), ref val_length, val_length, 0);
+					if (val_length > 0)
+						fixed(byte *valuePtr = binValue)
+						{
+							rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY, 
+								new IntPtr(valuePtr), ref val_length, val_length, 0);
 
-						if (rc != SQLDBC_Retcode.SQLDBC_OK)
-							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
-								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
-					}
+							if (rc != SQLDBC_Retcode.SQLDBC_OK)
+								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
+									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+						}
 
 					m_ValArrays[i] = binValue;
 					return binValue;
@@ -1515,6 +1409,9 @@ namespace MaxDBDataProvider
 				rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, hostType, 
 					new IntPtr(valuePtr + bufferIndex), ref ref_length, length, (int)dataIndex, SQLDBC_BOOL.SQLDBC_FALSE);
 
+				if (ref_length == SQLDBC.SQLDBC_NULL_DATA)
+					return 0;
+
 				if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
 					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_NODATA_FOUND));
 
@@ -1531,6 +1428,24 @@ namespace MaxDBDataProvider
 
 		#endregion
 #endif
+
+		#region IDisposable Members
+
+		public void Dispose()
+		{
+			try 
+			{
+				Close();
+			}
+			catch (Exception e) 
+			{
+				throw new SystemException("An exception of type " + e.GetType() + " was encountered while closing the MaxDBDataReader.");
+			}
+
+			GC.SuppressFinalize(this);
+		}
+
+		#endregion
 	}
 }
 
