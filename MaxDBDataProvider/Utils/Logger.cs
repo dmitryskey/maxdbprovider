@@ -1,25 +1,206 @@
 using System;
-using System.Text;
+using System.Diagnostics;
+using System.IO;
+using System.Configuration;
+using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider.Utils
 {
+	public enum MaxDBTraceLevel
+	{
+		None = 0,
+		SQLOnly = 1,
+		Full = 2
+	}
 	/// <summary>
 	/// Summary description for Logger.
 	/// </summary>
-	public class Logger
+	internal class MaxDBTraceSwitch : Switch
 	{
-		public static string ToHexString(byte[] array)
+		public MaxDBTraceSwitch(string displayName, string description): base(displayName, description)
 		{
-			if (array != null)
-			{
-				StringBuilder result = new StringBuilder(array.Length * 2);
-				foreach(byte val in array)
-					result.Append(val.ToString("X2"));
-
-				return result.ToString();
-			}
-			else
-				return "NULL";
 		}
+
+		public MaxDBTraceLevel Level
+		{
+			get
+			{
+				switch(SwitchSetting)
+				{
+					case (int)MaxDBTraceLevel.None:
+						return MaxDBTraceLevel.None;
+					case (int)MaxDBTraceLevel.SQLOnly:
+						return MaxDBTraceLevel.SQLOnly;
+					case (int)MaxDBTraceLevel.Full:
+						return MaxDBTraceLevel.Full;
+					default:
+						return MaxDBTraceLevel.None;
+				}
+			}
+		}
+
+		public bool TraceSQL
+		{
+			get
+			{
+				return (Level != MaxDBTraceLevel.None);
+			}
+		}
+
+		public bool TraceFull
+		{
+			get
+			{
+				return (Level == MaxDBTraceLevel.Full);
+			}
+		}
+	}
+
+	internal class MaxDBLogger : IDisposable
+	{
+		private MaxDBConnection m_conn;
+		private MaxDBTraceSwitch m_traceSwitch = new MaxDBTraceSwitch("TraceLevel", "Trace Level");
+#if !SAFE
+		private IntPtr m_prop = IntPtr.Zero;
+		private string m_logname;
+#endif
+
+		public MaxDBLogger(MaxDBConnection conn)
+		{
+			m_conn = conn;
+#if !SAFE
+			if (m_traceSwitch.TraceSQL)
+			{
+				m_prop = SQLDBC.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
+				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "SQL", "1");
+				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "TIMESTAMP", "1");
+				string TempDir = "";
+				if (ConfigurationSettings.AppSettings["SDBPath"] != null)
+					TempDir = ConfigurationSettings.AppSettings["SDBPath"] + "\\data\\wrk";
+				m_logname = TempDir + "\\adonetlog.html";
+				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "FILENAME", "adonet.html");
+				if (m_traceSwitch.TraceFull)
+					SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "PACKET", "1");
+				SQLDBC.SQLDBC_Environment_setTraceOptions(m_conn.m_envHandler, m_prop);
+			}
+#endif
+		}
+
+		public void SqlTrace(DateTime dt, string msg)
+		{
+#if SAFE
+			if (m_traceSwitch.TraceSQL)
+				Trace.WriteLine(dt.ToString("yyyy-MM-dd hh:mm:ss.ffffff") + " " + msg);
+#endif
+		}
+
+		public void SqlTraceParseInfo(DateTime dt, MaxDBParseInfo parseInfo)
+		{
+#if SAFE
+			if (m_traceSwitch.TraceSQL)
+			{
+				if (parseInfo.ParamInfo.Length > 0)
+				{
+					SqlTrace(dt, "PARAMETERS:");
+					SqlTrace(dt, "I   T              L    P   IO    N");
+					foreach (DBTechTranslator info in parseInfo.ParamInfo)
+					{
+						Trace.Write(dt.ToString("yyyy-MM-dd hh:mm:ss.ffffff") + " ");
+
+						SqlTraceTransl(info);
+
+						if (FunctionCode.IsQuery(parseInfo.m_funcCode))
+						{
+							if(!info.IsOutput) 
+							{
+								if(info.IsInput) 
+								{
+									if(info.IsOutput) 
+										Trace.Write(" INOUT ");// ... two in one. We must reduce the overall number !!!
+									else 
+										Trace.Write(" IN    ");
+								} 
+								else 
+									Trace.Write(" OUT   ");
+							}
+						}
+						else
+						{
+							if(info.IsInput) 
+							{
+								if(info.IsOutput) 
+									Trace.Write(" INOUT ");// ... two in one. We must reduce the overall number !!!
+								else 
+									Trace.Write(" IN    ");
+							} 
+							else 
+								Trace.Write(" OUT   ");
+						}
+
+						Trace.WriteLine(info.ColumnName);
+					}
+				}
+
+				if (parseInfo.m_columnInfos.Length > 0)
+				{
+					SqlTrace(dt, "COLUMNS:");
+					SqlTrace(dt, "I   T              L    P   N");
+					foreach(DBTechTranslator info in parseInfo.m_columnInfos)
+					{
+						Trace.Write(dt.ToString("yyyy-MM-dd hh:mm:ss.ffffff") + " ");
+						SqlTraceTransl(info);
+						Trace.WriteLine(info.ColumnName);
+					}
+				}
+			}
+#endif
+		}
+
+		private void SqlTraceTransl(DBTechTranslator info)
+		{
+			Trace.Write(info.ColumnIndex.ToString().PadRight(4));
+			Trace.Write(info.ColumnTypeName.PadRight(15));
+			Trace.Write(info.PhysicalLength.ToString().PadRight(5));
+			Trace.Write(info.Precision.ToString().PadRight(4));
+		}
+
+		public void Flush()
+		{
+#if SAFE
+			if (m_traceSwitch.TraceSQL)
+				Trace.Flush();
+#else
+			if (!File.Exists(m_logname))
+				return;
+			StreamReader sr = new StreamReader(m_logname);
+			string header = sr.ReadLine();
+			if (header != null)
+			{
+				string line;
+				do
+				{
+					line = sr.ReadLine();
+					if (line != null)
+						Trace.WriteLine(line);
+				}
+				while(line != null);
+			}
+			sr.Close();
+
+			Trace.Flush();
+#endif
+		}
+
+		#region IDisposable Members
+
+		public void Dispose()
+		{
+#if !SAFE
+			if (m_conn != null && m_traceSwitch.TraceSQL && m_prop != IntPtr.Zero)
+				SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(m_prop);
+#endif
+		}
+
+		#endregion
 	}
 }

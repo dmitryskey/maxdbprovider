@@ -34,6 +34,10 @@ namespace MaxDBDataProvider
 		public void Commit()
 		{
 			m_connection.AssertOpen();
+
+			//>>> SQL TRACE
+			m_connection.m_logger.SqlTrace(DateTime.Now, "::COMMIT");
+			//<<< SQL TRACE
 #if SAFE
 			m_connection.Commit();
 #else
@@ -99,6 +103,10 @@ namespace MaxDBDataProvider
 		public void Rollback()
 		{
 			m_connection.AssertOpen();
+
+			//>>> SQL TRACE
+			m_connection.m_logger.SqlTrace(DateTime.Now, "::ROLLBACK");
+			//<<< SQL TRACE
 #if SAFE
 			m_connection.Rollback();
 #else

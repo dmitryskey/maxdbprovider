@@ -479,6 +479,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				reuse_mselect_found, 
 				reuse_upd_mselect_found
 			};
+
+		public static bool IsQuery(int code)
+		{
+			return (code == FunctionCode.Select || code == FunctionCode.Show ||	
+				code == FunctionCode.DBProcWithResultSetExecute || code == FunctionCode.Explain); 
+		}
 	}
 
 	internal class Ports
@@ -819,6 +825,20 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				Encoding.Unicode.GetBytes(BlankChar).CopyTo(BlankUnicodeBytes, i);
 				Encoding.BigEndianUnicode.GetBytes(BlankChar).CopyTo(BlankBigEndianUnicodeBytes, i);
 			}
+		}
+
+		public static string ToHexString(byte[] array)
+		{
+			if (array != null)
+			{
+				StringBuilder result = new StringBuilder(array.Length * 2);
+				foreach(byte val in array)
+					result.Append(val.ToString("X2"));
+
+				return result.ToString();
+			}
+			else
+				return "NULL";
 		}
 	}
 }

@@ -1,5 +1,4 @@
-1. CommandBuilder class
-2. SSL communication via Metalig.Org (Mono?)
-3. Batch updates
-5. Test cases
-6. Documentation
+1. SSL communication via Metalig.Org (Mono?)
+2. Batch updates
+3. Test cases
+4. Documentation

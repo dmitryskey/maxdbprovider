@@ -81,7 +81,7 @@ namespace MaxDBDataProvider
 			m_openStreams = new ArrayList(5);
 			if (reply != null)
 			{
-				SetCurrentChunk(new FetchChunk(
+				SetCurrentChunk(new FetchChunk(m_connection,
 					FetchType.FIRST,		// fetch first is forward
 					1,						// absolute start position
 					reply,					// reply packet
@@ -1057,7 +1057,7 @@ namespace MaxDBDataProvider
 					throw;
 				return false;
 			}
-			SetCurrentChunk(new FetchChunk(
+			SetCurrentChunk(new FetchChunk(m_connection,
 				FetchType.FIRST,		// fetch first is forward
 				1,						// absolute start position
 				reply,					// reply packet
@@ -1106,7 +1106,7 @@ namespace MaxDBDataProvider
 				}
 				throw;
 			}
-			SetCurrentChunk(new FetchChunk(
+			SetCurrentChunk(new FetchChunk(m_connection,
 				FetchType.RELATIVE_UP,
 				m_currentChunk.End + 1,
 				reply,

@@ -389,18 +389,18 @@ namespace MaxDBConsole.UnitTesting
 		[Test()]
 		public void TestGetChars()
 		{
-			int len = 500;//00;
+			int len = 50000;
 			char[] chars = new char[len];
 			for (int i = 0; i < len; i++)
-				chars[i] = 'a';//(char)(i % 128);
+				chars[i] = (char)(i % 128);
 			
 			MaxDBDataReader reader = null;
 			try 
 			{
 				ClearTestTable();
 
-				MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name, c1) VALUES(1, 'test', :c1)", m_conn);
-				//cmd.Parameters.Add(":t", "Test");
+				MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name, c1) VALUES(1, :t, :c1)", m_conn);
+				cmd.Parameters.Add(":t", "Test");
 				cmd.Parameters.Add(":c1", MaxDBType.LongA).Value = chars;
 				cmd.ExecuteNonQuery();
 

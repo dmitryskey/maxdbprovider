@@ -43,9 +43,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		internal bool m_isDBProc; // flag is set to true if command is a call dbproc command 
 		internal bool m_hasLongs; // flag is set to true if command handle long columns 
 		internal bool m_hasStreams;
-		bool m_cached; // flag is set to true if command is in parseinfo cache 
+		private bool m_cached; // flag is set to true if command is in parseinfo cache 
 		internal int m_funcCode;
-		int m_sessionID; // unique identifier for the connection
+		private int m_sessionID; // unique identifier for the connection
 		internal string[] m_columnNames;
 
 		Hashtable m_columnMap;
@@ -944,6 +944,11 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			MaxDBRequestPacket request = c.GetRequestPacket();
 			request.InitDbsCommand(false, "DESCRIBE \"" + m_cursorName + "\"");
+
+			//>>> SQL TRACE
+			m_connection.m_logger.SqlTrace(DateTime.Now, "::DESCRIBE CURSOR " + m_cursorName);
+			//<<< SQL TRACE
+
 			MaxDBReplyPacket reply = c.Execute(request, this, GCMode.GC_ALLOWED);
 			reply.ClearPartOffset();
 			for(int i = 0; i < reply.PartCount; i++) 
@@ -975,7 +980,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				m_fetchparamstring = tmp.ToString();
 			}
 
-			string cmd="FETCH NEXT \"" + m_cursorName + "\" INTO " + m_fetchparamstring;
+			string cmd = "FETCH NEXT \"" + m_cursorName + "\" INTO " + m_fetchparamstring;
+
+			DateTime dt = DateTime.Now;
+			//>>> SQL TRACE
+			m_connection.m_logger.SqlTrace(dt, "::FETCH " + m_cursorName);
+			m_connection.m_logger.SqlTrace(dt, "SQL COMMAND: " + cmd);
+			//<<< SQL TRACE
 			
 			MaxDBRequestPacket request = m_connection.GetRequestPacket();
 			byte currentSQLMode = request.SwitchSqlMode(SqlMode.Internal);

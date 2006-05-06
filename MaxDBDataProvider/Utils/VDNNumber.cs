@@ -235,7 +235,7 @@ namespace MaxDBDataProvider.Utils
 			}
 			catch (Exception) 
 			{
-				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber, Logger.ToHexString(rawNumber)));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber, Consts.ToHexString(rawNumber)));
 			}
 		}
 
@@ -331,7 +331,7 @@ namespace MaxDBDataProvider.Utils
 			}
 			catch(Exception) 
 			{
-				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber, Logger.ToHexString(rawNumber)));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber, Consts.ToHexString(rawNumber)));
 			}
 		}
 
@@ -539,7 +539,7 @@ namespace MaxDBDataProvider.Utils
 			} 
 			catch(Exception) 
 			{
-				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber,  Logger.ToHexString(number)));
+				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber,  Consts.ToHexString(number)));
 			}
 		}
 

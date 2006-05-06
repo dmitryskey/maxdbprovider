@@ -1559,14 +1559,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			return formattedTime;
 		}
 
-		public virtual object TransTimeForInput(TimeSpan dt)
+		public virtual object TransTimeForInput(TimeSpan ts)
 		{
-			return TransDateTimeForInput(DateTime.MinValue.AddTicks(dt.Ticks));
+			return TransDateTimeForInput(DateTime.MinValue.AddTicks(ts.Ticks));
 		}
 
 		protected override object TransSpecificForInput(object obj)
 		{
-			return (obj is DateTime) ? TransTimeForInput((DateTime)obj) : null;
+			return (obj is DateTime) ? TransTimeForInput((DateTime)obj) : TransTimeForInput((TimeSpan)obj);
 		}
  
 		public override object TransStringForInput(string val)
@@ -1576,11 +1576,18 @@ namespace MaxDBDataProvider.MaxDBProtocol
         
 			try 
 			{
-				return TransSpecificForInput(DateTime.Parse(val));
+				return TransTimeForInput(DateTime.Parse(val));
 			}
 			catch
 			{
-				// ignore
+				try 
+				{
+					return TransTimeForInput(TimeSpan.Parse(val));
+				}
+				catch
+				{
+					// ignore
+				}
 			}
 			throw CreateParseException(val, "Time");
 		}

@@ -18,7 +18,8 @@ MAXDBCONSOLE_SRC=MaxDBConsole/AssemblyInfo.cs \
 	MaxDBConsole/Class1.cs \
 	MaxDBConsole/UnitTesting/ConnectionTests.cs \
 	MaxDBConsole/UnitTesting/CommandTests.cs \
-	MaxDBConsole/UnitTesting/DataReaderTests.cs
+	MaxDBConsole/UnitTesting/DataReaderTests.cs \
+	MaxDBConsole/UnitTesting/DataAdapterTests.cs
 MAXDBCONSOLE_RES=
 
 MAXDBDATAPROVIDER_DLL=$(TARGET)/MaxDBDataProvider.dll
