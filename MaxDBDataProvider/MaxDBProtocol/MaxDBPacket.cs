@@ -94,7 +94,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		protected int alignSize(int val)
+		protected int AlignSize(int val)
 		{
 			if (val % Consts.AlignValue != 0)
 				return val + (Consts.AlignValue - val % Consts.AlignValue);
@@ -310,6 +310,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		private int m_replyReserve;
 		private int maxNumberOfSeg = Consts.defaultmaxNumberOfSegm;
 		private bool m_isAvailable = false;
+		private const string m_dropCmd = "Drop Parseid";
 		public const int resultCountSize = 6;
 
 		protected MaxDBRequestPacket(byte[] data, byte clientEncoding, string appID, string appVer) : base(data, HeaderOffset.END)
@@ -420,16 +421,16 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					CloseSegment();
 
 				int remainingSpace = Length - m_length - SegmentHeaderOffset.Part - PartHeaderOffset.Data
-					- m_replyReserve - Consts.ReserveForReply	- 12 // length("drop parseid")
-					- SegmentHeaderOffset.Part - PartHeaderOffset.Data - 12; // pid.length
-				if (remainingSpace <=0 || m_segments >= maxNumberOfSeg) 
+					- m_replyReserve - Consts.ReserveForReply - m_dropCmd.Length
+					- SegmentHeaderOffset.Part - PartHeaderOffset.Data - pid.Length;
+				if (remainingSpace <= 0 || m_segments >= maxNumberOfSeg) 
 					return false;
 			}
 
 			NewSegment(CmdMessType.Dbs, false, false);
 			NewPart(PartKind.Command);
 			m_partArgs = 1;
-			AddString("Drop Parseid");
+			AddString(m_dropCmd);
 			NewPart(PartKind.Parsid);
 			m_partArgs = 1;
 			AddBytes(pid);
@@ -439,8 +440,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public bool DropPidAddtoParsidPart(byte[] pid) 
 		{
 			int remainingSpace = Length - m_length - SegmentHeaderOffset.Part - PartHeaderOffset.Data
-				- m_replyReserve - Consts.ReserveForReply - m_partLength - 12; // pid.length
-			if(remainingSpace <=0) 
+				- m_replyReserve - Consts.ReserveForReply - m_partLength - pid.Length;
+			if(remainingSpace <= 0) 
 				return false;
 			AddBytes(pid);
 			m_partArgs++;
@@ -706,7 +707,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			WriteInt32(extent, m_partOffset + PartHeaderOffset.BufLen);
 			WriteInt16(args, m_partOffset + PartHeaderOffset.ArgCount);
-			m_segLength += alignSize(extent + PartHeaderOffset.Data);
+			m_segLength += AlignSize(extent + PartHeaderOffset.Data);
 			m_partOffset = -1;
 			m_partLength = -1;
 			m_partArgs = -1;
@@ -800,7 +801,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				else 
 				{
 					int partlen = ReadInt32(partofs + PartHeaderOffset.BufLen);
-					partofs = m_partIndices[i] = partofs + alignSize(partlen + PartHeaderOffset.Data);
+					partofs = m_partIndices[i] = partofs + AlignSize(partlen + PartHeaderOffset.Data);
 				}
 			}
 		}

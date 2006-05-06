@@ -106,9 +106,9 @@ namespace MaxDBConsole.UnitTesting
 				// do the update
 				MaxDBCommand cmd = new MaxDBCommand("UPDATE Test SET name='Test3' WHERE id = 10 OR id = 11", m_conn);
 				MaxDBConnection c = (MaxDBConnection)cmd.Connection;
-				Assert.AreEqual( m_conn, c );
+				Assert.AreEqual(m_conn, c);
 				int cnt = cmd.ExecuteNonQuery();
-				Assert.AreEqual( 2, cnt );
+				Assert.AreEqual(2, cnt);
 
 				// make sure we get the right value back out
 				cmd.CommandText = "SELECT name FROM Test WHERE id = 10";
@@ -124,7 +124,7 @@ namespace MaxDBConsole.UnitTesting
 				cmd.Parameters.Add(new MaxDBParameter(":name", "Test5"));
 				cmd.Parameters.Add(new MaxDBParameter(":id", 11));
 				cnt = cmd.ExecuteNonQuery();
-				Assert.AreEqual( 1, cnt, "Update with Parameters Count" );
+				Assert.AreEqual(1, cnt, "Update with Parameters Count" );
 
 				// make sure we get the right value back out
 				cmd.Parameters.Clear();

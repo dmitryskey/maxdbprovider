@@ -936,6 +936,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	*/
 	class FetchChunk
 	{
+		private MaxDBConnection m_conn; //database connection
 		private MaxDBReplyPacket m_replyPacket;	// The data packet from the fetch operation.
 		private ByteArray m_replyData;	// The data part of replyPacket.
 		private ByteArray m_currentRecord;	// The current record inside the data part (replyData).
@@ -949,8 +950,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		private int m_chunkSize;	// The number of elements in this chunk.
 		private int m_rowsInResultSet;	// The number of rows in the complete result set, or -1 if this is not known.
 
-		public FetchChunk(FetchType type, int absoluteStartRow, MaxDBReplyPacket replyPacket, int recordSize, int maxRows, int rowsInResultSet)
+		public FetchChunk(MaxDBConnection conn, FetchType type, int absoluteStartRow, MaxDBReplyPacket replyPacket, int recordSize, int maxRows, int rowsInResultSet)
 		{
+			m_conn = conn;
 			m_replyPacket = replyPacket;
 			m_type = type;
 			m_recordSize = recordSize;
@@ -965,9 +967,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_FETCH_NODATAPART));
 			}
 			m_chunkSize = replyPacket.PartArgs;
-			int dataPos=replyPacket.PartDataPos;
+			int dataPos = replyPacket.PartDataPos;
 			m_replyData = replyPacket.Clone(dataPos);
-			m_currentOffset=0;
+			m_currentOffset = 0;
 			m_currentRecord = m_replyData.Clone(m_currentOffset * m_recordSize);
 			if (absoluteStartRow > 0) 
 			{
@@ -991,6 +993,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					m_endIndex = absoluteStartRow + m_chunkSize -1;
 				}
 			}
+			DateTime dt = DateTime.Now;
+
+			//>>> SQL TRACE
+			m_conn.m_logger.SqlTrace(dt, "FETCH BUFFER START: " + m_startIndex.ToString());
+			m_conn.m_logger.SqlTrace(dt, "FETCH BUFFER END  : " + m_endIndex.ToString());
+			//<<< SQL TRACE
+			
 			DetermineFlags(maxRows);
 		}
 

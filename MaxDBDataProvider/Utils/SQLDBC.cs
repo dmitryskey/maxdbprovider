@@ -277,13 +277,16 @@ namespace MaxDBDataProvider.Utils
 		public extern static IntPtr SQLDBC_Environment_new_SQLDBC_Environment(IntPtr runtime);
 
 		[DllImport("libSQLDBC_C")]
+		public extern static void SQLDBC_Environment_setTraceOptions(IntPtr env, IntPtr traceoptions);  
+
+		[DllImport("libSQLDBC_C")]
 		public extern static void SQLDBC_Environment_delete_SQLDBC_Environment(IntPtr env);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static IntPtr SQLDBC_Environment_createConnection(IntPtr environment);
+		public extern static IntPtr SQLDBC_Environment_createConnection(IntPtr env);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static void SQLDBC_Environment_releaseConnection (IntPtr hdl, IntPtr conn); 
+		public extern static void SQLDBC_Environment_releaseConnection (IntPtr env, IntPtr conn); 
 
 		#endregion
  

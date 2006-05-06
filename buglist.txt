@@ -1,6 +1,7 @@
 1. What does 'ODB' mean for AppID?
 2. The method MaxDBCommand.Cancel() does not work properly
 3. Mono(wrapper): perfomance test fails - Packet execution failed : POS(38) Invalid keyword or missing delimiter
+4. How to get information whether field is serial or not? The method DataAdapter.Fill has to use this information to set column read-only.
 
 
 

@@ -3,6 +3,7 @@ using NUnit.Framework;
 using MaxDBDataProvider;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 
 namespace MaxDBConsole.UnitTesting
 {
@@ -44,7 +45,7 @@ namespace MaxDBConsole.UnitTesting
 			}
 			catch(Exception ex)
 			{
-				System.Diagnostics.Trace.WriteLine(ex.Message);
+				Trace.WriteLine(ex.Message);
 				throw;
 			}
 		}
@@ -107,10 +108,12 @@ namespace MaxDBConsole.UnitTesting
 				
 				MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT * FROM Test FOR UPDATE", m_conn);
 				MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da, new string[]{"id", "id2"}, new string[]{"id"});
+				cb.GetType(); //add this command since mcs compiler supposes that cb is never used
 				DataTable dt = new DataTable();
 				da.Fill(dt);
 
 				DataRow dr = dt.NewRow();
+				dr["id"] = 1;
 				dr["id2"] = 2;
 				dr["name"] = "TestName1";
 				dt.Rows.Add(dr);
@@ -166,11 +169,12 @@ namespace MaxDBConsole.UnitTesting
 				ClearTestTable();
 				MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT * FROM Test FOR UPDATE", m_conn);
 				MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da, new string[]{"id", "id2"}, new string[]{"id"});
+				cb.GetType(); //add this command since mcs compiler supposes that cb is never used
 				DataTable dt = new DataTable();
 				da.Fill(dt);
 
 				DataRow row = dt.NewRow();
-				row["id"] = DBNull.Value;
+				row["id"] = 1;//DBNull.Value; 
 				row["id2"] = 1;
 				row["name"] = "Test";
 				row["dt"] = DBNull.Value;
@@ -197,17 +201,18 @@ namespace MaxDBConsole.UnitTesting
 				ClearTestTable();
 				MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT * FROM test FOR UPDATE", m_conn);
 				MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da, new string[]{"id", "id2"}, new string[]{"id"});
+				cb.GetType(); //add this command since mcs compiler supposes that cb is never used
 				DataTable dt = new DataTable();
 				da.Fill(dt);
 
 				for (int i = 0; i < 1000; i++)
 				{
 					DataRow dr = dt.NewRow();
-					dr["id"] = DBNull.Value;
+					dr["id"] = 1;//DBNull.Value;
 					dr["id2"] = i;
-					dt.Rows.Add( dr );
+					dt.Rows.Add(dr);
 					DataTable changes = dt.GetChanges();
-					da.Update( changes );
+					da.Update(changes);
 					dt.AcceptChanges();
 				}
 
@@ -220,7 +225,6 @@ namespace MaxDBConsole.UnitTesting
 				Assert.Fail(ex.Message);
 			}
 		}
-
 
 		private void ClearTestTable()
 		{

@@ -43,56 +43,64 @@ namespace MaxDBDataProvider.Utils
 	{
 		private string m_host;
 		private int m_port;
-        private int m_timeout;
-        private TcpClient m_client;
+		private int m_timeout;
+		private TcpClient m_client;
 		private bool m_secure;
 
 		public SocketClass(string host, int port, int timeout, bool secure, bool checksocket) 
 		{
 			m_host = host;
 			m_port = port;
-            m_timeout = timeout;
+			m_timeout = timeout;
 			m_secure = secure;
-
-			if (checksocket && timeout > 0)
+			
+			try
 			{
-				Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-				bool connect_succeeded = false;
-				IPHostEntry entries = Dns.GetHostByName(host);
-				foreach(IPAddress ipAddr in entries.AddressList)
+				if (checksocket && timeout > 0)
 				{
-					sock.Blocking = false;
-					try 
+					Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+					bool connect_succeeded = false;
+					IPHostEntry entries = Dns.GetHostByName(host);
+					foreach(IPAddress ipAddr in entries.AddressList)
 					{
-						sock.Connect(new IPEndPoint(ipAddr, m_port));
-					}
-					catch (SocketException ex)
-					{
-						if (ex.ErrorCode != 10035 && ex.ErrorCode != 10036)
-							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_HOST_CONNECT, m_host, m_port), ex);
+						sock.Blocking = false;
+						try 
+						{
+							sock.Connect(new IPEndPoint(ipAddr, m_port));
+						}
+						catch(SocketException ex)
+						{
+							if (ex.ErrorCode != 10035 && ex.ErrorCode != 10036)
+								throw;
+						}
+
+						ArrayList checkWrite = new ArrayList();
+						checkWrite.Add(sock);
+						ArrayList checkError = new ArrayList();
+						checkError.Add(sock);
+
+						Socket.Select(null, checkWrite, checkError, m_timeout * 1000000);
+						sock.Blocking = true;
+						sock.Close();
+
+						if (checkWrite.Count > 0)
+						{
+							connect_succeeded = true;
+							break;
+						}
 					}
 
-					ArrayList checkWrite = new ArrayList();
-					checkWrite.Add(sock);
-					ArrayList checkError = new ArrayList();
-					checkError.Add(sock);
-
-					Socket.Select(null, checkWrite, checkError, m_timeout * 1000000);
-					sock.Close();
-
-					if (checkWrite.Count > 0)
-					{
-						connect_succeeded = true;
-						break;
-					}
+					if (!connect_succeeded)
+						throw new Exception();
 				}
 
-				if (!connect_succeeded)
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_HOST_CONNECT, m_host, m_port));
+				m_client = new TcpClient(host, port);
+				m_client.ReceiveTimeout = m_timeout;
 			}
-
-            m_client = new TcpClient(host, port);
-            m_client.ReceiveTimeout = m_timeout;
+			catch(Exception ex)
+			{
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_HOST_CONNECT, m_host, m_port), ex);
+			}
 		}
 
 		#region SocketIntf Members

@@ -16,6 +16,7 @@
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 using System;
+using System.Text;
 using System.Security.Cryptography;
 using MaxDBDataProvider.MaxDBProtocol;
 
@@ -297,16 +298,16 @@ namespace MaxDBDataProvider.Utils
 		{
 			if (!vData.NextRow() || !vData.NextField())
 				throw new MaxDBSQLException(MaxDBMessages.Extract
-					(MaxDBMessages.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
+					(MaxDBMessages.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
 
 			string alg = vData.ReadASCII(vData.CurrentOffset, vData.CurrentFieldLen);
 			if (alg.ToUpper().Trim() != Crypt.ScramMD5Name)
 				throw new MaxDBSQLException(MaxDBMessages.Extract
-					(MaxDBMessages.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
+					(MaxDBMessages.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
 
 			if (!vData.NextField() || vData.CurrentFieldLen < 8)
 				throw new MaxDBSQLException(MaxDBMessages.Extract
-					(MaxDBMessages.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
+					(MaxDBMessages.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
 
 			if (vData.CurrentFieldLen == 40)
 			{
@@ -320,13 +321,13 @@ namespace MaxDBDataProvider.Utils
 				if (!vd.NextRow() || !vd.NextField())
 					throw new MaxDBSQLException(MaxDBMessages.Extract
 						(MaxDBMessages.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
-							Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
+							Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
 
 				salt = vd.ReadBytes(vd.CurrentOffset, vd.CurrentFieldLen);
 				if (!vd.NextField())
 					throw new MaxDBSQLException(MaxDBMessages.Extract
 						(MaxDBMessages.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
-							Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
+							Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
 
 				serverchallenge = vd.ReadBytes(vd.CurrentOffset, vd.CurrentFieldLen);
 
@@ -337,7 +338,7 @@ namespace MaxDBDataProvider.Utils
 					if (!mp_vd.NextRow() || !mp_vd.NextField()) 
 						throw new MaxDBSQLException(MaxDBMessages.Extract
 							(MaxDBMessages.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
-								Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
+								Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
 
 					do 
 					{
@@ -346,7 +347,7 @@ namespace MaxDBDataProvider.Utils
 							if (!mp_vd.NextField()) 
 								throw new MaxDBSQLException(MaxDBMessages.Extract
 									(MaxDBMessages.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
-										Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
+										Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
 							else
 							{
 								try 
@@ -357,7 +358,7 @@ namespace MaxDBDataProvider.Utils
 								{
 									throw new MaxDBSQLException(MaxDBMessages.Extract
 										(MaxDBMessages.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
-											Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
+											Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
 								} 
 							}
 						} 
@@ -366,7 +367,7 @@ namespace MaxDBDataProvider.Utils
 							if (!mp_vd.NextField()) 
 								throw new MaxDBSQLException(MaxDBMessages.Extract
 									(MaxDBMessages.ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED, 
-										Logger.ToHexString(vData.ReadBytes(0, vData.Length))));
+										Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
 						}     
 					} 
 					while (mp_vd.NextField());

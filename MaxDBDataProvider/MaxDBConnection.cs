@@ -94,13 +94,14 @@ namespace MaxDBDataProvider
 		#region "SQLDBC Wrapper parameters"
 		
 		private IntPtr m_runtimeHandler;
-		private IntPtr m_envHandler;
+		internal IntPtr m_envHandler;
 		private IntPtr m_connPropHandler;
 		internal IntPtr m_connHandler = IntPtr.Zero;
 
 		#endregion
 #endif
 
+		internal MaxDBLogger m_logger;
 		internal IsolationLevel m_isolationLevel = IsolationLevel.Unspecified;
 		internal bool m_spaceOption = false;
 		private int m_timeout = 0;
@@ -257,6 +258,10 @@ namespace MaxDBDataProvider
 			{
 				if (State != ConnectionState.Open)
 					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONNECTION_NOTOPENED));
+
+				//>>> SQL TRACE
+				m_logger.SqlTrace(DateTime.Now, "::SET AUTOCOMMIT " + (value ? "ON" : "OFF"));
+				//<<< SQL TRACE				
 
 #if SAFE
 				m_autocommit = value;
@@ -472,6 +477,15 @@ namespace MaxDBDataProvider
 			password = StripString(password);
 
 			byte[] passwordBytes = m_enc.GetBytes(password);
+
+			DateTime currentDt = DateTime.Now;
+
+			//>>> SQL TRACE
+			m_logger.SqlTrace(currentDt, "::CONNECT");
+			m_logger.SqlTrace(currentDt, "SERVERNODE: '" + m_ConnArgs.host + (m_ConnArgs.port > 0 ? ":" + m_ConnArgs.port.ToString() : string.Empty) + "'");
+			m_logger.SqlTrace(currentDt, "SERVERDB  : '" + m_ConnArgs.dbname + "'");
+			m_logger.SqlTrace(currentDt, "USER  : '" + m_ConnArgs.username + "'");
+			//<<< SQL TRACE
  
 			m_comm.Connect(m_ConnArgs.dbname, m_ConnArgs.port);
 
@@ -528,6 +542,10 @@ namespace MaxDBDataProvider
 				SetKernelFeatureRequest(Feature.SpaceOption);
 			}
 
+			//>>> SQL TRACE
+			m_logger.SqlTrace(currentDt, "CONNECT COMMAND: " + connectCmd);
+			//<<< SQL TRACE
+
 			requestPacket.InitDbsCommand(false, connectCmd);
 
 			if (!isChallengeResponseSupported)
@@ -572,6 +590,10 @@ namespace MaxDBDataProvider
 
 			if (m_cache != null && m_cache.Length > 0 && m_cacheSize > 0)
 				m_parseCache = new ParseInfoCache(m_cache, m_cacheSize);
+
+			//>>> SQL TRACE
+			m_logger.SqlTrace(DateTime.Now, "SESSION ID: " + m_sessionID);
+			//<<< SQL TRACE
 		}
 
 		private void SetKernelFeatureRequest(int feature)
@@ -581,8 +603,20 @@ namespace MaxDBDataProvider
 
 		internal void Cancel(object reqObj)
 		{
+			DateTime dt = DateTime.Now;
+			//>>> SQL TRACE
+			m_logger.SqlTrace(dt, "::CANCEL");
+			m_logger.SqlTrace(dt, "SESSION ID: " + m_sessionID);
+			//<<< SQL TRACE
 			if (m_execObj == reqObj)
 				m_comm.Cancel();
+			else
+			{
+				//>>> SQL TRACE
+				m_logger.SqlTrace(dt, "RETURN     : 100");
+				m_logger.SqlTrace(dt, "MESSAGE    : No active command found.");
+				//<<< SQL TRACE
+			}
 		}
 
 		private bool IsKernelFeatureSupported(int feature)
@@ -704,8 +738,16 @@ namespace MaxDBDataProvider
 				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_connPropHandler, "ISOLATIONLEVEL", MapIsolationLevel(m_isolationLevel).ToString());
 			if (m_spaceOption) 
 				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_connPropHandler, "SPACE_OPTION", "1");
+
+			SQLDBC.SQLDBC_ConnectProperties_setProperty(m_connPropHandler, "LONG", "TRUE");
+			SQLDBC.SQLDBC_ConnectProperties_setProperty(m_connPropHandler, "PACKET", "TRUE");
+			SQLDBC.SQLDBC_ConnectProperties_setProperty(m_connPropHandler, "FILENAME", "1.log");
+
+			SQLDBC.SQLDBC_Environment_setTraceOptions(m_envHandler, m_connPropHandler);
 			
 			SQLDBC.SQLDBC_Connection_setSQLMode(m_connHandler, m_mode);
+
+			m_logger = new MaxDBLogger(this);
 
 			if (SQLDBC.SQLDBC_Connection_connectASCII(m_connHandler, m_ConnArgs.host, m_ConnArgs.dbname, m_ConnArgs.username, 
 				m_ConnArgs.password, m_connPropHandler) != SQLDBC_Retcode.SQLDBC_OK) 
@@ -763,6 +805,11 @@ namespace MaxDBDataProvider
 			 */
 			if (State == ConnectionState.Open)
 			{
+				//>>> SQL TRACE
+				m_logger.SqlTrace(DateTime.Now, "::CLOSE CONNECTION");
+				//<<< SQL TRACE
+
+				m_logger.Flush();
 #if SAFE
 				m_sessionID = -1;
 				if (m_comm != null)
@@ -872,17 +919,9 @@ namespace MaxDBDataProvider
 
 		public void Open()
 		{
-			/*
-			 * Open the database connection and set the ConnectionState
-			 * property. If the underlying connection to the server is 
-			 * expensive to obtain, the implementation should provide
-			 * implicit pooling of that connection.
-			 * 
-			 * If the provider also supports automatic enlistment in 
-			 * distributed transactions, it should enlist during Open().
-			 */
 #if SAFE
 			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout, false, true));
+			m_logger = new MaxDBLogger(this);
 			DoConnect();
 #else
 			OpenConnection();
@@ -929,6 +968,7 @@ namespace MaxDBDataProvider
 				Close();
 
 #if !SAFE
+			((IDisposable)m_logger).Dispose();
 			SQLDBC.SQLDBC_Environment_releaseConnection(m_envHandler, m_connHandler);
 			m_connHandler = IntPtr.Zero;
 			SQLDBC.SQLDBC_Environment_delete_SQLDBC_Environment(m_envHandler);

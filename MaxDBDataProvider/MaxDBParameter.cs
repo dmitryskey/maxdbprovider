@@ -30,7 +30,7 @@ namespace MaxDBDataProvider
 		private int m_size;
 		private DataRowVersion m_sourceVersion = DataRowVersion.Current;
 		internal object m_value;
-		internal object m_InputValue;
+		internal object m_inputValue;
 
 		public MaxDBParameter()
 		{
@@ -274,13 +274,13 @@ namespace MaxDBDataProvider
 				m_value = value;
 
 				if (value == null || value == DBNull.Value)
-					m_InputValue = DBNull.Value;
+					m_inputValue = DBNull.Value;
 				else
 				{
 					switch(m_dbType)
 					{
 						case MaxDBType.Boolean:
-							m_InputValue = bool.Parse(value.ToString());
+							m_inputValue = bool.Parse(value.ToString());
 							break;
 
 						case MaxDBType.Fixed:
@@ -288,19 +288,19 @@ namespace MaxDBDataProvider
 						case MaxDBType.VFloat:
 						case MaxDBType.Number:
 						case MaxDBType.NoNumber:
-							m_InputValue = double.Parse(value.ToString());
+							m_inputValue = double.Parse(value.ToString());
 							break;
 
 						case MaxDBType.Integer:
-							m_InputValue = int.Parse(value.ToString());
+							m_inputValue = int.Parse(value.ToString());
 							break;
 
 						case MaxDBType.SmallInt:
-							m_InputValue = short.Parse(value.ToString());
+							m_inputValue = short.Parse(value.ToString());
 							break;
 
 						default:
-							m_InputValue = value;
+							m_inputValue = value;
 							break;
 					}
 				}
