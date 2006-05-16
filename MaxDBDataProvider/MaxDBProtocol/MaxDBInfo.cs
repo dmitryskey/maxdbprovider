@@ -417,16 +417,20 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		/**
-		 * Gets the information about parameters in sql statement
-		 * 
-		 * @return a <code>DBTechTranslator []</code holding the parameter infos
-		 */
+		// Gets the information about parameters in sql statement
 		public DBTechTranslator[] ParamInfo 
 		{
 			get
 			{
 				return m_paramInfos;
+			}
+		}
+
+		public DBTechTranslator[] ColumnInfo 
+		{
+			get
+			{
+				return m_columnInfos;
 			}
 		}
 
@@ -984,7 +988,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			DateTime dt = DateTime.Now;
 			//>>> SQL TRACE
-			m_connection.m_logger.SqlTrace(dt, "::FETCH " + m_cursorName);
+			m_connection.m_logger.SqlTrace(dt, "::FETCH NEXT " + m_cursorName);
 			m_connection.m_logger.SqlTrace(dt, "SQL COMMAND: " + cmd);
 			//<<< SQL TRACE
 			
@@ -1081,49 +1085,49 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				case DataType.CHA:
 				case DataType.CHE:
 				case DataType.DBYTEEBCDIC:
-					return DataType.stringValues[DataType.CHA];
+					return DataType.StrValues[DataType.CHA];
 				case DataType.CHB:
 				case DataType.ROWID:
-					return DataType.stringValues[DataType.CHB];
+					return DataType.StrValues[DataType.CHB];
 				case DataType.UNICODE:
-					return DataType.stringValues[DataType.UNICODE];
+					return DataType.StrValues[DataType.UNICODE];
 				case DataType.VARCHARA:
 				case DataType.VARCHARE:
-					return DataType.stringValues[DataType.VARCHARA];
+					return DataType.StrValues[DataType.VARCHARA];
 				case DataType.VARCHARB:
-					return DataType.stringValues[DataType.VARCHARB];
+					return DataType.StrValues[DataType.VARCHARB];
 				case DataType.VARCHARUNI:
-					return DataType.stringValues[DataType.VARCHARUNI];
+					return DataType.StrValues[DataType.VARCHARUNI];
 				case DataType.STRA:
 				case DataType.STRE:
 				case DataType.LONGA:
 				case DataType.LONGE:
 				case DataType.LONGDB:
-					return DataType.stringValues[DataType.LONGA];
+					return DataType.StrValues[DataType.LONGA];
 				case DataType.STRB:
 				case DataType.LONGB:
-					return DataType.stringValues[DataType.LONGB];
+					return DataType.StrValues[DataType.LONGB];
 				case DataType.STRUNI:
 				case DataType.LONGUNI:
-					return DataType.stringValues[DataType.LONGUNI];
+					return DataType.StrValues[DataType.LONGUNI];
 				case DataType.DATE:
-					return DataType.stringValues[DataType.DATE];
+					return DataType.StrValues[DataType.DATE];
 				case DataType.TIME:
-					return DataType.stringValues[DataType.TIME];
+					return DataType.StrValues[DataType.TIME];
 				case DataType.TIMESTAMP:
-					return DataType.stringValues[DataType.TIMESTAMP];
+					return DataType.StrValues[DataType.TIMESTAMP];
 				case DataType.BOOLEAN:
-					return DataType.stringValues[DataType.BOOLEAN];
+					return DataType.StrValues[DataType.BOOLEAN];
 				case DataType.FIXED:
 				case DataType.NUMBER:
-					return DataType.stringValues[DataType.FIXED];
+					return DataType.StrValues[DataType.FIXED];
 				case DataType.FLOAT:
 				case DataType.VFLOAT:
-					return DataType.stringValues[DataType.FLOAT];
+					return DataType.StrValues[DataType.FLOAT];
 				case DataType.SMALLINT:
-					return DataType.stringValues[DataType.SMALLINT];
+					return DataType.StrValues[DataType.SMALLINT];
 				case DataType.INTEGER:
-					return DataType.stringValues[DataType.INTEGER];
+					return DataType.StrValues[DataType.INTEGER];
 				default:
 					return MaxDBMessages.Extract(MaxDBMessages.UNKNOWNTYPE);
 			}

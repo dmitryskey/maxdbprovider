@@ -260,7 +260,8 @@ namespace MaxDBDataProvider
 					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONNECTION_NOTOPENED));
 
 				//>>> SQL TRACE
-				m_logger.SqlTrace(DateTime.Now, "::SET AUTOCOMMIT " + (value ? "ON" : "OFF"));
+				if (m_logger.TraceSQL)
+					m_logger.SqlTrace(DateTime.Now, "::SET AUTOCOMMIT " + (value ? "ON" : "OFF"));
 				//<<< SQL TRACE				
 
 #if SAFE
@@ -408,8 +409,32 @@ namespace MaxDBDataProvider
 
 			try 
 			{
+				DateTime dt = DateTime.Now;
+
+				//>>> PACKET TRACE
+				if (m_logger.TraceFull)
+				{
+					m_logger.SqlTrace(dt, "<PACKET>");
+					m_logger.SqlTrace(dt, requestPacket.DumpPacket());
+				}
+				//<<< PACKET TRACE
+
 				m_execObj = execObj;
-				replyPacket = m_comm.Exec(requestPacket, requestLen);
+				replyPacket = m_comm.Execute(requestPacket, requestLen);
+
+				//>>> PACKET TRACE
+				if (m_logger.TraceFull)
+				{
+					dt = DateTime.Now;
+					int segm = replyPacket.FirstSegment();
+					while(segm != -1)
+					{
+						m_logger.SqlTrace(dt, replyPacket.DumpSegment(dt));
+						segm = replyPacket.NextSegment();
+					}
+					m_logger.SqlTrace(dt, "</PACKET>");
+				}
+				//<<< PACKET TRACE
 
 				// get return code
 				localWeakReturnCode = replyPacket.WeakReturnCode;
@@ -481,10 +506,13 @@ namespace MaxDBDataProvider
 			DateTime currentDt = DateTime.Now;
 
 			//>>> SQL TRACE
-			m_logger.SqlTrace(currentDt, "::CONNECT");
-			m_logger.SqlTrace(currentDt, "SERVERNODE: '" + m_ConnArgs.host + (m_ConnArgs.port > 0 ? ":" + m_ConnArgs.port.ToString() : string.Empty) + "'");
-			m_logger.SqlTrace(currentDt, "SERVERDB  : '" + m_ConnArgs.dbname + "'");
-			m_logger.SqlTrace(currentDt, "USER  : '" + m_ConnArgs.username + "'");
+			if (m_logger.TraceSQL)
+			{
+				m_logger.SqlTrace(currentDt, "::CONNECT");
+				m_logger.SqlTrace(currentDt, "SERVERNODE: '" + m_ConnArgs.host + (m_ConnArgs.port > 0 ? ":" + m_ConnArgs.port.ToString() : string.Empty) + "'");
+				m_logger.SqlTrace(currentDt, "SERVERDB  : '" + m_ConnArgs.dbname + "'");
+				m_logger.SqlTrace(currentDt, "USER  : '" + m_ConnArgs.username + "'");
+			}
 			//<<< SQL TRACE
  
 			m_comm.Connect(m_ConnArgs.dbname, m_ConnArgs.port);
@@ -543,7 +571,8 @@ namespace MaxDBDataProvider
 			}
 
 			//>>> SQL TRACE
-			m_logger.SqlTrace(currentDt, "CONNECT COMMAND: " + connectCmd);
+			if (m_logger.TraceSQL)
+				m_logger.SqlTrace(currentDt, "CONNECT COMMAND: " + connectCmd);
 			//<<< SQL TRACE
 
 			requestPacket.InitDbsCommand(false, connectCmd);
@@ -592,7 +621,8 @@ namespace MaxDBDataProvider
 				m_parseCache = new ParseInfoCache(m_cache, m_cacheSize);
 
 			//>>> SQL TRACE
-			m_logger.SqlTrace(DateTime.Now, "SESSION ID: " + m_sessionID);
+			if (m_logger.TraceSQL)
+				m_logger.SqlTrace(DateTime.Now, "SESSION ID: " + m_sessionID);
 			//<<< SQL TRACE
 		}
 
@@ -605,16 +635,22 @@ namespace MaxDBDataProvider
 		{
 			DateTime dt = DateTime.Now;
 			//>>> SQL TRACE
-			m_logger.SqlTrace(dt, "::CANCEL");
-			m_logger.SqlTrace(dt, "SESSION ID: " + m_sessionID);
+			if (m_logger.TraceSQL)
+			{
+				m_logger.SqlTrace(dt, "::CANCEL");
+				m_logger.SqlTrace(dt, "SESSION ID: " + m_sessionID);
+			}
 			//<<< SQL TRACE
 			if (m_execObj == reqObj)
 				m_comm.Cancel();
 			else
 			{
 				//>>> SQL TRACE
-				m_logger.SqlTrace(dt, "RETURN     : 100");
-				m_logger.SqlTrace(dt, "MESSAGE    : No active command found.");
+				if (m_logger.TraceSQL)
+				{
+					m_logger.SqlTrace(dt, "RETURN     : 100");
+					m_logger.SqlTrace(dt, "MESSAGE    : No active command found.");
+				}
 				//<<< SQL TRACE
 			}
 		}
@@ -707,7 +743,7 @@ namespace MaxDBDataProvider
 		{
 			get
 			{
-				return Consts.Cursor_Prefix + m_cursorId++;
+				return Consts.CursorPrefix + m_cursorId++;
 			}
 		}
 
@@ -806,7 +842,8 @@ namespace MaxDBDataProvider
 			if (State == ConnectionState.Open)
 			{
 				//>>> SQL TRACE
-				m_logger.SqlTrace(DateTime.Now, "::CLOSE CONNECTION");
+				if (m_logger.TraceSQL)
+					m_logger.SqlTrace(DateTime.Now, "::CLOSE CONNECTION");
 				//<<< SQL TRACE
 
 				m_logger.Flush();

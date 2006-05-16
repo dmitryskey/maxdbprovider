@@ -58,6 +58,15 @@ namespace MaxDBDataProvider.Utils
 
 	internal class MaxDBLogger : IDisposable
 	{
+		public const int 
+			NumSize = 4,
+			TypeSize = 16,
+			LenSize = 10,
+			InputSize = 10,
+			DataSize = 256;
+
+		public const string Null = "NULL";
+
 		private MaxDBConnection m_conn;
 		private MaxDBTraceSwitch m_traceSwitch = new MaxDBTraceSwitch("TraceLevel", "Trace Level");
 #if !SAFE
@@ -74,11 +83,17 @@ namespace MaxDBDataProvider.Utils
 				m_prop = SQLDBC.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
 				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "SQL", "1");
 				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "TIMESTAMP", "1");
-				string TempDir = "";
+
 				if (ConfigurationSettings.AppSettings["SDBPath"] != null)
-					TempDir = ConfigurationSettings.AppSettings["SDBPath"] + "\\data\\wrk";
-				m_logname = TempDir + "\\adonetlog.html";
-				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "FILENAME", "adonet.html");
+				{
+					m_logname = ConfigurationSettings.AppSettings["SDBPath"] + "\\data\\wrk" + "\\adonetlog.html";
+					SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "FILENAME", "adonet.html");
+				}
+				else
+				{
+					m_logname = Path.GetTempPath() + "adonetlog.html";
+					SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "FILENAME", m_logname);
+				}
 				if (m_traceSwitch.TraceFull)
 					SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "PACKET", "1");
 				SQLDBC.SQLDBC_Environment_setTraceOptions(m_conn.m_envHandler, m_prop);
@@ -86,26 +101,51 @@ namespace MaxDBDataProvider.Utils
 #endif
 		}
 
+		public MaxDBTraceLevel Level
+		{
+			get
+			{
+				return m_traceSwitch.Level;	
+			}
+		}
+
+		public bool TraceSQL
+		{
+			get
+			{
+				return m_traceSwitch.TraceSQL;
+			}
+		}
+
+		public bool TraceFull
+		{
+			get
+			{
+				return m_traceSwitch.TraceFull;
+			}
+		}
+
 		public void SqlTrace(DateTime dt, string msg)
 		{
 #if SAFE
 			if (m_traceSwitch.TraceSQL)
-				Trace.WriteLine(dt.ToString("yyyy-MM-dd hh:mm:ss.ffffff") + " " + msg);
+				Trace.WriteLine(dt.ToString(Consts.TimeStampFormat) + " " + msg);
 #endif
 		}
 
-		public void SqlTraceParseInfo(DateTime dt, MaxDBParseInfo parseInfo)
+		public void SqlTraceParseInfo(DateTime dt, object objInfo)
 		{
 #if SAFE
+			MaxDBParseInfo parseInfo = (MaxDBParseInfo)objInfo;
 			if (m_traceSwitch.TraceSQL)
 			{
-				if (parseInfo.ParamInfo.Length > 0)
+				if (parseInfo.ParamInfo != null && parseInfo.ParamInfo.Length > 0)
 				{
 					SqlTrace(dt, "PARAMETERS:");
 					SqlTrace(dt, "I   T              L    P   IO    N");
 					foreach (DBTechTranslator info in parseInfo.ParamInfo)
 					{
-						Trace.Write(dt.ToString("yyyy-MM-dd hh:mm:ss.ffffff") + " ");
+						Trace.Write(dt.ToString(Consts.TimeStampFormat) + " ");
 
 						SqlTraceTransl(info);
 
@@ -141,13 +181,13 @@ namespace MaxDBDataProvider.Utils
 					}
 				}
 
-				if (parseInfo.m_columnInfos.Length > 0)
+				if (parseInfo.ColumnInfo != null && parseInfo.ColumnInfo.Length > 0)
 				{
 					SqlTrace(dt, "COLUMNS:");
 					SqlTrace(dt, "I   T              L    P   N");
-					foreach(DBTechTranslator info in parseInfo.m_columnInfos)
+					foreach(DBTechTranslator info in parseInfo.ColumnInfo)
 					{
-						Trace.Write(dt.ToString("yyyy-MM-dd hh:mm:ss.ffffff") + " ");
+						Trace.Write(dt.ToString(Consts.TimeStampFormat) + " ");
 						SqlTraceTransl(info);
 						Trace.WriteLine(info.ColumnName);
 					}
@@ -156,6 +196,14 @@ namespace MaxDBDataProvider.Utils
 #endif
 		}
 
+		public void SqlTraceDataHeader(DateTime dt)
+		{
+#if SAFE
+			SqlTrace(dt, "I".PadRight(NumSize) + "T".PadRight(TypeSize) + "L".PadRight(LenSize) + "I".PadRight(InputSize) + "DATA");
+#endif
+		}
+
+#if SAFE
 		private void SqlTraceTransl(DBTechTranslator info)
 		{
 			Trace.Write(info.ColumnIndex.ToString().PadRight(4));
@@ -163,6 +211,7 @@ namespace MaxDBDataProvider.Utils
 			Trace.Write(info.PhysicalLength.ToString().PadRight(5));
 			Trace.Write(info.Precision.ToString().PadRight(4));
 		}
+#endif
 
 		public void Flush()
 		{

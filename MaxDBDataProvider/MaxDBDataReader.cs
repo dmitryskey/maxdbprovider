@@ -432,8 +432,22 @@ namespace MaxDBDataProvider
 		public object GetValue(int i)
 		{
 #if SAFE
-			DBTechTranslator info = FindColumnInfo(i);
-			return info.IsDBNull(CurrentRecord)? DBNull.Value : info.GetValue(this, CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			object obj_value = transl.IsDBNull(CurrentRecord)? DBNull.Value : transl.GetValue(this, CurrentRecord);
+
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+				if (obj_value != DBNull.Value)
+				{
+					string str_value = obj_value.ToString();
+					LogValue(i + 1, transl, "OBJECT", 0, 1, 
+						(str_value.Length <= MaxDBLogger.DataSize ? str_value : str_value.Substring(0, MaxDBLogger.DataSize) + "..."));
+				}
+				else
+					LogValue(i + 1, transl, "OBJECT", 0, 1, "NULL"); 
+			//<<< SQL TRACE
+
+			return obj_value;
 #else
 			int columnType;
 			byte[] data = GetValueBytes(i, out columnType);
@@ -510,6 +524,21 @@ namespace MaxDBDataProvider
 			}
 		}
 
+#if SAFE
+		private void LogValue(int i, DBTechTranslator transl, string type, int size, int minusLen, string value)
+		{
+			DateTime dt = DateTime.Now;
+			m_connection.m_logger.SqlTrace(dt, "GET " + type + " VALUE:");
+			m_connection.m_logger.SqlTraceDataHeader(dt);
+			string s_out = i.ToString().PadRight(MaxDBLogger.NumSize);
+			s_out += transl.ColumnTypeName.PadRight(MaxDBLogger.TypeSize);
+			s_out += (transl.PhysicalLength - minusLen).ToString().PadRight(MaxDBLogger.LenSize);
+			s_out += size.ToString().PadRight(MaxDBLogger.InputSize);
+			s_out += value;
+			m_connection.m_logger.SqlTrace(dt, s_out);
+		}
+#endif
+
 		public bool GetBoolean(int i)
 		{
 			/*
@@ -517,7 +546,15 @@ namespace MaxDBDataProvider
 			 * should be thrown if the data is not already of the correct type.
 			 */
 #if SAFE
-			return FindColumnInfo(i).GetBoolean(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			bool bool_value = transl.GetBoolean(CurrentRecord);
+			
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+				LogValue(i + 1, transl, "BOOLEAN", 1, 0, bool_value.ToString());
+			//<<< SQL TRACE
+
+			return bool_value;
 #else
 			int columnType;
 			byte[] data = GetValueBytes(i, out columnType);
@@ -547,7 +584,7 @@ namespace MaxDBDataProvider
 						return bool.Parse(Encoding.Unicode.GetString(data));
 					default:
 						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
-							DataType.stringValues[columnType], "Boolean"));
+							DataType.StrValues[columnType], "Boolean"));
 				}
 			}
 			else
@@ -558,7 +595,15 @@ namespace MaxDBDataProvider
 		public byte GetByte(int i)
 		{
 #if SAFE
-			return FindColumnInfo(i).GetByte(this, CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			byte byte_value = transl.GetByte(this, CurrentRecord);
+			
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+				LogValue(i + 1, transl, "BYTE", 1, 0, byte_value.ToString());
+			//<<< SQL TRACE
+
+			return byte_value;
 #else
 			byte[] buffer = new byte[1];
 			int columnType = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1));
@@ -570,7 +615,20 @@ namespace MaxDBDataProvider
 		public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferOffset, int length)
 		{
 #if SAFE
-			return FindColumnInfo(i).GetBytes(this, CurrentRecord, fieldOffset, buffer, bufferOffset, length);
+			DBTechTranslator transl = FindColumnInfo(i);
+			long result = transl.GetBytes(this, CurrentRecord, fieldOffset, buffer, bufferOffset, length);
+			
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+			{
+				byte[] logs = new byte[Math.Min(MaxDBLogger.DataSize / 2, length)];
+				Array.Copy(buffer, bufferOffset, logs, 0, logs.Length);
+
+				LogValue(i + 1, transl, "BYTES", logs.Length, 0, Consts.ToHexString(logs) + (logs.Length < length ? "..." : ""));
+			}
+			//<<< SQL TRACE
+
+			return result;
 #else
 			int columnType = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1));
 			return GetValueBytes(i, columnType, fieldOffset, buffer, bufferOffset, length);
@@ -583,13 +641,26 @@ namespace MaxDBDataProvider
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
-			return ((string)GetValue(i))[0];
+			return GetString(i)[0];
 		}
 
-		public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
+		public long GetChars(int i, long fieldOffset, char[] buffer, int bufferOffset, int length)
 		{
 #if SAFE
-			return FindColumnInfo(i).GetChars(this, CurrentRecord, fieldoffset, buffer, bufferoffset, length);
+			DBTechTranslator transl = FindColumnInfo(i);
+			long result = transl.GetChars(this, CurrentRecord, fieldOffset, buffer, bufferOffset, length);
+			
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+			{
+				char[] logs = new char[Math.Min(MaxDBLogger.DataSize, length)];
+				Array.Copy(buffer, bufferOffset, logs, 0, logs.Length);
+
+				LogValue(i + 1, transl, "CHARS", logs.Length, 0, new string(logs) + (logs.Length < length ? "..." : ""));
+			}
+			//<<< SQL TRACE
+
+			return result;
 #else
 			int columnType = SQLDBC.SQLDBC_ResultSetMetaData_getColumnType(SQLDBC.SQLDBC_ResultSet_getResultSetMetaData(m_resultset), (short)(i + 1));
 			int elemSize;
@@ -610,7 +681,7 @@ namespace MaxDBDataProvider
 			}
 
 			byte[] byte_buffer = new byte[buffer.Length * elemSize]; 
-			long result_length = GetValueBytes(i, columnType, fieldoffset * elemSize, byte_buffer, bufferoffset * elemSize, length * elemSize);
+			long result_length = GetValueBytes(i, columnType, fieldOffset * elemSize, byte_buffer, bufferOffset * elemSize, length * elemSize);
 			if (elemSize == Consts.UnicodeWidth)
 				Encoding.Unicode.GetChars(byte_buffer, 0, byte_buffer.Length, buffer, 0);
 			else
@@ -636,7 +707,15 @@ namespace MaxDBDataProvider
 			 * should be thrown if the data is not already of the correct type.
 			 */
 #if SAFE
-			return FindColumnInfo(i).GetInt16(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			short short_value = transl.GetInt16(CurrentRecord);
+			
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+				LogValue(i + 1, transl, "INT16", 2, 0, short_value.ToString());
+			//<<< SQL TRACE
+
+			return short_value;
 #else
 			int columnType;
 			byte[] data = GetValueBytes(i, out columnType);
@@ -656,7 +735,7 @@ namespace MaxDBDataProvider
 						return BitConverter.ToInt16(data, 0);
 					default:
 						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
-							DataType.stringValues[columnType], "Int16"));
+							DataType.StrValues[columnType], "Int16"));
 				}
 			}
 			else
@@ -671,7 +750,15 @@ namespace MaxDBDataProvider
 			 * should be thrown if the data is not already of the correct type.
 			 */
 #if SAFE
-			return FindColumnInfo(i).GetInt32(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			int int_value = transl.GetInt32(CurrentRecord);
+			
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+				LogValue(i + 1, transl, "INT32", 4, 0, int_value.ToString());
+			//<<< SQL TRACE
+
+			return int_value;
 #else
 			int columnType;
 			byte[] data = GetValueBytes(i, out columnType);
@@ -691,7 +778,7 @@ namespace MaxDBDataProvider
 						return BitConverter.ToInt16(data, 0);
 					default:
 						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
-							DataType.stringValues[columnType], "Int32"));
+							DataType.StrValues[columnType], "Int32"));
 				}
 			}
 			else
@@ -706,7 +793,15 @@ namespace MaxDBDataProvider
 			 * should be thrown if the data is not already of the correct type.
 			 */
 #if SAFE
-			return FindColumnInfo(i).GetInt64(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			long long_value = transl.GetInt64(CurrentRecord);
+			
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+				LogValue(i + 1, transl, "INT64", 8, 0, long_value.ToString());
+			//<<< SQL TRACE
+
+			return long_value;
 #else
 			int columnType;
 			byte[] data = GetValueBytes(i, out columnType);
@@ -726,7 +821,7 @@ namespace MaxDBDataProvider
 						return BitConverter.ToInt16(data, 0);
 					default:
 						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
-							DataType.stringValues[columnType], "Int64"));
+							DataType.StrValues[columnType], "Int64"));
 				}
 			}
 			else
@@ -741,7 +836,15 @@ namespace MaxDBDataProvider
 			 * should be thrown if the data is not already of the correct type.
 			 */
 #if SAFE
-			return FindColumnInfo(i).GetFloat(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			float float_value = transl.GetFloat(CurrentRecord);
+			
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+				LogValue(i + 1, transl, "FLOAT", 4, 0, float_value.ToString());
+			//<<< SQL TRACE
+
+			return float_value;
 #else
 			int columnType;
 			byte[] data = GetValueBytes(i, out columnType);
@@ -761,7 +864,7 @@ namespace MaxDBDataProvider
 						return BitConverter.ToInt16(data, 0);
 					default:
 						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
-							DataType.stringValues[columnType], "Float"));
+							DataType.StrValues[columnType], "Float"));
 				}
 			}
 			else
@@ -776,7 +879,15 @@ namespace MaxDBDataProvider
 			 * should be thrown if the data is not already of the correct type.
 			 */
 #if SAFE
-			return FindColumnInfo(i).GetDouble(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			double double_value = transl.GetDouble(CurrentRecord);
+			
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+				LogValue(i + 1, transl, "DOUBLE", 8, 0, double_value.ToString());
+			//<<< SQL TRACE
+
+			return double_value;
 #else
 			int columnType;
 			byte[] data = GetValueBytes(i, out columnType);
@@ -796,7 +907,7 @@ namespace MaxDBDataProvider
 						return BitConverter.ToInt16(data, 0);
 					default:
 						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
-							DataType.stringValues[columnType], "Double"));
+							DataType.StrValues[columnType], "Double"));
 				}
 			}
 			else
@@ -811,7 +922,19 @@ namespace MaxDBDataProvider
 			 * should be thrown if the data is not already of the correct type.
 			 */
 #if SAFE
-			return FindColumnInfo(i).GetString(this, CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			string str_value = transl.GetString(this, CurrentRecord);
+			
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+				if (str_value != null)
+					LogValue(i + 1, transl, "STRING", str_value.Length, 1, 
+					(str_value.Length <= MaxDBLogger.DataSize ? str_value : str_value.Substring(0, MaxDBLogger.DataSize) + "..."));
+				else
+					LogValue(i + 1, transl, "STRING", 0, 1, "NULL"); 
+			//<<< SQL TRACE
+
+			return str_value;
 #else
 			int columnType;
 			byte[] data = GetValueBytes(i, out columnType);
@@ -862,7 +985,15 @@ namespace MaxDBDataProvider
 			 * should be thrown if the data is not already of the correct type.
 			 */
 #if SAFE
-			return FindColumnInfo(i).GetDecimal(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			decimal dec_value = transl.GetDecimal(CurrentRecord);
+			
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+				LogValue(i + 1, transl, "DECIMAL", 8, 0, dec_value.ToString());
+			//<<< SQL TRACE
+
+			return dec_value;
 #else
 			int columnType;
 			byte[] data = GetValueBytes(i, out columnType);
@@ -882,7 +1013,7 @@ namespace MaxDBDataProvider
 						return BitConverter.ToInt16(data, 0);
 					default:
 						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
-							DataType.stringValues[columnType], "Decimal"));
+							DataType.StrValues[columnType], "Decimal"));
 				}
 			}
 			else
@@ -897,7 +1028,15 @@ namespace MaxDBDataProvider
 			 * should be thrown if the data is not already of the correct type.
 			 */
 #if SAFE
-			return FindColumnInfo(i).GetDateTime(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			DateTime dt_value = transl.GetDateTime(CurrentRecord);
+			
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+				LogValue(i + 1, transl, "DATETIME", 0, 0, dt_value.ToString());
+			//<<< SQL TRACE
+
+			return dt_value;
 #else
 			int columnType;
 			byte[] data = GetValueBytes(i, out columnType);
@@ -913,7 +1052,7 @@ namespace MaxDBDataProvider
 						return ODBCConverter.GetDateTime(ODBCConverter.GetTimeStamp(data));
 					default:
 						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
-							DataType.stringValues[columnType], "DateTime"));
+							DataType.StrValues[columnType], "DateTime"));
 				}
 			}
 			else
@@ -928,7 +1067,15 @@ namespace MaxDBDataProvider
 			 * should be thrown if the data is not already of the correct type.
 			 */
 #if SAFE
-			return FindColumnInfo(i).GetTimeSpan(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			TimeSpan ts_value = transl.GetTimeSpan(CurrentRecord);
+			
+			//>>> SQL TRACE
+			if (m_connection.m_logger.TraceSQL)
+				LogValue(i + 1, transl, "TIMESPAN", 0, 0, ts_value.ToString());
+			//<<< SQL TRACE
+
+			return ts_value;
 #else
 			int columnType;
 			byte[] data = GetValueBytes(i, out columnType);
@@ -940,7 +1087,7 @@ namespace MaxDBDataProvider
 						return ODBCConverter.GetTimeSpan(ODBCConverter.GetTime(data));
 					default:
 						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
-							DataType.stringValues[columnType], "TimeSpan"));
+							DataType.StrValues[columnType], "TimeSpan"));
 				}
 			}
 			else
@@ -955,7 +1102,7 @@ namespace MaxDBDataProvider
 			 * this would be used to expose nested tables and
 			 * other hierarchical data.
 			 */
-			throw new NotSupportedException("GetData not supported.");
+			throw new NotSupportedException();
 		}
 
 		public bool IsDBNull(int i)

@@ -966,7 +966,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				throw new DataException(MaxDBMessages.Extract(MaxDBMessages.ERROR_FETCH_NODATAPART));
 			}
-			m_chunkSize = replyPacket.PartArgs;
+			m_chunkSize = replyPacket.PartArgsCount;
 			int dataPos = replyPacket.PartDataPos;
 			m_replyData = replyPacket.Clone(dataPos);
 			m_currentOffset = 0;
