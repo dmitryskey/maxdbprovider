@@ -5,6 +5,7 @@ using System.Data;
 using System.Data.Common;
 using System.Text;
 using System.Threading;
+using System.Diagnostics;
 
 namespace MaxDBConsole.UnitTesting
 {
@@ -12,10 +13,8 @@ namespace MaxDBConsole.UnitTesting
 	/// Summary description for CommandTests.
 	/// </summary>
 	[TestFixture()]
-	public class CommandTests
+	public class CommandTests : BaseTest
 	{
-		private MaxDBConnection m_conn;
-
 		public CommandTests()
 		{
 			//
@@ -24,37 +23,15 @@ namespace MaxDBConsole.UnitTesting
 		}
 
 		[TestFixtureSetUp]
-		public void Init() 
+		public void TestFixtureSetUp() 
 		{
-			try
-			{
-				m_conn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
-				m_conn.Open();
-				m_conn.AutoCommit = true;
-				try
-				{
-					(new MaxDBCommand("EXISTS TABLE Test", m_conn)).ExecuteNonQuery();
-					(new MaxDBCommand("DROP TABLE Test", m_conn)).ExecuteNonQuery();
-				}
-				catch(MaxDBException ex)
-				{
-					if (ex.DetailErrorCode != -708)
-						throw;
-				}
-
-				(new MaxDBCommand("CREATE TABLE Test (id int NOT NULL, name VARCHAR(100))", m_conn)).ExecuteNonQuery();
-			}
-			catch(Exception ex)
-			{
-				Assert.Fail(ex.Message);
-			}
+			Init("CREATE TABLE Test (id int NOT NULL, name VARCHAR(100))");
 		}
 
 		[TestFixtureTearDown]
-		public void TestFixtureTearDown() 
+		public void TestFixtureTearDown()
 		{
-			(new MaxDBCommand("DROP TABLE Test", m_conn)).ExecuteNonQuery();
-			m_conn.Close();
+			Close();
 		}
 
 		[Test()]
@@ -301,11 +278,7 @@ namespace MaxDBConsole.UnitTesting
 			}
 		}
 		*/
-
-		private void ClearTestTable()
-		{
-			(new MaxDBCommand("DELETE FROM Test", m_conn)).ExecuteNonQuery();
-		}
+	
 
 	}
 }

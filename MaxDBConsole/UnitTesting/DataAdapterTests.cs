@@ -11,10 +11,8 @@ namespace MaxDBConsole.UnitTesting
 	/// Summary description for DataAdapterTests.
 	/// </summary>
 	[TestFixture()]
-	public class DataAdapterTests
+	public class DataAdapterTests : BaseTest
 	{
-		private MaxDBConnection m_conn;
-
 		public DataAdapterTests()
 		{
 			//
@@ -25,36 +23,13 @@ namespace MaxDBConsole.UnitTesting
 		[TestFixtureSetUp]
 		public void Init() 
 		{
-			try
-			{
-				m_conn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
-				m_conn.Open();
-				m_conn.AutoCommit = true;
-				try
-				{
-					(new MaxDBCommand("EXISTS TABLE Test", m_conn)).ExecuteNonQuery();
-					(new MaxDBCommand("DROP TABLE Test", m_conn)).ExecuteNonQuery();
-				}
-				catch(MaxDBException ex)
-				{
-					if (ex.DetailErrorCode != -708)
-						throw;
-				}
-
-				(new MaxDBCommand("CREATE TABLE Test (id INT NOT NULL DEFAULT SERIAL, id2 INT NOT NULL, name VARCHAR(100), dt DATE, tm TIME, ts TIMESTAMP, OriginalId INT, PRIMARY KEY(id, id2))", m_conn)).ExecuteNonQuery();
-			}
-			catch(Exception ex)
-			{
-				Trace.WriteLine(ex.Message);
-				throw;
-			}
+			Init("CREATE TABLE Test (id INT NOT NULL DEFAULT SERIAL, id2 INT NOT NULL, name VARCHAR(100), dt DATE, tm TIME, ts TIMESTAMP, OriginalId INT, PRIMARY KEY(id, id2))");
 		}
 
 		[TestFixtureTearDown]
-		public void TestFixtureTearDown() 
+		public void TestFixtureTearDown()
 		{
-			(new MaxDBCommand("DROP TABLE Test", m_conn)).ExecuteNonQuery();
-			m_conn.Close();
+			Close();
 		}
 
 		[Test]
@@ -224,11 +199,6 @@ namespace MaxDBConsole.UnitTesting
 			{
 				Assert.Fail(ex.Message);
 			}
-		}
-
-		private void ClearTestTable()
-		{
-			(new MaxDBCommand("DELETE FROM Test", m_conn)).ExecuteNonQuery();
 		}
 	}
 }

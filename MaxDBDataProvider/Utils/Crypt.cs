@@ -207,7 +207,7 @@ namespace MaxDBDataProvider.Utils
 			if (passwd.Length > maxPasswdLen)
 				passwd = passwd.Substring(0, maxPasswdLen);
 			else
-				passwd = passwd.PadRight(maxPasswdLen, ' ');
+				passwd = passwd.PadRight(maxPasswdLen);
         
 			if (isUnicode) 
 				passwdBytes.WriteUnicode(passwd, 0);

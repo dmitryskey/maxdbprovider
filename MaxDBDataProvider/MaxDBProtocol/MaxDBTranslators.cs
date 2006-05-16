@@ -440,7 +440,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		protected void CheckFieldLimits(int byteLength)
 		{
 			if (byteLength > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], m_colIndex + 1);
+				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], m_colIndex + 1);
 		}
 
 		protected abstract void PutSpecific(DataPart dataPart, object data);
@@ -621,7 +621,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			byte[] bytes = Encoding.GetEncoding(1251).GetBytes(data.ToString());
 			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
+				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
 			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
 			dataPart.WriteASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
@@ -1596,7 +1596,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			byte [] bytes = (byte[])data;
 			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
+				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
 			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
 			dataPart.WriteASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
@@ -1638,7 +1638,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			byte[] bytes = (byte[])data;
 			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
+				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
 			dataPart.WriteDefineByte ((byte) 1, m_bufpos - 1);
 			dataPart.WriteUnicodeBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
@@ -1791,7 +1791,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			byte [] bytes = (byte[])data;
 			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
+				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
 			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
 			dataPart.WriteASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
@@ -1838,7 +1838,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			byte[] bytes = (byte[])data;
 			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
+				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
 			dataPart.WriteDefineByte ((byte) 1, m_bufpos - 1);
 			dataPart.WriteUnicodeBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
@@ -1955,7 +1955,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			byte [] bytes = (byte[])data;
 			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
+				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
 			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
 			dataPart.WriteASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}
@@ -1997,7 +1997,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			byte [] bytes = (byte[])data;
 			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.stringValues[m_dataType], -1);
+				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
 			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
 			dataPart.WriteUnicodeBytes(bytes, m_bufpos, m_physicalLength - 1);
 		}

@@ -87,7 +87,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		// common header
 		public const byte 
 			Len					= 0,  // int4
-			Offs				= 4,  // int4
+			Offset				= 4,  // int4
 			NoOfParts			= 8,  // int2
 			OwnIndex			= 10, // int2
 			SegmKind			= 12, // enum1
@@ -95,7 +95,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			MessType			= 13, // enum1
 			SqlMode				= 14, // enum1
 			Producer			= 15, // enum1
-			CommitImmediateley	= 16, // bool
+			CommitImmediately	= 16, // bool
 			IgnoreCostwarning	= 17, // bool
 			Prepare				= 18, // bool
 			WithInfo			= 19, // bool
@@ -122,7 +122,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			PartKind	= 0,   // enum1
 			Attributes	= 1,   // set1
 			ArgCount	= 2,   // int2
-			SegmOffs	= 4,   // int4
+			SegmOffset	= 4,   // int4
 			BufLen		= 8,   // int4
 			BufSize		= 12,  // int4
 			Data		= 16;
@@ -269,13 +269,51 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			AbapInfo                =  27,
 			CheckpointInfo          =  28,
 			Procid                  =  29,
-			Long_Demand             =  30,
+			LongDemand             =  30,
 			MessageList             =  31,
 			Vardata_ShortInfo       =  32,
 			Vardata                 =  33,
 			Feature                 =  34,
 			Clientid                =  35;
-	}
+
+		public static readonly string[] Name = new string[]{
+										 "Nil",
+										 "ApplParameterDescription",
+										 "ColumnNames",
+										 "Command",
+										 "ConvTablesReturned",
+										 "Data",
+										 "ErrorText",
+										 "GetInfo",
+										 "ModulName",
+										 "Page",
+										 "Parsid",
+										 "ParsidOfSelect",
+										 "ResultCount",
+										 "ResultTableName",
+										 "ShortInfo",
+										 "UserInfoReturned",
+										 "Surrogate",
+										 "Bdinfo",
+										 "LongData",
+										 "TableName",
+										 "SessionInfoReturned",
+										 "OutputColsNoParameter",
+										 "Key",
+										 "Serial",
+										 "RelativePos",
+										 "AbapIStream",
+										 "AbapOStream",
+										 "AbapInfo",
+										 "CheckpointInfo",
+										 "Procid",
+										 "LongDemand",
+										 "MessageList",
+										 "VardataShortinfo",
+										 "Vardata",
+										 "Feature",
+										 "Clientid"};
+ 	}
 
 	internal class Feature 
 	{
@@ -641,7 +679,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			DWYDE			= 39,           
 			MAX				= DWYDE;
 
-		public static readonly string[] stringValues = 
+		public static readonly string[] StrValues = 
 		{
 			"FIXED",
 			"FLOAT",
@@ -814,7 +852,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const string AppID = "ODB";
 		public const string AppVersion = "70400";//"10100";
 		public static readonly bool IsLittleEndian = BitConverter.IsLittleEndian;
-		public const string Cursor_Prefix = "ADONET_CURSOR_";//"JDBC_CURSOR_";
+		public const string CursorPrefix = "ADONET_CURSOR_";//"JDBC_CURSOR_";
+		public const string TimeStampFormat = "yyyy-MM-dd hh:mm:ss.ffffff";
 
 		static Consts()
 		{
@@ -827,18 +866,28 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public static string ToHexString(byte[] array)
+		public static string ToHexString(byte[] array, int offset, int length)
 		{
 			if (array != null)
 			{
-				StringBuilder result = new StringBuilder(array.Length * 2);
-				foreach(byte val in array)
-					result.Append(val.ToString("X2"));
+				StringBuilder result = new StringBuilder((array.Length - offset) * 2);
+				for(int i = offset; i < array.Length && i < length; i++)
+					result.Append(array[i].ToString("X2"));
 
 				return result.ToString();
 			}
 			else
 				return "NULL";
+		}
+
+		public static string ToHexString(byte[] array, int offset)
+		{
+			return ToHexString(array, offset, array.Length);
+		}
+
+		public static string ToHexString(byte[] array)
+		{
+			return ToHexString(array, 0, array.Length);
 		}
 	}
 }

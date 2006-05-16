@@ -3,6 +3,8 @@ using System.Text;
 using System.IO;
 using System.Data;
 using System.Data.Odbc;
+using System.Diagnostics;
+using System.Configuration;
 
 namespace MaxDBDataProvider
 {
@@ -22,6 +24,10 @@ namespace MaxDBDataProvider
 			//
 
 //			PerfomanceTest();
+
+			StreamWriter sw = new StreamWriter(ConfigurationSettings.AppSettings["LogFileName"]);
+
+			Trace.Listeners.Add(new TextWriterTraceListener(sw));
 
             MaxDBConnection maxdbconn = null;
             MaxDBTransaction trans = null;
@@ -50,7 +56,7 @@ namespace MaxDBDataProvider
                     cmd.Parameters.Add(":a", MaxDBType.VarCharUni).Value = "42600";
                     cmd.Parameters.Add(":b", MaxDBType.VarCharUni).Value = "Ижевск";
                     cmd.Parameters.Add(":c", MaxDBType.VarCharUni).Value = DBNull.Value;
-					cmd.Parameters.Add(":d", MaxDBType.LongA).Value = chars;
+					cmd.Parameters.Add(":d", MaxDBType.LongUni).Value = chars;
                     cmd.Transaction = trans;
                     cmd.ExecuteNonQuery();
                     cmd.Transaction.Commit();
@@ -104,6 +110,7 @@ namespace MaxDBDataProvider
             {
 				if (maxdbconn != null)
 					maxdbconn.Dispose();
+				sw.Close();
             }
 
             return;

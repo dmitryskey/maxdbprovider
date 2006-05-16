@@ -192,7 +192,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		public MaxDBReplyPacket Exec(MaxDBRequestPacket userPacket, int len)
+		public MaxDBReplyPacket Execute(MaxDBRequestPacket userPacket, int len)
 		{
 			try
 			{
