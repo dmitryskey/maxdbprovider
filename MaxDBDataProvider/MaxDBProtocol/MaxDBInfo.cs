@@ -1078,6 +1078,25 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
+		public static bool IsTextual(int columnType)
+		{
+			switch (columnType)
+			{
+				case DataType.STRA:
+				case DataType.STRE:
+				case DataType.STRUNI:
+				case DataType.LONGA:
+				case DataType.LONGE:
+				case DataType.LONGUNI:
+				case DataType.VARCHARA:
+				case DataType.VARCHARE:
+				case DataType.VARCHARUNI:
+					return true;
+				default:
+					return false;
+			}
+		}
+
 		public static string GetTypeName(int columnType)
 		{
 			switch (columnType) 

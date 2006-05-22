@@ -23,7 +23,8 @@ namespace MaxDBDataProvider
 			// TODO: Add code to start application here
 			//
 
-//			PerfomanceTest();
+			PerfomanceTest();
+			return;
 
 			StreamWriter sw = new StreamWriter(ConfigurationSettings.AppSettings["LogFileName"]);
 
@@ -116,45 +117,45 @@ namespace MaxDBDataProvider
             return;
 		}
 
-//        static void PerfomanceTest()
-//        {
-//            MaxDBConnection maxdbconn = null;
-//
-//            try
-//            {
-//				maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
-//				maxdbconn.SQLMode = SqlMode.Oracle;
-//				maxdbconn.Open();
-//
-//                DateTime start_time = DateTime.Now;
-//
-//                for(int i=0;i<1000;i++)
-//                {
-//                    using(MaxDBCommand cmd = new MaxDBCommand("SELECT NAME FROM HOTEL WHERE zip LIKE ?", maxdbconn))
-//                    {
-//                        cmd.Parameters.Add("?", MaxDBType.VarCharUni).Value = "2%";
-//
-//                        MaxDBDataReader reader = cmd.ExecuteReader();
-//                        while(reader.Read());
-//                            Console.Out.WriteLine(reader.GetString(0));
-//						reader.Close();
-//                    }
-//                }
-//
-//                Console.WriteLine(DateTime.Now - start_time);
-//            }
-//            catch(Exception ex)
-//            {
-//                Console.WriteLine(ex.Message);
-//            }
-//            finally
-//            {
-//                if (maxdbconn != null)
-//                    maxdbconn.Close();
-//            }
-//
-//            return;
-//        }
+        static void PerfomanceTest()
+        {
+            MaxDBConnection maxdbconn = null;
+
+            try
+            {
+				maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
+				maxdbconn.SQLMode = SqlMode.Oracle;
+				maxdbconn.Open();
+
+                DateTime start_time = DateTime.Now;
+
+                for(int i=0;i<1000;i++)
+                {
+                    using(MaxDBCommand cmd = new MaxDBCommand("SELECT NAME FROM HOTEL WHERE zip LIKE ?", maxdbconn))
+                    {
+                        cmd.Parameters.Add("?", MaxDBType.VarCharUni).Value = "2%";
+
+                        MaxDBDataReader reader = cmd.ExecuteReader();
+                        while(reader.Read())
+                            Console.Out.WriteLine(reader.GetString(0));
+						reader.Close();
+                    }
+                }
+
+                Console.WriteLine(DateTime.Now - start_time);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            finally
+            {
+                if (maxdbconn != null)
+                    maxdbconn.Close();
+            }
+
+            return;
+        }
 
 	}
 }

@@ -344,6 +344,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
+		public virtual bool IsTextualKind
+		{
+			get
+			{
+				return GeneralColumnInfo.IsTextual(m_dataType);
+			}
+		}
+
 		public bool IsDBNull(ByteArray mem) 
 		{
 			return (mem.ReadByte(m_bufpos - 1) == 0xFF);

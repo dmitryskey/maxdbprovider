@@ -67,16 +67,14 @@ namespace MaxDBDataProvider.Utils
 
 		public const string Null = "NULL";
 
-		private MaxDBConnection m_conn;
 		private MaxDBTraceSwitch m_traceSwitch = new MaxDBTraceSwitch("TraceLevel", "Trace Level");
 #if !SAFE
 		private IntPtr m_prop = IntPtr.Zero;
 		private string m_logname;
 #endif
 
-		public MaxDBLogger(MaxDBConnection conn)
+		public MaxDBLogger()
 		{
-			m_conn = conn;
 #if !SAFE
 			if (m_traceSwitch.TraceSQL)
 			{
@@ -84,16 +82,8 @@ namespace MaxDBDataProvider.Utils
 				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "SQL", "1");
 				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "TIMESTAMP", "1");
 
-				if (ConfigurationSettings.AppSettings["SDBPath"] != null)
-				{
-					m_logname = ConfigurationSettings.AppSettings["SDBPath"] + "\\data\\wrk" + "\\adonetlog.html";
-					SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "FILENAME", "adonet.html");
-				}
-				else
-				{
-					m_logname = Path.GetTempPath() + "adonetlog.html";
-					SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "FILENAME", m_logname);
-				}
+				m_logname = Path.GetTempPath() + "adonetlog.html";
+				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "FILENAME", "\"" + m_logname + "\"");
 				if (m_traceSwitch.TraceFull)
 					SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "PACKET", "1");
 				SQLDBC.SQLDBC_Environment_setTraceOptions(m_conn.m_envHandler, m_prop);
@@ -184,7 +174,7 @@ namespace MaxDBDataProvider.Utils
 				if (parseInfo.ColumnInfo != null && parseInfo.ColumnInfo.Length > 0)
 				{
 					SqlTrace(dt, "COLUMNS:");
-					SqlTrace(dt, "I   T              L    P   N");
+					SqlTrace(dt, "I   T              L           P           N");
 					foreach(DBTechTranslator info in parseInfo.ColumnInfo)
 					{
 						Trace.Write(dt.ToString(Consts.TimeStampFormat) + " ");
@@ -208,36 +198,42 @@ namespace MaxDBDataProvider.Utils
 		{
 			Trace.Write(info.ColumnIndex.ToString().PadRight(4));
 			Trace.Write(info.ColumnTypeName.PadRight(15));
-			Trace.Write(info.PhysicalLength.ToString().PadRight(5));
-			Trace.Write(info.Precision.ToString().PadRight(4));
+			Trace.Write((info.PhysicalLength - 1).ToString().PadRight(12));
+			Trace.Write(info.Precision.ToString().PadRight(12));
 		}
 #endif
 
 		public void Flush()
 		{
-#if SAFE
 			if (m_traceSwitch.TraceSQL)
+			{
+#if SAFE
 				Trace.Flush();
 #else
-			if (!File.Exists(m_logname))
-				return;
-			StreamReader sr = new StreamReader(m_logname);
-			string header = sr.ReadLine();
-			if (header != null)
-			{
-				string line;
-				do
-				{
-					line = sr.ReadLine();
-					if (line != null)
-						Trace.WriteLine(line);
-				}
-				while(line != null);
-			}
-			sr.Close();
 
-			Trace.Flush();
+				if (!File.Exists(m_logname))
+					return;
+				string tmpFile = Path.GetTempFileName();
+				File.Copy(m_logname, tmpFile, true);
+				StreamReader sr = new StreamReader(tmpFile);
+				string header = sr.ReadLine();
+				if (header != null)
+				{
+					string line;
+					do
+					{
+						line = sr.ReadLine();
+						if (line != null)
+							Trace.WriteLine(line);
+					}
+					while(line != null);
+				}
+				sr.Close();
+				File.Delete(tmpFile);
+
+				Trace.Flush();
 #endif
+			}
 		}
 
 		#region IDisposable Members
@@ -245,6 +241,7 @@ namespace MaxDBDataProvider.Utils
 		public void Dispose()
 		{
 #if !SAFE
+			Flush();
 			if (m_conn != null && m_traceSwitch.TraceSQL && m_prop != IntPtr.Zero)
 				SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(m_prop);
 #endif

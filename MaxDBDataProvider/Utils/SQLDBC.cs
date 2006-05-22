@@ -453,7 +453,7 @@ namespace MaxDBDataProvider.Utils
 			ref int length, int size, SQLDBC_BOOL terminate);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_ResultSet_getObject(IntPtr result, int index, SQLDBC_HostType type, IntPtr paramAddr, 
+		public extern static SQLDBC_Retcode SQLDBC_ResultSet_getObjectByPos(IntPtr result, int index, SQLDBC_HostType type, IntPtr paramAddr, 
 			ref int length, int size, int startPos, SQLDBC_BOOL terminate);
 
 		#endregion
