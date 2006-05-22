@@ -501,7 +501,7 @@ namespace MaxDBDataProvider
 
 			password = StripString(password);
 
-			byte[] passwordBytes = m_enc.GetBytes(password);
+			byte[] passwordBytes = Encoding.ASCII.GetBytes(password);
 
 			DateTime currentDt = DateTime.Now;
 
@@ -774,13 +774,7 @@ namespace MaxDBDataProvider
 				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_connPropHandler, "ISOLATIONLEVEL", MapIsolationLevel(m_isolationLevel).ToString());
 			if (m_spaceOption) 
 				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_connPropHandler, "SPACE_OPTION", "1");
-
-			SQLDBC.SQLDBC_ConnectProperties_setProperty(m_connPropHandler, "LONG", "TRUE");
-			SQLDBC.SQLDBC_ConnectProperties_setProperty(m_connPropHandler, "PACKET", "TRUE");
-			SQLDBC.SQLDBC_ConnectProperties_setProperty(m_connPropHandler, "FILENAME", "1.log");
-
-			SQLDBC.SQLDBC_Environment_setTraceOptions(m_envHandler, m_connPropHandler);
-			
+		
 			SQLDBC.SQLDBC_Connection_setSQLMode(m_connHandler, m_mode);
 
 			m_logger = new MaxDBLogger(this);
@@ -958,7 +952,7 @@ namespace MaxDBDataProvider
 		{
 #if SAFE
 			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout, false, true));
-			m_logger = new MaxDBLogger(this);
+			m_logger = new MaxDBLogger();
 			DoConnect();
 #else
 			OpenConnection();

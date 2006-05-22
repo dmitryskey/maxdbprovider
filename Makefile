@@ -5,8 +5,8 @@ else
 endif
 
 MCS=mcs
-MCSFLAGS=-debug --stacktrace -unsafe
-#MCSFLAGS=-debug --stacktrace -d:SAFE
+#MCSFLAGS=-debug --stacktrace -unsafe
+MCSFLAGS=-debug --stacktrace -d:SAFE
 
 RESGEN=resgen
 
@@ -16,6 +16,7 @@ MAXDBCONSOLE_EXE=$(TARGET)/MaxDBConsole.exe
 MAXDBCONSOLE_PDB=$(TARGET)/MaxDBConsole.exe
 MAXDBCONSOLE_SRC=MaxDBConsole/AssemblyInfo.cs \
 	MaxDBConsole/Class1.cs \
+	MaxDBConsole/UnitTesting/BaseTest.cs \
 	MaxDBConsole/UnitTesting/ConnectionTests.cs \
 	MaxDBConsole/UnitTesting/CommandTests.cs \
 	MaxDBConsole/UnitTesting/DataReaderTests.cs \

@@ -28,7 +28,7 @@ namespace MaxDBConsole.UnitTesting
 			if (ConfigurationSettings.AppSettings["LogFileName"] != null)
 				logFile = ConfigurationSettings.AppSettings["LogFileName"];
 
-			m_sw = new StreamWriter(ConfigurationSettings.AppSettings["LogFileName"]);
+			m_sw = new StreamWriter(logFile);
 
 			Trace.Listeners.Clear();
 			Trace.Listeners.Add(new TextWriterTraceListener(m_sw));
@@ -53,7 +53,7 @@ namespace MaxDBConsole.UnitTesting
 		protected void Close() 
 		{
 			(new MaxDBCommand("DROP TABLE Test", m_conn)).ExecuteNonQuery();
-			m_conn.Close();
+			m_conn.Dispose();
 			m_sw.Close();
 		}
 

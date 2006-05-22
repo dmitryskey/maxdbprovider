@@ -36,6 +36,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		private bool m_isauthallowed = false;
 		private int m_maxcmdsize = 0;
 		private bool m_session = false;
+		private TimeSpan ts = new TimeSpan(1);
 
 		public bool IsAuthAllowed
 		{
@@ -165,7 +166,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END]);
 				request.FillHeader(RSQLTypes.USER_RELEASE_REQUEST, m_sender, m_receiver, m_maxSendLen);
-				request.SetSendLength(0);
+				request.SetSendLength(HeaderOffset.END);
 				m_socket.Stream.Write(request.arrayData, 0, request.Length);
 				m_socket.Close();
 			}
@@ -199,6 +200,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				MaxDBPacket rawPacket = new MaxDBPacket(userPacket.arrayData, 0, userPacket.Swapped); 
 				rawPacket.FillHeader(RSQLTypes.USER_DATA_REQUEST, m_sender, m_receiver, m_maxSendLen);
 				rawPacket.SetSendLength(len + HeaderOffset.END);
+
 				m_socket.Stream.Write(rawPacket.arrayData, 0, len + HeaderOffset.END);
 				byte[] headerBuf = new byte[HeaderOffset.END];
 
@@ -223,7 +225,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					else
 						throw new Exception(MaxDBMessages.Extract(MaxDBMessages.ERROR_CHUNKOVERFLOW, 
 							header.ActSendLength, replyLen, packetBuf.Length + HeaderOffset.END));
-	
+
+					if (!m_socket.DataAvailable) System.Threading.Thread.Sleep(ts); //wait for end of data
 				};
 
 				return new MaxDBReplyPacket(packetBuf);

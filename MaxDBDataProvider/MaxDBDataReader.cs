@@ -230,7 +230,10 @@ namespace MaxDBDataProvider
 				SQLDBC.SQLDBC_ResultSet_close(m_resultset);
 #endif
 			if (m_fCloseConn && m_connection != null)
+			{
 				m_connection.Close();
+				m_connection.m_logger.Flush();
+			}
 		}
 
 		public bool NextResult()
@@ -471,13 +474,17 @@ namespace MaxDBDataProvider
 						return BitConverter.ToInt32(data, 0);
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0);
-					case DataType.STRA:
 					case DataType.STRUNI:
-					case DataType.VARCHARA:
 					case DataType.VARCHARUNI:
-					case DataType.CHA:
 					case DataType.UNICODE:
-						return Encoding.Unicode.GetString(data);
+						if (Consts.IsLittleEndian)
+							return Encoding.Unicode.GetString(data);
+						else
+							return Encoding.BigEndianUnicode.GetString(data);
+					case DataType.STRA:
+					case DataType.VARCHARA:
+					case DataType.CHA:
+						return Encoding.ASCII.GetString(data);
 					case DataType.STRB:
 					case DataType.VARCHARB:
 					case DataType.CHB:
@@ -563,6 +570,9 @@ namespace MaxDBDataProvider
 				switch(columnType)
 				{
 					case DataType.BOOLEAN:
+					case DataType.STRB:	
+					case DataType.VARCHARB:
+					case DataType.CHB:
 						return (data[0] == 1);
 					case DataType.FIXED:
 					case DataType.FLOAT:
@@ -572,16 +582,17 @@ namespace MaxDBDataProvider
 						return (BitConverter.ToInt32(data, 0) == 1);
 					case DataType.SMALLINT:
 						return (BitConverter.ToInt16(data, 0) == 1);
-					case DataType.STRA:
-					case DataType.STRB:
 					case DataType.STRUNI:
-					case DataType.VARCHARA:
-					case DataType.VARCHARB:
 					case DataType.VARCHARUNI:
-					case DataType.CHA:
-					case DataType.CHB:
 					case DataType.UNICODE:
-						return bool.Parse(Encoding.Unicode.GetString(data));
+						if (Consts.IsLittleEndian)
+							return bool.Parse(Encoding.Unicode.GetString(data));
+						else
+							return bool.Parse(Encoding.BigEndianUnicode.GetString(data));
+					case DataType.STRA:
+					case DataType.VARCHARA:
+					case DataType.CHA:
+						return bool.Parse(Encoding.ASCII.GetString(data));
 					default:
 						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSQLNET, 
 							DataType.StrValues[columnType], "Boolean"));
@@ -667,11 +678,8 @@ namespace MaxDBDataProvider
 			switch(columnType)
 			{
 				case DataType.LONGUNI:
-				case DataType.STRA:
 				case DataType.STRUNI:
-				case DataType.VARCHARA:
 				case DataType.VARCHARUNI:
-				case DataType.CHA:
 				case DataType.UNICODE:
 					elemSize = Consts.UnicodeWidth;
 					break;
@@ -958,15 +966,18 @@ namespace MaxDBDataProvider
 						return BitConverter.ToInt32(data, 0).ToString();
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0).ToString();
-					case DataType.STRA:
 					case DataType.STRUNI:
-					case DataType.VARCHARA:
 					case DataType.VARCHARUNI:
-					case DataType.CHA:
 					case DataType.UNICODE:
-						return Encoding.Unicode.GetString(data);
+						if (Consts.IsLittleEndian)
+							return Encoding.Unicode.GetString(data);
+						else
+							return Encoding.BigEndianUnicode.GetString(data);
+					case DataType.STRA:
 					case DataType.STRB:
+					case DataType.VARCHARA:
 					case DataType.VARCHARB:
+					case DataType.CHA:
 					case DataType.CHB:
 						return Encoding.ASCII.GetString(data);
 					default:
@@ -1434,11 +1445,8 @@ namespace MaxDBDataProvider
 					else
 						m_ValArrays[i] = BitConverter.GetBytes(short_val);
 					return (byte[])m_ValArrays[i];
-				case DataType.STRA:
 				case DataType.STRUNI:
-				case DataType.VARCHARA:
 				case DataType.VARCHARUNI:
-				case DataType.CHA:
 				case DataType.UNICODE:
 					byte[] strValue = new byte[sizeof(char)];
 					val_length = 0;
@@ -1479,6 +1487,46 @@ namespace MaxDBDataProvider
 
 					m_ValArrays[i] = strValue;
 					return strValue;
+				case DataType.STRA:
+				case DataType.VARCHARA:
+				case DataType.CHA:
+					byte[] asciiValue = new byte[sizeof(byte)];
+					val_length = 0;
+
+					fixed(byte *valuePtr = asciiValue)
+					{
+						rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, 
+							SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, new IntPtr(valuePtr), ref val_length, val_length, 0);
+
+						if (val_length == SQLDBC.SQLDBC_NULL_DATA)
+						{
+							m_ValArrays[i] = null;
+							return null;
+						}
+
+						if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_NODATA_FOUND));
+
+						if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
+								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+					}
+
+					asciiValue = new byte[val_length];
+
+					if (val_length > 0)
+						fixed(byte *valuePtr = asciiValue)
+						{
+							rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, 
+								SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, new IntPtr(valuePtr), ref val_length, val_length, SQLDBC_BOOL.SQLDBC_FALSE);
+
+							if (rc != SQLDBC_Retcode.SQLDBC_OK)
+								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_GETOBJECT_FAILED) + ": " +
+									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
+						}
+
+					m_ValArrays[i] = asciiValue;
+					return asciiValue;
 				case DataType.STRB:
 				case DataType.VARCHARB:
 				case DataType.CHB:
@@ -1553,8 +1601,8 @@ namespace MaxDBDataProvider
 			fixed(byte *valuePtr = buffer)
 			{
 				int ref_length = 0;
-				rc = SQLDBC.SQLDBC_ResultSet_getObject(m_resultset, i + 1, hostType, 
-					new IntPtr(valuePtr + bufferIndex), ref ref_length, length, (int)dataIndex, SQLDBC_BOOL.SQLDBC_FALSE);
+				rc = SQLDBC.SQLDBC_ResultSet_getObjectByPos(m_resultset, i + 1, hostType, 
+					new IntPtr(valuePtr + bufferIndex), ref ref_length, length, (int)dataIndex + 1, SQLDBC_BOOL.SQLDBC_FALSE);
 
 				if (ref_length == SQLDBC.SQLDBC_NULL_DATA)
 					return 0;
@@ -1567,7 +1615,29 @@ namespace MaxDBDataProvider
 						SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_ResultSet_getError(m_resultset)));
 
 				if (rc == SQLDBC_Retcode.SQLDBC_OK)
-					length = ref_length;
+				{
+//					if (ref_length < 0) 
+//						length += ref_length;
+//					else if (ref_length < length)
+//						length = ref_length;
+
+					switch(columnType)
+					{
+						case DataType.STRA:
+						case DataType.LONGA:
+							ref_length += length; //???
+							if (ref_length < length)
+								length = ref_length;
+							break;
+						case DataType.STRUNI:
+						case DataType.LONGUNI:
+						case DataType.STRB:
+						case DataType.LONGB:
+							if (ref_length < length)
+								length = ref_length;
+							break;
+					}
+				}
 			}
 
 			return length;

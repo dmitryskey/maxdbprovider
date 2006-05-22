@@ -169,6 +169,7 @@ namespace MaxDBConsole.UnitTesting
 				reader.Close();
 				reader = null;
 				Assert.IsTrue(m_conn.State == ConnectionState.Closed);
+
 				m_conn.Open();
 			}
 			catch (Exception ex) 
@@ -364,10 +365,10 @@ namespace MaxDBConsole.UnitTesting
 		[Test()]
 		public void TestGetChars()
 		{
-			int len = 50000;
+			int len = 20000;
 			char[] chars = new char[len];
 			for (int i = 0; i < len; i++)
-				chars[i] = (char)(i % 128);
+				chars[i] = 'a';//(char)(i % 128);
 			
 			MaxDBDataReader reader = null;
 			try 

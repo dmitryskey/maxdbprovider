@@ -770,7 +770,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			dump.Append(ReadByte(PacketHeaderOffset.MessSwap).ToString()).Append(" swap ");
 			dump.Append(ReadASCII(PacketHeaderOffset.Appl, PacketHeaderOffset.VarPartSize - PacketHeaderOffset.Appl).ToString()).Append("-");
 			dump.Append(ReadASCII(PacketHeaderOffset.ApplVersion, PacketHeaderOffset.Appl - PacketHeaderOffset.ApplVersion).ToString());
-			dump.Append(" (transfer len ").Append((ReadInt32(PacketHeaderOffset.VarPartLen) + PacketHeaderOffset.Segment).ToString());
+			dump.Append(" (transfer len ").Append((ReadInt32(PacketHeaderOffset.VarPartLen) + PacketHeaderOffset.Segment).ToString()).Append(")");
 	
 			return dump.ToString();
 		}

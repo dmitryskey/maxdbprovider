@@ -578,26 +578,26 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	{
 		// request/reply types
 		public const byte 
-			RTE_PROT_TCP          =      3,
-			INFO_REQUEST_KEEP_ALIVE  =     50,
-			INFO_REQUEST          =     51,
-			INFO_REPLY            =     52,
-			USER_CONN_REQUEST     =     61,
-			USER_CONN_REPLY       =     62,
-			USER_DATA_REQUEST     =     63,
-			USER_DATA_REPLY       =     64,
-			USER_CANCEL_REQUEST   =     65,
-			USER_RELEASE_REQUEST  =     66,
-			KERN_CONN_REQUEST     =     71,
-			KERN_CONN_REPLY       =     72,
-			KERN_DATA_REQUEST     =     73,
-			KERN_DATA_REPLY       =     74,
-			KERN_RELEASE_REQUEST  =     76,
-			DUMP_REQUEST          =     81,
-			CTRL_CONN_REQUEST     =     91,
-			CTRL_CONN_REPLY       =     92,
-			CTRL_CANCEL_REQUEST   =     93,
-			NORMAL                =      0;
+			RTE_PROT_TCP				=      3,
+			INFO_REQUEST_KEEP_ALIVE		=     50,
+			INFO_REQUEST          		=     51,
+			INFO_REPLY            		=     52,
+			USER_CONN_REQUEST     		=     61,
+			USER_CONN_REPLY       		=     62,
+			USER_DATA_REQUEST     		=     63,
+			USER_DATA_REPLY       		=     64,
+			USER_CANCEL_REQUEST   		=     65,
+			USER_RELEASE_REQUEST  		=     66,
+			KERN_CONN_REQUEST     		=     71,
+			KERN_CONN_REPLY       		=     72,
+			KERN_DATA_REQUEST     		=     73,
+			KERN_DATA_REPLY       		=     74,
+			KERN_RELEASE_REQUEST  		=     76,
+			DUMP_REQUEST          		=     81,
+			CTRL_CONN_REQUEST     		=     91,
+			CTRL_CONN_REPLY       		=     92,
+			CTRL_CANCEL_REQUEST   		=     93,
+			NORMAL                		=      0;
 	}
 
 	internal class SwapMode

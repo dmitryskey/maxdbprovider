@@ -483,9 +483,12 @@ namespace MaxDBDataProvider
 					// as next packet is harmful. Same with INPUT LONG parameters of
 					// DB Procedures.
 				}
-				catch(MaxDBSQLException dbExc) 
+				catch(MaxDBException ex) 
 				{
-					if ((dbExc.VendorCode == -8) && afterParseAgain > 0) 
+					if (ex.InnerException != null && 
+						ex.InnerException is MaxDBSQLException && 
+						((MaxDBSQLException)ex.InnerException).VendorCode == -8 && 
+						afterParseAgain > 0) 
 					{
 						//>>> SQL TRACE
 						if (m_connection.m_logger.TraceSQL)
@@ -497,11 +500,9 @@ namespace MaxDBDataProvider
 						afterParseAgain--;
 						return Execute(afterParseAgain, behavior);
 					}
-					else 
-					{
-						// The request packet has already been recycled
-						throw dbExc;
-					}
+
+					// The request packet has already been recycled
+					throw;
 				}
 
 				// --- now it becomes difficult ...
@@ -1455,7 +1456,7 @@ namespace MaxDBDataProvider
 			}
 
 			// +1 byte to avoid zero-length array
-			ByteArray paramArr = new ByteArray(buffer_length + 1);
+			ByteArray paramArr = new ByteArray(buffer_length + 1, BitConverter.IsLittleEndian);
 
 			fixed(byte *buffer_ptr = paramArr.arrayData)
 			{
@@ -1562,7 +1563,7 @@ namespace MaxDBDataProvider
 								val_size[i - 1] = val_length;
 							}
 							
-							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII_CLOB, 
+							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, 
 								new IntPtr(buffer_ptr + buffer_offset),	ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
@@ -1597,7 +1598,7 @@ namespace MaxDBDataProvider
 							}
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, 
-								Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2, 
+								BitConverter.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2, 
 								new IntPtr(buffer_ptr + buffer_offset), ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
@@ -1629,7 +1630,7 @@ namespace MaxDBDataProvider
 							}
 
 							if(SQLDBC.SQLDBC_PreparedStatement_bindParameter(stmt, i, 
-								Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED_CLOB : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_CLOB, 
+								BitConverter.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2, 
 								new IntPtr(buffer_ptr + buffer_offset), ref val_size[i - 1], val_length, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK) 
 								throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
 									SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_PreparedStatement_getError(stmt)));
