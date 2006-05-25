@@ -71,13 +71,20 @@ namespace MaxDBDataProvider.Utils
 #if !SAFE
 		private IntPtr m_prop = IntPtr.Zero;
 		private string m_logname;
+		private MaxDBConnection m_conn;
 #endif
 
 		public MaxDBLogger()
 		{
+		}
+
 #if !SAFE
+		public MaxDBLogger(MaxDBConnection conn)
+		{
 			if (m_traceSwitch.TraceSQL)
 			{
+				m_conn = conn;
+
 				m_prop = SQLDBC.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
 				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "SQL", "1");
 				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "TIMESTAMP", "1");
@@ -88,8 +95,8 @@ namespace MaxDBDataProvider.Utils
 					SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "PACKET", "1");
 				SQLDBC.SQLDBC_Environment_setTraceOptions(m_conn.m_envHandler, m_prop);
 			}
-#endif
 		}
+#endif
 
 		public MaxDBTraceLevel Level
 		{

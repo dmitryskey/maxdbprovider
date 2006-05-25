@@ -97,6 +97,7 @@ namespace MaxDBDataProvider
 		internal IntPtr m_envHandler;
 		private IntPtr m_connPropHandler;
 		internal IntPtr m_connHandler = IntPtr.Zero;
+		internal Hashtable m_tableNames = new Hashtable();
 
 		#endregion
 #endif
@@ -777,7 +778,7 @@ namespace MaxDBDataProvider
 		
 			SQLDBC.SQLDBC_Connection_setSQLMode(m_connHandler, m_mode);
 
-			m_logger = new MaxDBLogger(this);
+			m_logger = new MaxDBLogger();
 
 			if (SQLDBC.SQLDBC_Connection_connectASCII(m_connHandler, m_ConnArgs.host, m_ConnArgs.dbname, m_ConnArgs.username, 
 				m_ConnArgs.password, m_connPropHandler) != SQLDBC_Retcode.SQLDBC_OK) 

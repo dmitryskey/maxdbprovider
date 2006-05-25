@@ -181,9 +181,10 @@ namespace MaxDBDataProvider
 			m_resultset = resultset;
 			m_connection = conn;
 			m_cmd = cmd;
+			
 			m_fCloseConn = closeConn;
 			m_fSchemaOnly = schemaOnly;
-			m_updTableName = cmd.UpdTableName;			 
+			m_updTableName = cmd.UpdTableName;
 		}
 #endif
 
