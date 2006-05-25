@@ -158,7 +158,11 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		public MaxDBCommand DeleteCommand 
+#if NET20
+        public new MaxDBCommand DeleteCommand
+#else
+		public MaxDBCommand DeleteCommand
+#endif 
 		{
 			get 
 			{ 
@@ -182,7 +186,11 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		public MaxDBCommand InsertCommand 
+#if NET20
+        public new MaxDBCommand InsertCommand
+#else
+		public MaxDBCommand InsertCommand
+#endif
 		{
 			get 
 			{ 
