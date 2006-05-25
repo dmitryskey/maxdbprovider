@@ -102,7 +102,11 @@ namespace MaxDBDataProvider
 
 		#region IDbDataAdapter Members
 
-		public MaxDBCommand UpdateCommand 
+#if NET20
+        public new MaxDBCommand UpdateCommand
+#else
+		public MaxDBCommand UpdateCommand
+#endif 
 		{
 			get 
 			{ 
@@ -126,7 +130,11 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		public MaxDBCommand SelectCommand 
+#if NET20
+        public new MaxDBCommand SelectCommand
+#else
+		public MaxDBCommand SelectCommand
+#endif
 		{
 			get 
 			{ 

@@ -123,7 +123,12 @@ namespace MaxDBDataProvider
 
             try
             {
-				maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
+				maxdbconn = 
+#if NET20
+                    new MaxDBConnection(System.Configuration.ConfigurationManager.AppSettings["ConnectionString"]);
+#else
+                    new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
+#endif
 				maxdbconn.SQLMode = SqlMode.Oracle;
 				maxdbconn.Open();
 
