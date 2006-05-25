@@ -62,7 +62,7 @@ namespace MaxDBDataProvider
 #else
 		#region "SQLDBC Wrapper parameters"
 
-		IntPtr m_stmt = IntPtr.Zero;
+		internal IntPtr m_stmt = IntPtr.Zero;
 		
 		#endregion
 #endif
@@ -2068,30 +2068,35 @@ namespace MaxDBDataProvider
 		{
 			get
 			{
-				byte[] buffer = new byte[1];
-				int bufferSize = 0;
-				SQLDBC_Retcode rc;
-
-				fixed(byte* bufferPtr = buffer)
+				if (m_connection.m_tableNames[CommandText] == null)
 				{
-					rc = SQLDBC.SQLDBC_Statement_getTableName(m_stmt, (IntPtr)bufferPtr, SQLDBC_StringEncodingType.Ascii, bufferSize, ref bufferSize);
-					if(rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC) 
-						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
-							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_Statement_getError(m_stmt)));
+					byte[] buffer = new byte[1];
+					int bufferSize = 0;
+					SQLDBC_Retcode rc;
+
+					fixed(byte* bufferPtr = buffer)
+					{
+						rc = SQLDBC.SQLDBC_Statement_getTableName(m_stmt, (IntPtr)bufferPtr, SQLDBC_StringEncodingType.Ascii, bufferSize, ref bufferSize);
+						if(rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC) 
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
+								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_Statement_getError(m_stmt)));
+					}
+
+					bufferSize++;//increase buffer for the last zero
+
+					buffer = new byte[bufferSize];
+					fixed(byte* bufferPtr = buffer)
+					{
+						rc = SQLDBC.SQLDBC_Statement_getTableName(m_stmt, (IntPtr)bufferPtr, SQLDBC_StringEncodingType.Ascii, bufferSize, ref bufferSize);
+						if(rc != SQLDBC_Retcode.SQLDBC_OK) 
+							throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
+								SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_Statement_getError(m_stmt)));
+					}
+
+					m_connection.m_tableNames[CommandText] = bufferSize > 1 ? Encoding.ASCII.GetString(buffer, 0, bufferSize - 1) : null;//skip last zero
 				}
 
-				bufferSize++;//increase buffer for the last zero
-
-				buffer = new byte[bufferSize];
-				fixed(byte* bufferPtr = buffer)
-				{
-					rc = SQLDBC.SQLDBC_Statement_getTableName(m_stmt, (IntPtr)bufferPtr, SQLDBC_StringEncodingType.Ascii, bufferSize, ref bufferSize);
-					if(rc != SQLDBC_Retcode.SQLDBC_OK) 
-						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED) + ": " + 
-							SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_Statement_getError(m_stmt)));
-				}
-
-				return bufferSize > 1 ? Encoding.ASCII.GetString(buffer, 0, bufferSize - 1) : null;//skip last zero
+				return (string)m_connection.m_tableNames[CommandText];
 			}
 		}
 

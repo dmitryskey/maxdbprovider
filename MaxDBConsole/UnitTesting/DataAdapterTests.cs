@@ -95,7 +95,7 @@ namespace MaxDBConsole.UnitTesting
 
 				int count = da.Update(dt);
 
-				MaxDBCommand cmd = new MaxDBCommand("SELECT Max(id) FROM Test", m_conn);
+				MaxDBCommand cmd = new MaxDBCommand("SELECT MAX(id) FROM Test", m_conn);
 				dr["id"] = cmd.ExecuteScalar();
 
 				// make sure our refresh of auto increment values worked

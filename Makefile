@@ -5,8 +5,8 @@ else
 endif
 
 MCS=mcs
-#MCSFLAGS=-debug --stacktrace -unsafe
-MCSFLAGS=-debug --stacktrace -d:SAFE
+MCSFLAGS=-debug --stacktrace -unsafe
+#MCSFLAGS=-debug --stacktrace -d:SAFE
 
 RESGEN=resgen
 
