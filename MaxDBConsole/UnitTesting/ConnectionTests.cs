@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Specialized;
 using NUnit.Framework;
 using MaxDBDataProvider;
 
@@ -10,13 +11,19 @@ namespace MaxDBConsole.UnitTesting
 	[TestFixture()]
 	public class ConnectionTests
 	{
-		string m_connStr;
+		private string m_connStr;
 #if SAFE
-		string m_connStrBadAddr;
+		private string m_connStrBadAddr;
 #endif
-		string m_connStrBadLogin;
-		string m_connStrBadPassword;
-		string m_connStrBadDbName;
+		private string m_connStrBadLogin;
+		private string m_connStrBadPassword;
+		private string m_connStrBadDbName;
+        private NameValueCollection m_AppSettings =
+#if NET20
+            System.Configuration.ConfigurationManager.AppSettings;
+#else
+            System.Configuration.ConfigurationSettings.AppSettings;
+#endif
 
 		public ConnectionTests()
 		{
@@ -28,13 +35,13 @@ namespace MaxDBConsole.UnitTesting
 		[TestFixtureSetUp]
 		public void Init() 
 		{
-			m_connStr = System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"];
+			m_connStr = m_AppSettings["ConnectionString"];
 #if SAFE
-			m_connStrBadAddr = System.Configuration.ConfigurationSettings.AppSettings["ConnectionStringBadAddr"];
+			m_connStrBadAddr = m_AppSettings["ConnectionStringBadAddr"];
 #endif
-			m_connStrBadLogin = System.Configuration.ConfigurationSettings.AppSettings["ConnectionStringBadAddr"];
-			m_connStrBadPassword = System.Configuration.ConfigurationSettings.AppSettings["ConnectionStringBadPassword"];
-			m_connStrBadDbName = System.Configuration.ConfigurationSettings.AppSettings["ConnectionStringBadDbName"];
+			m_connStrBadLogin = m_AppSettings["ConnectionStringBadAddr"];
+			m_connStrBadPassword = m_AppSettings["ConnectionStringBadPassword"];
+			m_connStrBadDbName = m_AppSettings["ConnectionStringBadDbName"];
 		}
 
 		[Test] 
