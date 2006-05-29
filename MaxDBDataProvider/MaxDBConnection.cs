@@ -82,12 +82,16 @@ namespace MaxDBDataProvider
 		private int m_cursorId = 0;
 		private int m_cacheLimit, m_cacheSize;
 		internal ParseInfoCache m_parseCache = null;
-		private bool m_auth = false;
+		private bool m_encrypt = false;
 		
 		private bool m_keepGarbage = false;
 		internal int m_sessionID = -1;
 		private static byte[] m_defFeatureSet = {1, 0, 2, 0, 3, 0, 4, 0, 5, 0};
 		private byte[] m_kernelFeatures = new byte[m_defFeatureSet.Length];
+
+#if NET20
+        private string m_sslHostName = null;
+#endif
 
 		#endregion
 #else
@@ -106,7 +110,7 @@ namespace MaxDBDataProvider
 		internal IsolationLevel m_isolationLevel = IsolationLevel.Unspecified;
 		internal bool m_spaceOption = false;
 		private int m_timeout = 0;
-		private Encoding m_enc = Encoding.ASCII;
+		private Encoding m_encoding = Encoding.ASCII;
 		private int m_mode = SqlMode.Internal;
 		private int m_kernelVersion; // Version without patch level, e.g. 70402 or 70600.
 
@@ -130,7 +134,7 @@ namespace MaxDBDataProvider
 				if (param.Split('=').Length > 1)
 					switch (param.Split('=')[0].Trim().ToUpper())
 					{
-						case "DATA SOURCE":
+						case "DATA SOURCE":case "SERVER":case "ADDRESS":case "ADDR":case "NETWORK ADDRESS":
 							string[] hostPort = param.Split('=')[1].Trim().Split(':');
 							m_ConnArgs.host = hostPort[0];
 							try
@@ -139,16 +143,16 @@ namespace MaxDBDataProvider
 							}
 							catch
 							{
-								m_ConnArgs.port = Ports.Default;
+								m_ConnArgs.port = 0;
 							}
 							break;
-						case "INITIAL CATALOG":
+						case "INITIAL CATALOG":case "DATABASE":
 							m_ConnArgs.dbname = param.Split('=')[1].Trim();
 							break;
 						case "USER ID":
 							m_ConnArgs.username = param.Split('=')[1].Trim();
 							break;
-						case "PASSWORD":
+						case "PASSWORD":case "PWD":
 							m_ConnArgs.password = param.Split('=')[1].Trim();
 							break;
 						case "TIMEOUT":
@@ -161,15 +165,15 @@ namespace MaxDBDataProvider
 								m_timeout = 0;
 							}
 							break;
-						case "SPACE_OPTION":
-							if (param.Split('=')[1].Trim().ToUpper() == "TRUE")
+						case "SPACE OPTION":
+                            if (param.Split('=')[1].Trim().ToUpper() == "TRUE" || param.Split('=')[1].Trim().ToUpper() == "YES")
 								m_spaceOption = true;
 							break;
 #if SAFE
 						case "CACHE":
 							m_cache = param.Split('=')[1].Trim();
 							break;
-						case "CACHELIMIT":
+						case "CACHE LIMIT":
 							try
 							{
 								m_cacheLimit = int.Parse(param.Split('=')[1]);
@@ -179,7 +183,7 @@ namespace MaxDBDataProvider
 								m_cacheLimit = 0;
 							}
 							break;
-						case "CACHESIZE":
+						case "CACHE SIZE":
 							try
 							{
 								m_cacheSize = int.Parse(param.Split('=')[1]);
@@ -189,9 +193,9 @@ namespace MaxDBDataProvider
 								m_cacheSize = 0;
 							}
 							break;
-						case "AUTH":
-							if (param.Split('=')[1].Trim().ToUpper() == "TRUE")
-								m_auth = true;
+						case "ENCRYPT":
+                            if (param.Split('=')[1].Trim().ToUpper() == "TRUE" || param.Split('=')[1].Trim().ToUpper() == "YES")
+								m_encrypt = true;
 							break;
 #endif
 						case "MODE":
@@ -218,6 +222,11 @@ namespace MaxDBDataProvider
 							}
 							m_mode = SqlMode.Internal;
 							break;
+#if NET20
+                        case "SSL HOST NAME":
+                            m_sslHostName = param.Split('=')[1].Trim();
+							break;
+#endif
 					}
 			}
 		}
@@ -226,7 +235,7 @@ namespace MaxDBDataProvider
 		{
 			get
 			{
-				return m_enc;
+				return m_encoding;
 			}
 		}
 
@@ -552,7 +561,7 @@ namespace MaxDBDataProvider
 					isChallengeResponseSupported = false;
 				}
 			}
-			if (m_auth && !isChallengeResponseSupported)
+			if (m_encrypt && !isChallengeResponseSupported)
 				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONNECTION_CHALLENGERESPONSENOTSUPPORTED));
 		
 			/*
@@ -608,7 +617,7 @@ namespace MaxDBDataProvider
 			// execute
 			MaxDBReplyPacket replyPacket = Execute(requestPacket, this, GCMode.GC_DELAYED);
 			m_sessionID = replyPacket.SessionID;
-			m_enc = replyPacket.IsUnicode ? Encoding.Unicode : Encoding.ASCII;
+			m_encoding = replyPacket.IsUnicode ? Encoding.Unicode : Encoding.ASCII;
 			
 			m_kernelVersion = 10000 * replyPacket.KernelMajorVersion + 100 * replyPacket.KernelMinorVersion + replyPacket.KernelCorrectionLevel;
 			byte[] featureReturn = replyPacket.Features;
@@ -952,8 +961,24 @@ namespace MaxDBDataProvider
 		public void Open()
 		{
 #if SAFE
-			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout, false, true));
-			m_logger = new MaxDBLogger();
+#if NET20
+            if (m_encrypt)
+            {
+                if (m_ConnArgs.port == 0) m_ConnArgs.port = Ports.DefaultSecure;
+                m_comm = new MaxDBComm(new SslSocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout, true, 
+                    m_sslHostName != null ? m_sslHostName : m_ConnArgs.host));
+            }
+            else
+            {
+                if (m_ConnArgs.port == 0) m_ConnArgs.port = Ports.Default;
+                m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout, true));
+            }
+#else
+            if (m_ConnArgs.port == 0) m_ConnArgs.port = Ports.Default;
+			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout, true));
+#endif
+
+            m_logger = new MaxDBLogger();
 			DoConnect();
 #else
 			OpenConnection();

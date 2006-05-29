@@ -1,9 +1,9 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
-	<!-- 
+  <!-- 
     Microsoft ResX Schema 
     
-    Version 1.3
+    Version 2.0
     
     The primary goals of this format is to allow a simple XML format 
     that is mostly human readable. The generation and parsing of the 
@@ -14,16 +14,17 @@
     
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">1.3</resheader>
+    <resheader name="version">2.0</resheader>
     <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
     <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
-    <data name="Name1">this is my long string</data>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        [base64 mime encoded serialized .NET Framework object]
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
     </data>
     <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        [base64 mime encoded string representing a byte array form of the .NET Framework object]
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
     </data>
                 
     There are any number of "resheader" rows that contain simple 
@@ -35,7 +36,7 @@
     Classes that don't support this are serialized and stored with the 
     mimetype set.
     
-    The mimetype is used forserialized objects, and tells the 
+    The mimetype is used for serialized objects, and tells the 
     ResXResourceReader how to depersist the object. This is currently not 
     extensible. For a given mimetype the value must be set accordingly:
     
@@ -45,7 +46,7 @@
     
     mimetype: application/x-microsoft.net.object.binary.base64
     value   : The object must be serialized with 
-            : System.Serialization.Formatters.Binary.BinaryFormatter
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
     
     mimetype: application/x-microsoft.net.object.soap.base64
@@ -58,319 +59,341 @@
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
-	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-		<xsd:element name="root" msdata:IsDataSet="true">
-			<xsd:complexType>
-				<xsd:choice maxOccurs="unbounded">
-					<xsd:element name="data">
-						<xsd:complexType>
-							<xsd:sequence>
-								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-								<xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-							</xsd:sequence>
-							<xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
-							<xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-							<xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-						</xsd:complexType>
-					</xsd:element>
-					<xsd:element name="resheader">
-						<xsd:complexType>
-							<xsd:sequence>
-								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-							</xsd:sequence>
-							<xsd:attribute name="name" type="xsd:string" use="required" />
-						</xsd:complexType>
-					</xsd:element>
-				</xsd:choice>
-			</xsd:complexType>
-		</xsd:element>
-	</xsd:schema>
-	<resheader name="resmimetype">
-		<value>text/microsoft-resx</value>
-	</resheader>
-	<resheader name="version">
-		<value>1.3</value>
-	</resheader>
-	<resheader name="reader">
-		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=1.0.5000.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
-	<resheader name="writer">
-		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=1.0.5000.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
-	<data name="error.connection.notopened">
-		<value>Connection is not opened.</value>
-	</data>
-	<data name="error.valueoverflow">
-		<value>Parameter {0}: value too large.</value>
-		<comment>{0} - position of parameter</comment>
-	</data>
-	<data name="error.databaseexception">
-		<value>[{0}] (at {1}): {2}</value>
-		<comment>{0} - vendor code, {1} - error position, {2} - reason (localized)</comment>
-	</data>
-	<data name="error.databaseexception.woerrpos">
-		<value>[{0}]: {1}</value>
-		<comment>{0} - vendor code, {1} - reason (localized)</comment>
-	</data>
-	<data name="error.invalid.columnindex">
-		<value>Invalid column index {0}.</value>
-		<comment>{0} - the column index</comment>
-	</data>
-	<data name="error.invalid.columnname">
-		<value>Invalid column {0}.</value>
-		<comment>{0} - the column name</comment>
-	</data>
-	<data name="error.objectisclosed">
-		<value>Object is closed.</value>
-	</data>
-	<data name="error.timeout">
-		<value>Timeout</value>
-	</data>
-	<data name="error">
-		<value>Error</value>
-	</data>
-	<data name="error.longdata.expected">
-		<value>Expected a longdata part as reply to getval.</value>
-	</data>
-	<data name="error.conversion.sqlnet">
-		<value>Cannot convert SQL type {0} to .NET type {1}.</value>
-		<comment>{0} - SQL type, {1} - .NET type</comment>
-	</data>
-	<data name="error.conversion.netsql">
-		<value>Cannot convert .NET type {0} to SQL type {1}.</value>
-		<comment>{0} - .NET type, {1} - SQL type</comment>
-	</data>
-	<data name="error.conversion.data">
-		<value>Cannot convert data {0} to type {1}.</value>
-		<comment>{0} - Data, {1} - Type</comment>
-	</data>
-	<data name="unknowntype">
-		<value>&lt;unknown&gt;</value>
-	</data>
-	<data name="error.conversion.VDNnumber">
-		<value>Cannot convert VDN number [{0}].</value>
-		<comment>{0} - .NET type</comment>
-	</data>
-	<data name="error.conversion.SpecialNullValue">
-		<value>Result of arithmetic operation leads to an overflow or a division by 0.</value>
-	</data>
-	<data name="error.movebackwardinblob">
-		<value>Moving backwards in Blob is not supported.</value>
-	</data>
-	<data name="error.asciireadfromlong">
-		<value>Cannot read ASCII data from this LONG column.</value>
-	</data>
-	<data name="error.binaryreadfromlong">
-		<value>Cannot read binary data from this LONG column.</value>
-	</data>
-	<data name="error.asciiputtolong">
-		<value>Cannot put ASCII data into this LONG column.</value>
-	</data>
-	<data name="error.binaryputtolong">
-		<value>Cannot put binary data into this LONG column.</value>
-	</data>
-	<data name="error.sqlstatement.null">
-		<value>SQL statement is null.</value>
-	</data>
-	<data name="error.columnvalue.null">
-		<value>Failed to get the value since column's value is NULL</value>
-	</data>
-	<data name="error.adapter.null">
-		<value>Data adapter is null.</value>
-	</data>
-	<data name="error.select.null">
-		<value>Select command is null.</value>
-	</data>
-	<data name="error.basetable.notfound">
-		<value>Base table name is not found. Propably FOR UPDATE suffix is not specified.</value>
-	</data>
-	<data name="error.sqlstatement.toolong">
-		<value>SQL statement is too long. Increase the DB parameter PACKET_SIZE.</value>
-	</data>
-	<data name="error.missinginout">
-		<value>IN or OUT param missing at position {0}.</value>
-		<comment>{0} - parameter position (number)</comment>
-	</data>
-	<data name="error.sqlstatement.resultset">
-		<value>SQL statement would generate a result set.</value>
-	</data>
-	<data name="error.sqlcommand.noresultset">
-		<value>SQL command doesn't return a result set.</value>
-	</data>
-	<data name="error.colindex.notfound">
-		<value>Column index {0} was not found.</value>
-		<comment>{0} - the column index (number)</comment>
-	</data>
-	<data name="error.colname.notfound">
-		<value>Column name {0} was not found.</value>
-		<comment>{0} - the column name</comment>
-	</data>
-	<data name="error.sqlstatement.noprocedure">
-		<value>SQL statement does not call a DB procedure.</value>
-	</data>
-	<data name="error.special.number.unsupported">
-		<value>The number value {0} is not supported.</value>
-		<comment>{0} - the NaN or INF value</comment>
-	</data>
-	<data name="error.nouser">
-		<value>No user name given.</value>
-	</data>
-	<data name="error.nopassword">
-		<value>No password given.</value>
-	</data>
-	<data name="error.invalidpassword">
-		<value>The password is invalid.</value>
-	</data>
-	<data name="error.nodata.found">
-		<value>No data found.</value>
-	</data>
-	<data name="error.invalid.datatype">
-		<value>Invalid data type.</value>
-	</data>
-	<data name="error.unknown.datatype">
-		<value>Unknown data type.</value>
-	</data>
-	<data name="error.resultset.beforefirst">
-		<value>Result set is positioned before first row.</value>
-	</data>
-	<data name="error.resultset.afterlast">
-		<value>Result set is positioned after last row.</value>
-	</data>
-	<data name="error.unnamed.parameter">
-		<value>Parameter must be named.</value>
-	</data>
-	<data name="error.no.columnnames">
-		<value>Could not get column names from database kernel.</value>
-	</data>
-	<data name="error.internal.connectionnull">
-		<value>Internal error: connection field is null, but should not.</value>
-	</data>
-	<data name="error.internal.unexpectedinput">
-		<value>Internal error: input parameter at index {0} was not expected.</value>
-	</data>
-	<data name="error.internal.unexpectedoutput">
-		<value>Internal error: output parameter at index {0} was not expected.</value>
-	</data>
-	<data name="error.internal.invalidParseid">
-		<value>Internal error: parse id is null.</value>
-	</data>
-	<data name="error.host.connect">
-		<value>Cannot connect to host {0}:{1}.</value>
-		<comment>{0} - host name, {1} - port name</comment>
-	</data>
-	<data name="error.recv.connect">
-		<value>Receive of connect failed.</value>
-	</data>
-	<data name="error.connectreply.garbled">
-		<value>Reply is garbled.</value>
-	</data>
-	<data name="error.chunkoverflow">
-		<value>Read {0} bytes at position {1} in buffer of length {2}.</value>
-		<comment>{0} - bytes still to read (number), {1} - read bytes (number), {2} - buffer length (number)</comment>
-	</data>
-	<data name="error.admin.reconnect">
-		<value>Reconnect for admin session not supported.</value>
-	</data>
-	<data name="error.stream.ioexception">
-		<value>IO Exception in stream read: {0}</value>
-	</data>
-	<data name="error.stream.conversion.string">
-		<value>Character data argument cannot be converted to binary/structured stream.</value>
-	</data>
-	<data name="error.stream.conversion.bytes">
-		<value>Binary data argument cannot be converted to character/structured stream.</value>
-	</data>
-	<data name="error.stream.isatend">
-		<value>Stream is empty or already closed.</value>
-	</data>
-	<data name="error.conversion.structuretype">
-		<value>Structure member {0} has unsupported data type {1}.</value>
-	</data>
-	<data name="error.structure.arraywronglength">
-		<value>Number of items in input and structure do not match (required {0}, input was {1}).</value>
-	</data>
-	<data name="error.structure.element.null">
-		<value>Input structure element #{0} is null.</value>
-	</data>
-	<data name="error.structure.element.conversion">
-		<value>Conversion of structure element of type {0} from {1} is not possible.</value>
-	</data>
-	<data name="error.structure.element.overflow">
-		<value>Conversion of structure element of type {0} failed (overflow), value was {1}.</value>
-	</data>
-	<data name="error.invalid.startposition">
-		<value>Internal error: Invalid start position for LONG data.</value>
-	</data>
-	<data name="error.fetch.nodatapart">
-		<value>Fetch operation delivered no data part.</value>
-	</data>
-	<data name="error.connection.wrongserverchallengereceived">
-		<value>Connect failed, wrong format of server challenge [{0}] </value>
-	</data>
-	<data name="error.connection.challengeresponsenotsupported">
-		<value>Secure connect using challenge response authentication is not supported</value>
-	</data>
-	<data name="commerror.ok">
-		<value>OK</value>
-	</data>
-	<data name="commerror.connectiondown">
-		<value>Connection down, session released</value>
-	</data>
-	<data name="commerror.tasklimit">
-		<value>Task limit</value>
-	</data>
-	<data name="commerror.timeout">
-		<value>Time out</value>
-	</data>
-	<data name="commerror.crash">
-		<value>Crash</value>
-	</data>
-	<data name="commerror.restartrequired">
-		<value>Restart required</value>
-	</data>
-	<data name="commerror.shutdown">
-		<value>Shutdown</value>
-	</data>
-	<data name="commerror.sendlinedown">
-		<value>Send line down</value>
-	</data>
-	<data name="commerror.recvlinedown">
-		<value>Receive line down</value>
-	</data>
-	<data name="commerror.packetlimit">
-		<value>Packet limit</value>
-	</data>
-	<data name="commerror.released">
-		<value>Released</value>
-	</data>
-	<data name="commerror.wouldblock">
-		<value>Would block</value>
-	</data>
-	<data name="commerror.unknownrequest">
-		<value>Unknown request</value>
-	</data>
-	<data name="commerror.serverdbunknown">
-		<value>Server or DB unknown</value>
-	</data>
-	<data name="error.exec.failed">
-		<value>Execution failed</value>
-	</data>
-	<data name="error.getobject.failed">
-		<value>getObject function failed</value>
-	</data>
-	<data name="error.dbnull.unknown">
-		<value>Column nullable unknown</value>
-	</data>
-	<data name="error.param.trunc">
-		<value>Parameter truncated</value>
-	</data>
-	<data name="error.oms.unsupported">
-		<value>OMS stream object is not supported</value>
-	</data>
-	<data name="error.tabledirect.unsupported">
-		<value>TableDirect parameter is not supported</value>
-	</data>
-	<data name="error.statement.cancelled">
-		<value>SQL statement cancelled.</value>
-	</data>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="error.connection.notopened" xml:space="preserve">
+    <value>Connection is not opened.</value>
+  </data>
+  <data name="error.valueoverflow" xml:space="preserve">
+    <value>Parameter {0}: value too large.</value>
+    <comment>{0} - position of parameter</comment>
+  </data>
+  <data name="error.databaseexception" xml:space="preserve">
+    <value>[{0}] (at {1}): {2}</value>
+    <comment>{0} - vendor code, {1} - error position, {2} - reason (localized)</comment>
+  </data>
+  <data name="error.databaseexception.woerrpos" xml:space="preserve">
+    <value>[{0}]: {1}</value>
+    <comment>{0} - vendor code, {1} - reason (localized)</comment>
+  </data>
+  <data name="error.invalid.columnindex" xml:space="preserve">
+    <value>Invalid column index {0}.</value>
+    <comment>{0} - the column index</comment>
+  </data>
+  <data name="error.invalid.columnname" xml:space="preserve">
+    <value>Invalid column {0}.</value>
+    <comment>{0} - the column name</comment>
+  </data>
+  <data name="error.objectisclosed" xml:space="preserve">
+    <value>Object is closed.</value>
+  </data>
+  <data name="error.timeout" xml:space="preserve">
+    <value>Timeout</value>
+  </data>
+  <data name="error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="error.longdata.expected" xml:space="preserve">
+    <value>Expected a longdata part as reply to getval.</value>
+  </data>
+  <data name="error.conversion.sqlnet" xml:space="preserve">
+    <value>Cannot convert SQL type {0} to .NET type {1}.</value>
+    <comment>{0} - SQL type, {1} - .NET type</comment>
+  </data>
+  <data name="error.conversion.netsql" xml:space="preserve">
+    <value>Cannot convert .NET type {0} to SQL type {1}.</value>
+    <comment>{0} - .NET type, {1} - SQL type</comment>
+  </data>
+  <data name="error.conversion.data" xml:space="preserve">
+    <value>Cannot convert data {0} to type {1}.</value>
+    <comment>{0} - Data, {1} - Type</comment>
+  </data>
+  <data name="unknowntype" xml:space="preserve">
+    <value>&lt;unknown&gt;</value>
+  </data>
+  <data name="error.conversion.VDNnumber" xml:space="preserve">
+    <value>Cannot convert VDN number [{0}].</value>
+    <comment>{0} - .NET type</comment>
+  </data>
+  <data name="error.conversion.SpecialNullValue" xml:space="preserve">
+    <value>Result of arithmetic operation leads to an overflow or a division by 0.</value>
+  </data>
+  <data name="error.movebackwardinblob" xml:space="preserve">
+    <value>Moving backwards in Blob is not supported.</value>
+  </data>
+  <data name="error.asciireadfromlong" xml:space="preserve">
+    <value>Cannot read ASCII data from this LONG column.</value>
+  </data>
+  <data name="error.binaryreadfromlong" xml:space="preserve">
+    <value>Cannot read binary data from this LONG column.</value>
+  </data>
+  <data name="error.asciiputtolong" xml:space="preserve">
+    <value>Cannot put ASCII data into this LONG column.</value>
+  </data>
+  <data name="error.binaryputtolong" xml:space="preserve">
+    <value>Cannot put binary data into this LONG column.</value>
+  </data>
+  <data name="error.sqlstatement.null" xml:space="preserve">
+    <value>SQL statement is null.</value>
+  </data>
+  <data name="error.columnvalue.null" xml:space="preserve">
+    <value>Failed to get the value since column's value is NULL</value>
+  </data>
+  <data name="error.adapter.null" xml:space="preserve">
+    <value>Data adapter is null.</value>
+  </data>
+  <data name="error.select.null" xml:space="preserve">
+    <value>Select command is null.</value>
+  </data>
+  <data name="error.basetable.notfound" xml:space="preserve">
+    <value>Base table name is not found. Propably FOR UPDATE suffix is not specified.</value>
+  </data>
+  <data name="error.sqlstatement.toolong" xml:space="preserve">
+    <value>SQL statement is too long. Increase the DB parameter PACKET_SIZE.</value>
+  </data>
+  <data name="error.missinginout" xml:space="preserve">
+    <value>IN or OUT param missing at position {0}.</value>
+    <comment>{0} - parameter position (number)</comment>
+  </data>
+  <data name="error.sqlstatement.resultset" xml:space="preserve">
+    <value>SQL statement would generate a result set.</value>
+  </data>
+  <data name="error.sqlcommand.noresultset" xml:space="preserve">
+    <value>SQL command doesn't return a result set.</value>
+  </data>
+  <data name="error.colindex.notfound" xml:space="preserve">
+    <value>Column index {0} was not found.</value>
+    <comment>{0} - the column index (number)</comment>
+  </data>
+  <data name="error.colname.notfound" xml:space="preserve">
+    <value>Column name {0} was not found.</value>
+    <comment>{0} - the column name</comment>
+  </data>
+  <data name="error.sqlstatement.noprocedure" xml:space="preserve">
+    <value>SQL statement does not call a DB procedure.</value>
+  </data>
+  <data name="error.special.number.unsupported" xml:space="preserve">
+    <value>The number value {0} is not supported.</value>
+    <comment>{0} - the NaN or INF value</comment>
+  </data>
+  <data name="error.nouser" xml:space="preserve">
+    <value>No user name given.</value>
+  </data>
+  <data name="error.nopassword" xml:space="preserve">
+    <value>No password given.</value>
+  </data>
+  <data name="error.invalidpassword" xml:space="preserve">
+    <value>The password is invalid.</value>
+  </data>
+  <data name="error.nodata.found" xml:space="preserve">
+    <value>No data found.</value>
+  </data>
+  <data name="error.invalid.datatype" xml:space="preserve">
+    <value>Invalid data type.</value>
+  </data>
+  <data name="error.unknown.datatype" xml:space="preserve">
+    <value>Unknown data type.</value>
+  </data>
+  <data name="error.resultset.beforefirst" xml:space="preserve">
+    <value>Result set is positioned before first row.</value>
+  </data>
+  <data name="error.resultset.afterlast" xml:space="preserve">
+    <value>Result set is positioned after last row.</value>
+  </data>
+  <data name="error.unnamed.parameter" xml:space="preserve">
+    <value>Parameter must be named.</value>
+  </data>
+  <data name="error.no.columnnames" xml:space="preserve">
+    <value>Could not get column names from database kernel.</value>
+  </data>
+  <data name="error.internal.connectionnull" xml:space="preserve">
+    <value>Internal error: connection field is null, but should not.</value>
+  </data>
+  <data name="error.internal.unexpectedinput" xml:space="preserve">
+    <value>Internal error: input parameter at index {0} was not expected.</value>
+  </data>
+  <data name="error.internal.unexpectedoutput" xml:space="preserve">
+    <value>Internal error: output parameter at index {0} was not expected.</value>
+  </data>
+  <data name="error.internal.invalidParseid" xml:space="preserve">
+    <value>Internal error: parse id is null.</value>
+  </data>
+  <data name="error.host.connect" xml:space="preserve">
+    <value>Cannot connect to host {0}:{1}.</value>
+    <comment>{0} - host name, {1} - port name</comment>
+  </data>
+  <data name="error.recv.connect" xml:space="preserve">
+    <value>Receive of connect failed.</value>
+  </data>
+  <data name="error.connectreply.garbled" xml:space="preserve">
+    <value>Reply is garbled.</value>
+  </data>
+  <data name="error.chunkoverflow" xml:space="preserve">
+    <value>Read {0} bytes at position {1} in buffer of length {2}.</value>
+    <comment>{0} - bytes still to read (number), {1} - read bytes (number), {2} - buffer length (number)</comment>
+  </data>
+  <data name="error.admin.reconnect" xml:space="preserve">
+    <value>Reconnect for admin session not supported.</value>
+  </data>
+  <data name="error.stream.ioexception" xml:space="preserve">
+    <value>IO Exception in stream read: {0}</value>
+  </data>
+  <data name="error.stream.conversion.string" xml:space="preserve">
+    <value>Character data argument cannot be converted to binary/structured stream.</value>
+  </data>
+  <data name="error.stream.conversion.bytes" xml:space="preserve">
+    <value>Binary data argument cannot be converted to character/structured stream.</value>
+  </data>
+  <data name="error.stream.isatend" xml:space="preserve">
+    <value>Stream is empty or already closed.</value>
+  </data>
+  <data name="error.conversion.structuretype" xml:space="preserve">
+    <value>Structure member {0} has unsupported data type {1}.</value>
+  </data>
+  <data name="error.structure.arraywronglength" xml:space="preserve">
+    <value>Number of items in input and structure do not match (required {0}, input was {1}).</value>
+  </data>
+  <data name="error.structure.element.null" xml:space="preserve">
+    <value>Input structure element #{0} is null.</value>
+  </data>
+  <data name="error.structure.element.conversion" xml:space="preserve">
+    <value>Conversion of structure element of type {0} from {1} is not possible.</value>
+  </data>
+  <data name="error.structure.element.overflow" xml:space="preserve">
+    <value>Conversion of structure element of type {0} failed (overflow), value was {1}.</value>
+  </data>
+  <data name="error.invalid.startposition" xml:space="preserve">
+    <value>Internal error: Invalid start position for LONG data.</value>
+  </data>
+  <data name="error.fetch.nodatapart" xml:space="preserve">
+    <value>Fetch operation delivered no data part.</value>
+  </data>
+  <data name="error.connection.wrongserverchallengereceived" xml:space="preserve">
+    <value>Connect failed, wrong format of server challenge [{0}] </value>
+  </data>
+  <data name="error.connection.challengeresponsenotsupported" xml:space="preserve">
+    <value>Secure connect using challenge response authentication is not supported</value>
+  </data>
+  <data name="commerror.ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="commerror.connectiondown" xml:space="preserve">
+    <value>Connection down, session released</value>
+  </data>
+  <data name="commerror.tasklimit" xml:space="preserve">
+    <value>Task limit</value>
+  </data>
+  <data name="commerror.timeout" xml:space="preserve">
+    <value>Time out</value>
+  </data>
+  <data name="commerror.crash" xml:space="preserve">
+    <value>Crash</value>
+  </data>
+  <data name="commerror.restartrequired" xml:space="preserve">
+    <value>Restart required</value>
+  </data>
+  <data name="commerror.shutdown" xml:space="preserve">
+    <value>Shutdown</value>
+  </data>
+  <data name="commerror.sendlinedown" xml:space="preserve">
+    <value>Send line down</value>
+  </data>
+  <data name="commerror.recvlinedown" xml:space="preserve">
+    <value>Receive line down</value>
+  </data>
+  <data name="commerror.packetlimit" xml:space="preserve">
+    <value>Packet limit</value>
+  </data>
+  <data name="commerror.released" xml:space="preserve">
+    <value>Released</value>
+  </data>
+  <data name="commerror.wouldblock" xml:space="preserve">
+    <value>Would block</value>
+  </data>
+  <data name="commerror.unknownrequest" xml:space="preserve">
+    <value>Unknown request</value>
+  </data>
+  <data name="commerror.serverdbunknown" xml:space="preserve">
+    <value>Server or DB unknown</value>
+  </data>
+  <data name="error.exec.failed" xml:space="preserve">
+    <value>Execution failed</value>
+  </data>
+  <data name="error.getobject.failed" xml:space="preserve">
+    <value>getObject function failed</value>
+  </data>
+  <data name="error.dbnull.unknown" xml:space="preserve">
+    <value>Column nullable unknown</value>
+  </data>
+  <data name="error.param.trunc" xml:space="preserve">
+    <value>Parameter truncated</value>
+  </data>
+  <data name="error.oms.unsupported" xml:space="preserve">
+    <value>OMS stream object is not supported</value>
+  </data>
+  <data name="error.tabledirect.unsupported" xml:space="preserve">
+    <value>TableDirect parameter is not supported</value>
+  </data>
+  <data name="error.statement.cancelled" xml:space="preserve">
+    <value>SQL statement cancelled.</value>
+  </data>
+  <data name="error.ssl.certificate" xml:space="preserve">
+    <value>Certificate error:</value>
+  </data>
 </root>
