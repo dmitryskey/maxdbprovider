@@ -22,6 +22,12 @@ using System.Reflection;
 using System.Net;
 using System.Collections;
 
+#if NET20
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Authentication;
+#endif
+
 namespace MaxDBDataProvider.Utils
 {
 	/// <summary>
@@ -41,18 +47,16 @@ namespace MaxDBDataProvider.Utils
 
 	public class SocketClass : ISocketIntf
 	{
-		private string m_host;
-		private int m_port;
-		private int m_timeout;
-		private TcpClient m_client;
-		private bool m_secure;
+		protected string m_host;
+        protected int m_port;
+        protected int m_timeout;
+        protected TcpClient m_client;
 
-		public SocketClass(string host, int port, int timeout, bool secure, bool checksocket) 
+		public SocketClass(string host, int port, int timeout, bool checksocket) 
 		{
 			m_host = host;
 			m_port = port;
 			m_timeout = timeout;
-			m_secure = secure;
 			
 			try
 			{
@@ -153,7 +157,7 @@ namespace MaxDBDataProvider.Utils
 
 		ISocketIntf ISocketIntf.Clone()
 		{
-			return new SocketClass(m_host, m_port, m_timeout, m_secure, false);
+			return new SocketClass(m_host, m_port, m_timeout, false);
 		}
 
 		void ISocketIntf.Close()
@@ -164,6 +168,71 @@ namespace MaxDBDataProvider.Utils
 
 		#endregion
 	}
+
+#if NET20
+
+    public class SslSocketClass : SocketClass, ISocketIntf
+    {
+        SslStream m_sslStream;
+        private string m_certificateError;
+        private string m_server;
+
+        public SslSocketClass(string host, int port, int timeout, bool checksocket, string server)
+            : base(host, port, timeout, checksocket)
+        {
+            m_server = server;
+            m_sslStream = new SslStream(m_client.GetStream(),
+                false,
+                new RemoteCertificateValidationCallback(ValidateServerCertificate),
+                null
+                );
+            try
+            {
+                m_sslStream.AuthenticateAsClient(server);
+            }
+            catch (AuthenticationException e)
+            {
+                throw new MaxDBException(m_certificateError + ". " + e.Message);
+            }
+        }
+
+        // The following method is invoked by the RemoteCertificateValidationDelegate.
+        private bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            m_certificateError = string.Empty;
+
+            if (sslPolicyErrors == SslPolicyErrors.None)
+                return true;
+
+            m_certificateError = MaxDBMessages.Extract(MaxDBMessages.ERROR_SSL_CERTIFICATE, sslPolicyErrors);
+
+            // Do not allow this client to communicate with unauthenticated servers.
+            return false;
+        }
+
+        Stream ISocketIntf.Stream
+        {
+            get
+            {
+                return m_sslStream;
+            }
+        }
+
+        ISocketIntf ISocketIntf.Clone()
+        {
+            return new SslSocketClass(m_host, m_port, m_timeout, false, m_server);
+        }
+
+        void ISocketIntf.Close()
+        {
+            m_sslStream.Close();
+            m_sslStream = null;
+            m_client.Close();
+            m_client = null;
+        }
+    }
+
+#endif
 
 	#region "Join stream class reimplementation"
 

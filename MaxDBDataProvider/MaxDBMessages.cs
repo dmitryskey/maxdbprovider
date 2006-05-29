@@ -221,6 +221,7 @@ namespace MaxDBDataProvider
 			// Connection
 			ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED = "error.connection.wrongserverchallengereceived",
 			ERROR_CONNECTION_CHALLENGERESPONSENOTSUPPORTED = "error.connection.challengeresponsenotsupported",
+            ERROR_SSL_CERTIFICATE = "error.ssl.certificate",
 
 			// communication errors
 			COMMERROR_OK = "commerror.ok",
