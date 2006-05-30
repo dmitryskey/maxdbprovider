@@ -982,7 +982,7 @@ namespace MaxDBDataProvider
 			DoConnect();
 #else
 			OpenConnection();
-			m_enc = SQLDBC.SQLDBC_Connection_isUnicodeDatabase(m_connHandler) == 1 ? Encoding.Unicode : Encoding.ASCII;
+			m_encoding = SQLDBC.SQLDBC_Connection_isUnicodeDatabase(m_connHandler) == 1 ? Encoding.Unicode : Encoding.ASCII;
 			m_kernelVersion = SQLDBC.SQLDBC_Connection_getKernelVersion(m_connHandler);
 #endif
 		}
