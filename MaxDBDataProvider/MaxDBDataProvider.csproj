@@ -135,7 +135,7 @@
                 />
                 <File
                     RelPath = "MaxDBCommandBuilder.cs"
-                    SubType = "Component"
+                    SubType = "Code"
                     BuildAction = "Compile"
                 />
                 <File
@@ -149,8 +149,13 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "MaxDBConnectionStringBuilder.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
                     RelPath = "MaxDBDataAdapter.cs"
-                    SubType = "Component"
+                    SubType = "Code"
                     BuildAction = "Compile"
                 />
                 <File

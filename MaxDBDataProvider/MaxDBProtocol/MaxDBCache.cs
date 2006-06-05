@@ -301,42 +301,34 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public ParseInfoCache(string cache, int cacheSize) : base((cacheSize > 0)? cacheSize : defaultSize)
 		{
-			setOptions(cache);
-		}
+            string kindDecl = cache;
 
-		private void setOptions(string cache)
-		{
-			string kindDecl = cache;
+            kindFilter = new bool[maxFunctionCode];
+            if (kindDecl.IndexOf('?') >= 0)
+            {
+                keepStats = true;
+                stats = new CacheInfo[maxFunctionCode];
+                stats[FunctionCode.Nil] = new CacheInfo("other");
+                stats[FunctionCode.Insert] = new CacheInfo("insert");
+                stats[FunctionCode.Select] = new CacheInfo("select");
+                stats[FunctionCode.Update] = new CacheInfo("update");
+                stats[FunctionCode.Delete] = new CacheInfo("delete");
+            }
 
-			kindFilter = new bool[maxFunctionCode];
-			if (kindDecl.IndexOf('?') >= 0) 
-				initStats();
-	
-			if (kindDecl.IndexOf("all") >= 0) 
-				for (int i = 0; i < maxFunctionCode; ++i) 
-					kindFilter[i] = true;
-			else 
-			{
-				if (kindDecl.IndexOf("i") >= 0) 
-					kindFilter[FunctionCode.Insert] = true;
-				if (kindDecl.IndexOf("u") >= 0) 
-					kindFilter [FunctionCode.Update] = true;
-				if (kindDecl.IndexOf("d") >= 0) 
-					kindFilter[FunctionCode.Delete] = true;
-				if (kindDecl.IndexOf ("s") >= 0) 
-					kindFilter[FunctionCode.Select] = true;
-			}
-		}
-
-		private void initStats()
-		{
-			keepStats = true;
-			stats = new CacheInfo[maxFunctionCode];
-			stats[FunctionCode.Nil] = new CacheInfo("other");
-			stats[FunctionCode.Insert] = new CacheInfo("insert");
-			stats[FunctionCode.Select] = new CacheInfo("select");
-			stats[FunctionCode.Update] = new CacheInfo("update");
-			stats[FunctionCode.Delete] = new CacheInfo("delete");
+            if (kindDecl.IndexOf("all") >= 0)
+                for (int i = 0; i < maxFunctionCode; ++i)
+                    kindFilter[i] = true;
+            else
+            {
+                if (kindDecl.IndexOf("i") >= 0)
+                    kindFilter[FunctionCode.Insert] = true;
+                if (kindDecl.IndexOf("u") >= 0)
+                    kindFilter[FunctionCode.Update] = true;
+                if (kindDecl.IndexOf("d") >= 0)
+                    kindFilter[FunctionCode.Delete] = true;
+                if (kindDecl.IndexOf("s") >= 0)
+                    kindFilter[FunctionCode.Select] = true;
+            }
 		}
 
 		public MaxDBParseInfo FindParseInfo(string sqlCmd)
@@ -402,6 +394,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	}
 
 	#endregion
+
 #endif
 }
 

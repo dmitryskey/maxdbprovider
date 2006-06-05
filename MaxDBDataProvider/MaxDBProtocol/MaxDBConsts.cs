@@ -728,27 +728,28 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	internal class ParamInfo 
 	{
 		// param modes, declared as set values
-		public const int Mandatory		= 1;
-		public const int Optional		= 2;
-		public const int Default		= 4;
-		public const int EscapeChar		= 8;
-		// param io types
-		public const int Input			= 0;
-		public const int Output			= 1;
-		public const int InOut			= 2;
-		// layout of tsp1_param_info
-		public const int ModeOffset		= 0;  // Set 1
-		public const int IOTypeOffset	= 1;  // enum 1
-		public const int DataTypeOffset = 2;  // enum1
-		public const int FracOffset		= 3;  // int1
-		public const int LengthOffset	= 4;  // int2
-		public const int InOutLenOffset = 6;  // int2
-		public const int BufPosOffset	= 8;  // int4
-		public const int ParamNoOffset  = 8;  // int2
-		public const int ReadOnlyOffset = 10; // int1
-		public const int SerialOffset   = 11; // int1
-		// The size of tsp1_param_info 
-		public const int END			= 12;
+		public const int 
+            Mandatory		= 1,
+		    Optional		= 2,
+		    Default		    = 4,
+		    EscapeChar		= 8,
+		    // param io types
+		    Input			= 0,
+		    Output			= 1,
+		    InOut			= 2,
+		    // layout of tsp1_param_info
+		    ModeOffset		= 0,  // Set 1
+		    IOTypeOffset	= 1,  // enum 1
+		    DataTypeOffset  = 2,  // enum1
+		    FracOffset		= 3,  // int1
+		    LengthOffset	= 4,  // int2
+		    InOutLenOffset  = 6,  // int2
+		    BufPosOffset	= 8,  // int4
+		    ParamNoOffset   = 8,  // int2
+		    ReadOnlyOffset  = 10, // int1
+		    SerialOffset    = 11, // int1
+		    // The size of tsp1_param_info 
+		    END			    = 12;
 	}
 
 	internal class Vsp00Consts
@@ -764,46 +765,47 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	internal class StreamHandle 
 	{
-		public const int Header_Length = 20;	
-		public const int RowDef    = 0;
-		public const int TabHandle = 4;
-	
-		public const int TabHandle_Reserved  =  4;
-		public const int TabHandle_Rowsize   =  8;
-		public const int TabHandle_ColCount  = 10;
-		public const int TabHandle_RowCount  = 12;
-		public const int TabHandle_ABAPTabID = 16;
-		public const int TabHandle_ColDesc_0 = 20;
-	
-		public const int ColDesc_InOut     = 0;
-		public const int ColDesc_ABAPType  = 1;
-		public const int ColDesc_Dec       = 2;
-		public const int ColDesc_Length    = 4;
-		public const int ColDesc_Offset    = 6;
-	
-		public const int ColDesc_Size      = 8;	
-	
-		public const int StreamType_Bool   = 0;
-		public const int StreamType_Int1   = 1;
-		public const int StreamType_UInt1  = 2;
-		public const int StreamType_Int2   = 3;
-		public const int StreamType_UInt2  = 4;
-		public const int StreamType_Int4   = 5;
-		public const int StreamType_UInt4  = 6;
-		public const int StreamType_Int8   = 7;
-		public const int StreamType_UInt8  = 8;
-		public const int StreamType_Float  = 9;
-		public const int StreamType_Double = 10;
-		public const int StreamType_Int    = 12;
-		public const int StreamType_UInt   = 13;
-		public const int StreamType_Char   = 14;
-		public const int StreamType_WChar  = 15;
-		public const int StreamType_UDT    = 16;
-		public const int StreamType_WYDE   = 17;
-	
-		public const int Stream_IN    = 0;
-		public const int Stream_OUT   = 1;
-		public const int Stream_INOUT = 2;
+        public const int 
+            Header_Length = 20,
+            RowDef = 0,
+            TabHandle = 4,
+
+            TabHandle_Reserved = 4,
+            TabHandle_Rowsize = 8,
+            TabHandle_ColCount = 10,
+            TabHandle_RowCount = 12,
+            TabHandle_ABAPTabID = 16,
+            TabHandle_ColDesc_0 = 20,
+
+            ColDesc_InOut = 0,
+            ColDesc_ABAPType = 1,
+            ColDesc_Dec = 2,
+            ColDesc_Length = 4,
+            ColDesc_Offset = 6,
+
+            ColDesc_Size = 8,
+
+            StreamType_Bool = 0,
+            StreamType_Int1 = 1,
+            StreamType_UInt1 = 2,
+            StreamType_Int2 = 3,
+            StreamType_UInt2 = 4,
+            StreamType_Int4 = 5,
+            StreamType_UInt4 = 6,
+            StreamType_Int8 = 7,
+            StreamType_UInt8 = 8,
+            StreamType_Float = 9,
+            StreamType_Double = 10,
+            StreamType_Int = 12,
+            StreamType_UInt = 13,
+            StreamType_Char = 14,
+            StreamType_WChar = 15,
+            StreamType_UDT = 16,
+            StreamType_WYDE = 17,
+
+            Stream_IN = 0,
+            Stream_OUT = 1,
+            Stream_INOUT = 2;
 	}
 
 	internal enum FetchType
@@ -823,6 +825,23 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		AFTER_LAST    = 3,	// Constant indicating that the current position is behind the last row.
 		NOT_AVAILABLE =	4	// Constant indicating that the current position is not available.
 	}
+
+    internal class ConnectionStringParams
+    {
+        public const string
+            DATA_SOURCE = "DATA SOURCE",
+            INITIAL_CATALOG = "INITIAL CATALOG",
+            USER_ID = "USER ID",
+            PASSWORD = "PASSWORD",
+            TIMEOUT = "TIMEOUT",
+            SPACE_OPTION = "SPACE OPTION",
+            CACHE = "CACHE",
+            CACHE_LIMIT = "CACHE LIMIT",
+            CACHE_SIZE = "CACHE SIZE",
+            ENCRYPT = "ENCRYPT",
+            MODE = "MODE",
+            SSL_HOST = "SSL HOST";
+    }
 
 	/// <summary>
 	/// Summary description for Consts.

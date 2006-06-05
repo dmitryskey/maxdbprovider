@@ -20,12 +20,17 @@ using System.Data.Common;
 
 namespace MaxDBDataProvider
 {
-	public class MaxDBDataAdapter : DbDataAdapter, IDbDataAdapter
+    [System.ComponentModel.DesignerCategory("Code")]
+	public sealed class MaxDBDataAdapter : DbDataAdapter, IDbDataAdapter
 	{
 		private MaxDBCommand m_selectCommand;
 		private MaxDBCommand m_insertCommand;
 		private MaxDBCommand m_updateCommand;
 		private MaxDBCommand m_deleteCommand;
+
+#if !NET20
+		private int m_updBatchSize;
+#endif
 
 		static private readonly object EventRowUpdated = new object(); 
 		static private readonly object EventRowUpdating = new object(); 
@@ -213,9 +218,22 @@ namespace MaxDBDataProvider
 				InsertCommand = (MaxDBCommand)value; 
 			}
 		}
+    	#endregion
 
-		#endregion
-	}
+#if !NET20
+		public int UpdateBatchSize
+		{
+			get
+			{
+				return m_updBatchSize;
+			}
+			set
+			{
+				m_updBatchSize = value;
+			}
+		}
+#endif
+    }
 
 	public delegate void MaxDBRowUpdatingEventHandler(object sender, MaxDBRowUpdatingEventArgs e);
 	public delegate void MaxDBRowUpdatedEventHandler(object sender, MaxDBRowUpdatedEventArgs e);

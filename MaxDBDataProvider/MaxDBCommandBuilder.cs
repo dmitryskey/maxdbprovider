@@ -25,6 +25,7 @@ namespace MaxDBDataProvider
 	/// <summary>
 	/// Summary description for MaxDBCommandBuilder.
 	/// </summary>
+    [System.ComponentModel.DesignerCategory("Code")]
 	public sealed class MaxDBCommandBuilder : Component
 	{
 		private string m_prefix = "'";
@@ -35,8 +36,6 @@ namespace MaxDBDataProvider
 		private MaxDBCommand m_delCmd = null;
 		private MaxDBCommand m_insCmd = null;
 		private MaxDBCommand m_updCmd = null;
-		private string[] m_keyFields = null;
-		private string[] m_serialFields = null;
 
 		public MaxDBCommandBuilder()
 		{
@@ -48,19 +47,6 @@ namespace MaxDBDataProvider
 		public MaxDBCommandBuilder(MaxDBDataAdapter adapter)
 		{
 			DataAdapter = adapter;
-		}
-
-		public MaxDBCommandBuilder(MaxDBDataAdapter adapter, string[] keyFields)
-		{
-			DataAdapter = adapter;
-			KeyFields = keyFields;
-		}
-
-		public MaxDBCommandBuilder(MaxDBDataAdapter adapter, string[] keyFields, string[] serialFields)
-		{
-			DataAdapter = adapter;
-			KeyFields = keyFields;
-			SerialFields = serialFields;
 		}
 
 		public string QuotePrefix
@@ -104,37 +90,7 @@ namespace MaxDBDataProvider
 				m_adapter.RowUpdating += new MaxDBRowUpdatingEventHandler(OnRowUpdating);
 			}
 		}
-
-		public string[] KeyFields
-		{
-			get
-			{
-				return m_keyFields;
-			}
-			set
-			{
-				m_keyFields = value;
-				if (m_keyFields != null)
-					for(int i = 0; i < m_keyFields.Length; i++)
-						m_keyFields[i] = m_keyFields[i].Trim().ToUpper();
-			}
-		}
-
-		public string[] SerialFields
-		{
-			get
-			{
-				return m_serialFields;
-			}
-			set
-			{
-				m_serialFields = value;
-				if (m_serialFields != null)
-					for(int i = 0; i < m_serialFields.Length; i++)
-						m_serialFields[i] = m_serialFields[i].Trim().ToUpper();
-			}
-		}
-
+        		
 		public void RefreshSchema()
 		{
 			if (m_adapter == null)
@@ -189,7 +145,7 @@ namespace MaxDBDataProvider
 			{
 				string columnName = row["ColumnName"].ToString();
 
-				if (m_keyFields != null && Array.IndexOf(m_keyFields, columnName.Trim().ToUpper()) >= 0)
+                if ((bool)row["IsKeyColumn"])
 				{
 					if (whereStmt.Length > 0)
 						whereStmt.Append(" AND ");
@@ -224,7 +180,7 @@ namespace MaxDBDataProvider
 			foreach(DataRow row in m_schema.Rows)
 			{
 				string columnName = row["ColumnName"].ToString();
-				if (m_serialFields == null || Array.IndexOf(m_serialFields, columnName.Trim().ToUpper()) == -1)
+				if (!(bool)row["IsAutoIncrement"])
 				{
 					if (columns.Length > 0 && markers.Length > 0)
 					{
@@ -265,7 +221,7 @@ namespace MaxDBDataProvider
 			{
 				string columnName = row["ColumnName"].ToString();
 
-				if (m_keyFields != null && Array.IndexOf(m_keyFields, columnName.Trim().ToUpper()) >= 0)
+                if ((bool)row["IsKeyColumn"])
 				{
 					if (whereStmt.Length > 0)
 						whereStmt.Append(" AND ");
