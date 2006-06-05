@@ -5,6 +5,7 @@ using System.Data;
 using System.Data.Odbc;
 using System.Diagnostics;
 using System.Configuration;
+using System.ComponentModel;
 
 namespace MaxDBDataProvider
 {
@@ -23,6 +24,11 @@ namespace MaxDBDataProvider
 			// TODO: Add code to start application here
 			//
 
+            //ICustomTypeDescriptor bl = (ICustomTypeDescriptor)new System.Data.SqlClient.SqlConnectionStringBuilder();
+            ICustomTypeDescriptor b2 = (ICustomTypeDescriptor)new MaxDBConnectionStringBuilder();
+
+            AttributeCollection ff = b2.GetAttributes();
+ 
 			PerfomanceTest();
 			return;
 

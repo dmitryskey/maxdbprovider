@@ -20,7 +20,7 @@ using MaxDBDataProvider.MaxDBProtocol;
 
 namespace MaxDBDataProvider
 {
-	public class MaxDBParameter : ICloneable, IDataParameter
+	public class MaxDBParameter : ICloneable, IDbDataParameter
 	{
 		internal MaxDBType m_dbType = MaxDBType.VarCharA;
 		internal ParameterDirection m_direction = ParameterDirection.Input;
@@ -28,6 +28,7 @@ namespace MaxDBDataProvider
 		private string m_sParamName;
 		private string m_sSourceColumn;
 		private int m_size;
+        private byte m_precision, m_scale;
 		private DataRowVersion m_sourceVersion = DataRowVersion.Current;
 		internal object m_value;
 		internal object m_inputValue;
@@ -145,7 +146,7 @@ namespace MaxDBDataProvider
 
 		#endregion
 
-		#region IDataParameter Members
+		#region IDbDataParameter Members
 
 		public ParameterDirection Direction
 		{
@@ -351,7 +352,31 @@ namespace MaxDBDataProvider
 			}
 		}
 
-		#endregion
-	}
+        public byte Precision
+        {
+            get
+            {
+                return m_precision;
+            }
+            set
+            {
+                m_precision = value;
+            }
+        }
+
+        public byte Scale
+        {
+            get
+            {
+                return m_scale;
+            }
+            set
+            {
+                m_scale = value;
+            }
+        }
+
+        #endregion
+    }
 }
 

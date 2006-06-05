@@ -1,3 +1,20 @@
+//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//	Copyright (C) 2004-2005 MySQL AB
+//
+//	This program is free software; you can redistribute it and/or
+//	modify it under the terms of the GNU General Public License
+//	as published by the Free Software Foundation; either version 2
+//  of the License, or (at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program; if not, write to the Free Software
+//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
 using System;
 using NUnit.Framework;
 using MaxDBDataProvider;
@@ -23,7 +40,7 @@ namespace MaxDBConsole.UnitTesting
 		[TestFixtureSetUp]
 		public void Init() 
 		{
-			Init("CREATE TABLE Test (id INT NOT NULL DEFAULT SERIAL, id2 INT NOT NULL, name VARCHAR(100), dt DATE, tm TIME, ts TIMESTAMP, OriginalId INT, PRIMARY KEY(id, id2))");
+            Init("CREATE TABLE Test (id INT NOT NULL DEFAULT SERIAL, id2 INT NOT NULL UNIQUE, name VARCHAR(100), dt DATE, tm TIME, ts TIMESTAMP, OriginalId INT, PRIMARY KEY(id, id2))");
 		}
 
 		[TestFixtureTearDown]
@@ -82,13 +99,12 @@ namespace MaxDBConsole.UnitTesting
 				ClearTestTable();
 				
 				MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT * FROM Test FOR UPDATE", m_conn);
-				MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da, new string[]{"id", "id2"}, new string[]{"id"});
+				MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da);
 				cb.GetType(); //add this command since mcs compiler supposes that cb is never used
 				DataTable dt = new DataTable();
 				da.Fill(dt);
 
 				DataRow dr = dt.NewRow();
-				dr["id"] = 1;
 				dr["id2"] = 2;
 				dr["name"] = "TestName1";
 				dt.Rows.Add(dr);
@@ -143,13 +159,12 @@ namespace MaxDBConsole.UnitTesting
 			{
 				ClearTestTable();
 				MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT * FROM Test FOR UPDATE", m_conn);
-				MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da, new string[]{"id", "id2"}, new string[]{"id"});
+				MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da);
 				cb.GetType(); //add this command since mcs compiler supposes that cb is never used
 				DataTable dt = new DataTable();
 				da.Fill(dt);
 
 				DataRow row = dt.NewRow();
-				row["id"] = 1;//DBNull.Value; 
 				row["id2"] = 1;
 				row["name"] = "Test";
 				row["dt"] = DBNull.Value;
@@ -175,7 +190,7 @@ namespace MaxDBConsole.UnitTesting
 			{
 				ClearTestTable();
 				MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT * FROM test FOR UPDATE", m_conn);
-				MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da, new string[]{"id", "id2"}, new string[]{"id"});
+				MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da);
 				cb.GetType(); //add this command since mcs compiler supposes that cb is never used
 				DataTable dt = new DataTable();
 				da.Fill(dt);
@@ -183,7 +198,6 @@ namespace MaxDBConsole.UnitTesting
 				for (int i = 0; i < 1000; i++)
 				{
 					DataRow dr = dt.NewRow();
-					dr["id"] = 1;//DBNull.Value;
 					dr["id2"] = i;
 					dt.Rows.Add(dr);
 					DataTable changes = dt.GetChanges();

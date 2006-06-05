@@ -136,16 +136,14 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="MaxDBCommand.cs">
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="MaxDBCommandBuilder.cs">
-      <SubType>Component</SubType>
     </Compile>
     <Compile Include="MaxDBConnection.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="MaxDBConnectionStringBuilder.cs" />
     <Compile Include="MaxDBDataAdapter.cs">
-      <SubType>Component</SubType>
     </Compile>
     <Compile Include="MaxDBDataReader.cs">
       <SubType>Code</SubType>
@@ -217,9 +215,6 @@
       <SubType>Code</SubType>
     </Compile>
     <EmbeddedResource Include="MaxDBMessages.resx" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ClassDiagram1.cd" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

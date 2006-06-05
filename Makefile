@@ -29,6 +29,7 @@ MAXDBDATAPROVIDER_SRC=MaxDBDataProvider/AssemblyInfo.cs \
 	MaxDBDataProvider/MaxDBCommand.cs \
 	MaxDBDataProvider/MaxDBCommandBuilder.cs \
 	MaxDBDataProvider/MaxDBConnection.cs \
+	MaxDBDataProvider/MaxDBConnectionStringBuilder.cs \
 	MaxDBDataProvider/MaxDBDataAdapter.cs \
 	MaxDBDataProvider/MaxDBDataReader.cs \
 	MaxDBDataProvider/MaxDBException.cs \
