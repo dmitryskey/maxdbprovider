@@ -127,8 +127,8 @@ namespace MaxDBDataProvider.Utils
 #if SAFE
 			if (m_traceSwitch.TraceSQL)
 				Trace.WriteLine(dt.ToString(Consts.TimeStampFormat) + " " + msg);
-#endif
-		}
+#endif // SAFE
+        }
 
 		public void SqlTraceParseInfo(DateTime dt, object objInfo)
 		{
@@ -189,16 +189,16 @@ namespace MaxDBDataProvider.Utils
 						Trace.WriteLine(info.ColumnName);
 					}
 				}
-			}
-#endif
-		}
+            }
+#endif // SAFE
+        }
 
 		public void SqlTraceDataHeader(DateTime dt)
 		{
 #if SAFE
 			SqlTrace(dt, "I".PadRight(NumSize) + "T".PadRight(TypeSize) + "L".PadRight(LenSize) + "I".PadRight(InputSize) + "DATA");
-#endif
-		}
+#endif // SAFE
+        }
 
 #if SAFE
 		private void SqlTraceTransl(DBTechTranslator info)
@@ -207,10 +207,10 @@ namespace MaxDBDataProvider.Utils
 			Trace.Write(info.ColumnTypeName.PadRight(15));
 			Trace.Write((info.PhysicalLength - 1).ToString().PadRight(12));
 			Trace.Write(info.Precision.ToString().PadRight(12));
-		}
-#endif
+        }
+#endif // SAFE
 
-		public void Flush()
+        public void Flush()
 		{
 			if (m_traceSwitch.TraceSQL)
 			{
@@ -239,13 +239,13 @@ namespace MaxDBDataProvider.Utils
 				File.Delete(tmpFile);
 
 				Trace.Flush();
-#endif
-			}
+#endif // SAFE
+            }
 		}
 
 		#region IDisposable Members
 
-		public void Dispose()
+		void IDisposable.Dispose()
 		{
 #if !SAFE
 			Flush();

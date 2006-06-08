@@ -47,6 +47,9 @@ namespace MaxDBDataProvider
 			// Invalid column name.
 			ERROR_INVALID_COLUMNNAME = "error.invalid.columnname",
 
+			// Invalid column name buffer.
+			ERROR_COLUMNNAME_BUFFER = "error.columnname.buffer",
+
 			// An object is closed but shouldn't.
 			ERROR_OBJECTISCLOSED = "error.objectisclosed",
 
@@ -161,6 +164,9 @@ namespace MaxDBDataProvider
 			// Connection field is null.
 			ERROR_INTERNAL_CONNECTIONNULL = "error.internal.connectionnull",
 
+			// Cant not set isolation level.
+			ERROR_CONNECTION_ISOLATIONLEVEL = "error.connection.isolationlevel",
+
 			// No more input expected at this place.
 			ERROR_INTERNAL_UNEXPECTEDINPUT = "error.internal.unexpectedinput",
 
@@ -175,6 +181,9 @@ namespace MaxDBDataProvider
 
 			//Fetch operation delivered no data part.
 			ERROR_FETCH_NODATAPART = "error.fetch.nodatapart",
+
+			//Fetch operation error.
+			ERROR_FETCH_DATA = "error.fetch.data",
 
 			// Runtime: connect to host failed.
 			ERROR_HOST_CONNECT = "error.host.connect",

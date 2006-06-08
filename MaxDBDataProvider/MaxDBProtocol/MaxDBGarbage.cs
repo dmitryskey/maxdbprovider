@@ -145,6 +145,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			m_garbage.Clear();
 		}
-	}
-#endif
+    }
+#endif // SAFE
 }

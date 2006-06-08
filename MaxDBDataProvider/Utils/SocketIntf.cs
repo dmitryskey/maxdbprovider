@@ -26,7 +26,7 @@ using System.Collections;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Authentication;
-#endif
+#endif // NET20
 
 namespace MaxDBDataProvider.Utils
 {
@@ -64,7 +64,13 @@ namespace MaxDBDataProvider.Utils
 				{
 					Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 					bool connect_succeeded = false;
-					IPHostEntry entries = Dns.GetHostByName(host);
+
+                    IPHostEntry entries =
+#if NET20
+                        Dns.GetHostEntry(host);
+#else
+					    Dns.GetHostByName(host);
+#endif
 					foreach(IPAddress ipAddr in entries.AddressList)
 					{
 						sock.Blocking = false;
@@ -232,11 +238,11 @@ namespace MaxDBDataProvider.Utils
         }
     }
 
-#endif
+#endif // NET20
 
-	#region "Join stream class reimplementation"
+    #region "Join stream class reimplementation"
 
-	public class JoinStream : Stream
+    public class JoinStream : Stream
 	{
 		protected Stream[] streams;
 		protected Stream currentStream;

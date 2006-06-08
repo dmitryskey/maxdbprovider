@@ -265,5 +265,66 @@ namespace MaxDBConsole.UnitTesting
 				Assert.Fail(ex.Message);
 			}
 		}
+
+		private MaxDBCommand m_cmd;
+
+		private void CancelQuery() 
+		{
+			System.Threading.Thread.Sleep(100);
+			m_cmd.Cancel();
+		}
+
+		[Test]
+		public void TestCancel() 
+		{
+			MaxDBCommand db_proc = new MaxDBCommand("CREATE DBPROC InsertManyRows (IN cnt INTEGER) AS" +
+					"    VAR i INTEGER;" +
+					"TRY" +
+					"  SET i = 1; " +
+					"  WHILE $rc = 0 AND i <= cnt DO BEGIN" +
+					"      INSERT INTO SCOTT.TEST (id, name) VALUES (:i, '*');" +
+					"      SET i = i + 1;" +
+					"  END;" +
+					"CATCH" +
+					"  IF $rc <> 100 THEN STOP ($rc, 'unexpected error');"
+					, m_conn);
+
+			try
+			{
+				ClearTestTable();
+				db_proc.ExecuteNonQuery();
+			}
+			catch(MaxDBException ex)
+			{
+				if (ex.VendorCode != -6006)
+					Assert.Fail(ex.Message);
+			}
+
+			try
+			{
+				(new MaxDBCommand("CALL InsertManyRows(128000)", m_conn)).ExecuteNonQuery();
+			}
+			catch(Exception ex)
+			{
+				Assert.Fail(ex.Message);
+			}
+
+			m_cmd = new MaxDBCommand("UPDATE test SET name = '" + DateTime.Now.ToString() + "'", m_conn);
+        
+			Thread cancel_thread = new Thread(new ThreadStart(this.CancelQuery));
+			cancel_thread.Start();
+
+			try 
+			{
+				m_cmd.ExecuteNonQuery();
+
+				Assert.Fail("Execution should not have finished.");
+			}            
+			catch(MaxDBException ex) 
+			{
+				if (ex.VendorCode != -102)
+					Assert.Fail(ex.Message);
+			}
+		}
 	}
 }

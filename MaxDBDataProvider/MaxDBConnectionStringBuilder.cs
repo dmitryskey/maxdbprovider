@@ -24,7 +24,13 @@ using System.Data.Common;
 
 namespace MaxDBDataProvider
 {
-    public class MaxDBConnectionStringBuilder : IDictionary, ICollection, IEnumerable, ICustomTypeDescriptor
+    public class MaxDBConnectionStringBuilder : 
+#if NET20
+        DbConnectionStringBuilder
+#else
+        IDictionary, ICollection, ICustomTypeDescriptor
+#endif
+        , IEnumerable
     {
         private Hashtable m_KeyValuePairs = new Hashtable();
         private bool m_browsable = true;
@@ -38,7 +44,11 @@ namespace MaxDBDataProvider
             ConnectionString = connStr;
         }
 
-        public bool BrowsableConnectionString 
+#if NET20
+        public new bool BrowsableConnectionString
+#else
+        public bool BrowsableConnectionString
+#endif // NET20
         { 
             get
             {
@@ -47,15 +57,23 @@ namespace MaxDBDataProvider
             set
             {
                 m_browsable = value;
-            } 
+            }
         }
 
+#if NET20
+        public static new void AppendKeyValuePair(StringBuilder builder, string keyword, string value)
+#else
         public static void AppendKeyValuePair(StringBuilder builder, string keyword, string value)
+#endif // NET20
         {
             builder.Append(keyword).Append("=").Append(value).Append(";");
         }
 
-		public virtual bool ShouldSerialize(string keyword)
+#if NET20
+        public override bool ShouldSerialize(string keyword)
+#else
+        public bool ShouldSerialize(string keyword)
+#endif
 		{
 			return m_KeyValuePairs.ContainsKey(keyword);
 		}
@@ -65,7 +83,11 @@ namespace MaxDBDataProvider
             return ConnectionString;
         }
 
-        public virtual bool TryGetValue(string keyword, out object value)
+#if NET20
+        public override bool TryGetValue(string keyword, out object value)
+#else
+        public bool TryGetValue(string keyword, out object value)
+#endif
         {
             if (m_KeyValuePairs.ContainsKey(keyword))
             {
@@ -79,7 +101,11 @@ namespace MaxDBDataProvider
             }
         }
 
+#if NET20
+        public new string ConnectionString
+#else
         public string ConnectionString
+#endif
         {
             get
             {
@@ -363,7 +389,11 @@ namespace MaxDBDataProvider
             m_KeyValuePairs[key] = value;
         }
 
+#if NET20
+        public override void Clear()
+#else
         public void Clear()
+#endif // NET20
         {
             m_KeyValuePairs.Clear();
         }
@@ -378,7 +408,11 @@ namespace MaxDBDataProvider
             return m_KeyValuePairs.GetEnumerator();
         }
 
+#if NET20
+        public override bool IsFixedSize
+#else
         public bool IsFixedSize
+#endif // NET20
         {
             get
             {
@@ -386,7 +420,11 @@ namespace MaxDBDataProvider
             }
         }
 
+#if NET20
+        public new bool IsReadOnly
+#else
         public bool IsReadOnly
+#endif // NET20
         {
             get
             {
@@ -394,7 +432,11 @@ namespace MaxDBDataProvider
             }
         }
 
+#if NET20
+        public override ICollection Keys
+#else
         public ICollection Keys
+#endif // NET20
         {
             get
             {
@@ -407,7 +449,11 @@ namespace MaxDBDataProvider
             m_KeyValuePairs.Remove(key);
         }
 
+#if NET20
+        public override ICollection Values
+#else
         public ICollection Values
+#endif // NET20
         {
             get
             {
@@ -436,7 +482,11 @@ namespace MaxDBDataProvider
             m_KeyValuePairs.CopyTo(array, index);
         }
 
+#if NET20
+        public override int Count
+#else
         public int Count
+#endif
         {
             get
             {

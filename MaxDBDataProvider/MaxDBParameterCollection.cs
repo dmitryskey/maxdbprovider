@@ -18,16 +18,23 @@ using System;
 using System.Data;
 using System.Collections;
 using System.Globalization;
+using System.Data.Common;
 
 namespace MaxDBDataProvider
 {
-	public class MaxDBParameterCollection : IDataParameterCollection, IList, ICollection, IEnumerable
+	public class MaxDBParameterCollection : 
+#if NET20
+        DbParameterCollection
+#else
+        IList, ICollection, IEnumerable
+#endif
+        ,IDataParameterCollection
 	{
-		private MaxDBParameter[] collection = new MaxDBParameter[0];
+		private MaxDBParameter[] m_collection = new MaxDBParameter[0];
 
 		#region "IDataParameterCollection implementation"
 
-		object IDataParameterCollection.this[string index] 
+		object IDataParameterCollection.this[string index]
 		{
 			get
 			{
@@ -39,12 +46,20 @@ namespace MaxDBDataProvider
 			}
 		}
 
+#if NET20
+        public override bool Contains(string parameterName)
+#else
 		public bool Contains(string parameterName)
+#endif // NET20
 		{
 			return(-1 != IndexOf(parameterName));
 		}
 
+#if NET20
+        public override int IndexOf(string parameterName)
+#else
 		public int IndexOf(string parameterName)
+#endif // NET20
 		{
 			int index = 0;
 			foreach(MaxDBParameter item in this) 
@@ -56,7 +71,11 @@ namespace MaxDBDataProvider
 			return -1;
 		}
 
+#if NET20
+        public override void RemoveAt(string parameterName)
+#else
 		public void RemoveAt(string parameterName)
+#endif // NET20
 		{
 			RemoveAt(IndexOf(parameterName));
 		}
@@ -70,32 +89,48 @@ namespace MaxDBDataProvider
 
 		#region "ICollection implementation"
 
+#if NET20
+        public override void CopyTo(Array array, int index)
+#else
 		public void CopyTo(Array array, int index)
+#endif // NET20
 		{
-			collection.CopyTo(array, index);
+			m_collection.CopyTo(array, index);
 		}
 
+#if NET20
+        public override int Count
+#else
 		public int Count
+#endif // NET20
 		{
 			get
 			{
-				return collection.Length;
+				return m_collection.Length;
 			}
 		}
 
-		public virtual bool IsSynchronized 
+#if NET20
+        public override bool IsSynchronized
+#else
+		public virtual bool IsSynchronized
+#endif // NET20
 		{
 			get
 			{
-				return collection.IsSynchronized;
+				return m_collection.IsSynchronized;
 			}
 		}
 
-		public object SyncRoot 
+#if NET20
+        public override object SyncRoot
+#else
+		public object SyncRoot
+ #endif // NET20
 		{
 			get
 			{
-				return collection.SyncRoot;
+				return m_collection.SyncRoot;
 			}
 		}
 
@@ -103,77 +138,117 @@ namespace MaxDBDataProvider
 
 		#region "IEnumerable implementation"
 
+#if NET20
+        public override IEnumerator GetEnumerator()
+#else
 		public IEnumerator GetEnumerator()
-		{
-			return collection.GetEnumerator();
+#endif // NET20
+        {
+			return m_collection.GetEnumerator();
 		}
 
 		#endregion
 
 		#region "IList implementation"
 		
-		int IList.Add(object val)
+#if NET20
+        public override int Add(object val)
+#else
+		public int Add(object val)
+#endif
 		{
 			Add((MaxDBParameter)val);
-			return collection.Length - 1;
+			return m_collection.Length - 1;
 		}
 
+#if NET20
+        public override void Clear()
+#else
 		public void Clear()
+#endif // NET20
 		{
-			collection = new MaxDBParameter[0];
+			m_collection = new MaxDBParameter[0];
 		}
 
+#if NET20
+        public override bool Contains(object parameter)
+#else
 		public bool Contains(object parameter)
+#endif // NET20
 		{
-			foreach(MaxDBParameter param in collection)
+			foreach(MaxDBParameter param in m_collection)
 				if (param == parameter)
 					return true;
 
 			return false;
 		}
 
+#if NET20
+        public override void RemoveAt(int index)
+#else
 		public void RemoveAt(int index)
+#endif // NET20
 		{
-			ArrayList tmp_array = new ArrayList(collection);
+			ArrayList tmp_array = new ArrayList(m_collection);
 			tmp_array.RemoveAt(index);
-			collection = new MaxDBParameter[tmp_array.Count];
-			tmp_array.CopyTo(collection);
+			m_collection = new MaxDBParameter[tmp_array.Count];
+			tmp_array.CopyTo(m_collection);
 		}
 
+#if NET20
+        public override int IndexOf(object parameter)
+#else
 		public int IndexOf(object parameter)
+#endif // NET20
 		{
-			for (int index = 0; index < collection.Length; index++)
-				if (collection[index] == parameter)
+			for (int index = 0; index < m_collection.Length; index++)
+				if (m_collection[index] == parameter)
 					return index;
 
 			return -1;
 		}
 
+#if NET20
+        public override void Insert(int index, object value)
+#else
 		public void Insert(int index, object value)
+#endif // NET20
 		{
-			ArrayList tmp_array = new ArrayList(collection);
+			ArrayList tmp_array = new ArrayList(m_collection);
 			tmp_array.Insert(index, value);
-			collection = new MaxDBParameter[tmp_array.Count];
-			tmp_array.CopyTo(collection);
+			m_collection = new MaxDBParameter[tmp_array.Count];
+			tmp_array.CopyTo(m_collection);
 		}
 
+#if NET20
+        public override bool IsFixedSize
+#else
 		public bool IsFixedSize
+#endif // NET20
 		{
 			get
 			{
-				return collection.IsFixedSize;
+				return m_collection.IsFixedSize;
 			}
 		}
 
+#if NET20
+        public override bool IsReadOnly
+#else
 		public bool IsReadOnly
+#endif // NET20
 		{
 			get
 			{
-				return collection.IsReadOnly;
+				return m_collection.IsReadOnly;
 			}
 		}
 
+#if NET20
+        public override void Remove(object value)
+#else
 		public void Remove(object value)
+#endif // NET20
 		{
 			int index = ((IList)this).IndexOf(value);
 			if (index >=0)
@@ -184,25 +259,29 @@ namespace MaxDBDataProvider
 		{
 			get
 			{
-				return collection[index];
+				return m_collection[index];
 			}
 			set
 			{
-				collection[index] = (MaxDBParameter)value;
+				m_collection[index] = (MaxDBParameter)value;
 			}
 		}
 
 		#endregion
 
+#if NET20
+        public new MaxDBParameter this[int index]
+#else
 		public MaxDBParameter this[int index]
+#endif
 		{
 			get
 			{
-				return (MaxDBParameter)collection[index];
+				return (MaxDBParameter)m_collection[index];
 			}
 			set
 			{
-				collection[index] = value;
+				m_collection[index] = value;
 			}
 		}
 
@@ -210,10 +289,10 @@ namespace MaxDBDataProvider
 		{
 			if (val.ParameterName != null)
 			{
-				MaxDBParameter[] new_collection = new MaxDBParameter[collection.Length + 1];
-				collection.CopyTo(new_collection, 0);
-				new_collection[collection.Length] = val;
-				collection = new_collection;
+				MaxDBParameter[] new_collection = new MaxDBParameter[m_collection.Length + 1];
+				m_collection.CopyTo(new_collection, 0);
+				new_collection[m_collection.Length] = val;
+				m_collection = new_collection;
 				return val;
 			}
 			else
@@ -245,5 +324,41 @@ namespace MaxDBDataProvider
 		{
 			return Add(new MaxDBParameter(parameterName, type, size, direction, isNullable, precision, scale, sourceColumn, sourceVersion, val));
 		}
+
+#if NET20
+        public override void AddRange(Array values)
+#else
+        public void AddRange(Array values)
+#endif // NET20
+        {
+            foreach(MaxDBParameter param in values)
+                Add(param);
+        }
+
+        public Array ToArray()
+        {
+            return m_collection;
+        }
+ 
+#if NET20
+        protected override DbParameter GetParameter(int index)
+        {
+            return this[index];
+        }
+
+        protected override DbParameter GetParameter(string parameterName)
+        {
+            return this[parameterName];
+        }
+
+        protected override void SetParameter(int index, DbParameter value)
+        {
+            this[index] = (MaxDBParameter)value;
+        }
+        protected override void SetParameter(string parameterName, DbParameter value)
+        {
+            this[parameterName] = (MaxDBParameter)value;
+        }
+#endif // NET20
 	}
 }

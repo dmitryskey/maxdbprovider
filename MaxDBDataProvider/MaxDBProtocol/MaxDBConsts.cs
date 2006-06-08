@@ -871,7 +871,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const string AppID = "ODB";
 		public const string AppVersion = "70400";//"10100";
 		public static readonly bool IsLittleEndian = BitConverter.IsLittleEndian;
-		public const string CursorPrefix = "ADONET_CURSOR_";//"JDBC_CURSOR_";
+		public const string CursorPrefix = "ADONET_CURSOR_";
 		public const string TimeStampFormat = "yyyy-MM-dd hh:mm:ss.ffffff";
 
 		static Consts()

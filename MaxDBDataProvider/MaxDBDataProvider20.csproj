@@ -136,11 +136,12 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="MaxDBCommand.cs">
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="MaxDBCommandBuilder.cs">
     </Compile>
     <Compile Include="MaxDBConnection.cs">
-      <SubType>Code</SubType>
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="MaxDBConnectionStringBuilder.cs" />
     <Compile Include="MaxDBDataAdapter.cs">

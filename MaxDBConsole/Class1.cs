@@ -134,8 +134,8 @@ namespace MaxDBDataProvider
                     new MaxDBConnection(System.Configuration.ConfigurationManager.AppSettings["ConnectionString"]);
 #else
                     new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
-#endif
-				maxdbconn.SQLMode = SqlMode.Oracle;
+#endif // NET20
+                maxdbconn.SQLMode = SqlMode.Oracle;
 				maxdbconn.Open();
 
                 DateTime start_time = DateTime.Now;

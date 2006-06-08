@@ -235,7 +235,7 @@ namespace MaxDBDataProvider.Utils
 			}
 			catch (Exception) 
 			{
-				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber, Consts.ToHexString(rawNumber)));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber, Consts.ToHexString(rawNumber)));
 			}
 		}
 
@@ -331,7 +331,7 @@ namespace MaxDBDataProvider.Utils
 			}
 			catch(Exception) 
 			{
-				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber, Consts.ToHexString(rawNumber)));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber, Consts.ToHexString(rawNumber)));
 			}
 		}
 
@@ -539,7 +539,7 @@ namespace MaxDBDataProvider.Utils
 			} 
 			catch(Exception) 
 			{
-				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber,  Consts.ToHexString(number)));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber,  Consts.ToHexString(number)));
 			}
 		}
 
@@ -573,7 +573,7 @@ namespace MaxDBDataProvider.Utils
 													1.0e56, 1.0e57, 1.0e58, 1.0e59, 1.0e60,
 													1.0e61, 1.0e62, 1.0e63, 1.0e64,
 		};
-	}
+    }
 
-#endif
+#endif // SAFE
 }

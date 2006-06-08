@@ -22,6 +22,7 @@ using MaxDBDataProvider.Utils;
 namespace MaxDBDataProvider.MaxDBProtocol
 {
 #if SAFE
+
 	#region "MaxDB Packet"
 
 	/// <summary>
@@ -176,12 +177,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public void Close()
 		{
-			int currentLength = Length;
+			int currentLength = PacketLength;
 			int requiredLength = ConnectPacketOffset.MinSize - HeaderOffset.END;
 
 			if (currentLength < requiredLength) 
 				m_curPos += requiredLength - currentLength;
-			WriteUInt16((ushort)m_curPos, ConnectPacketOffset.ConnectLength);
+			WriteUInt16((ushort)(m_curPos - HeaderOffset.END), ConnectPacketOffset.ConnectLength);
 		}
 
 		public bool IsSwapped
@@ -679,9 +680,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				ClosePart();
 			}
 			else
-			{
-				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INTERNAL_INVALIDPARSEID));
-			}
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INTERNAL_INVALIDPARSEID));
 		}
 
 		public void AddCursorPart(string cursorName) 
@@ -1457,7 +1456,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if (rc == -8000) 
 				errmsg = MaxDBMessages.Extract(MaxDBMessages.COMMERROR_RESTARTREQUIRED);
 
-			return new MaxDBException(errmsg, new MaxDBSQLException(errmsg, state, rc, errorPos));
+			return new MaxDBException(errmsg, state, rc, errorPos);
 		}
 
 		public byte[] ReadDataBytes(int pos, int len) 
@@ -1493,5 +1492,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	}
 
 	#endregion
-#endif
+
+#endif // SAFE
 }

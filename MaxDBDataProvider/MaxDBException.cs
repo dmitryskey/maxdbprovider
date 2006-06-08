@@ -19,12 +19,14 @@ using System;
 using System.Data;
 using System.IO;
 using MaxDBDataProvider.MaxDBProtocol;
+using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider
 {
 	/// <summary>
 	/// Summary description for MaxDBException.
 	/// </summary>
+	/*
 	[Serializable]
 	public class MaxDBException : DataException
 	{
@@ -55,6 +57,7 @@ namespace MaxDBDataProvider
 			}
 		}
 	}
+	*/
 
 	public class PartNotFound : Exception 
 	{
@@ -72,32 +75,61 @@ namespace MaxDBDataProvider
 	}
 
 	[Serializable]
-	public class MaxDBSQLException : DataException
+	public class MaxDBException : DataException
 	{
 		private int m_errPos = -10899;
 		private string m_sqlState;
 		private int m_vendorCode;
 
-		public MaxDBSQLException() : base()
+		public MaxDBException() : base()
 		{
 		}
 
-		public MaxDBSQLException(string message) : base(message)
+		public MaxDBException(string message) : base(message)
 		{
 		}
 
-		public MaxDBSQLException(string message, string sqlState) : base(message)
+		public MaxDBException(string message, Exception innerException) : 
+			base(message, innerException)
+		{
+		}
+
+		public MaxDBException(string message, string sqlState) : 
+			base(message)
 		{
 			m_sqlState = sqlState;
 		}
 
-		public MaxDBSQLException(string message, string sqlState, int vendorCode) : base(message)
+		public MaxDBException(string message, string sqlState, Exception innerException) : 
+			base(message, innerException)
+		{
+			m_sqlState = sqlState;
+		}
+
+		public MaxDBException(string message, string sqlState, int vendorCode) : 
+			base(message)
 		{
 			m_sqlState = sqlState;
 			m_vendorCode = vendorCode;
 		}
 
-		public MaxDBSQLException(string message, string sqlState, int vendorCode, int errpos) : base(message)
+		public MaxDBException(string message, string sqlState, int vendorCode, Exception innerException) : 
+			base(message, innerException)
+		{
+			m_sqlState = sqlState;
+			m_vendorCode = vendorCode;
+		}
+
+		public MaxDBException(string message, string sqlState, int vendorCode, int errpos) : 
+			base(message)
+		{
+			m_sqlState = sqlState;
+			m_vendorCode = vendorCode;
+			m_errPos = errpos;
+		}
+
+		public MaxDBException(string message, string sqlState, int vendorCode, int errpos, Exception innerException) : 
+			base(message, innerException)
 		{
 			m_sqlState = sqlState;
 			m_vendorCode = vendorCode;
@@ -147,9 +179,23 @@ namespace MaxDBDataProvider
 				return false;
 			}
 		}
+
+#if !SAFE
+		public static void ThrowException(string message, IntPtr errorHndl)
+		{
+			ThrowException(message, errorHndl, null);
+		}
+
+		public static void ThrowException(string message, IntPtr errorHndl, Exception innerException)
+		{
+			throw new MaxDBException(message + ": " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(errorHndl), 
+				SQLDBC.SQLDBC_ErrorHndl_getSQLState(errorHndl), SQLDBC.SQLDBC_ErrorHndl_getErrorCode(errorHndl),
+				innerException);
+		}
+#endif
 	}
 
-	public class DatabaseException : MaxDBSQLException 
+	public class DatabaseException : MaxDBException 
 	{
 		public DatabaseException(string message, string sqlState, int vendorCode, int errpos) : base((errpos > 1) 
 			? MaxDBMessages.Extract(MaxDBMessages.ERROR_DATABASEEXCEPTION, vendorCode.ToString(), errpos.ToString(), message)
@@ -160,13 +206,9 @@ namespace MaxDBDataProvider
 	}
 
 	[Serializable]
-	public class MaxDBConnectionException : MaxDBSQLException 
+	public class MaxDBConnectionException : MaxDBException 
 	{
-		public MaxDBConnectionException(MaxDBException ex) : base("[" + ex.DetailErrorCode + "] " + ex.Message, "08000", ex.DetailErrorCode, 0)
-		{
-		}
-    
-		public MaxDBConnectionException(MaxDBSQLException ex) : base(ex.Message, "08000", ex.VendorCode) 
+		public MaxDBConnectionException(MaxDBException ex) : base(ex.Message, "08000", ex.VendorCode) 
 		{
 		}
 
@@ -195,7 +237,7 @@ namespace MaxDBDataProvider
 		}
 	}
 
-	public class MaxDBConversionException : MaxDBSQLException
+	public class MaxDBConversionException : MaxDBException
 	{
 		public MaxDBConversionException(string msg) : base(msg)
 		{

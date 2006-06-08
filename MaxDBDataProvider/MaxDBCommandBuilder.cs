@@ -17,6 +17,7 @@
 using System;
 using System.ComponentModel;
 using System.Data;
+using System.Data.Common;
 using System.Text;
 using MaxDBDataProvider.Utils;
 
@@ -26,7 +27,12 @@ namespace MaxDBDataProvider
 	/// Summary description for MaxDBCommandBuilder.
 	/// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
-	public sealed class MaxDBCommandBuilder : Component
+	public sealed class MaxDBCommandBuilder : 
+#if NET20
+        DbCommandBuilder
+#else
+        Component
+#endif
 	{
 		private string m_prefix = "'";
 		private string m_suffix = "'";
@@ -49,7 +55,11 @@ namespace MaxDBDataProvider
 			DataAdapter = adapter;
 		}
 
+#if NET20
+        public override string QuotePrefix
+#else
 		public string QuotePrefix
+#endif // NET20
 		{
 			get
 			{
@@ -61,7 +71,11 @@ namespace MaxDBDataProvider
 			}
 		}
 
+#if NET20
+        public override string QuoteSuffix
+#else
 		public string QuoteSuffix
+#endif // NET20
 		{
 			get
 			{
@@ -73,7 +87,11 @@ namespace MaxDBDataProvider
 			}
 		}
 
+#if NET20
+        public new MaxDBDataAdapter DataAdapter
+#else
 		public MaxDBDataAdapter DataAdapter
+#endif // NET20
 		{
 			get
 			{
@@ -90,8 +108,19 @@ namespace MaxDBDataProvider
 				m_adapter.RowUpdating += new MaxDBRowUpdatingEventHandler(OnRowUpdating);
 			}
 		}
-        		
+
+#if NET20
+        protected override void SetRowUpdatingHandler(DbDataAdapter adapter)
+        {
+            DataAdapter = (MaxDBDataAdapter)adapter;
+        }
+#endif // NET20
+
+#if NET20
+        public override void RefreshSchema()
+#else
 		public void RefreshSchema()
+#endif // NET20
 		{
 			if (m_adapter == null)
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_ADAPTER_NULL));
@@ -107,6 +136,46 @@ namespace MaxDBDataProvider
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_BASETABLE_NOTFOUND));
 		}
 
+#if NET20
+        protected override void ApplyParameterInfo(DbParameter parameter, DataRow row, StatementType statementType, bool whereClause)
+        {
+        }
+#endif // NET20
+
+#if NET20
+        protected override string GetParameterName(int parameterOrdinal)
+#else
+		private string GetParameterName(int parameterOrdinal)
+#endif // NET20
+        {
+            if (parameterOrdinal < 0 || parameterOrdinal >= m_schema.Rows.Count)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLINDEX_NOTFOUND));
+
+            return m_schema.Rows[parameterOrdinal]["ColumnName"].ToString();
+        }
+
+#if NET20
+        protected override string GetParameterName(string parameterName)
+#else
+		private string GetParameterName(string parameterName)
+#endif // NET20
+        {
+            foreach (DataRow row in m_schema.Rows)
+                if (row["ColumnName"].ToString().Trim().ToUpper() == parameterName)
+                    return parameterName;
+
+            throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLNAME_NOTFOUND));
+        }
+
+#if NET20
+        protected override string GetParameterPlaceholder(int parameterOrdinal)
+#else
+		private string GetParameterPlaceholder(int parameterOrdinal)
+#endif // NET20
+        {
+            return ":" + m_schema.Rows[parameterOrdinal]["ColumnName"].ToString();
+        }
+
 		private MaxDBCommand CreateCommand()
 		{
 			MaxDBCommand cmd = new MaxDBCommand(string.Empty, m_adapter.SelectCommand.Connection, m_adapter.SelectCommand.Transaction);
@@ -114,10 +183,11 @@ namespace MaxDBDataProvider
 			return cmd;
 		}
 
-		private MaxDBParameter CreateParameter(DataRow row, DataRowVersion version)
+		private MaxDBParameter CreateParameter(int index, DataRowVersion version)
 		{
+            DataRow row = m_schema.Rows[index];
 			return new MaxDBParameter(
-				row["ColumnName"].ToString(),
+				GetParameterName(index),
 				(MaxDBType)row["ProviderType"],
 				(int)row["ColumnSize"],
 				ParameterDirection.Input,
@@ -129,7 +199,11 @@ namespace MaxDBDataProvider
 				DBNull.Value);
 		}
 
+#if NET20
+        public new MaxDBCommand GetDeleteCommand()
+#else
 		public MaxDBCommand GetDeleteCommand()
+#endif // NET20
 		{
 			if (m_schema == null)
 				RefreshSchema();
@@ -141,18 +215,19 @@ namespace MaxDBDataProvider
 
 			StringBuilder whereStmt = new StringBuilder();
 	
-			foreach(DataRow row in m_schema.Rows)
+			for(int i = 0; i < m_schema.Rows.Count; i++)
 			{
+                DataRow row = m_schema.Rows[i];
 				string columnName = row["ColumnName"].ToString();
 
                 if ((bool)row["IsKeyColumn"])
 				{
 					if (whereStmt.Length > 0)
 						whereStmt.Append(" AND ");
-					
-					whereStmt.Append(columnName + "= :" + columnName);
 
-					cmd.Parameters.Add(CreateParameter(row, DataRowVersion.Original));
+                    whereStmt.Append(columnName + "= " + GetParameterPlaceholder(i));
+
+					cmd.Parameters.Add(CreateParameter(i, DataRowVersion.Original));
 				}
 			}
 
@@ -164,7 +239,11 @@ namespace MaxDBDataProvider
 			return m_delCmd;
 		}
 
+#if NET20
+        public new MaxDBCommand GetInsertCommand()
+#else
 		public MaxDBCommand GetInsertCommand()
+#endif // NET20
 		{
 			if (m_schema == null)
 				RefreshSchema();
@@ -177,8 +256,9 @@ namespace MaxDBDataProvider
 			StringBuilder columns = new StringBuilder();
 			StringBuilder markers = new StringBuilder();
 
-			foreach(DataRow row in m_schema.Rows)
+            for (int i = 0; i < m_schema.Rows.Count; i++)
 			{
+                DataRow row = m_schema.Rows[i];
 				string columnName = row["ColumnName"].ToString();
 				if (!(bool)row["IsAutoIncrement"])
 				{
@@ -189,9 +269,9 @@ namespace MaxDBDataProvider
 					}
 
 					columns.Append(columnName);
-					markers.Append(":" + columnName);
+                    markers.Append(GetParameterPlaceholder(i));
 
-					cmd.Parameters.Add(CreateParameter(row, DataRowVersion.Current));
+					cmd.Parameters.Add(CreateParameter(i, DataRowVersion.Current));
 				}
 			}
 
@@ -202,7 +282,11 @@ namespace MaxDBDataProvider
 			return m_insCmd;
 		}
 
+#if NET20
+        public new MaxDBCommand GetUpdateCommand()
+#else
 		public MaxDBCommand GetUpdateCommand()
+#endif // NET20
 		{
 			if (m_schema == null)
 				RefreshSchema();
@@ -217,25 +301,26 @@ namespace MaxDBDataProvider
 			StringBuilder whereStmt = new StringBuilder();
 			MaxDBParameterCollection whereParams = new MaxDBParameterCollection();
 
-			foreach(DataRow row in m_schema.Rows)
+            for (int i = 0; i < m_schema.Rows.Count; i++)
 			{
+                DataRow row = m_schema.Rows[i];
 				string columnName = row["ColumnName"].ToString();
 
                 if ((bool)row["IsKeyColumn"])
 				{
 					if (whereStmt.Length > 0)
 						whereStmt.Append(" AND ");
-					
-					whereStmt.Append(columnName + "= :" + columnName);
-					whereParams.Add(CreateParameter(row, DataRowVersion.Current));
+
+                    whereStmt.Append(columnName + " = " + GetParameterPlaceholder(i));
+					whereParams.Add(CreateParameter(i, DataRowVersion.Current));
 				}
 				else
 				{
 					if (setStmt.Length > 0)
 						setStmt.Append(", ");
 
-					setStmt.Append(columnName + "= :" + columnName);
-					setParams.Add(CreateParameter(row, DataRowVersion.Current));
+                    setStmt.Append(columnName + "= " + GetParameterPlaceholder(i));
+					setParams.Add(CreateParameter(i, DataRowVersion.Current));
 				}
 			}
 

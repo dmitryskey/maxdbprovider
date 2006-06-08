@@ -245,7 +245,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 			catch (Exception ex)
 			{
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ex.Message));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ex.Message), ex);
 			}
 
 			// patch pos, length and kind
@@ -294,7 +294,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 			catch (Exception ex)
 			{
-				throw new MaxDBException("Reading from a stream resulted in an IOException", ex);
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ex.Message), ex);
 			}
 			
 			
@@ -576,7 +576,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					} 
 					catch (IOException ioex) 
 					{
-						throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ioex.Message));
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ioex.Message));
 					}
 					// if the stream is exhausted, we have to look whether it is wholly written.
 					if (currCharsRead == -1) 
@@ -643,7 +643,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					} 
 					catch (IOException ioex) 
 					{
-						throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ioex.Message));
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ioex.Message));
 					}
 					// if the stream is exhausted, we have to look
 					// whether it is wholly written.
@@ -713,7 +713,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					} 
 					catch (IOException ioEx) 
 					{
-						throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ioEx.Message));
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ioEx.Message));
 					}
 					if (currBytesRead == -1) 
 					{
@@ -742,5 +742,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	}
 
 	#endregion
-#endif
+
+#endif // SAFE
 }

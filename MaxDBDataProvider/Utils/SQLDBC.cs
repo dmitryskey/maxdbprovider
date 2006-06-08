@@ -267,6 +267,12 @@ namespace MaxDBDataProvider.Utils
 		public extern static IntPtr ClientRuntime_GetClientRuntime(IntPtr errorText, int errorTextSize);
 
 		[DllImport("libSQLDBC_C")]
+		public extern static int SQLDBC_ErrorHndl_getErrorCode(IntPtr herror);
+
+		[DllImport("libSQLDBC_C")]
+		public extern static string SQLDBC_ErrorHndl_getSQLState(IntPtr herror);
+
+		[DllImport("libSQLDBC_C")]
 		public extern static string SQLDBC_ErrorHndl_getErrorText(IntPtr herror);
 		
 		#endregion

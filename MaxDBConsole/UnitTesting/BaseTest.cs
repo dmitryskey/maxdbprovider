@@ -36,9 +36,9 @@ namespace MaxDBConsole.UnitTesting
             System.Configuration.ConfigurationManager.AppSettings;
 #else
             System.Configuration.ConfigurationSettings.AppSettings;
-#endif
+#endif // NET20
 
-		public BaseTest()
+        public BaseTest()
 		{
 			//
 			// TODO: Add constructor logic here
@@ -65,7 +65,7 @@ namespace MaxDBConsole.UnitTesting
 			}
 			catch(MaxDBException ex)
 			{
-				if (ex.DetailErrorCode != -708)
+				if (ex.VendorCode != -4004)
 					throw;
 			}
 
@@ -75,7 +75,7 @@ namespace MaxDBConsole.UnitTesting
 		protected void Close() 
 		{
 			(new MaxDBCommand("DROP TABLE Test", m_conn)).ExecuteNonQuery();
-			m_conn.Dispose();
+			((IDisposable)m_conn).Dispose();
 			if (m_sw != null) m_sw.Close();
 		}
 
