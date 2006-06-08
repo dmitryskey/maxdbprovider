@@ -16,12 +16,19 @@
 
 using System;
 using System.Data;
+using System.Data.Common;
 using MaxDBDataProvider.Utils;
 
 namespace MaxDBDataProvider
 {
-	public class MaxDBTransaction : IDbTransaction, IDisposable
-	{
+	public class MaxDBTransaction :
+#if NET20
+        DbTransaction
+#else
+        IDbTransaction
+#endif // NET20
+        , IDisposable
+    {
 		private MaxDBConnection m_connection;
 
 		internal MaxDBTransaction(MaxDBConnection conn)
@@ -31,8 +38,12 @@ namespace MaxDBDataProvider
 
 		#region IDbTransaction Members
 
+#if NET20
+        public override void Commit()
+#else
 		public void Commit()
-		{
+#endif // NET20
+        {
 			m_connection.AssertOpen();
 
 			//>>> SQL TRACE
@@ -42,34 +53,40 @@ namespace MaxDBDataProvider
 			m_connection.Commit();
 #else
 			if(SQLDBC.SQLDBC_Connection_commit(m_connection.m_connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
-				throw new MaxDBException("COMMIT failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-					SQLDBC.SQLDBC_Connection_getError(m_connection.m_connHandler)));
-#endif
+				MaxDBException.ThrowException("COMMIT", SQLDBC.SQLDBC_Connection_getError(m_connection.m_connHandler));
+#endif // SAFE
+        }
+
+#if NET20
+        protected override DbConnection DbConnection
+#else
+		IDbConnection IDbTransaction.Connection
+#endif // NET20
+        {
+			get 
+			{
+				return this.Connection;
+			}
 		}
 
-		void IDbTransaction.Commit()
-		{
-			Commit();
-		}
-
-		public MaxDBConnection Connection
-		{
+#if NET20
+		public new MaxDBConnection Connection
+#else
+        public MaxDBConnection Connection
+#endif // NET20
+        {
 			get  
 			{ 
 				return m_connection; 
 			}
 		}
  
-		IDbConnection IDbTransaction.Connection
-		{
-			get
-			{
-				return Connection;
-			}
-		}
-
-		public IsolationLevel IsolationLevel 
-		{
+#if NET20
+        public override IsolationLevel IsolationLevel
+#else
+		public IsolationLevel IsolationLevel
+#endif // NET20
+        {
 			get 
 			{
 #if SAFE
@@ -88,20 +105,16 @@ namespace MaxDBDataProvider
 					default:
 						return IsolationLevel.Unspecified;
 				}
-#endif
-			}
+#endif // SAFE
+            }
 		}
 
-		IsolationLevel IDbTransaction.IsolationLevel
-		{
-			get
-			{
-				return IsolationLevel;
-			}
-		}
-
-		public void Rollback()
-		{
+#if NET20
+        public override void Rollback()
+#else
+        public void Rollback()
+#endif // NET20
+        {
 			m_connection.AssertOpen();
 
 			//>>> SQL TRACE
@@ -111,23 +124,17 @@ namespace MaxDBDataProvider
 			m_connection.Rollback();
 #else
 			if(SQLDBC.SQLDBC_Connection_rollback(m_connection.m_connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
-				throw new MaxDBException("ROLLBACK failed: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-					SQLDBC.SQLDBC_Connection_getError(m_connection.m_connHandler)));
-#endif
-		}
-
-		void IDbTransaction.Rollback()
-		{
-			Rollback();
-		}
+				throw new MaxDBException("ROLLBACK" + SQLDBC.SQLDBC_Connection_getError(m_connection.m_connHandler));
+#endif // SAFE
+        }
 
 		#endregion   
 
 		#region IDisposable Members
 
-		public void Dispose()
-		{
-			if (null != m_connection) 
+        void IDisposable.Dispose()
+        {
+            if (null != m_connection) 
 				// implicitly rollback if transaction still valid
 				Rollback();
 			GC.SuppressFinalize(this);

@@ -17,6 +17,7 @@
 
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Text;
 using System.Collections;
 using System.Runtime.CompilerServices;
@@ -60,7 +61,13 @@ namespace MaxDBDataProvider
         public static readonly string[] Value = { "NULL", "SESSION", "INTERNAL", "ANSI", "DB2", "ORACLE", "SAPR3" };
     }
 
-    public class MaxDBConnection : IDbConnection, IDisposable
+    public class MaxDBConnection :
+#if NET20
+        DbConnection
+#else
+        IDbConnection
+#endif // NET20
+        , IDisposable
     {
         private MaxDBConnectionStringBuilder m_connStrBuilder;
         private string m_connStr;
@@ -91,7 +98,7 @@ namespace MaxDBDataProvider
 
 #if NET20
         private string m_sslHostName = null;
-#endif
+#endif // NET20
 
         #endregion
 #else
@@ -104,7 +111,7 @@ namespace MaxDBDataProvider
 		internal Hashtable m_tableNames = new Hashtable();
 
         #endregion
-#endif
+#endif // SAFE
 
         internal MaxDBLogger m_logger;
         internal IsolationLevel m_isolationLevel = IsolationLevel.Unspecified;
@@ -162,14 +169,14 @@ namespace MaxDBDataProvider
 
 #if SAFE
             m_cache = m_connStrBuilder.Cache;
-#endif
+#endif // SAFE
 
 #if NET20 && SAFE
             if (m_connStrBuilder.SslHost != null)
                 m_sslHostName = m_connStrBuilder.SslHost;
 
             m_encrypt = m_connStrBuilder.Encrypt;
-#endif
+#endif // NET && SAFE
         }
 
         public Encoding DatabaseEncoding
@@ -203,7 +210,7 @@ namespace MaxDBDataProvider
                 return m_autocommit;
 #else
 				return SQLDBC.SQLDBC_Connection_getAutoCommit(m_connHandler) == SQLDBC_BOOL.SQLDBC_TRUE;
-#endif
+#endif // SAFE
             }
             set
             {
@@ -219,11 +226,15 @@ namespace MaxDBDataProvider
                 m_autocommit = value;
 #else
 				SQLDBC.SQLDBC_Connection_setAutoCommit(m_connHandler, value ? SQLDBC_BOOL.SQLDBC_TRUE : SQLDBC_BOOL.SQLDBC_FALSE);
-#endif
+#endif // SAFE
             }
         }
 
+#if NET20
+        public override string ServerVersion
+#else
         public string ServerVersion
+#endif // NET20
         {
             get
             {
@@ -276,9 +287,9 @@ namespace MaxDBDataProvider
 			m_isolationLevel = level;
 
 			if(SQLDBC.SQLDBC_Connection_setTransactionIsolation(m_connHandler, MapIsolationLevel(level)) != SQLDBC_Retcode.SQLDBC_OK) 
-				throw new MaxDBException("Can't set isolation level: " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(
-					SQLDBC.SQLDBC_Connection_getError(m_connHandler)));
-#endif
+				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONNECTION_ISOLATIONLEVEL), 
+					SQLDBC.SQLDBC_Connection_getError(m_connHandler));
+#endif // SAFE
         }
 
         internal void AssertOpen()
@@ -407,7 +418,6 @@ namespace MaxDBDataProvider
                         m_nonRecyclingExecutions = 0;
                     }
                 }
-
             }
             catch (MaxDBException ex)
             {
@@ -482,7 +492,7 @@ namespace MaxDBDataProvider
                     if (password.Length > auth.MaxPasswordLength && auth.MaxPasswordLength > 0)
                         password = password.Substring(0, auth.MaxPasswordLength);
                 }
-                catch (MaxDBSQLException ex)
+                catch (MaxDBException ex)
                 {
                     isChallengeResponseSupported = false;
                     if (ex.VendorCode == -5015)
@@ -503,7 +513,7 @@ namespace MaxDBDataProvider
                 }
             }
             if (m_encrypt && !isChallengeResponseSupported)
-                throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONNECTION_CHALLENGERESPONSENOTSUPPORTED));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONNECTION_CHALLENGERESPONSENOTSUPPORTED));
 
             /*
             * build connect statement
@@ -536,7 +546,7 @@ namespace MaxDBDataProvider
                 }
                 catch
                 {
-                    throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALIDPASSWORD));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALIDPASSWORD));
                 }
                 requestPacket.NewPart(PartKind.Data);
                 requestPacket.AddData(crypted);
@@ -736,37 +746,55 @@ namespace MaxDBDataProvider
 
 			if (SQLDBC.SQLDBC_Connection_connectASCII(m_connHandler, m_ConnArgs.host, m_ConnArgs.dbname, m_ConnArgs.username, 
 				m_ConnArgs.password, m_connPropHandler) != SQLDBC_Retcode.SQLDBC_OK) 
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_HOST_CONNECT, m_ConnArgs.host, m_ConnArgs.port) + ": " 
-					+ SQLDBC.SQLDBC_ErrorHndl_getErrorText(SQLDBC.SQLDBC_Connection_getError(m_connHandler)));
+				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBMessages.ERROR_HOST_CONNECT, m_ConnArgs.host, m_ConnArgs.port),  
+					SQLDBC.SQLDBC_Connection_getError(m_connHandler));
 		}
 
         #endregion
-#endif
+#endif // SAFE
 
         #region IDbConnection Members
 
+#if NET20
+        protected override DbTransaction BeginDbTransaction(IsolationLevel il)
+#else
+		IDbTransaction IDbConnection.BeginTransaction(IsolationLevel il)
+#endif // NET20
+        {
+			return BeginTransaction(il);
+		}
+
+#if NET20
+        public new MaxDBTransaction BeginTransaction(IsolationLevel il)
+#else
         public MaxDBTransaction BeginTransaction(IsolationLevel il)
+#endif // NET20
         {
             SetIsolationLevel(il);
             return new MaxDBTransaction(this);
         }
 
-        IDbTransaction IDbConnection.BeginTransaction(IsolationLevel il)
-        {
-            return BeginTransaction(il);
-        }
+#if !NET20
+		IDbTransaction IDbConnection.BeginTransaction()
+		{
+			return BeginTransaction();
+		}
+#endif
 
+#if NET20
+        public new MaxDBTransaction BeginTransaction()
+#else
         public MaxDBTransaction BeginTransaction()
+#endif // NET20
         {
             return new MaxDBTransaction(this);
         }
 
-        IDbTransaction IDbConnection.BeginTransaction()
-        {
-            return BeginTransaction();
-        }
-
+#if NET20
+        public override void ChangeDatabase(string dbName)
+#else
         public void ChangeDatabase(string dbName)
+#endif // NET20
         {
             /*
              * Change the database setting on the back-end. Note that it is a method
@@ -775,13 +803,12 @@ namespace MaxDBDataProvider
             m_ConnArgs.dbname = dbName;
         }
 
-        void IDbConnection.ChangeDatabase(string dbName)
-        {
-            ChangeDatabase(dbName);
-        }
-
         [MethodImpl(MethodImplOptions.Synchronized)]
+#if NET20
+        public override void Close()
+#else
         public void Close()
+#endif // NET20
         {
             /*
              * Close the database connection and set the ConnectionState
@@ -821,16 +848,15 @@ namespace MaxDBDataProvider
 				m_connPropHandler = IntPtr.Zero;
 
 				SQLDBC.SQLDBC_Connection_close(m_connHandler);
-#endif
+#endif // SAFE
             }
         }
 
-        void IDbConnection.Close()
-        {
-            Close();
-        }
-
+#if NET20
+        public override string ConnectionString
+#else
         public string ConnectionString
+#endif // NET20
         {
             get
             {
@@ -845,19 +871,11 @@ namespace MaxDBDataProvider
             }
         }
 
-        string IDbConnection.ConnectionString
-        {
-            get
-            {
-                return ConnectionString;
-            }
-            set
-            {
-                ConnectionString = value;
-            }
-        }
-
+#if NET20
+        public override int ConnectionTimeout
+#else
         public int ConnectionTimeout
+#endif // NET20
         {
             get
             {
@@ -867,44 +885,57 @@ namespace MaxDBDataProvider
             }
         }
 
-        int IDbConnection.ConnectionTimeout
+#if NET20
+        protected override DbCommand CreateDbCommand()
         {
-            get
-            {
-                return m_timeout;
-            }
+            return this.CreateCommand();
         }
+#else
+		IDbCommand IDbConnection.CreateCommand()
+		{
+			return CreateCommand();
+		}
+#endif // NET20
 
+#if NET20
+        public new MaxDBCommand CreateCommand()
+#else
         public MaxDBCommand CreateCommand()
+#endif // NET20
         {
             // Return a new instance of a command object.
             return new MaxDBCommand();
         }
 
-        IDbCommand IDbConnection.CreateCommand()
-        {
-            return CreateCommand();
-        }
-
+#if NET20
+        public override string Database
+#else
         public string Database
+#endif // NET20
         {
             get
             {
-                // Returns an initial database as set in the connection string.
-                // An empty string indicates not set - do not return a null reference.
-                return m_ConnArgs.dbname;
+                 return m_ConnArgs.dbname;
             }
         }
 
-        string IDbConnection.Database
+#if NET20
+        public override string DataSource
+#else
+        public string DataSource
+#endif // NET20
         {
             get
             {
-                return Database;
+                return m_ConnArgs.host;
             }
         }
 
+#if NET20
+        public override void Open()
+#else
         public void Open()
+#endif // NET20
         {
 #if SAFE
 #if NET20
@@ -922,7 +953,7 @@ namespace MaxDBDataProvider
 #else
             if (m_ConnArgs.port == 0) m_ConnArgs.port = Ports.Default;
 			m_comm = new MaxDBComm(new SocketClass(m_ConnArgs.host, m_ConnArgs.port, m_timeout, true));
-#endif
+#endif // NET20
 
             m_logger = new MaxDBLogger();
             DoConnect();
@@ -930,15 +961,14 @@ namespace MaxDBDataProvider
 			OpenConnection();
 			m_encoding = SQLDBC.SQLDBC_Connection_isUnicodeDatabase(m_connHandler) == 1 ? Encoding.Unicode : Encoding.ASCII;
 			m_kernelVersion = SQLDBC.SQLDBC_Connection_getKernelVersion(m_connHandler);
-#endif
+#endif // SAFE
         }
 
-        void IDbConnection.Open()
-        {
-            Open();
-        }
-
+#if NET20
+        public override ConnectionState State
+#else
         public ConnectionState State
+#endif // NET20
         {
             get
             {
@@ -949,15 +979,7 @@ namespace MaxDBDataProvider
 					return ConnectionState.Open;
 				else
 					return ConnectionState.Closed;
-#endif
-            }
-        }
-
-        ConnectionState IDbConnection.State
-        {
-            get
-            {
-                return State;
+#endif // SAFE
             }
         }
 
@@ -965,7 +987,7 @@ namespace MaxDBDataProvider
 
         #region IDisposable Members
 
-        public void Dispose()
+        void IDisposable.Dispose()
         {
             if (State == ConnectionState.Open)
                 Close();
@@ -976,7 +998,7 @@ namespace MaxDBDataProvider
 			m_connHandler = IntPtr.Zero;
 			SQLDBC.SQLDBC_Environment_delete_SQLDBC_Environment(m_envHandler);
 			m_envHandler = IntPtr.Zero;
-#endif
+#endif // !SAFE
 
             GC.SuppressFinalize(this);
         }

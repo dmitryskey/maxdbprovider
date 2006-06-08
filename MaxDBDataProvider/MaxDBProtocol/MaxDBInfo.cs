@@ -26,6 +26,7 @@ using MaxDBDataProvider.Utils;
 namespace MaxDBDataProvider.MaxDBProtocol
 {
 #if SAFE
+
 	#region "Parse information class"
 
 	internal class MaxDBParseInfo 
@@ -1053,11 +1054,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	}
 
 	#endregion
-#endif
 
-	#region "General column information"
+#endif // SAFE
 
-	internal class GeneralColumnInfo
+    #region "General column information"
+
+    internal class GeneralColumnInfo
 	{
 		public static bool IsLong(int columnType)
 		{

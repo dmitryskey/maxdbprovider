@@ -178,13 +178,19 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				if (m_socket.Stream != null)
 				{
-					MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END + ConnectPacketOffset.END]);
+					ISocketIntf cancel_socket = m_socket.Clone();
+					ConnectPacketData connData = new ConnectPacketData();
+					connData.DBName = m_dbname;
+					connData.Port = m_port;
+					connData.MaxSegSize = 1024 * 32;
+					MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END + ConnectPacketOffset.END], connData);
 					request.FillHeader(RSQLTypes.USER_CANCEL_REQUEST, m_sender, m_receiver, m_maxSendLen);
 					request.WriteInt32(m_sender, HeaderOffset.ReceiverRef);
+					request.SetSendLength(request.PacketLength);
+					request.Offset = HeaderOffset.END;
 					request.Close();
-					request.SetSendLength(request.Length);
-					m_socket.Stream.Write(request.arrayData, 0, request.Length);
-					m_socket.Close();
+					cancel_socket.Stream.Write(request.arrayData, 0, request.PacketLength);
+					cancel_socket.Close();
 				}
 			}
 			catch(Exception ex)
@@ -236,6 +242,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_EXEC_FAILED), ex);
 			}
 		}
-	}
-#endif
+    }
+#endif // SAFE
 }

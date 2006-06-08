@@ -28,10 +28,6 @@ namespace MaxDBDataProvider
 		private MaxDBCommand m_updateCommand;
 		private MaxDBCommand m_deleteCommand;
 
-#if !NET20
-		private int m_updBatchSize;
-#endif
-
 		static private readonly object EventRowUpdated = new object(); 
 		static private readonly object EventRowUpdating = new object(); 
 
@@ -41,7 +37,7 @@ namespace MaxDBDataProvider
 
 		public MaxDBDataAdapter(MaxDBCommand selectCommand)
 		{
-			m_selectCommand = selectCommand;
+            m_selectCommand = selectCommand;
 		}
 
 		public MaxDBDataAdapter(string selectCmdText, MaxDBConnection connection) 
@@ -111,8 +107,8 @@ namespace MaxDBDataProvider
         public new MaxDBCommand UpdateCommand
 #else
 		public MaxDBCommand UpdateCommand
-#endif 
-		{
+#endif  // NET20
+        {
 			get 
 			{ 
 				return m_updateCommand; 
@@ -139,8 +135,8 @@ namespace MaxDBDataProvider
         public new MaxDBCommand SelectCommand
 #else
 		public MaxDBCommand SelectCommand
-#endif
-		{
+#endif // NET20
+        {
 			get 
 			{ 
 				return m_selectCommand; 
@@ -167,8 +163,8 @@ namespace MaxDBDataProvider
         public new MaxDBCommand DeleteCommand
 #else
 		public MaxDBCommand DeleteCommand
-#endif 
-		{
+#endif // NET20
+        {
 			get 
 			{ 
 				return m_deleteCommand; 
@@ -195,8 +191,8 @@ namespace MaxDBDataProvider
         public new MaxDBCommand InsertCommand
 #else
 		public MaxDBCommand InsertCommand
-#endif
-		{
+#endif // NET20
+        {
 			get 
 			{ 
 				return m_insertCommand; 
@@ -219,20 +215,6 @@ namespace MaxDBDataProvider
 			}
 		}
     	#endregion
-
-#if !NET20
-		public int UpdateBatchSize
-		{
-			get
-			{
-				return m_updBatchSize;
-			}
-			set
-			{
-				m_updBatchSize = value;
-			}
-		}
-#endif
     }
 
 	public delegate void MaxDBRowUpdatingEventHandler(object sender, MaxDBRowUpdatingEventArgs e);

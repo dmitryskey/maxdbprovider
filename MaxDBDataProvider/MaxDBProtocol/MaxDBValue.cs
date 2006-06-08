@@ -25,6 +25,7 @@ using MaxDBDataProvider.Utils;
 namespace MaxDBDataProvider.MaxDBProtocol
 {
 #if SAFE
+
 	#region "Put Value class"
 
 	public class PutValue
@@ -309,7 +310,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			} 
 			catch(Exception ex) 
 			{
-				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ex.Message));                   
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ex.Message));                   
 			}
 		}
 	}
@@ -384,7 +385,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			} 
 			catch(Exception ex) 
 			{
-				throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ex.Message));                   
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STREAM_IOEXCEPTION, ex.Message));                   
 			}
 		}
 	}
@@ -438,16 +439,16 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				{
 					replyPacket = connection.Execute(requestPacket, this, GCMode.GC_DELAYED);
 				}
-				catch(MaxDBSQLException sqlEx) 
+				catch(MaxDBException ex) 
 				{
-					throw new IOException(sqlEx.Message, sqlEx);
+					throw new IOException(ex.Message, ex);
 				}
 
 				replyPacket.FindPart(PartKind.LongData);
 				int dataPos = replyPacket.PartDataPos;
 				descriptor = replyPacket.ReadDataBytes(dataPos, LongDesc.Size + 1);
 				if(descriptor[LongDesc.ValMode] == LongDesc.StartposInvalid) 
-					throw new MaxDBSQLException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALID_STARTPOSITION));
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALID_STARTPOSITION));
             
 				SetupStreamBuffer(descriptor, replyPacket.Clone(dataPos));
 				return true;
@@ -1316,5 +1317,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	}
 
 	#endregion
-#endif
+
+#endif // SAFE
 }

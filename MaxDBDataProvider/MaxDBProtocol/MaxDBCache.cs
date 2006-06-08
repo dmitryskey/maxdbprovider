@@ -395,7 +395,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#endregion
 
-#endif
+#endif // SAFE
 }
 
 

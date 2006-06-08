@@ -14,8 +14,8 @@ namespace MaxDBConsole.UnitTesting
 		private string m_connStr;
 #if SAFE
 		private string m_connStrBadAddr;
-#endif
-		private string m_connStrBadLogin;
+#endif // SAFE
+        private string m_connStrBadLogin;
 		private string m_connStrBadPassword;
 		private string m_connStrBadDbName;
         private NameValueCollection m_AppSettings =
@@ -23,9 +23,9 @@ namespace MaxDBConsole.UnitTesting
             System.Configuration.ConfigurationManager.AppSettings;
 #else
             System.Configuration.ConfigurationSettings.AppSettings;
-#endif
+#endif // NET20
 
-		public ConnectionTests()
+        public ConnectionTests()
 		{
 			//
 			// TODO: Add constructor logic here
@@ -38,8 +38,8 @@ namespace MaxDBConsole.UnitTesting
 			m_connStr = m_AppSettings["ConnectionString"];
 #if SAFE
 			m_connStrBadAddr = m_AppSettings["ConnectionStringBadAddr"];
-#endif
-			m_connStrBadLogin = m_AppSettings["ConnectionStringBadAddr"];
+#endif // SAFE
+            m_connStrBadLogin = m_AppSettings["ConnectionStringBadAddr"];
 			m_connStrBadPassword = m_AppSettings["ConnectionStringBadPassword"];
 			m_connStrBadDbName = m_AppSettings["ConnectionStringBadDbName"];
 		}
@@ -69,10 +69,10 @@ namespace MaxDBConsole.UnitTesting
 			{
 				Assert.IsTrue(DateTime.Now.Subtract(start).TotalSeconds <= maxdbconn.ConnectionTimeout + 2, "Timeout exceeded");
 			}
-		}
-#endif
+        }
+#endif // SAFE
 
-		[Test]
+        [Test]
 		[ExpectedException(typeof(MaxDBException))]
 		public void TestConnectionBadLogin()
 		{
