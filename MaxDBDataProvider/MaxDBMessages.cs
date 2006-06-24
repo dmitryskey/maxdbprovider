@@ -19,7 +19,7 @@ using System;
 using System.Resources;
 using System.Text;
 
-namespace MaxDBDataProvider
+namespace MaxDB.Data
 {
 	#region "Message translator class"
 
@@ -30,223 +30,235 @@ namespace MaxDBDataProvider
 		public const string 
 
 			// Connection is not opened
-			ERROR_CONNECTION_NOTOPENED = "error.connection.notopened",
+			ERROR_CONNECTION_NOTOPENED = "error_connection_notopened",
 
 			// Value overflow.
-			ERROR_VALUEOVERFLOW = "error.valueoverflow",
+			ERROR_VALUEOVERFLOW = "error_valueoverflow",
 
 			// Database exception (with error position).
-			ERROR_DATABASEEXCEPTION = "error.databaseexception",
+			ERROR_DATABASEEXCEPTION = "error_databaseexception",
 
 			// Database exception (without error position).
-			ERROR_DATABASEEXCEPTION_WOERRPOS = "error.databaseexception.woerrpos",
+			ERROR_DATABASEEXCEPTION_WOERRPOS = "error_databaseexception_woerrpos",
 
 			// Invalid column index.
-			ERROR_INVALID_COLUMNINDEX = "error.invalid.columnindex",
+			ERROR_INVALID_COLUMNINDEX = "error_invalid_columnindex",
 
 			// Invalid column name.
-			ERROR_INVALID_COLUMNNAME = "error.invalid.columnname",
+			ERROR_INVALID_COLUMNNAME = "error_invalid_columnname",
 
 			// Invalid column name buffer.
-			ERROR_COLUMNNAME_BUFFER = "error.columnname.buffer",
+			ERROR_COLUMNNAME_BUFFER = "error_columnname_buffer",
 
 			// An object is closed but shouldn't.
-			ERROR_OBJECTISCLOSED = "error.objectisclosed",
+			ERROR_OBJECTISCLOSED = "error_objectisclosed",
 
 			// A time out.
-			ERROR_TIMEOUT = "error.timeout",
+			ERROR_TIMEOUT = "error_timeout",
 
 			// No longdata packet.
-			ERROR_LONGDATAEXPECTED = "error.longdata.expected",
+			ERROR_LONGDATAEXPECTED = "error_longdata_expected",
 
 			// Invalid startposition for long data. 
-			ERROR_INVALID_STARTPOSITION = "error.invalid.startposition",
+			ERROR_INVALID_STARTPOSITION = "error_invalid_startposition",
 
 			// SQL -> .NET type conversion.
-			ERROR_CONVERSIONSQLNET = "error.conversion.sqlnet",
+			ERROR_CONVERSIONSQLNET = "error_conversion_sqlnet",
 
 			// .NET -> SQL type conversion.
-			ERROR_CONVERSIONNETSQL = "error.conversion.netsql",
+			ERROR_CONVERSIONNETSQL = "error_conversion_netsql",
 
 			// Data -> any type conversion.
-			ERROR_CONVERSIONDATA = "error.conversion.data",
+			ERROR_CONVERSIONDATA = "error_conversion_data",
 
 			// VDN Number -> BigDecimal conversion.
-			ERROR_CONVERSIONVDNnumber = "error.conversion.VDNnumber",
+			ERROR_CONVERSIONVDNnumber = "error_conversion_VDNnumber",
 
 			// VDN Number -> Special Null value.
-			ERROR_CONVERSIONSpecialNullValue = "error.conversion.SpecialNullValue",
+			ERROR_CONVERSIONSpecialNullValue = "error_conversion_SpecialNullValue",
 
 			// Unsupported blob navigation.
-			ERROR_MOVEBACKWARDINBLOB = "error.movebackwardinblob",
+			ERROR_MOVEBACKWARDINBLOB = "error_movebackwardinblob",
 
-			// Try to read ASCII data from LONG column.
-			ERROR_ASCIIREADFROMLONG = "error.asciireadfromlong",
+			// Try to read ASCII data from LONG column_
+			ERROR_ASCIIREADFROMLONG = "error_asciireadfromlong",
 
 			// Try to read binary data from LONG column.
-			ERROR_BINARYREADFROMLONG = "error.binaryreadfromlong",
+			ERROR_BINARYREADFROMLONG = "error_binaryreadfromlong",
 
 			// Try to put ASCII data into LONG column.
-			ERROR_ASCIIPUTTOLONG = "error.asciiputtolong",
+			ERROR_ASCIIPUTTOLONG = "error_asciiputtolong",
 
 			// Try to put binary data into LONG column.
-			ERROR_BINARYPUTTOLONG = "error.binaryputtolong",
+			ERROR_BINARYPUTTOLONG = "error_binaryputtolong",
 
 			// Call of cancel occured.
-			ERROR_STATEMENT_CANCELLED="error.statement.cancelled",
+			ERROR_STATEMENT_CANCELLED="error_statement_cancelled",
 
 			// Try to execute null statement.
-			ERROR_SQLSTATEMENT_NULL = "error.sqlstatement.null",
+			ERROR_SQLSTATEMENT_NULL = "error_sqlstatement_null",
 
 			// Column value is null.
-			ERROR_COLUMNVALUE_NULL = "error.columnvalue.null",
+			ERROR_COLUMNVALUE_NULL = "error_columnvalue_null",
 
 			// Try to use null data adapter
-			ERROR_ADAPTER_NULL = "error.adapter.null",
+			ERROR_ADAPTER_NULL = "error_adapter_null",
 
 			// Try to use null select command
-			ERROR_SELECT_NULL = "error.select.null",
+			ERROR_SELECT_NULL = "error_select_null",
 
 			// Base table is not found
-			ERROR_BASETABLE_NOTFOUND = "error.basetable.notfound",
+			ERROR_BASETABLE_NOTFOUND = "error_basetable_notfound",
 
 			// Try to execute too long statement.
-			ERROR_SQLSTATEMENT_TOOLONG = "error.sqlstatement.toolong",
+			ERROR_SQLSTATEMENT_TOOLONG = "error_sqlstatement_toolong",
 
 			// IN or OUT param missing.
-			ERROR_MISSINGINOUT = "error.missinginout",
+			ERROR_MISSINGINOUT = "error_missinginout",
+
+            // Statement in batch generated result set.
+            ERROR_BATCHRESULTSET="error_batchresultset",
+
+            // Statement in batch generated result set.
+            ERROR_BATCHRESULTSET_WITHNUMBER="error_batchresultset_withnumber",
+
+            // Procedure call in batch contained OUT/INOUT.
+            ERROR_BATCHPROCOUT="error_batchprocout",
+
+            // Procedure call in batch contained OUT/INOUT.
+            ERROR_BATCHMISSINGIN="error_batchmissingin",
 
 			// A statement executed as update delivered a result set.
-			ERROR_SQLSTATEMENT_RESULTSET = "error.sqlstatement.resultset",
+			ERROR_SQLSTATEMENT_RESULTSET = "error_sqlstatement_resultset",
 
 			// SQL command doesn't return a result set.
-			ERROR_SQLCOMMAND_NORESULTSET = "error.sqlcommand.noresultset",
+			ERROR_SQLCOMMAND_NORESULTSET = "error_sqlcommand_noresultset",
 
 			// A statement assumed to be a procedure call is not one.
-			ERROR_SQLSTATEMENT_NOPROCEDURE = "error.sqlstatement.noprocedure",
+			ERROR_SQLSTATEMENT_NOPROCEDURE = "error_sqlstatement_noprocedure",
 
 			// Column index not found.
-			ERROR_COLINDEX_NOTFOUND = "error.colindex.notfound",
+			ERROR_COLINDEX_NOTFOUND = "error_colindex_notfound",
 
 			// Column name not found.
-			ERROR_COLNAME_NOTFOUND = "error.colname.notfound",
+			ERROR_COLNAME_NOTFOUND = "error_colname_notfound",
 
 			// User name missing.
-			ERROR_NOUSER = "error.nouser",
+			ERROR_NOUSER = "error_nouser",
  
 			// Password missing.
-			ERROR_NOPASSWORD = "error.nopassword",
+			ERROR_NOPASSWORD = "error_nopassword",
 
 			// Password invalid.
-			ERROR_INVALIDPASSWORD = "error.invalidpassword",
+			ERROR_INVALIDPASSWORD = "error_invalidpassword",
 
 			//No data found
-			ERROR_NODATA_FOUND = "error.nodata.found",
+			ERROR_NODATA_FOUND = "error_nodata_found",
 
 			//Invalid data type
-			ERROR_INVALID_DATATYPE = "error.invalid.datatype",
+			ERROR_INVALID_DATATYPE = "error_invalid_datatype",
 
 			//Unknown data type
-			ERROR_UNKNOWN_DATATYPE = "error.unknown.datatype",
+			ERROR_UNKNOWN_DATATYPE = "error_unknown_datatype",
 
 			// Try to get record at position < first.
-			ERROR_RESULTSET_BEFOREFIRST = "error.resultset.beforefirst",
+			ERROR_RESULTSET_BEFOREFIRST = "error_resultset_beforefirst",
 
 			// Try to get record at position > last.
-			ERROR_RESULTSET_AFTERLAST = "error.resultset.afterlast",
+			ERROR_RESULTSET_AFTERLAST = "error_resultset_afterlast",
 
 			// Try to retrieve unnamed parameter by name.
-			ERROR_UNNAMED_PARAMETER = "error.unnamed.parameter",
+			ERROR_UNNAMED_PARAMETER = "error_unnamed_parameter",
 
 			// No column names delivered from kernel.
-			ERROR_NO_COLUMNNAMES = "error.no.columnnames",
+			ERROR_NO_COLUMNNAMES = "error_no_columnnames",
 
 			// Connection field is null.
-			ERROR_INTERNAL_CONNECTIONNULL = "error.internal.connectionnull",
+			ERROR_INTERNAL_CONNECTIONNULL = "error_internal_connectionnull",
 
 			// Cant not set isolation level.
-			ERROR_CONNECTION_ISOLATIONLEVEL = "error.connection.isolationlevel",
+			ERROR_CONNECTION_ISOLATIONLEVEL = "error_connection_isolationlevel",
 
 			// No more input expected at this place.
-			ERROR_INTERNAL_UNEXPECTEDINPUT = "error.internal.unexpectedinput",
+			ERROR_INTERNAL_UNEXPECTEDINPUT = "error_internal_unexpectedinput",
 
 			// No more output expected at this place.
-			ERROR_INTERNAL_UNEXPECTEDOUTPUT = "error.internal.unexpectedoutput",
+			ERROR_INTERNAL_UNEXPECTEDOUTPUT = "error_internal_unexpectedoutput",
 
 			// Internal error: parse id is null.
-			ERROR_INTERNAL_INVALIDPARSEID = "error.internal.invalidParseid",
+			ERROR_INTERNAL_INVALIDPARSEID = "error_internal_invalidParseid",
 
 			// getObject function failed
-			ERROR_GETOBJECT_FAILED = "error.getobject.failed",
+			ERROR_GETOBJECT_FAILED = "error_getobject_failed",
 
 			//Fetch operation delivered no data part.
-			ERROR_FETCH_NODATAPART = "error.fetch.nodatapart",
+			ERROR_FETCH_NODATAPART = "error_fetch_nodatapart",
 
-			//Fetch operation error.
-			ERROR_FETCH_DATA = "error.fetch.data",
+			//Fetch operation error_
+			ERROR_FETCH_DATA = "error_fetch_data",
 
 			// Runtime: connect to host failed.
-			ERROR_HOST_CONNECT = "error.host.connect",
+			ERROR_HOST_CONNECT = "error_host_connect",
 
 			// Runtime: execution failed.
-			ERROR_EXEC_FAILED = "error.exec.failed",
+			ERROR_EXEC_FAILED = "error_exec_failed",
     
 			// Runtime: receive of connect failed.
-			ERROR_RECV_CONNECT = "error.recv.connect",
+			ERROR_RECV_CONNECT = "error_recv_connect",
 
 			// Runtime: receive garbled reply
-			ERROR_REPLY_GARBLED = "error.connectreply.garbled",
+			ERROR_REPLY_GARBLED = "error_connectreply_garbled",
 
 			// Runtime: reconnect on admin session unsupported
-			ERROR_ADMIN_RECONNECT = "error.admin.reconnect",
+			ERROR_ADMIN_RECONNECT = "error_admin_reconnect",
 
 			// Runtime: chunk overflow in read
-			ERROR_CHUNKOVERFLOW = "error.chunkoverflow",
+			ERROR_CHUNKOVERFLOW = "error_chunkoverflow",
 
 			// Reading from a stream resulted in an IOException
-			ERROR_STREAM_IOEXCEPTION = "error.stream.ioexception",
+			ERROR_STREAM_IOEXCEPTION = "error_stream_ioexception",
 
 			// Column nullable unknown
-			ERROR_DBNULL_UNKNOWN = "error.dbnull.unknown",
+			ERROR_DBNULL_UNKNOWN = "error_dbnull_unknown",
 
 			// Output parameter value truncated
-			ERROR_PARAM_TRUNC = "error.param.trunc",
+			ERROR_PARAM_TRUNC = "error_param_trunc",
 
 			// Unsupported database features
-			ERROR_SPECIAL_NUMBER_UNSUPPORTED = "error.special.number.unsupported",
-			ERROR_OMS_UNSUPPORTED = "error.oms.unsupported",
-			ERROR_TABLEDIRECT_UNSUPPORTED = "error.tabledirect.unsupported",
+			ERROR_SPECIAL_NUMBER_UNSUPPORTED = "error_special_number_unsupported",
+			ERROR_OMS_UNSUPPORTED = "error_oms_unsupported",
+			ERROR_TABLEDIRECT_UNSUPPORTED = "error_tabledirect_unsupported",
 	
 			// Streams
-			ERROR_CONVERSION_STRINGSTREAM  = "error.stream.conversion.string",
-			ERROR_CONVERSION_BYTESTREAM = "error.stream.conversion.bytes",
-			ERROR_STREAM_ISATEND = "error.stream.isatend",
-			ERROR_CONVERSION_STRUCTURETYPE = "error.conversion.structuretype",	
-			ERROR_STRUCTURE_ARRAYWRONGLENTGH = "error.structure.arraywronglength",
-			ERROR_STRUCT_ELEMENT_NULL = "error.structure.element.null",
-			ERROR_STRUCT_ELEMENT_CONVERSION = "error.structure.element.conversion",
-			ERROR_STRUCT_ELEMENT_OVERFLOW = "error.structure.element.overflow",
+			ERROR_CONVERSION_STRINGSTREAM  = "error_stream_conversion_string",
+			ERROR_CONVERSION_BYTESTREAM = "error_stream_conversion_bytes",
+			ERROR_STREAM_ISATEND = "error_stream_isatend",
+			ERROR_CONVERSION_STRUCTURETYPE = "error_conversion_structuretype",	
+			ERROR_STRUCTURE_ARRAYWRONGLENTGH = "error_structure_arraywronglength",
+			ERROR_STRUCT_ELEMENT_NULL = "error_structure_element_null",
+			ERROR_STRUCT_ELEMENT_CONVERSION = "error_structure_element_conversion",
+			ERROR_STRUCT_ELEMENT_OVERFLOW = "error_structure_element_overflow",
 
 			// Connection
-			ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED = "error.connection.wrongserverchallengereceived",
-			ERROR_CONNECTION_CHALLENGERESPONSENOTSUPPORTED = "error.connection.challengeresponsenotsupported",
-            ERROR_SSL_CERTIFICATE = "error.ssl.certificate",
+			ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED = "error_connection_wrongserverchallengereceived",
+			ERROR_CONNECTION_CHALLENGERESPONSENOTSUPPORTED = "error_connection_challengeresponsenotsupported",
+            ERROR_SSL_CERTIFICATE = "error_ssl_certificate",
 
 			// communication errors
-			COMMERROR_OK = "commerror.ok",
-			COMMERROR_CONNECTDOWN = "commerror.connectiondown",
-			COMMERROR_TASKLIMIT = "commerror.tasklimit",
-			COMMERROR_TIMEOUT = "commerror.timeout",
-			COMMERROR_CRASH = "commerror.crash",
-			COMMERROR_RESTARTREQUIRED = "commerror.restartrequired",
-			COMMERROR_SHUTDOWN = "commerror.shutdown",
-			COMMERROR_SENDLINEDOWN = "commerror.sendlinedown",
-			COMMERROR_RECVLINEDOWN = "commerror.recvlinedown",
-			COMMERROR_PACKETLIMIT = "commerror.packetlimit",
-			COMMERROR_RELEASED = "commerror.released",
-			COMMERROR_WOULDBLOCK = "commerror.wouldblock",
-			COMMERROR_UNKNOWNREQUEST = "commerror.unknownrequest",
-			COMMERROR_SERVERDBUNKNOWN = "commerror.serverdbunknown",
+			COMMERROR_OK = "commerror_ok",
+			COMMERROR_CONNECTDOWN = "commerror_connectiondown",
+			COMMERROR_TASKLIMIT = "commerror_tasklimit",
+			COMMERROR_TIMEOUT = "commerror_timeout",
+			COMMERROR_CRASH = "commerror_crash",
+			COMMERROR_RESTARTREQUIRED = "commerror_restartrequired",
+			COMMERROR_SHUTDOWN = "commerror_shutdown",
+			COMMERROR_SENDLINEDOWN = "commerror_sendlinedown",
+			COMMERROR_RECVLINEDOWN = "commerror_recvlinedown",
+			COMMERROR_PACKETLIMIT = "commerror_packetlimit",
+			COMMERROR_RELEASED = "commerror_released",
+			COMMERROR_WOULDBLOCK = "commerror_wouldblock",
+			COMMERROR_UNKNOWNREQUEST = "commerror_unknownrequest",
+			COMMERROR_SERVERDBUNKNOWN = "commerror_serverdbunknown",
 			
 			// the rest
 			ERROR = "error",

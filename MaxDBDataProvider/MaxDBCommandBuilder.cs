@@ -19,9 +19,9 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Text;
-using MaxDBDataProvider.Utils;
+using MaxDB.Data.Utils;
 
-namespace MaxDBDataProvider
+namespace MaxDB.Data
 {
 	/// <summary>
 	/// Summary description for MaxDBCommandBuilder.
@@ -156,9 +156,6 @@ namespace MaxDBDataProvider
 
 #if NET20
         protected override string GetParameterName(string parameterName)
-#else
-		private string GetParameterName(string parameterName)
-#endif // NET20
         {
             foreach (DataRow row in m_schema.Rows)
                 if (row["ColumnName"].ToString().Trim().ToUpper() == parameterName)
@@ -166,6 +163,7 @@ namespace MaxDBDataProvider
 
             throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_COLNAME_NOTFOUND));
         }
+#endif // NET20
 
 #if NET20
         protected override string GetParameterPlaceholder(int parameterOrdinal)
@@ -326,13 +324,15 @@ namespace MaxDBDataProvider
 
 			cmd.CommandType = CommandType.Text;
 			cmd.CommandText = "UPDATE " + m_baseTable + " SET " + setStmt.ToString();
-			foreach(MaxDBParameter param in setParams)
-				cmd.Parameters.Add(param);
+
+            foreach (MaxDBParameter param in setParams)
+                cmd.Parameters.Add(param);
+
 			if (whereStmt.Length > 0)
 			{
 				cmd.CommandText += " WHERE " + whereStmt.ToString();
-				foreach(MaxDBParameter param in whereParams)
-					cmd.Parameters.Add(param);
+                foreach (MaxDBParameter param in whereParams)
+                    cmd.Parameters.Add(param);
 			}
 
 			m_updCmd = cmd;

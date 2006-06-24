@@ -134,7 +134,7 @@
 using System;
 using System.Globalization;
 
-namespace MaxDBDataProvider.Utils
+namespace MaxDB.Data.Utils
 {
 	internal class BigInteger
 	{

@@ -17,7 +17,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace MaxDBDataProvider.Utils
+namespace MaxDB.Data.Utils
 {
 #if !SAFE
 
@@ -264,7 +264,7 @@ namespace MaxDBDataProvider.Utils
 		#region "Runtime"
 
 		[DllImport("libSQLDBC_C")]
-		public extern static IntPtr ClientRuntime_GetClientRuntime(IntPtr errorText, int errorTextSize);
+		public unsafe extern static IntPtr ClientRuntime_GetClientRuntime(byte* errorText, int errorTextSize);
 
 		[DllImport("libSQLDBC_C")]
 		public extern static int SQLDBC_ErrorHndl_getErrorCode(IntPtr herror);
@@ -385,8 +385,8 @@ namespace MaxDBDataProvider.Utils
 		public extern static IntPtr SQLDBC_Statement_getResultSet(IntPtr stmt);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_Statement_getTableName(IntPtr stmt, IntPtr buffer, SQLDBC_StringEncodingType encoding, 
-			int bufferSize, ref int bufferLength); 
+		public unsafe extern static SQLDBC_Retcode SQLDBC_Statement_getTableName(IntPtr stmt, IntPtr buffer, SQLDBC_StringEncodingType encoding, 
+			int bufferSize, int* bufferLength); 
 
 		[DllImport("libSQLDBC_C")]
 		public extern static IntPtr SQLDBC_Statement_getError(IntPtr stmt);
@@ -399,14 +399,14 @@ namespace MaxDBDataProvider.Utils
 		public extern static IntPtr SQLDBC_PreparedStatement_getError(IntPtr stmt);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareNTS(IntPtr stmt, byte[] query, SQLDBC_StringEncodingType encoding);
+		public unsafe extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareNTS(IntPtr stmt, byte* query, SQLDBC_StringEncodingType encoding);
 
 		[DllImport("libSQLDBC_C")]
 		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareASCII(IntPtr stmt, string query);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_bindParameter(IntPtr stmt, short index, SQLDBC_HostType type, IntPtr paramAddr,  
-						ref int length, int size, SQLDBC_BOOL terminate);		
+		public unsafe extern static SQLDBC_Retcode SQLDBC_PreparedStatement_bindParameterAddr(IntPtr stmt, short index, SQLDBC_HostType type, void* addr,  
+						int* length, int size, SQLDBC_BOOL terminate);		
 		
 		[DllImport("libSQLDBC_C")]
 		public extern static IntPtr SQLDBC_PreparedStatement_getParameterMetaData(IntPtr stmt);
@@ -421,7 +421,10 @@ namespace MaxDBDataProvider.Utils
 		public extern static IntPtr SQLDBC_PreparedStatement_getResultSet(IntPtr stmt);
 		
 		[DllImport("libSQLDBC_C")]
-		public extern static int SQLDBC_PreparedStatement_getRowsAffected(IntPtr stmt); 
+		public extern static int SQLDBC_PreparedStatement_getRowsAffected(IntPtr stmt);
+
+        [DllImport("libSQLDBC_C")]
+        public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_setBatchSize(IntPtr stmt, uint size);
 		
 		#endregion
 
@@ -455,12 +458,8 @@ namespace MaxDBDataProvider.Utils
 		public extern static IntPtr SQLDBC_ResultSet_getResultSetMetaData(IntPtr hdl); 
 
 		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_ResultSet_getObject(IntPtr result, int index, SQLDBC_HostType type, IntPtr paramAddr, 
-			ref int length, int size, SQLDBC_BOOL terminate);
-
-		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_ResultSet_getObjectByPos(IntPtr result, int index, SQLDBC_HostType type, IntPtr paramAddr, 
-			ref int length, int size, int startPos, SQLDBC_BOOL terminate);
+		public unsafe extern static SQLDBC_Retcode SQLDBC_ResultSet_getObject(IntPtr result, int index, SQLDBC_HostType type, void* paramAddr, 
+			int* length, int size, SQLDBC_BOOL terminate);
 
 		#endregion
 
@@ -469,10 +468,6 @@ namespace MaxDBDataProvider.Utils
 		[DllImport("libSQLDBC_C")]
 		public extern static short SQLDBC_ParameterMetaData_getParameterCount(IntPtr hdl);
  
-		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_ParameterMetaData_getParameterName(IntPtr hdl, short param, byte[] buffer, 
-			SQLDBC_StringEncodingType type, int size, ref int length);
-
 		[DllImport("libSQLDBC_C")]
 		public extern static int SQLDBC_ParameterMetaData_getParameterLength(IntPtr hdl, short param);
 
@@ -490,8 +485,8 @@ namespace MaxDBDataProvider.Utils
 		public extern static short SQLDBC_ResultSetMetaData_getColumnCount(IntPtr hdl);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_ResultSetMetaData_getColumnName(IntPtr hdl, short column, IntPtr buffer, 
-			SQLDBC_StringEncodingType encoding, int size, ref int length); 
+		public unsafe extern static SQLDBC_Retcode SQLDBC_ResultSetMetaData_getColumnName(IntPtr hdl, short column, void* buffer, 
+			SQLDBC_StringEncodingType encoding, int size, int* length); 
 
 		[DllImport("libSQLDBC_C")]
 		public extern static int SQLDBC_ResultSetMetaData_getColumnType(IntPtr hdl, short column);

@@ -20,10 +20,13 @@ using System.Data;
 using System.Text;
 using System.IO;
 using System.Collections;
+#if NET20
+using System.Collections.Generic;
+#endif // NET20
 using System.Runtime.CompilerServices;
-using MaxDBDataProvider.Utils;
+using MaxDB.Data.Utils;
 
-namespace MaxDBDataProvider.MaxDBProtocol
+namespace MaxDB.Data.MaxDBProtocol
 {
 #if SAFE
 
@@ -31,8 +34,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	internal class MaxDBParseInfo 
 	{
-		public MaxDBConnection m_connection;
-		public string m_sqlCmd;
+		internal MaxDBConnection m_connection;
+		internal string m_sqlCmd;
 		private byte[] m_parseid;
 		private byte[] m_massParseid;
 		internal DBTechTranslator[] m_paramInfos;
@@ -333,7 +336,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					int offset = rs.GetInt32(6);
 					int asciiOffset = rs.GetInt32(7);
 					int unicodeOffset = rs.GetInt32(8);
-					currentInfo.addStructureElement(datatype, code, len, dec, offset, asciiOffset, unicodeOffset);
+					currentInfo.AddStructureElement(datatype, code, len, dec, offset, asciiOffset, unicodeOffset);
 				}
 			} 
 			while (rs.Read());
@@ -664,37 +667,37 @@ namespace MaxDBDataProvider.MaxDBProtocol
 	{
 		public StructureElement(string typeName, string codeType, int length, int precision, int offset, int asciiOffset, int unicodeOffset) 
 		{
-			this.TypeName      = typeName.ToUpper().Trim();
-			this.CodeType      = codeType.ToUpper().Trim();
-			this.Length        = length;
-			this.Precision     = precision;
-			this.Offset        = offset;
-			this.ASCIIOffset   = asciiOffset;
-			this.UnicodeOffset = unicodeOffset;  		   	
+			m_typeName      = typeName.ToUpper().Trim();
+			m_codeType      = codeType.ToUpper().Trim();
+			m_Length        = length;
+			m_Precision     = precision;
+			m_Offset        = offset;
+			m_ASCIIOffset   = asciiOffset;
+			m_unicodeOffset = unicodeOffset;  		   	
 		}
 		 
-		public string TypeName;
-		public string CodeType;
-		public int    Length;
-		public int    Precision;
-		public int    Offset;
-		public int    ASCIIOffset;
-		public int    UnicodeOffset;
+		public string m_typeName;
+		public string m_codeType;
+		public int    m_Length;
+		public int    m_Precision;
+		public int    m_Offset;
+		public int    m_ASCIIOffset;
+		public int    m_unicodeOffset;
 		
 		public string SQLTypeName
 		{
 			get
 			{
-				switch(TypeName.ToUpper().Trim())
+				switch(m_typeName.ToUpper().Trim())
 				{
 					case "CHAR":
-						return TypeName + "(" + Length + ") " + CodeType;
+						return m_typeName + "(" + m_Length + ") " + m_codeType;
 					case "FIXED":
-						return TypeName + "(" + Length + ", " + Precision +")";
+						return m_typeName + "(" + m_Length + ", " + m_Precision +")";
 					case "BOOLEAN":
-						return TypeName;
+						return m_typeName;
 					default:
-						return TypeName + "(" + Length + ")";
+						return m_typeName + "(" + m_Length + ")";
 				}
 			}
 		}
@@ -705,10 +708,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public const int ABAPTABLE  = 1;
 		public const int STRUCTURE  = 2;
 
-		private int       type;
-		private string    sqlTypeName;
-		private string    baseTypeName;
-		private ArrayList typeElements;
+		private int       m_type;
+		private string    m_sqlTypeName;
+		private string    m_baseTypeName;
+#if NET20
+        private List<StructureElement> m_typeElements;
+#else
+		private ArrayList m_typeElements;
+#endif
 	
 		/*
 		  Creates a new DB procedure parameter info.
@@ -720,29 +727,39 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			if(datatype.ToUpper().Trim() == "ABAPTABLE") 
 			{
-				type = ABAPTABLE;
-				typeElements = new ArrayList();
+				m_type = ABAPTABLE;
+                m_typeElements = new 
+#if NET20
+                List<StructureElement>();
+#else
+				ArrayList();
+#endif
 			} 
 			else if(datatype.ToUpper().Trim() == "STRUCTURE") 
 			{
-				type = STRUCTURE;
-				typeElements = new ArrayList();
+				m_type = STRUCTURE;
+                m_typeElements = new 
+#if NET20
+                List<StructureElement>();
+#else
+				ArrayList();
+#endif
 			} 
 		}
 	
-		public void addStructureElement(string typeName, string codeType, int length, int precision, int offset, int asciiOffset, int unicodeOffset) 
+		public void AddStructureElement(string typeName, string codeType, int length, int precision, int offset, int asciiOffset, int unicodeOffset) 
 		{
-			if(typeElements == null) 
+			if(m_typeElements == null) 
 				return;		
 			else 
-				typeElements.Add(new StructureElement(typeName, codeType, length, precision, offset, asciiOffset, unicodeOffset));
+				m_typeElements.Add(new StructureElement(typeName, codeType, length, precision, offset, asciiOffset, unicodeOffset));
 		}
 
 		public int MemberCount 
 		{
 			get
 			{
-				return typeElements.Count;
+				return m_typeElements.Count;
 			}
 		}
 	
@@ -750,7 +767,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return type;
+				return m_type;
 			}
 		}
 
@@ -758,7 +775,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return (StructureElement) typeElements[index];
+				return (StructureElement) m_typeElements[index];
 			}
 		}
 
@@ -766,25 +783,25 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				if (this.sqlTypeName == null) 
+				if (this.m_sqlTypeName == null) 
 				{
 					StringBuilder typeBuffer = new StringBuilder();
 					StringBuilder baseType   = new StringBuilder();
 					string close = ")";
-					if (type == ABAPTABLE) 
+					if (m_type == ABAPTABLE) 
 					{
-						if (typeElements.Count == 1) 
+						if (m_typeElements.Count == 1) 
 						{
-							StructureElement el = (StructureElement)typeElements[0];
-							if(el.TypeName.ToUpper().Trim() == "CHAR") 
+							StructureElement el = (StructureElement)m_typeElements[0];
+							if(el.m_typeName.ToUpper().Trim() == "CHAR") 
 							{
-								if (el.CodeType.ToUpper().Trim() == "ASCII") 
-									sqlTypeName = "CHARACTER STREAM";
-								else if (el.CodeType.ToUpper().Trim() == "BYTE") 
-									sqlTypeName = "BYTE STREAM";
+								if (el.m_codeType.ToUpper().Trim() == "ASCII") 
+									m_sqlTypeName = "CHARACTER STREAM";
+								else if (el.m_codeType.ToUpper().Trim() == "BYTE") 
+									m_sqlTypeName = "BYTE STREAM";
 							} 
-							else if(el.TypeName.ToUpper().Trim() == "WYDE") 
-								sqlTypeName = "CHARACTER STREAM";
+							else if(el.m_typeName.ToUpper().Trim() == "WYDE") 
+								m_sqlTypeName = "CHARACTER STREAM";
 						
 							typeBuffer.Append("STREAM(");
 						} 
@@ -797,23 +814,23 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					else 
 						typeBuffer.Append("STRUCTURE(");
 
-					for(int i = 0; i< typeElements.Count; ++i) 
+					for(int i = 0; i< m_typeElements.Count; ++i) 
 					{
 						if(i!=0) 
 						{
 							baseType.Append(", ");
 							typeBuffer.Append(", ");
 						}
-						StructureElement el = (StructureElement)typeElements[i];
+						StructureElement el = (StructureElement)m_typeElements[i];
 						typeBuffer.Append(el.SQLTypeName);
 						baseType.Append(el.SQLTypeName);
 					}
 					typeBuffer.Append(close);
-					sqlTypeName = typeBuffer.ToString();
-					baseTypeName = baseType.ToString();
+					m_sqlTypeName = typeBuffer.ToString();
+					m_baseTypeName = baseType.ToString();
 				}
 		
-				return sqlTypeName;
+				return m_sqlTypeName;
 			}
 		}
 
@@ -821,7 +838,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			get
 			{
-				return baseTypeName;
+				return m_baseTypeName;
 			}
 		}
 	}

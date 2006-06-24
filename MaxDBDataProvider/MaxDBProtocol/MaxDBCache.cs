@@ -18,7 +18,7 @@
 using System;
 using System.Collections;
 
-namespace MaxDBDataProvider.MaxDBProtocol
+namespace MaxDB.Data.MaxDBProtocol
 {
 #if SAFE
 

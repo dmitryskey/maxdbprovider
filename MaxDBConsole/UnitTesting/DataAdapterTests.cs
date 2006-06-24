@@ -17,12 +17,12 @@
 
 using System;
 using NUnit.Framework;
-using MaxDBDataProvider;
+using MaxDB.Data;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 
-namespace MaxDBConsole.UnitTesting
+namespace MaxDB.Data.Test.UnitTesting
 {
 	/// <summary>
 	/// Summary description for DataAdapterTests.
@@ -41,7 +41,7 @@ namespace MaxDBConsole.UnitTesting
 		public void Init() 
 		{
             Init("CREATE TABLE Test (id INT NOT NULL DEFAULT SERIAL, id2 INT NOT NULL UNIQUE, name VARCHAR(100), dt DATE, tm TIME, ts TIMESTAMP, OriginalId INT, PRIMARY KEY(id, id2))");
-		}
+        }
 
 		[TestFixtureTearDown]
 		public void TestFixtureTearDown()
@@ -81,9 +81,9 @@ namespace MaxDBConsole.UnitTesting
 				Assert.AreEqual(2, ds.Tables[0].Rows[1]["id2"]);
 				Assert.AreEqual(3, ds.Tables[0].Rows[2]["id2"]);
 
-				Assert.AreEqual("Name 1", ds.Tables[0].Rows[0]["name"].ToString().Trim());
+				Assert.AreEqual("Name 1", ds.Tables[0].Rows[0]["name"].ToString());
 				Assert.AreEqual(DBNull.Value, ds.Tables[0].Rows[1]["name"]);
-				Assert.AreEqual(String.Empty, ds.Tables[0].Rows[2]["name"].ToString().Trim());
+				Assert.AreEqual(String.Empty, ds.Tables[0].Rows[2]["name"].ToString());
 			}
 			catch (Exception ex)
 			{
@@ -116,7 +116,7 @@ namespace MaxDBConsole.UnitTesting
 
 				// make sure our refresh of auto increment values worked
 				Assert.AreEqual(1, count);
-				Assert.IsFalse(dt.Rows[dt.Rows.Count - 1]["id"] == DBNull.Value, "auto increment value can't be NULL");
+				Assert.IsFalse(dt.Rows[dt.Rows.Count - 1]["id"] == DBNull.Value);
 
 				dt.Rows[0]["id2"] = 2;
 				dt.Rows[0]["name"] = "TestName2";
@@ -186,8 +186,12 @@ namespace MaxDBConsole.UnitTesting
 		[Test]
 		public void TestUpdatingOfManyRows() 
 		{
+			MaxDBTransaction trans = null;
 			try 
 			{
+				m_conn.AutoCommit = false;
+				trans = m_conn.BeginTransaction();
+				const int rowCount = 1000;
 				ClearTestTable();
 				MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT * FROM test FOR UPDATE", m_conn);
 				MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da);
@@ -195,23 +199,59 @@ namespace MaxDBConsole.UnitTesting
 				DataTable dt = new DataTable();
 				da.Fill(dt);
 
-				for (int i = 0; i < 1000; i++)
-				{
-					DataRow dr = dt.NewRow();
-					dr["id2"] = i;
-					dt.Rows.Add(dr);
-					DataTable changes = dt.GetChanges();
-					da.Update(changes);
-					dt.AcceptChanges();
-				}
+#if NET20
+                da.UpdateBatchSize = 0;
+#endif // NET20
+
+                DataRow dr;
+
+                for (int i = 0; i < rowCount; i++)
+                {
+                    dr = dt.NewRow();
+                    dr["id2"] = i;
+                    dt.Rows.Add(dr);
+                }
+
+                da.Update(dt.GetChanges());
+                dt.AcceptChanges();
+
+                dt.Clear();
+                da.Fill(dt);
+                Assert.AreEqual(rowCount, dt.Rows.Count);
+
+				for (int i = 0; i < rowCount; i++)
+					dt.Rows[i]["name"] = "Name " + i.ToString();
+
+                dr = dt.NewRow();
+                dr["id2"] = rowCount + 1;
+                dr["name"] = "Name " + rowCount.ToString();
+                dt.Rows.Add(dr);
+
+#if NET20
+                da.UpdateBatchSize = rowCount / 15;
+#endif // NET20
+				da.Update(dt.GetChanges());
+				dt.AcceptChanges();
 
 				dt.Clear();
 				da.Fill(dt);
-				Assert.AreEqual(1000, dt.Rows.Count);
+
+				Assert.AreEqual(rowCount + 1, dt.Rows.Count);
+
+                for (int i = 0; i < rowCount + 1; i++)
+                   Assert.AreEqual(dt.Rows[i]["name"].ToString(), "Name " + i.ToString());
+
+				trans.Commit();
 			}
 			catch (Exception ex)
 			{
+				if (trans != null)
+					trans.Rollback();
 				Assert.Fail(ex.Message);
+			}
+			finally
+			{
+				m_conn.AutoCommit = true;
 			}
 		}
 	}

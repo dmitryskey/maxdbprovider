@@ -15,14 +15,14 @@
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 using System;
-using MaxDBDataProvider;
+using MaxDB.Data;
 using NUnit.Framework;
 using System.Configuration;
 using System.IO;
 using System.Diagnostics;
 using System.Collections.Specialized;
 
-namespace MaxDBConsole.UnitTesting
+namespace MaxDB.Data.Test.UnitTesting
 {
 	/// <summary>
 	/// Summary description for BaseTest.

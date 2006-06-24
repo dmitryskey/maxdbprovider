@@ -18,7 +18,7 @@
 using System;
 using System.Text;
 
-namespace MaxDBDataProvider.MaxDBProtocol
+namespace MaxDB.Data.MaxDBProtocol
 {
 	#region "Offsets"
 
@@ -860,13 +860,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public static readonly byte[] ZeroBytes = new byte [FillBufSize];
 		public static readonly byte[] BlankBytes = new byte[FillBufSize];
 		public static readonly byte[] BlankUnicodeBytes = new byte[FillBufSize * UnicodeWidth];
-		public static readonly byte[] BlankBigEndianUnicodeBytes = new byte[FillBufSize * UnicodeWidth];
 
 		public const int AlignValue	= 8;
 
 		public const int ReserveFor2ndSegment = 8192; //8kB reserve size in order packet if more than 1 segment will be used
 		public const int ReserveForReply = SegmentHeaderOffset.Part - PartHeaderOffset.Data + 200;
-		public const int defaultmaxNumberOfSegm = 6; //default maximum number of segments for a request packet
+		public const int DefaultMaxNumberOfSegm = 6; //default maximum number of segments for a request packet
+        public const int ResultCountSize = 6;
 
 		public const string AppID = "ODB";
 		public const string AppVersion = "70400";//"10100";
@@ -880,8 +880,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				ZeroBytes[i] = ZeroBytes [i + 1] = 0;
 				BlankBytes[i] = BlankBytes[i + 1] = Encoding.ASCII.GetBytes(BlankChar)[0];
-				Encoding.Unicode.GetBytes(BlankChar).CopyTo(BlankUnicodeBytes, i);
-				Encoding.BigEndianUnicode.GetBytes(BlankChar).CopyTo(BlankBigEndianUnicodeBytes, i);
+                if (IsLittleEndian)
+				    Encoding.Unicode.GetBytes(BlankChar).CopyTo(BlankUnicodeBytes, i);
+                else
+				    Encoding.BigEndianUnicode.GetBytes(BlankChar).CopyTo(BlankUnicodeBytes, i);
 			}
 		}
 

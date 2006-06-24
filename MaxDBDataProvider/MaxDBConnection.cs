@@ -20,11 +20,14 @@ using System.Data;
 using System.Data.Common;
 using System.Text;
 using System.Collections;
+#if NET20
+using System.Collections.Generic;
+#endif
 using System.Runtime.CompilerServices;
-using MaxDBDataProvider.MaxDBProtocol;
-using MaxDBDataProvider.Utils;
+using MaxDB.Data.MaxDBProtocol;
+using MaxDB.Data.Utils;
 
-namespace MaxDBDataProvider
+namespace MaxDB.Data
 {
     internal struct ConnectArgs
     {
@@ -108,7 +111,54 @@ namespace MaxDBDataProvider
 		internal IntPtr m_envHandler;
 		private IntPtr m_connPropHandler;
 		internal IntPtr m_connHandler = IntPtr.Zero;
-		internal Hashtable m_tableNames = new Hashtable();
+
+		//we cache table names extracted from SELECT ... FOR UPDATE statement
+		//SQLDBC library does not store it in its command cache!!!
+		//hash algorithm is equal to the SQLDBC counterpart
+
+#if NET20
+        private class TableNameHashCodeProvider : IEqualityComparer
+        {
+            bool IEqualityComparer.Equals(object x, object y)
+            {
+                return (string)x == (string)y;
+            }
+
+            int IEqualityComparer.GetHashCode(object obj)
+#else
+		private class TableNameHashCodeProvider : IHashCodeProvider
+		{
+			int IHashCodeProvider.GetHashCode(object obj)
+#endif // NET20
+			{
+				// the X31 hash formula is hash = (hash<<5) - hash + char(i) for i in 1 ... string length
+				// as it degenerates when the input are 0's, a little bit decoration is added
+				// to hash UTF8 data and UCS2 data equally. 
+				// also chars >= 128 are completely skipped.
+
+				string str = (string)obj;
+				if (str.Length > 0)
+				{
+					int result = 0;
+					
+					foreach(char c in str)
+					{
+						byte[] b = BitConverter.GetBytes(c);
+						if (b[0] < 128 && b[1] == 0)
+							result = (result << 5) - result + b[0];
+					}
+					return result;
+				}
+				else
+					return 0;
+			}
+		}
+
+		internal Hashtable m_tableNames = new Hashtable(new TableNameHashCodeProvider()
+#if !NET20
+			, new Comparer(System.Globalization.CultureInfo.InvariantCulture)
+#endif // !NET20
+            );
 
         #endregion
 #endif // SAFE
@@ -717,10 +767,9 @@ namespace MaxDBDataProvider
 			byte[] errorText = new byte[256];
 			
 			fixed(byte* errorPtr = errorText)
-			{
-				m_runtimeHandler = SQLDBC.ClientRuntime_GetClientRuntime(new IntPtr(errorPtr), errorText.Length);
-			}
-			if (m_runtimeHandler == IntPtr.Zero)
+				m_runtimeHandler = SQLDBC.ClientRuntime_GetClientRuntime(errorPtr, errorText.Length);
+
+            if (m_runtimeHandler == IntPtr.Zero)
 				throw new MaxDBException(Encoding.ASCII.GetString(errorText));
 
 			m_envHandler = SQLDBC.SQLDBC_Environment_new_SQLDBC_Environment(m_runtimeHandler);
@@ -742,7 +791,7 @@ namespace MaxDBDataProvider
 		
 			SQLDBC.SQLDBC_Connection_setSQLMode(m_connHandler, m_mode);
 
-			m_logger = new MaxDBLogger();
+			m_logger = new MaxDBLogger(this);
 
 			if (SQLDBC.SQLDBC_Connection_connectASCII(m_connHandler, m_ConnArgs.host, m_ConnArgs.dbname, m_ConnArgs.username, 
 				m_ConnArgs.password, m_connPropHandler) != SQLDBC_Retcode.SQLDBC_OK) 

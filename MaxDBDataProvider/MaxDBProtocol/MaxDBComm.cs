@@ -17,9 +17,9 @@
 
 using System;
 using System.Net.Sockets;
-using MaxDBDataProvider.Utils;
+using MaxDB.Data.Utils;
 
-namespace MaxDBDataProvider.MaxDBProtocol
+namespace MaxDB.Data.MaxDBProtocol
 {
 #if SAFE
 	/// <summary>

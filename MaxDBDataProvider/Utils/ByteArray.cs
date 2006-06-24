@@ -16,9 +16,9 @@
 
 using System;
 using System.Text;
-using MaxDBDataProvider.MaxDBProtocol;
+using MaxDB.Data.MaxDBProtocol;
 
-namespace MaxDBDataProvider.Utils
+namespace MaxDB.Data.Utils
 {
 	/// <summary>
 	/// Summary description for ByteArray.
@@ -64,6 +64,11 @@ namespace MaxDBDataProvider.Utils
 			m_swapMode = swapMode;
 			m_offset = offset;
 		}
+
+        public ByteArray Clone()
+        {
+            return new ByteArray(m_data, m_offset, m_swapMode); 
+        }
 
 		public ByteArray Clone(int offset)
 		{
@@ -326,9 +331,9 @@ namespace MaxDBDataProvider.Utils
 		public void WriteUnicode(string val, int offset, int len)
 		{
 			if (m_swapMode)
-				WriteBytes(Encoding.Unicode.GetBytes(val), offset, len, Consts.BlankUnicodeBytes);
+				WriteBytes(Encoding.Unicode.GetBytes(val), offset, len * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
 			else
-				WriteBytes(Encoding.BigEndianUnicode.GetBytes(val), offset, len, Consts.BlankBigEndianUnicodeBytes);
+                WriteBytes(Encoding.BigEndianUnicode.GetBytes(val), offset, len * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
 		}
 
 		protected void WriteValue(ulong val, int offset, int bytes)
