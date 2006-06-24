@@ -22,7 +22,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 
-namespace MaxDB.Test.UnitTesting
+namespace MaxDB.UnitTesting
 {
 	/// <summary>
 	/// Summary description for DataAdapterTests.

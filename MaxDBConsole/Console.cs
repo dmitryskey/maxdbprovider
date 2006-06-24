@@ -11,9 +11,9 @@ using MaxDB.Data;
 namespace MaxDB.Test
 {
 	/// <summary>
-	/// Summary description for Class1.
+	/// Summary description for class.
 	/// </summary>
-	class Class1
+	class ConsoleDefault
 	{
 		/// <summary>
 		/// The main entry point for the application.
@@ -25,7 +25,7 @@ namespace MaxDB.Test
 			// TODO: Add code to start application here
 			//
  
-			//PerfomanceTest();
+			PerfomanceTest();
 			return;
 
 //			StreamWriter sw = new StreamWriter(ConfigurationSettings.AppSettings["LogFileName"]);

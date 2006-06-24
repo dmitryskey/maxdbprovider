@@ -3,7 +3,7 @@ using System.Collections.Specialized;
 using NUnit.Framework;
 using MaxDB.Data;
 
-namespace MaxDB.Data.Test.UnitTesting
+namespace MaxDB.UnitTesting
 {
 	/// <summary>
 	/// Summary description for ConnectionTests.
