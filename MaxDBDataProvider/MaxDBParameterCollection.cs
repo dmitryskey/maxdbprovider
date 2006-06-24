@@ -17,10 +17,13 @@
 using System;
 using System.Data;
 using System.Collections;
+#if NET20
+using System.Collections.Generic;
+#endif // NET20
 using System.Globalization;
 using System.Data.Common;
 
-namespace MaxDBDataProvider
+namespace MaxDB.Data
 {
 	public class MaxDBParameterCollection : 
 #if NET20
@@ -28,7 +31,7 @@ namespace MaxDBDataProvider
 #else
         IList, ICollection, IEnumerable
 #endif
-        ,IDataParameterCollection
+        ,IDataParameterCollection, ICloneable
 	{
 		private MaxDBParameter[] m_collection = new MaxDBParameter[0];
 
@@ -189,7 +192,11 @@ namespace MaxDBDataProvider
 		public void RemoveAt(int index)
 #endif // NET20
 		{
-			ArrayList tmp_array = new ArrayList(m_collection);
+#if NET20
+            List<MaxDBParameter> tmp_array = new List<MaxDBParameter>(m_collection);
+#else
+            ArrayList tmp_array = new ArrayList(m_collection);
+#endif // NET20
 			tmp_array.RemoveAt(index);
 			m_collection = new MaxDBParameter[tmp_array.Count];
 			tmp_array.CopyTo(m_collection);
@@ -214,9 +221,13 @@ namespace MaxDBDataProvider
 		public void Insert(int index, object value)
 #endif // NET20
 		{
-			ArrayList tmp_array = new ArrayList(m_collection);
-			tmp_array.Insert(index, value);
-			m_collection = new MaxDBParameter[tmp_array.Count];
+#if NET20
+            List<MaxDBParameter> tmp_array = new List<MaxDBParameter>(m_collection);
+#else
+            ArrayList tmp_array = new ArrayList(m_collection);
+#endif // NET20
+            tmp_array.Insert(index, (MaxDBParameter)value);
+            m_collection = new MaxDBParameter[tmp_array.Count];
 			tmp_array.CopyTo(m_collection);
 		}
 
@@ -360,5 +371,22 @@ namespace MaxDBDataProvider
             this[parameterName] = (MaxDBParameter)value;
         }
 #endif // NET20
-	}
+
+        #region ICloneable Members
+
+        object ICloneable.Clone()
+        {
+            return this.Clone();
+        }
+
+        public MaxDBParameterCollection Clone()
+        {
+            MaxDBParameterCollection clone = new MaxDBParameterCollection();
+            foreach (MaxDBParameter param in this)
+                clone.Add(param.Clone());
+            return clone;
+        }
+
+        #endregion
+    }
 }

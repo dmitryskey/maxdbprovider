@@ -17,9 +17,9 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using MaxDBDataProvider.Utils;
+using MaxDB.Data.Utils;
 
-namespace MaxDBDataProvider
+namespace MaxDB.Data
 {
 	public class MaxDBTransaction :
 #if NET20

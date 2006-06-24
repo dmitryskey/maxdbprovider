@@ -19,9 +19,9 @@ using System;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
-using MaxDBDataProvider.Utils;
+using MaxDB.Data.Utils;
 
-namespace MaxDBDataProvider.MaxDBProtocol
+namespace MaxDB.Data.MaxDBProtocol
 {
 #if SAFE
 
@@ -29,6 +29,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	public abstract class DataPart
 	{
+        private static readonly int m_maxArgCount = Int16.MaxValue;
+        protected internal short m_argCount = 0;
+        protected internal int m_extent = 0;
+        protected internal int m_massExtent = 0;
+        internal ByteArray m_data, m_origData;
+
+        internal MaxDBRequestPacket reqPacket;
+
 		virtual protected internal int MaxDataSize
 		{
 			get
@@ -56,16 +64,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
-		private static readonly int m_maxArgCount = Int16.MaxValue;
-		protected internal short m_argCount = 0;
-		protected internal int m_extent = 0;
-		protected internal int m_massExtent = 0;
-		internal ByteArray m_origData;
-		
-		internal MaxDBRequestPacket reqPacket;
-		
 		internal DataPart(ByteArray data, MaxDBRequestPacket packet)
 		{
+            m_data = data.Clone();
 			m_origData = data;
 			reqPacket = packet;
 		}
@@ -74,26 +75,24 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		
 		public virtual void Close()
 		{
-			int argCountOffs = - PartHeaderOffset.Data + PartHeaderOffset.ArgCount;
-			m_origData.WriteInt16(m_argCount, argCountOffs);
+			m_origData.WriteInt16(m_argCount, -PartHeaderOffset.Data + PartHeaderOffset.ArgCount);
 			reqPacket.ClosePart(m_massExtent + m_extent, m_argCount);
 		}
 		
 		public virtual void CloseArrayPart(short rows)
 		{
-			int argCountOffs = - PartHeaderOffset.Data + PartHeaderOffset.ArgCount;
-			m_origData.WriteInt16(rows, argCountOffs);
+			m_data.WriteInt16(rows, -PartHeaderOffset.Data + PartHeaderOffset.ArgCount);
 			reqPacket.ClosePart(m_massExtent + m_extent * rows, rows);
 		}
 		
 		public virtual bool HasRoomFor(int recordSize, int reserve)
 		{
-			return (m_argCount < m_maxArgCount && (Length - m_extent) > (recordSize + reserve));
+            return (m_argCount < m_maxArgCount && (m_origData.Length - m_origData.Offset - m_extent) > (recordSize + reserve));
 		}
 		
 		public virtual bool HasRoomFor(int recordSize)
 		{
-			return (m_argCount < m_maxArgCount && (Length - m_extent) > recordSize);
+            return (m_argCount < m_maxArgCount && (m_origData.Length - m_origData.Offset - m_extent) > recordSize);
 		}
 		
 		public virtual void SetFirstPart()
@@ -105,6 +104,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			reqPacket.AddPartAttr(PartAttributes.LastPacket_Ext);
 		}
+
+        public void MoveRecordBase()
+        {
+            m_origData.Offset += m_extent;
+            m_massExtent += m_extent;
+            m_extent = 0;
+        }
 		
 		public abstract void WriteDefineByte(byte val, int offset);
 
@@ -262,11 +268,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		
 		public virtual bool FillWithReader(TextReader reader, ByteArray descMark, PutValue putval)
 		{
-			const int unicodeWidthC = 2;
 			// not exact, but enough to prevent an overflow - adding this
 			// part to the packet may at most eat up 8 bytes more, if
 			// the size is weird.
-			int maxDataSize = (m_origData.Length - m_extent - 8) / unicodeWidthC;
+            int maxDataSize = (m_origData.Length - m_extent - 8) / Consts.UnicodeWidth;
 			if (maxDataSize <= 1)
 			{
 				descMark.WriteByte(LongDesc.NoData, LongDesc.ValMode);
@@ -285,7 +290,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					if (charsRead > 0)
 					{
 						m_origData.WriteUnicode(new string(readBuf), m_extent);
-						m_extent += charsRead * unicodeWidthC;
+						m_extent += charsRead * Consts.UnicodeWidth;
 						maxDataSize -= charsRead;
 					}
 					else
@@ -599,13 +604,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 					}
 				}
     
-				WriteUnicode(new string(readBuf), m_extent, charsRead * 2);
-				m_extent += charsRead * 2;
-				maxDataSize -= charsRead * 2;
-				bytesWritten += charsRead * 2;
+				WriteUnicode(new string(readBuf), m_extent, charsRead);
+				m_extent += charsRead * Consts.UnicodeWidth;
+                maxDataSize -= charsRead * Consts.UnicodeWidth;
+                bytesWritten += charsRead * Consts.UnicodeWidth;
 			}
 			// The number of arguments is the number of rows
-			m_argCount = (short)(bytesWritten / 2);
+            m_argCount = (short)(bytesWritten / Consts.UnicodeWidth);
 			// the data must be marked as 'last part' in case it is a last part.
 			if (streamExhausted) 
 				SetLastPart();

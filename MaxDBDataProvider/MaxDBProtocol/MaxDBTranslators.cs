@@ -22,9 +22,9 @@ using System.Threading;
 using System.ComponentModel;
 using System.Globalization;
 using System.Data;
-using MaxDBDataProvider.Utils;
+using MaxDB.Data.Utils;
 
-namespace MaxDBDataProvider.MaxDBProtocol
+namespace MaxDB.Data.MaxDBProtocol
 {
 #if SAFE
 
@@ -758,10 +758,22 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
-			if (!IsDBNull(mem))
-				return mem.ReadASCII(m_bufpos, m_logicalLength);
-			else
-				return null;
+            if (!IsDBNull(mem))
+            {
+                string result = mem.ReadASCII(m_bufpos, m_logicalLength);
+                switch (m_dataType)
+                {
+                    case DataType.VARCHARA:
+                    case DataType.VARCHARB:
+                    case DataType.VARCHARE:
+                    case DataType.VARCHARUNI:
+                        return result.TrimEnd();
+                    default:
+                        return result;
+                }
+            }
+            else
+                return null;
 		}
 
 		public override object TransBytesForInput(byte[] val) 
@@ -862,10 +874,22 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override string GetString(ISQLParamController controller, ByteArray mem)
 		{
-			if (!IsDBNull(mem))
-				return m_enc.GetString(mem.ReadBytes(m_bufpos, m_logicalLength * Consts.UnicodeWidth));
-			else
-				return null;
+            if (!IsDBNull(mem))
+            {
+                string result =  m_enc.GetString(mem.ReadBytes(m_bufpos, m_logicalLength * Consts.UnicodeWidth));
+                switch (m_dataType)
+                {
+                    case DataType.VARCHARA:
+                    case DataType.VARCHARB:
+                    case DataType.VARCHARE:
+                    case DataType.VARCHARUNI:
+                        return result.TrimEnd();
+                    default:
+                        return result;
+                }
+            }
+            else
+                return null;
 		}
 
 		public override object GetValue(ISQLParamController controller, ByteArray mem)
@@ -925,9 +949,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			if (!IsDBNull(mem)) 
 			{
-				result = base.GetString(controller, mem).TrimStart();
+				result = base.GetString(controller, mem);
 				if (result.Length == 0)
-					result = " ";
+					result = Consts.BlankChar;
 			}
 			return result;
 		}
@@ -950,9 +974,9 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 			if (!IsDBNull(mem)) 
 			{
-				result = base.GetString(controller, mem).TrimStart();
+				result = base.GetString(controller, mem);
 				if (result.Length == 0)
-					result = " ";
+					result = Consts.BlankChar;
 			}
 			return result;
 		}
@@ -2205,7 +2229,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		{
 			this.structElement = structElement;
 			this.index = index;						
-			this.offset = unicode ? structElement.UnicodeOffset : structElement.ASCIIOffset;	  	    
+			this.offset = unicode ? structElement.m_unicodeOffset : structElement.m_ASCIIOffset;	  	    
 		}
 	
 		public abstract object GetValue(ByteArray memory, int recordOffset);
@@ -2226,52 +2250,52 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public static StructMemberTranslator CreateStructMemberTranslator(DBProcParameterInfo paramInfo, int index, bool unicode) 
 		{
 			StructureElement s = paramInfo[index];
-			if(s.TypeName.ToUpper().Trim() == "CHAR") 
+			if(s.m_typeName.ToUpper().Trim() == "CHAR") 
 			{
-				if(s.CodeType.ToUpper().Trim() == "BYTE") 
+				if(s.m_codeType.ToUpper().Trim() == "BYTE") 
 					return new ByteStructureElementTranslator(s, index, unicode);
-				else if(s.CodeType.ToUpper().Trim() == "ASCII") 
+				else if(s.m_codeType.ToUpper().Trim() == "ASCII") 
 					return new CharASCIIStructureElementTranslator(s, index, unicode);
 			} 
-			else if(s.TypeName.ToUpper().Trim() == "WYDE") 
+			else if(s.m_typeName.ToUpper().Trim() == "WYDE") 
 			{
 				if(unicode) 
 					return new WydeStructureElementTranslator(s, index, unicode);
 				else 
 					return new CharASCIIStructureElementTranslator(s, index, unicode);
 			} 
-			else if(s.TypeName.ToUpper().Trim() == "SMALLINT") 
+			else if(s.m_typeName.ToUpper().Trim() == "SMALLINT") 
 			{
-				if(s.Length == 5) 
+				if(s.m_Length == 5) 
 					return new ShortStructureElementTranslator(s, index, unicode);
 			} 
-			else if(s.TypeName.ToUpper().Trim() == "INTEGER") 
+			else if(s.m_typeName.ToUpper().Trim() == "INTEGER") 
 			{
-				if(s.Length == 10) 
+				if(s.m_Length == 10) 
 					return new IntStructureElementTranslator(s, index, unicode);
-				else if(s.Length == 19) 
+				else if(s.m_Length == 19) 
 					return new LongStructureElementTranslator(s, index, unicode);
 			} 
-			else if(s.TypeName.ToUpper().Trim() == "FIXED") 
+			else if(s.m_typeName.ToUpper().Trim() == "FIXED") 
 			{
-				if(s.Precision == 0) 
+				if(s.m_Precision == 0) 
 				{
-					if(s.Length == 5) 
+					if(s.m_Length == 5) 
 						return new ShortStructureElementTranslator(s, index, unicode);
-					else if(s.Length == 10) 
+					else if(s.m_Length == 10) 
 						return new IntStructureElementTranslator(s, index, unicode);
-					else if(s.Length == 19) 
+					else if(s.m_Length == 19) 
 						return new LongStructureElementTranslator(s, index, unicode);
 				}
 			} 
-			else if(s.TypeName.ToUpper().Trim() == "FLOAT") 
+			else if(s.m_typeName.ToUpper().Trim() == "FLOAT") 
 			{
-				if(s.Length == 15) 
+				if(s.m_Length == 15) 
 					return new DoubleStructureElementTranslator(s, index,unicode);			
-				else if(s.Length == 6) 
+				else if(s.m_Length == 6) 
 					return new FloatStructureElementTranslator(s, index, unicode);
 			} 
-			else if(s.TypeName.ToUpper().Trim() == "BOOLEAN") 
+			else if(s.m_typeName.ToUpper().Trim() == "BOOLEAN") 
 				return new BooleanStructureElementTranslator(s, index, unicode);
 
 			throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSION_STRUCTURETYPE, index, s.SQLTypeName));
@@ -2330,8 +2354,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			byte[] bytes = memory.ReadBytes(offset + recordOffset, structElement.Length);
-			if(structElement.Length == 1) 
+			byte[] bytes = memory.ReadBytes(offset + recordOffset, structElement.m_Length);
+			if(structElement.m_Length == 1) 
 				return bytes[0];				
 			else 
 				return bytes;
@@ -2365,8 +2389,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			byte[] bytes = memory.ReadBytes(offset + recordOffset, structElement.Length);
-			if(structElement.Length == 1) 
+			byte[] bytes = memory.ReadBytes(offset + recordOffset, structElement.m_Length);
+			if(structElement.m_Length == 1) 
 				return (char)bytes[0];		
 			else 
 				return Encoding.ASCII.GetString(bytes);
@@ -2400,8 +2424,8 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			string ca  = memory.ReadUnicode(offset + recordOffset, structElement.Length * 2);
-			if(structElement.Length == 1) 
+			string ca  = memory.ReadUnicode(offset + recordOffset, structElement.m_Length * 2);
+			if(structElement.m_Length == 1) 
 				return ca[0];
 			else
 				return ca;

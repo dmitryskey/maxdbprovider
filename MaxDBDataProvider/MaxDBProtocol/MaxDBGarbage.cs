@@ -19,7 +19,7 @@ using System;
 using System.Collections;
 using System.Runtime.CompilerServices;
 
-namespace MaxDBDataProvider.MaxDBProtocol
+namespace MaxDB.Data.MaxDBProtocol
 {
 #if SAFE
 
@@ -71,14 +71,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				} 
 				catch  
 				{ 
-					/* ignore */
+					// ignore 
 				}
 			}
 			m_currentEmptyRun = false;
 		}
 
 
-		public void throwIntoGarbageCan (object obj)
+		public void throwIntoGarbageCan(object obj)
 		{
 			m_garbage.Add(obj);
 		}

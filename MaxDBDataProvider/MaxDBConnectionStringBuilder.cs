@@ -19,10 +19,10 @@ using System.Text;
 using System.ComponentModel;
 using System.Reflection;
 using System.Collections;
-using MaxDBDataProvider.MaxDBProtocol;
+using MaxDB.Data.MaxDBProtocol;
 using System.Data.Common;
 
-namespace MaxDBDataProvider
+namespace MaxDB.Data
 {
     public class MaxDBConnectionStringBuilder : 
 #if NET20

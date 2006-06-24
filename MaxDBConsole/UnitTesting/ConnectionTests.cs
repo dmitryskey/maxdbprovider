@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Specialized;
 using NUnit.Framework;
-using MaxDBDataProvider;
+using MaxDB.Data;
 
-namespace MaxDBConsole.UnitTesting
+namespace MaxDB.Data.Test.UnitTesting
 {
 	/// <summary>
 	/// Summary description for ConnectionTests.

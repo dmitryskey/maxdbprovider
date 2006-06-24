@@ -17,9 +17,9 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using MaxDBDataProvider.MaxDBProtocol;
+using MaxDB.Data.MaxDBProtocol;
 
-namespace MaxDBDataProvider
+namespace MaxDB.Data
 {
     public class MaxDBParameter :
 #if NET20

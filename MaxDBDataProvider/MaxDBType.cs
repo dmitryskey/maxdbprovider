@@ -15,9 +15,9 @@
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 using System;
-using MaxDBDataProvider.MaxDBProtocol;
+using MaxDB.Data.MaxDBProtocol;
 
-namespace MaxDBDataProvider
+namespace MaxDB.Data
 {
 	/// <summary>
 	/// Summary description for MaxDBType.

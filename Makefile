@@ -1,7 +1,7 @@
 ifndef TARGET
-	TARGET=./bin/Debug
+	TARGET=./MaxDBConsole/bin/Debug
 else
-	TARGET=./bin/$(TARGET)
+	TARGET=./MaxDBConsole/bin/$(TARGET)
 endif
 
 MCS=mcs

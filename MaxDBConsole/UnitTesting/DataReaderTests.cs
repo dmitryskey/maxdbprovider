@@ -17,11 +17,11 @@
 
 using System;
 using NUnit.Framework;
-using MaxDBDataProvider;
+using MaxDB.Data;
 using System.Data;
 using System.Data.Common;
 
-namespace MaxDBConsole.UnitTesting
+namespace MaxDB.Data.Test.UnitTesting
 {
 	/// <summary>
 	/// Summary description for DataReaderTests.
@@ -145,14 +145,14 @@ namespace MaxDBConsole.UnitTesting
 				cmd.CommandText = "SELECT * FROM test WHERE id = 1";
 				reader = cmd.ExecuteReader(CommandBehavior.SingleRow);
 				Assert.IsTrue(reader.Read());
-				Assert.AreEqual("test1", reader.GetString(1).Trim());
+				Assert.AreEqual("test1", reader.GetString(1));
 				Assert.IsFalse(reader.Read());
 				reader.Close();
 
 				cmd.CommandText = "SELECT * FROM test WHERE rowno <= 2";
 				reader = cmd.ExecuteReader(CommandBehavior.SingleRow);
 				Assert.IsTrue(reader.Read());
-				Assert.AreEqual("test1", reader.GetString(1).Trim());
+				Assert.AreEqual("test1", reader.GetString(1));
 				Assert.IsFalse(reader.Read());
 				reader.Close();
 			}
@@ -216,7 +216,7 @@ namespace MaxDBConsole.UnitTesting
 				cmd.CommandText = "INSERT INTO Test(id, name) VALUES(3, 'test3')";
 				cmd.ExecuteNonQuery();
 
-				cmd.CommandText = "SELECT * FROM Test";
+				cmd.CommandText = "SELECT * FROM Test FOR UPDATE";
 				reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly);
 				DataTable table = reader.GetSchemaTable();
 				Assert.AreEqual(7, table.Rows.Count);
@@ -257,8 +257,8 @@ namespace MaxDBConsole.UnitTesting
 				reader.Read();
 				Assert.AreEqual(1, reader.GetValue(0));
 				Assert.AreEqual(1, reader.GetInt32(0));
-				Assert.AreEqual("Test", reader.GetValue(1).ToString().Trim());
-				Assert.AreEqual("Test", reader.GetString(1).Trim());
+				Assert.AreEqual("Test", reader.GetValue(1).ToString());
+				Assert.AreEqual("Test", reader.GetString(1));
 				reader.Read();
 				Assert.AreEqual(2, reader.GetValue(0));
 				Assert.AreEqual(2, reader.GetInt32(0));
@@ -267,8 +267,8 @@ namespace MaxDBConsole.UnitTesting
 				reader.Read();
 				Assert.AreEqual(3, reader.GetValue(0));
 				Assert.AreEqual(3, reader.GetInt32(0));
-				Assert.AreEqual("Test2", reader.GetValue(1).ToString().Trim());
-				Assert.AreEqual("Test2", reader.GetString(1).Trim());
+				Assert.AreEqual("Test2", reader.GetValue(1).ToString());
+				Assert.AreEqual("Test2", reader.GetString(1));
 				Assert.IsFalse(reader.Read());
 			}
 			catch (Exception ex) 
@@ -382,10 +382,14 @@ namespace MaxDBConsole.UnitTesting
 		[Test()]
 		public void TestGetChars()
 		{
-			int len = 20000;
+			int len = 50000;
+			
 			char[] chars = new char[len];
+			byte[] bytes = new byte[len];
 			for (int i = 0; i < len; i++)
-				chars[i] = 'a';//(char)(i % 128);
+				bytes[i] = (byte)(i % 127 + 1); //we can not use null
+
+			System.Text.Encoding.ASCII.GetChars(bytes, 0, len, chars, 0);
 			
 			MaxDBDataReader reader = null;
 			try 
@@ -440,7 +444,7 @@ namespace MaxDBConsole.UnitTesting
 				cmd = new MaxDBCommand("SELECT * FROM Test", m_conn);
 				reader = cmd.ExecuteReader();
 				reader.Read();
-				Assert.AreEqual( "Text value", reader["name"].ToString().Trim());
+				Assert.AreEqual( "Text value", reader["name"].ToString());
 			}
 			catch (Exception ex) 
 			{

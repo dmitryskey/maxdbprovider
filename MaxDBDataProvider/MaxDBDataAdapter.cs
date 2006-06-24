@@ -17,8 +17,12 @@
 using System;
 using System.Data;
 using System.Data.Common;
+#if NET20
+using System.Collections.Generic;
+using MaxDB.Data.MaxDBProtocol;
+#endif // NET20
 
-namespace MaxDBDataProvider
+namespace MaxDB.Data
 {
     [System.ComponentModel.DesignerCategory("Code")]
 	public sealed class MaxDBDataAdapter : DbDataAdapter, IDbDataAdapter
@@ -27,6 +31,17 @@ namespace MaxDBDataProvider
 		private MaxDBCommand m_insertCommand;
 		private MaxDBCommand m_updateCommand;
 		private MaxDBCommand m_deleteCommand;
+
+#if NET20
+        private int m_batchUpdSize = 0;
+        private MaxDBCommand m_batchInsertCmd;
+        private MaxDBCommand m_batchUpdateCmd;
+        private MaxDBCommand m_batchDeleteCmd;
+        private List<MaxDBParameterCollection> m_batchInsertParams = new List<MaxDBParameterCollection>();
+        private List<MaxDBParameterCollection> m_batchUpdateParams = new List<MaxDBParameterCollection>();
+        private List<MaxDBParameterCollection> m_batchDeleteParams = new List<MaxDBParameterCollection>();
+        private StatementType m_currentType = StatementType.Select;
+#endif // NET20
 
 		static private readonly object EventRowUpdated = new object(); 
 		static private readonly object EventRowUpdating = new object(); 
@@ -65,6 +80,9 @@ namespace MaxDBDataProvider
 
 		override protected void OnRowUpdating(RowUpdatingEventArgs value)
 		{
+#if NET20
+            m_currentType = value.StatementType;
+#endif // NET20
 			MaxDBRowUpdatingEventHandler handler = (MaxDBRowUpdatingEventHandler) Events[EventRowUpdating];
 			if ((null != handler) && (value is MaxDBRowUpdatingEventArgs)) 
 				handler(this, (MaxDBRowUpdatingEventArgs) value);
@@ -215,6 +233,89 @@ namespace MaxDBDataProvider
 			}
 		}
     	#endregion
+
+#if NET20
+        public override int UpdateBatchSize
+        {
+            get
+            {
+                return m_batchUpdSize;
+            }
+            set
+            {
+                m_batchUpdSize = value; 
+            }
+        }
+
+        protected override void InitializeBatching()
+        {
+        }
+
+        protected override void TerminateBatching()
+        {
+            if (m_batchInsertCmd != null)
+                m_batchInsertCmd.Cancel();
+            if (m_batchUpdateCmd != null)
+                m_batchUpdateCmd.Cancel();
+            if (m_batchDeleteCmd != null)
+                m_batchDeleteCmd.Cancel();
+        }
+
+        protected override int AddToBatch(IDbCommand command)
+        {
+            if (m_currentType == StatementType.Insert)
+            {
+                m_batchInsertCmd = (MaxDBCommand)command;
+                m_batchInsertParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
+            }
+
+            if (m_currentType == StatementType.Update)
+            {
+                m_batchUpdateCmd = (MaxDBCommand)command;
+                m_batchUpdateParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
+            }
+
+            if (m_currentType == StatementType.Delete)
+            {
+                m_batchDeleteCmd = (MaxDBCommand)command;
+                m_batchDeleteParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
+            }
+
+            return m_batchInsertParams.Count + m_batchUpdateParams.Count + m_batchDeleteParams.Count - 1;
+        }
+
+        protected override void ClearBatch()
+        {
+            m_batchInsertCmd = null;
+            m_batchUpdateCmd = null;
+            m_batchDeleteCmd = null;
+            m_batchInsertParams.Clear();
+            m_batchUpdateParams.Clear();
+            m_batchDeleteParams.Clear();
+        }
+
+        protected override int ExecuteBatch()
+        {
+            int rowAffected = 0;
+            if (m_batchInsertCmd != null)
+            {
+                m_batchInsertCmd.ExecuteBatch(m_batchInsertParams.ToArray());
+                rowAffected += m_batchInsertCmd.m_rowsAffected;
+            }
+            if (m_batchUpdateCmd != null)
+            {
+                m_batchUpdateCmd.ExecuteBatch(m_batchUpdateParams.ToArray());
+                rowAffected += m_batchUpdateCmd.m_rowsAffected;
+            }
+            if (m_batchDeleteCmd != null)
+            {
+                m_batchDeleteCmd.ExecuteBatch(m_batchDeleteParams.ToArray());
+                rowAffected += m_batchDeleteCmd.m_rowsAffected;
+            }
+            return rowAffected;
+        }
+#endif // NET20
+
     }
 
 	public delegate void MaxDBRowUpdatingEventHandler(object sender, MaxDBRowUpdatingEventArgs e);

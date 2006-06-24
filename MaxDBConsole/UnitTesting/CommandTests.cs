@@ -17,14 +17,14 @@
 
 using System;
 using NUnit.Framework;
-using MaxDBDataProvider;
+using MaxDB.Data;
 using System.Data;
 using System.Data.Common;
 using System.Text;
 using System.Threading;
 using System.Diagnostics;
 
-namespace MaxDBConsole.UnitTesting
+namespace MaxDB.Data.Test.UnitTesting
 {
 	/// <summary>
 	/// Summary description for CommandTests.
@@ -66,7 +66,7 @@ namespace MaxDBConsole.UnitTesting
 				// make sure we get the right value back out
 				cmd.CommandText = "SELECT name FROM Test WHERE id = 10";
 				string name = (string)cmd.ExecuteScalar();
-				Assert.AreEqual("Test", name.Trim(), "Insert result" );
+				Assert.AreEqual("Test", name, "Insert result" );
 
 				// now do the insert with parameters
 				cmd.CommandText = "INSERT INTO Test (id, name) VALUES( :id, :name)";
@@ -79,7 +79,7 @@ namespace MaxDBConsole.UnitTesting
 				cmd.Parameters.Clear();
 				cmd.CommandText = "SELECT name FROM Test WHERE id = 11";
 				name = (string)cmd.ExecuteScalar();
-				Assert.AreEqual("Test2", name.Trim(), "Insert with parameters result" );
+				Assert.AreEqual("Test2", name, "Insert with parameters result" );
 			}
 			catch(MaxDBException ex)
 			{
@@ -107,11 +107,11 @@ namespace MaxDBConsole.UnitTesting
 				// make sure we get the right value back out
 				cmd.CommandText = "SELECT name FROM Test WHERE id = 10";
 				string name = (string)cmd.ExecuteScalar();
-				Assert.AreEqual("Test3", name.Trim());
+				Assert.AreEqual("Test3", name);
 			
 				cmd.CommandText = "SELECT name FROM Test WHERE id = 11";
 				name = (string)cmd.ExecuteScalar();
-				Assert.AreEqual("Test3", name.Trim());
+				Assert.AreEqual("Test3", name);
 
 				// now do the update with parameters
 				cmd.CommandText = "UPDATE Test SET name = :name WHERE id = :id";
@@ -124,7 +124,7 @@ namespace MaxDBConsole.UnitTesting
 				cmd.Parameters.Clear();
 				cmd.CommandText = "SELECT name FROM Test WHERE id = 11";
 				name = (string)cmd.ExecuteScalar();
-				Assert.AreEqual("Test5", name.Trim());
+				Assert.AreEqual("Test5", name);
 			}
 			catch (Exception ex)
 			{

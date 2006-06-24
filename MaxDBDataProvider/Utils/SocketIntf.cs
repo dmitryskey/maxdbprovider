@@ -28,7 +28,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Authentication;
 #endif // NET20
 
-namespace MaxDBDataProvider.Utils
+namespace MaxDB.Data.Utils
 {
 	/// <summary>
 	/// Interface to support tcp and ssl connection.

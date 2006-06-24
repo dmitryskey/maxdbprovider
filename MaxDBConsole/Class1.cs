@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Configuration;
 using System.ComponentModel;
 
-namespace MaxDBDataProvider
+namespace MaxDB.Data.Test
 {
 	/// <summary>
 	/// Summary description for Class1.
@@ -18,18 +18,13 @@ namespace MaxDBDataProvider
 		/// The main entry point for the application.
 		/// </summary>
 		[STAThread]
-		static void Main(string[] args)
+		static unsafe void Main(string[] args)
 		{
 			//
 			// TODO: Add code to start application here
 			//
-
-            //ICustomTypeDescriptor bl = (ICustomTypeDescriptor)new System.Data.SqlClient.SqlConnectionStringBuilder();
-            ICustomTypeDescriptor b2 = (ICustomTypeDescriptor)new MaxDBConnectionStringBuilder();
-
-            AttributeCollection ff = b2.GetAttributes();
  
-			PerfomanceTest();
+			//PerfomanceTest();
 			return;
 
 //			StreamWriter sw = new StreamWriter(ConfigurationSettings.AppSettings["LogFileName"]);

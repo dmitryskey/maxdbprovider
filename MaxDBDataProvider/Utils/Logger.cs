@@ -2,9 +2,9 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Configuration;
-using MaxDBDataProvider.MaxDBProtocol;
+using MaxDB.Data.MaxDBProtocol;
 
-namespace MaxDBDataProvider.Utils
+namespace MaxDB.Data.Utils
 {
 	public enum MaxDBTraceLevel
 	{

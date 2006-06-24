@@ -20,15 +20,18 @@ using System.IO;
 using System.Data;
 using System.Text;
 using System.Collections;
-using MaxDBDataProvider.Utils;
+#if NET20
+using System.Collections.Generic;
+#endif // NET20
+using MaxDB.Data.Utils;
 
-namespace MaxDBDataProvider.MaxDBProtocol
+namespace MaxDB.Data.MaxDBProtocol
 {
 #if SAFE
 
 	#region "Put Value class"
 
-	public class PutValue
+    public class PutValue
 	{
 		private byte[] m_desc;
 		protected ByteArray m_descMark;
@@ -174,7 +177,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				if (m_stream == null) 
 					m_stream = firstChunk;
 				else 
-					m_stream = new JoinStream (new Stream[]{firstChunk, m_stream});
+					m_stream = new JoinStream(new Stream[]{firstChunk, m_stream});
 			}
 			m_reqData = null;
 		}
@@ -184,44 +187,44 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Put Unicode Value class"
 
-	public class PutUnicodeValue : PutValue
+    internal class PutUnicodeValue : PutValue
 	{
-		private TextReader reader;
+		private TextReader m_reader;
     
 		public PutUnicodeValue(TextReader readerp, int length, int bufpos) : base(bufpos)
 		{
 			if (length >= 0)
-				reader = new TextReaderFilter(readerp, length);
+				m_reader = new TextReaderFilter(readerp, length);
 			else
-				reader = readerp;
+				m_reader = readerp;
 		}
     
 		public PutUnicodeValue(char[] source, int bufpos) : base(bufpos)
 		{
-			reader = new StringReader(new string(source));
+			m_reader = new StringReader(new string(source));
 		}
 
 		public override bool AtEnd
 		{
 			get
 			{
-				return reader == null;
+				return m_reader == null;
 			}
 		}
 
 		public override void TransferStream(DataPart dataPart)
 		{
-			if (!AtEnd && dataPart.FillWithReader(reader, m_descMark, this))
+			if (!AtEnd && dataPart.FillWithReader(m_reader, m_descMark, this))
 			{
 				try 
 				{
-					reader.Close();
+					m_reader.Close();
 				}
 				catch 
 				{
 					// ignore
 				}
-				reader = null;
+				m_reader = null;
 			}
 		}
 
@@ -230,10 +233,10 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			if(m_reqData != null) 
 			{
 				StringReader firstChunk = new StringReader(m_reqData.ReadUnicode(0, m_reqLength));
-				if(reader == null) 
-					reader = firstChunk;
+				if(m_reader == null) 
+					m_reader = firstChunk;
 				else
-					reader = new JoinTextReader(new TextReader[] {firstChunk, reader });
+					m_reader = new JoinTextReader(new TextReader[] {firstChunk, m_reader });
       
 				m_reqData = null;
 			}
@@ -246,27 +249,27 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	internal abstract class AbstractProcedurePutValue 
 	{
-		private DBTechTranslator translator; 
-		private ByteArray  descriptor;
-		private ByteArray  descriptorMark;
+		private DBTechTranslator m_translator; 
+		private ByteArray m_descriptor;
+		private ByteArray m_descriptorMark;
 	
 		public AbstractProcedurePutValue(DBTechTranslator translator)
 		{	    
-			this.translator = translator;
-			this.descriptor = new ByteArray(LongDesc.Size);
-			this.descriptor.WriteByte(LongDesc.StateStream, LongDesc.State);		
+			m_translator = translator;
+			m_descriptor = new ByteArray(LongDesc.Size);
+			m_descriptor.WriteByte(LongDesc.StateStream, LongDesc.State);		
 		}
 
 		public void UpdateIndex(int index)
 		{
-			this.descriptorMark.WriteInt16((short)index, LongDesc.ValInd);        
+			m_descriptorMark.WriteInt16((short)index, LongDesc.ValInd);        
 		}
 
 		public void putDescriptor(DataPart memory)
 		{
-			memory.WriteDefineByte (0, translator.BufPos - 1);
-			memory.WriteBytes(descriptor.arrayData, translator.BufPos);
-			descriptorMark = memory.m_origData.Clone(translator.BufPos);       
+			memory.WriteDefineByte (0, m_translator.BufPos - 1);
+			memory.WriteBytes(m_descriptor.arrayData, m_translator.BufPos);
+			m_descriptorMark = memory.m_origData.Clone(m_translator.BufPos);       
 		}
 
 		public abstract void TransferStream(DataPart dataPart, short rowCount);
@@ -394,7 +397,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Abstract Get Value class"
 
-	public abstract class AbstractGetValue
+    internal abstract class AbstractGetValue
 	{
 		protected MaxDBConnection connection;
 		protected byte[] descriptor;
@@ -550,7 +553,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Get Value class"
 
-	class GetValue : AbstractGetValue
+	internal class GetValue : AbstractGetValue
 	{
 		int asciiColumnAsUnicodeMultiplier = 1;
     
@@ -738,7 +741,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Get LOB Value class"
 
-	class GetLOBValue : GetValue
+	internal class GetLOBValue : GetValue
 	{
 		public GetLOBValue(MaxDBConnection connection, byte [] descriptor, ByteArray dataPart, int dataKind) : 
 			base(connection, descriptor, dataPart, dataKind)
@@ -788,7 +791,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Get Unicode Value class"
 
-	public class GetUnicodeValue : AbstractGetValue
+	internal class GetUnicodeValue : AbstractGetValue
 	{
 		private bool isUnicodeColumn;
 			
@@ -885,7 +888,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Get Unicode LOB Value class"
 
-	public class GetUnicodeLOBValue : GetUnicodeValue
+	internal class GetUnicodeLOBValue : GetUnicodeValue
 	{
 		public GetUnicodeLOBValue(MaxDBConnection connection, byte[] descriptor, ByteArray dataPart, bool isUnicodeColumn) :
 			base(connection, descriptor, dataPart, isUnicodeColumn)
@@ -935,7 +938,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		the kind of the fetch, the positioning in the result at the database
 		server and the start and end index computation does differ.
 	*/
-	class FetchChunk
+	internal class FetchChunk
 	{
 		private MaxDBConnection m_conn; //database connection
 		private MaxDBReplyPacket m_replyPacket;	// The data packet from the fetch operation.
@@ -1302,17 +1305,23 @@ namespace MaxDBDataProvider.MaxDBProtocol
 
 	#region "Put Value class comparator"
 
-	public class PutValueComparator : IComparer
-	{
-		int IComparer.Compare(object x, object y)
-		{
+    internal class PutValueComparator : 
+#if NET20
+    IComparer<PutValue>
+#else
+    IComparer
+#endif
+    {
+#if NET20
+        public int Compare(PutValue x, PutValue y)
+#else
+		public int Compare(object x, object y)
+#endif
+        {
 			PutValue p1 = (PutValue)x;
 			PutValue p2 = (PutValue)y;
 
-			int p1_bufpos = p1.BufPos;
-			int p2_bufpos = p2.BufPos;
-
-			return p1_bufpos - p2_bufpos;		
+			return p1.BufPos - p2.BufPos;		
 		}
 	}
 

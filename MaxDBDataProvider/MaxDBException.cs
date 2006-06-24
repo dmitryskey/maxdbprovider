@@ -18,10 +18,10 @@
 using System;
 using System.Data;
 using System.IO;
-using MaxDBDataProvider.MaxDBProtocol;
-using MaxDBDataProvider.Utils;
+using MaxDB.Data.MaxDBProtocol;
+using MaxDB.Data.Utils;
 
-namespace MaxDBDataProvider
+namespace MaxDB.Data
 {
 	/// <summary>
 	/// Summary description for MaxDBException.

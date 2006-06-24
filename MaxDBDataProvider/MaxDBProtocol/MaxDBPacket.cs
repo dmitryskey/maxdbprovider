@@ -17,9 +17,9 @@
 
 using System;
 using System.Text;
-using MaxDBDataProvider.Utils;
+using MaxDB.Data.Utils;
 
-namespace MaxDBDataProvider.MaxDBProtocol
+namespace MaxDB.Data.MaxDBProtocol
 {
 #if SAFE
 
@@ -309,7 +309,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		protected short m_partArgs = -1, m_segParts = -1;
 		private byte m_currentSqlMode = SqlMode.SessionSqlmode;
 		private int m_replyReserve;
-		private int maxNumberOfSeg = Consts.defaultmaxNumberOfSegm;
+        private int m_MaxNumberOfSeg = Consts.DefaultMaxNumberOfSegm;
 		private bool m_isAvailable = false;
 		private const string m_dropCmd = "Drop Parseid";
 		private const int resultCountSize = 6;
@@ -368,6 +368,14 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			}
 		}
 
+        public static int ResultCountPartSize
+        {
+            get
+            {
+                return PartHeaderOffset.Data + Consts.ResultCountSize + 8; // alignment
+            }
+        }
+
 		public byte SwitchSqlMode(byte newMode) 
 		{
 			byte result = m_currentSqlMode;
@@ -375,6 +383,12 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_currentSqlMode = newMode;
 			return result;
 		}
+
+        public void AddNullData(int len)
+        {
+            WriteByte(255, DataPos);
+            m_partLength += len + 1;
+        }
 
 		public void AddData(byte[] data) 
 		{
@@ -412,6 +426,13 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_partArgs++;
 		}
 
+        public void AddUndefResultCount()
+        {
+            NewPart(PartKind.ResultCount);
+            AddNullData(resultCountSize);
+            m_partArgs++;
+        }
+
 		public bool DropPid(byte [] pid, bool reset) 
 		{
 			if (reset) 
@@ -424,7 +445,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 				int remainingSpace = Length - m_length - SegmentHeaderOffset.Part - PartHeaderOffset.Data
 					- m_replyReserve - Consts.ReserveForReply - m_dropCmd.Length
 					- SegmentHeaderOffset.Part - PartHeaderOffset.Data - pid.Length;
-				if (remainingSpace <= 0 || m_segments >= maxNumberOfSeg) 
+				if (remainingSpace <= 0 || m_segments >= m_MaxNumberOfSeg) 
 					return false;
 			}
 
@@ -452,7 +473,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 		public void Init(short maxSegment) 
 		{
 			Reset();
-			maxNumberOfSeg = maxSegment;
+			m_MaxNumberOfSeg = maxSegment;
 		}
 
 		private void Reset()
@@ -462,7 +483,6 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			m_segOffset = -1;
 			m_segLength = -1;
 			m_segParts = -1;
-			maxNumberOfSeg = Consts.defaultmaxNumberOfSegm;
 			m_partOffset = -1;
 			m_partLength = -1;
 			m_partArgs = -1;
@@ -487,7 +507,7 @@ namespace MaxDBDataProvider.MaxDBProtocol
 			{
 				CloseSegment();
 				if (m_data.Length - HeaderOffset.END - m_length - SegmentHeaderOffset.Part - PartHeaderOffset.Data
-					- m_replyReserve - Consts.ReserveForReply < cmd.Length || m_segments >= maxNumberOfSeg) 
+					- m_replyReserve - Consts.ReserveForReply < cmd.Length || m_segments >= m_MaxNumberOfSeg) 
 					return false;
 			}
 			InitDbs(reset, autocommit);
