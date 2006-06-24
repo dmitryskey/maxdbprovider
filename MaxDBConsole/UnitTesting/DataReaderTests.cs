@@ -21,7 +21,7 @@ using MaxDB.Data;
 using System.Data;
 using System.Data.Common;
 
-namespace MaxDB.Data.Test.UnitTesting
+namespace MaxDB.Test.UnitTesting
 {
 	/// <summary>
 	/// Summary description for DataReaderTests.

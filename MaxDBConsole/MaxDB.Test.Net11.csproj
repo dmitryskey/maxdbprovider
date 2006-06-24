@@ -9,7 +9,7 @@
             <Settings
                 ApplicationIcon = "App.ico"
                 AssemblyKeyContainerName = ""
-                AssemblyName = "MaxDB.Data.Test"
+                AssemblyName = "MaxDB.Test"
                 AssemblyOriginatorKeyFile = ""
                 DefaultClientScript = "JScript"
                 DefaultHTMLPageLayout = "Grid"
@@ -131,7 +131,7 @@
                     HintPath = "..\..\..\..\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Windows.Forms.dll"
                 />
                 <Reference
-                    Name = "MaxDBDataProvider"
+                    Name = "MaxDB.Data.Net11"
                     Project = "{96EABFAC-9C28-40C6-AD1F-08121496C11E}"
                     Package = "{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"
                 />
@@ -153,7 +153,7 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "Class1.cs"
+                    RelPath = "Console.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />

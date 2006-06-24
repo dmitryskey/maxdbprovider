@@ -6,8 +6,9 @@ using System.Data.Odbc;
 using System.Diagnostics;
 using System.Configuration;
 using System.ComponentModel;
+using MaxDB.Data;
 
-namespace MaxDB.Data.Test
+namespace MaxDB.Test
 {
 	/// <summary>
 	/// Summary description for Class1.
