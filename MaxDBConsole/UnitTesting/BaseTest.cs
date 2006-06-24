@@ -22,7 +22,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Collections.Specialized;
 
-namespace MaxDB.Test.UnitTesting
+namespace MaxDB.UnitTesting
 {
 	/// <summary>
 	/// Summary description for BaseTest.
