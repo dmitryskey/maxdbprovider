@@ -1,0 +1,142 @@
+<project name="MaxDBDataProvider" default="allframeworks" xmlns="http://nant.sf.net/schemas/nant-0.84.win32.net-1.0.xsd">
+	<description>ADO.NET Provider for MaxDB</description>
+
+	<property name="nunit-Net-1.1" value="D:\Program Files\NUnit V2.1" />
+	<property name="nunit-Net-2.0" value="D:\Program Files\NUnit-Net-2.0 2.2.7" />
+	<property name="nunit-mono" value="" />
+
+	<!-- filesets -->
+	<fileset id="Sources">
+		<include name="MaxDBDataProvider/*.cs"/>
+		<include name="MaxDBDataProvider/MaxDBProtocol/*.cs"/>
+		<include name="MaxDBDataProvider/Utils/*.cs"/>
+	</fileset>
+
+	<if test="${not property::exists('debug')}">
+		<property name="debug" value="false"/>
+	</if>
+	
+	<!-- we default to optimized release binaries -->
+	<property name="opt" value="true"/>
+	<property name="buildType" value="release"/>
+
+	<if test="${(debug)}">
+		<property name="opt" value="false"/>
+		<property name="buildType" value="debug"/>
+	</if>
+
+	<if test="${not property::exists('defines')}">
+		<property name="defines" value=""/>
+	</if>
+
+	<if test="${not property::exists('build.dir')}">
+		<property name="build.dir" value="."/>
+	</if>
+
+	<!-- builds the client on all supported frameworks -->
+	<target name="allframeworks" depends="net-1.1-safe net-1.1-unsafe net-2.0-safe net-2.0-unsafe mono-1.0-safe mono-1.0-unsafe">
+		<!--
+		<call target="Docs"/>
+		-->
+	</target>
+
+	<!-- provider target -->	
+	<target name="provider" description="MaxDB Data Provider target">
+		<property name="nant.settings.currentframework" value="${framework}"/>
+		<if test="${unsafe=='true'}">
+			<property name="outdir" value="bin/${framework}/unsafe/${buildType}"/>
+		</if>
+
+		<if test="${unsafe=='false'}">
+			<property name="outdir" value="bin/${framework}/safe/${buildType}"/>
+		</if>
+		
+		<mkdir dir="${outdir}" failonerror="false"/>
+		<resgen input="MaxDBDataProvider/MaxDBMessages.resx" output="MaxDBDataProvider/MaxDBMessages.resources"/>
+		<csc output="${outdir}/MaxDB.Data.dll" target="library" unsafe="${unsafe}"
+			define="${defines}" debug="${debug}" optimize="${opt}">
+			<resources prefix="MaxDB.Data" dynamicprefix="true">
+				<include name="MaxDBDataProvider/MaxDBMessages.resources"/>
+			</resources>
+			<references>
+				<include name="System.Data.dll"/>		
+			</references>
+			<sources refid="Sources"/>
+		</csc>
+		<csc output="${outdir}/MySql.Tests.exe" target="exe" unsafe="true"
+			define="${defines}" debug="${debug}" optimize="${opt}">
+			<sources>
+				<include name="MaxDBConsole/*.cs" />
+				<include name="MaxDBConsole/UnitTesting/*.cs" />
+			</sources>
+			<references>
+				<include name="${outdir}/MaxDB.Data.dll"/>
+				<include name="System.Data.dll"/>		
+				<include name="System.Drawing.dll"/>
+				<include name="${nunit-lib}/nunit.framework.dll"/>
+			</references>
+		</csc>
+	</target>
+
+	<!-- target .Net 1.1 Safe-->
+	<target name="net-1.1-safe" description=".NET 1.1 safe target">
+		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
+		<property name="framework" value="net-1.1"/>
+		<property name="defines" value="SAFE" />
+		<property name="unsafe" value="false"/>
+		<call target="provider"/>
+	</target>
+
+	<!-- target .Net 1.1 Unsafe-->
+	<target name="net-1.1-unsafe" description=".NET 1.1 unsafe target">
+		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
+		<property name="framework" value="net-1.1"/>
+		<property name="unsafe" value="true"/>
+		<call target="provider"/>
+	</target>
+
+	<!-- target .Net 2.0 Safe-->
+	<target name="net-2.0-safe" description=".NET 2.0 safe target">
+		<property name="nunit-lib" value="${nunit-Net-2.0}/bin"/>
+		<property name="framework" value="net-2.0"/>
+		<property name="defines" value="SAFE;NET20" />
+		<property name="unsafe" value="false"/>
+		<call target="provider"/>
+	</target>
+
+	<!-- target .Net 2.0 Unsafe-->
+	<target name="net-2.0-unsafe" description=".NET 2.0 unsafe target">
+		<property name="nunit-lib" value="${nunit-Net-2.0}/bin"/>
+		<property name="framework" value="net-2.0"/>
+		<property name="defines" value="NET20" />
+		<property name="unsafe" value="true"/>
+		<call target="provider"/>
+	</target>
+
+	<!-- target Mono 1.1 Safe-->
+	<target name="mono-1.0-safe" description="Mono 1.1 safe target">
+		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
+		<property name="framework" value="mono-1.0"/>
+		<property name="defines" value="SAFE" />
+		<property name="unsafe" value="false"/>
+		<call target="provider"/>
+	</target>
+
+	<!-- target Mono 1.1 Unsafe-->
+	<target name="mono-1.0-unsafe" description="Mono 1.1 unsafe target">
+		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
+		<property name="framework" value="mono-1.0"/>
+		<property name="unsafe" value="true"/>
+		<call target="provider"/>
+	</target>
+
+        <!-- Remove all generated files target -->
+	<target name="clean" description="Remove all generated files">
+		<delete failonerror="false">
+			<fileset>
+				<include name="bin/**" />
+            		</fileset>
+		</delete>
+	</target>
+
+</project>

@@ -1455,17 +1455,6 @@ namespace MaxDB.Data
 			}
 		}
 
-#if NET20
-        private void ResetPutValues(List<PutValue> inpLongs)
-#else
-		private void ResetPutValues(ArrayList inpLongs)
-#endif // NET20
-        {
-            if (inpLongs != null)
-                foreach (PutValue val in inpLongs)
-                    val.Reset();
-        }
-
 		private DBTechTranslator FindColInfo(int colIndex)
 		{
 			try 
