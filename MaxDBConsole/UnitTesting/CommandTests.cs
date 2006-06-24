@@ -24,7 +24,7 @@ using System.Text;
 using System.Threading;
 using System.Diagnostics;
 
-namespace MaxDB.Data.Test.UnitTesting
+namespace MaxDB.Test.UnitTesting
 {
 	/// <summary>
 	/// Summary description for CommandTests.

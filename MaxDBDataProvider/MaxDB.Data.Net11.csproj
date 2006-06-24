@@ -139,11 +139,6 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "MaxDBCommandBuilder.resx"
-                    DependentUpon = "MaxDBCommandBuilder.cs"
-                    BuildAction = "EmbeddedResource"
-                />
-                <File
                     RelPath = "MaxDBConnection.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
