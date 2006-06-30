@@ -27,15 +27,15 @@ namespace MaxDB.Data.MaxDBProtocol
 	/// <summary>
 	/// Least-Recently-Used cache class
 	/// </summary>
-	public class LRUCache
+	public class LeastRecentlyUsedCache
 	{
 		/// <summary>
 		/// double list class for internal purpuses
 		/// </summary>
 		private class DoubleList
 		{
-			private DoubleList m_prevLink, m_nextLink;
-			private object m_data;
+			private DoubleList mPrevLink, mNextLink;
+			private object objData;
 
 			/// <summary>
 			/// class costructor
@@ -43,7 +43,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			/// <param name="data">list element</param>
 			public DoubleList(object data)
 			{
-				m_data = data;
+				objData = data;
 			}
 
 			/// <summary>
@@ -53,15 +53,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			{
 				get
 				{
-					return m_data;
-				}
-			}
-
-			public DoubleList Next
-			{
-				get
-				{
-					return m_nextLink;
+					return objData;
 				}
 			}
 
@@ -69,75 +61,43 @@ namespace MaxDB.Data.MaxDBProtocol
 			{
 				get
 				{
-					return m_prevLink;
-				}
-			}
-
-			public bool	AtStart
-			{
-				get
-				{
-					return m_prevLink == null;
-				}
-			}
-
-			public bool AtEnd
-			{
-				get
-				{
-					return m_nextLink == null;
+					return mPrevLink;
 				}
 			}
 
 			public void Remove()
 			{
-				if (m_prevLink != null) 
-					m_prevLink.m_nextLink = m_nextLink;
+				if (mPrevLink != null) 
+					mPrevLink.mNextLink = mNextLink;
 
-				if (m_nextLink != null) 
-					m_nextLink.m_prevLink = m_prevLink;
+				if (mNextLink != null) 
+					mNextLink.mPrevLink = mPrevLink;
 			
-				m_prevLink = null;
-				m_nextLink = null;
+				mPrevLink = null;
+				mNextLink = null;
 			}
 
 			public void Prepend(DoubleList newHead)
 			{
-				newHead.m_nextLink = this;
-				m_prevLink = newHead;
-			}
-
-			public void Append(DoubleList newTail)
-			{
-				m_nextLink = newTail;
-				newTail.m_prevLink = this;
-			}
-
-			public void InsertAfter(DoubleList newHead)
-			{
-				DoubleList newTail = newHead.m_nextLink;
-				newHead.m_nextLink = this;
-				m_prevLink = newHead;
-				m_nextLink = newTail;
-				if (newTail != null) 
-					newTail.m_prevLink = this;
+				newHead.mNextLink = this;
+				mPrevLink = newHead;
 			}
 		}
 
 		private class Association : DoubleList
 		{
-			object m_key;
+			object objKey;
 
 			public Association(object key, object val) : base(val)
 			{
-				m_key = key;
+				objKey = key;
 			}
 
 			public object Key
 			{
 				get
 				{
-					return m_key;
+					return objKey;
 				}
 			}
 		}
@@ -148,7 +108,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		private int currentSize;
 		private int maxSize;
     
-		public LRUCache(int cacheSize)
+		public LeastRecentlyUsedCache(int cacheSize)
 		{
 			maxSize = cacheSize;
 			Clear();
@@ -213,15 +173,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			lruBottom = (Association) toDelete.Prev;
 			lookup.Remove(toDelete.Key);
-			RemoveHook (toDelete);
 			currentSize--;
 		}
 
-		protected void RemoveHook(object val)
-		{
-		}
-
-		public object[] ClearAll()
+        public object[] ClearAll()
 		{
 			object[] result= new object[lookup.Count];
 			lookup.Values.CopyTo(result, 0);
@@ -234,56 +189,39 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	#region "Cache information class"
 
-	public class CacheInfo
+	internal class CacheInfo
 	{
-		private string name;
-		private long hits;
-		private long misses;
+		private string strName;
+		private int iHits;
+		private int iMisses;
 		
 		public CacheInfo(string name)
 		{
-			this.name = name;
-			this.hits = 0;
-			this.misses = 0;
+			strName = name;
 		}
 
 		public override string ToString()
 		{
-			return name + ": " + hits + " hits, " + misses + " misses, " + Hitrate + "%";
+			return strName + ": " + iHits + " hits, " + iMisses + " misses, " + Hitrate + "%";
 		}
 
-		public void addHit()
+		public void AddHit()
 		{
-			hits++;
+			iHits++;
 		}
 		
-		public void addMiss()
+		public void AddMiss()
 		{
-			misses++;
+			iMisses++;
 		}
 
-		public double Hitrate
+		private double Hitrate
 		{
 			get
 			{
-				long all = hits + misses;
-				return (double) hits / (double) all * 100.0;
+				long all = iHits + iMisses;
+				return (double) iHits / (double) all * 100.0;
 			}
-		}
-
-		public static CacheInfo Cummulate(CacheInfo[] stats)
-		{
-			CacheInfo result = new CacheInfo("all");
-
-			for (int i = 0; i < stats.Length; i++) 
-			{
-				if (stats[i] != null) 
-				{
-					result.hits += stats[i].hits;
-					result.misses += stats[i].misses;
-				}
-			}
-			return result;
 		}
 	}
 
@@ -291,43 +229,43 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	#region "Parse information class"
 
-	internal class ParseInfoCache : LRUCache
+	internal class ParseInfoCache : LeastRecentlyUsedCache
 	{
-		const int defaultSize = 1000;
-		private const int maxFunctionCode = FunctionCode.Delete + 1;
-		private bool keepStats;
-		private bool[] kindFilter;
-		private CacheInfo[] stats;
+		const int iDefaultSize = 1000;
+		private const int iMaxFunctionCode = FunctionCode.Delete + 1;
+		private bool bKeepStats;
+		private bool[] bKindFilter;
+		private CacheInfo[] ciStats;
 
-		public ParseInfoCache(string cache, int cacheSize) : base((cacheSize > 0)? cacheSize : defaultSize)
+		public ParseInfoCache(string cache, int cacheSize) : base((cacheSize > 0)? cacheSize : iDefaultSize)
 		{
             string kindDecl = cache;
 
-            kindFilter = new bool[maxFunctionCode];
+            bKindFilter = new bool[iMaxFunctionCode];
             if (kindDecl.IndexOf('?') >= 0)
             {
-                keepStats = true;
-                stats = new CacheInfo[maxFunctionCode];
-                stats[FunctionCode.Nil] = new CacheInfo("other");
-                stats[FunctionCode.Insert] = new CacheInfo("insert");
-                stats[FunctionCode.Select] = new CacheInfo("select");
-                stats[FunctionCode.Update] = new CacheInfo("update");
-                stats[FunctionCode.Delete] = new CacheInfo("delete");
+                bKeepStats = true;
+                ciStats = new CacheInfo[iMaxFunctionCode];
+                ciStats[FunctionCode.Nil] = new CacheInfo("other");
+                ciStats[FunctionCode.Insert] = new CacheInfo("insert");
+                ciStats[FunctionCode.Select] = new CacheInfo("select");
+                ciStats[FunctionCode.Update] = new CacheInfo("update");
+                ciStats[FunctionCode.Delete] = new CacheInfo("delete");
             }
 
             if (kindDecl.IndexOf("all") >= 0)
-                for (int i = 0; i < maxFunctionCode; ++i)
-                    kindFilter[i] = true;
+                for (int i = 0; i < iMaxFunctionCode; ++i)
+                    bKindFilter[i] = true;
             else
             {
                 if (kindDecl.IndexOf("i") >= 0)
-                    kindFilter[FunctionCode.Insert] = true;
+                    bKindFilter[FunctionCode.Insert] = true;
                 if (kindDecl.IndexOf("u") >= 0)
-                    kindFilter[FunctionCode.Update] = true;
+                    bKindFilter[FunctionCode.Update] = true;
                 if (kindDecl.IndexOf("d") >= 0)
-                    kindFilter[FunctionCode.Delete] = true;
+                    bKindFilter[FunctionCode.Delete] = true;
                 if (kindDecl.IndexOf("s") >= 0)
-                    kindFilter[FunctionCode.Select] = true;
+                    bKindFilter[FunctionCode.Select] = true;
             }
 		}
 
@@ -336,27 +274,27 @@ namespace MaxDB.Data.MaxDBProtocol
 			MaxDBParseInfo result = null;
 
 			result = (MaxDBParseInfo)this[sqlCmd];
-			if (keepStats && result != null) 
-				stats[result.FuncCode].addHit();
+			if (bKeepStats && result != null) 
+				ciStats[result.FuncCode].AddHit();
 
 			return result;
 		}
 		/**
 		 *
 		 */
-		public void addParseinfo(MaxDBParseInfo parseinfo)
+		public void AddParseinfo(MaxDBParseInfo parseinfo)
 		{
-			int functionCode = mapFunctionCode(parseinfo.FuncCode);
-			if (kindFilter[functionCode]) 
+			int functionCode = MapFunctionCode(parseinfo.FuncCode);
+			if (bKindFilter[functionCode]) 
 			{
-				this[parseinfo.m_sqlCmd] = parseinfo;
+				this[parseinfo.strSqlCmd] = parseinfo;
 				parseinfo.IsCached = true;
-				if (keepStats) 
-					stats[functionCode].addMiss();
+				if (bKeepStats) 
+					ciStats[functionCode].AddMiss();
 			}
 		}
 
-		static private int mapFunctionCode(int functionCode)
+		static private int MapFunctionCode(int functionCode)
 		{
 			switch (functionCode) 
 			{
@@ -371,25 +309,6 @@ namespace MaxDB.Data.MaxDBProtocol
 					break;
 			}
 			return functionCode;
-		}
-
-		public CacheInfo[] Stats
-		{
-			get
-			{
-				if (!keepStats) 
-					return null;
-
-				CacheInfo[] result = new CacheInfo [6];
-
-				result[0] = stats[FunctionCode.Nil];
-				result[1] = stats[FunctionCode.Insert];
-				result[2] = stats[FunctionCode.Update];
-				result[3] = stats[FunctionCode.Delete];
-				result[4] = stats[FunctionCode.Select];
-				result[5] = CacheInfo.Cummulate(result);
-				return result;
-			}
 		}
 	}
 

@@ -29,9 +29,9 @@ namespace MaxDB.UnitTesting
 	/// </summary>
 	public class BaseTest
 	{
-		protected MaxDBConnection m_conn;
-		protected StreamWriter m_sw = null;
-        protected NameValueCollection m_AppSettings =
+		protected MaxDBConnection mconn;
+		protected StreamWriter msw = null;
+        protected NameValueCollection mAppSettings =
 #if NET20
             System.Configuration.ConfigurationManager.AppSettings;
 #else
@@ -47,21 +47,21 @@ namespace MaxDB.UnitTesting
 
 		protected void Init(string DDLQuery)
 		{
-			if (m_AppSettings["LogFileName"] != null)
+			if (mAppSettings["LogFileName"] != null)
 			{
-				m_sw = new StreamWriter(m_AppSettings["LogFileName"]);
+				msw = new StreamWriter(mAppSettings["LogFileName"]);
 
 				Trace.Listeners.Clear();
-				Trace.Listeners.Add(new TextWriterTraceListener(m_sw));
+				Trace.Listeners.Add(new TextWriterTraceListener(msw));
 			}
 
-			m_conn = new MaxDBConnection(m_AppSettings["ConnectionString"]);
-			m_conn.Open();
-			m_conn.AutoCommit = true;
+			mconn = new MaxDBConnection(mAppSettings["ConnectionString"]);
+			mconn.Open();
+			mconn.AutoCommit = true;
 			try
 			{
-				(new MaxDBCommand("EXISTS TABLE Test", m_conn)).ExecuteNonQuery();
-				(new MaxDBCommand("DROP TABLE Test", m_conn)).ExecuteNonQuery();
+				ExecuteNonQuery("EXISTS TABLE Test");
+				ExecuteNonQuery("DROP TABLE Test");
 			}
 			catch(MaxDBException ex)
 			{
@@ -69,19 +69,25 @@ namespace MaxDB.UnitTesting
 					throw;
 			}
 
-			(new MaxDBCommand(DDLQuery, m_conn)).ExecuteNonQuery();
+			(new MaxDBCommand(DDLQuery, mconn)).ExecuteNonQuery();
 		}
 
 		protected void Close() 
 		{
-			(new MaxDBCommand("DROP TABLE Test", m_conn)).ExecuteNonQuery();
-			((IDisposable)m_conn).Dispose();
-			if (m_sw != null) m_sw.Close();
+			ExecuteNonQuery("DROP TABLE Test");
+			((IDisposable)mconn).Dispose();
+			if (msw != null) msw.Close();
 		}
 
 		protected void ClearTestTable()
 		{
-			(new MaxDBCommand("DELETE FROM Test", m_conn)).ExecuteNonQuery();
+			ExecuteNonQuery("DELETE FROM Test");
+		}
+
+		protected void ExecuteNonQuery(string cmdSql)
+		{
+			using(MaxDBCommand cmd = new MaxDBCommand(cmdSql, mconn))
+				cmd.ExecuteNonQuery();
 		}
 	}
 }

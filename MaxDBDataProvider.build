@@ -5,16 +5,17 @@
 	<property name="nunit-Net-2.0" value="D:\Program Files\NUnit-Net-2.0 2.2.7" />
 	<property name="nunit-mono" value="" />
 
+	<property name="fxcop.executable" value="D:\Program Files\Microsoft FxCop 1.35\fxcopcmd.exe"/>
+
 	<!-- filesets -->
 	<fileset id="Sources">
 		<include name="MaxDBDataProvider/*.cs"/>
 		<include name="MaxDBDataProvider/MaxDBProtocol/*.cs"/>
 		<include name="MaxDBDataProvider/Utils/*.cs"/>
+		<exclude name="MaxDBDataProvider/MaxDBMessages.Designer.cs"/>
 	</fileset>
 
-	<if test="${not property::exists('debug')}">
-		<property name="debug" value="false"/>
-	</if>
+	<property name="debug" value="true"/>
 	
 	<!-- we default to optimized release binaries -->
 	<property name="opt" value="true"/>
@@ -63,7 +64,7 @@
 			</references>
 			<sources refid="Sources"/>
 		</csc>
-		<csc output="${outdir}/MySql.Tests.exe" target="exe" unsafe="true"
+		<csc output="${outdir}/MaxDB.Test.exe" target="exe" unsafe="true"
 			define="${defines}" debug="${debug}" optimize="${opt}">
 			<sources>
 				<include name="MaxDBConsole/*.cs" />
@@ -130,11 +131,152 @@
 		<call target="provider"/>
 	</target>
 
+	<!-- FxCop targets -->
+	<target name="allfxcops" depends="fxcop-net-1.1-safe, fxcop-net-1.1-unsafe, fxcop-net-2.0-safe, fxcop-net-2.0-unsafe">
+	</target>
+
+	<!-- target FxCop .Net 1.1 Safe-->
+	<target name="fxcop-net-1.1-safe" depends="net-1.1-safe">
+		<property name="framework" value="net-1.1"/>
+		<property name="defines" value="SAFE" />
+		<property name="unsafe" value="false"/>
+		<call target="fxcop"/>
+	</target>
+
+	<!-- target FxCop .Net 1.1 Unsafe-->
+	<target name="fxcop-net-1.1-unsafe" depends="net-1.1-unsafe">
+		<property name="framework" value="net-1.1"/>
+		<property name="defines" value=""/>
+		<property name="unsafe" value="true"/>
+		<call target="fxcop"/>
+	</target>
+
+	<!-- target FxCop .Net 2.0 Safe-->
+	<target name="fxcop-net-2.0-safe" depends="net-2.0-safe">
+		<property name="framework" value="net-2.0"/>
+		<property name="defines" value="SAFE;NET20" />
+		<property name="unsafe" value="false"/>
+		<call target="fxcop"/>
+	</target>
+
+	<!-- target FxCop .Net 2.0 Unsafe-->
+	<target name="fxcop-net-2.0-unsafe" depends="net-2.0-unsafe">
+		<property name="framework" value="net-2.0"/>
+		<property name="defines" value="NET20" />
+		<property name="unsafe" value="true"/>
+		<call target="fxcop"/>
+	</target>
+
+                 
+	<!-- testing targets -->
+	<target name="alltests" depends="test-net-1.1-safe, test-net-2.0-safe">
+	</target>
+	
+	<target name="test-net-1.1-safe" depends="net-1.1-safe">
+		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
+		<property name="framework" value="net-1.1"/>
+		<call target="testclient"/>
+	</target>
+
+	<target name="test-net-1.1-unsafe" depends="net-1.1-unsafe">
+		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
+		<property name="framework" value="net-1.1"/>
+		<call target="testclient"/>
+	</target>
+
+	<target name="test-net-2.0-safe" depends="net-2.0-safe">
+		<property name="nunit-lib" value="${nunit-Net-2.0}/bin"/>
+		<property name="framework" value="net-2.0"/>
+		<call target="testclient"/>
+	</target>
+
+	<target name="test-net-2.0-unsafe" depends="net-2.0-unsafe">
+		<property name="nunit-lib" value="${nunit-Net-2.0}/bin"/>
+		<property name="framework" value="net-2.0"/>
+		<call target="testclient"/>
+	</target>
+
+	<target name="test-mono-1.0-safe" depends="mono-1.0-safe">
+        <property name="nunit" value="${nunit-mono}"/>
+		<property name="framework" value="mono-1.0"/>
+		<call target="testclient"/>
+	</target>
+
+	<target name="test-mono-1.0-unsafe" depends="mono-1.0-unsafe">
+        <property name="nunit" value="${nunit-mono}"/>
+		<property name="framework" value="mono-1.0"/>
+		<call target="testclient"/>
+	</target>
+
+	<target name="testclient" description="Target to run NUnit tests">
+		<mkdir dir="results"/>
+		
+		<!-- test 7.6 Unicode -->		
+		<echo message="Testing MaxDB 7.6 UNICODE"/>
+		<echo message="Starting database instance"/>
+		<exec program="dbmcli" commandline="-n r55s -d uhoteldb -u dba,dba db_online" failonerror="true"/>
+		<property name="config" value="MaxDB_76_UNICODE"/>
+		<property name="unsafe" value= "false"/>
+		<call target="testdb"/>
+		<echo message="Stopping database instance"/>
+		<exec program="dbmcli" commandline="-n r55s -d uhoteldb -u dba,dba db_stop" failonerror="true"/>
+
+		<!-- test 7.6 -->		
+		<echo message="Testing MaxDB 7.6"/>
+		<echo message="Starting database instance"/>
+		<exec program="dbmcli" commandline="-n r55s -d hoteldb -u dba,dba db_online" failonerror="true"/>
+		<property name="config" value="MaxDB_76"/>
+		<property name="unsafe" value= "false"/>
+		<call target="testdb"/>
+		<echo message="Stopping database instance"/>
+		<exec program="dbmcli" commandline="-n r55s -d hoteldb -u dba,dba db_stop" failonerror="true"/>
+
+	</target>
+
+	<!-- execute the test suite against a single database instance, possibly using coverage	-->
+	<target name="testdb" description="Target to test a database with all possible configurations">
+		<property name="nunit-exe" value="${nunit-lib}/nunit-console.exe"/>
+
+		<if test="${unsafe=='true'}">
+			<property name="testfile" value="bin/${framework}/unsafe/${buildType}/MaxDB.Test.exe"/>
+			<property name="outfile" value="nunit-${framework}-unsafe-${buildType}-${config}.xml"/>
+		</if>
+
+		<if test="${unsafe=='false'}">
+			<property name="testfile" value="bin/${framework}/safe/${buildType}/MaxDB.Test.exe"/>
+			<property name="outfile" value="nunit-${framework}-safe-${buildType}-${config}.xml"/>
+		</if>
+
+		<copy file="MaxDBConsole/Configs/${config}.config" tofile="${testfile}.config"/>
+
+		<exec program="${nunit-exe}" commandline="/xml=results/${outfile} ${testfile}" failonerror="true"/>
+	</target>
+
+	<!-- Run fxcop on the current build -->	
+	<target name="fxcop" description="Runs FXCop">
+		<mkdir dir="results"/>
+
+		<if test="${unsafe=='true'}">
+			<property name="outdir" value="${framework}/unsafe/${buildType}"/>
+			<property name="outfile" value="FxCop-${framework}-unsafe-${buildType}.xml"/>
+		</if>
+
+		<if test="${unsafe=='false'}">
+			<property name="outdir" value="${framework}/safe/${buildType}"/>
+			<property name="outfile" value="FxCop-${framework}-safe-${buildType}.xml"/>
+		</if>
+
+		<exec program="${fxcop.executable}" 
+			commandline="/o:results/${outfile} /f:bin/${outdir}/MaxDB.Data.dll /s"
+			failonerror="false"/>
+	</target>
+
         <!-- Remove all generated files target -->
 	<target name="clean" description="Remove all generated files">
 		<delete failonerror="false">
 			<fileset>
 				<include name="bin/**" />
+				<include name="results/*" />
             		</fileset>
 		</delete>
 	</target>

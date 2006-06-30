@@ -3,13 +3,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Configuration;
 using MaxDB.Data.MaxDBProtocol;
+using System.Globalization;
 
-namespace MaxDB.Data.Utils
+namespace MaxDB.Data.Utilities
 {
 	public enum MaxDBTraceLevel
 	{
 		None = 0,
-		SQLOnly = 1,
+		SqlOnly = 1,
 		Full = 2
 	}
 	/// <summary>
@@ -29,8 +30,8 @@ namespace MaxDB.Data.Utils
 				{
 					case (int)MaxDBTraceLevel.None:
 						return MaxDBTraceLevel.None;
-					case (int)MaxDBTraceLevel.SQLOnly:
-						return MaxDBTraceLevel.SQLOnly;
+					case (int)MaxDBTraceLevel.SqlOnly:
+						return MaxDBTraceLevel.SqlOnly;
 					case (int)MaxDBTraceLevel.Full:
 						return MaxDBTraceLevel.Full;
 					default:
@@ -67,11 +68,11 @@ namespace MaxDB.Data.Utils
 
 		public const string Null = "NULL";
 
-		private MaxDBTraceSwitch m_traceSwitch = new MaxDBTraceSwitch("TraceLevel", "Trace Level");
+		private MaxDBTraceSwitch mSwitcher = new MaxDBTraceSwitch("TraceLevel", "Trace Level");
 #if !SAFE
-		private IntPtr m_prop = IntPtr.Zero;
-		private string m_logname;
-		private MaxDBConnection m_conn;
+		private IntPtr mProperties = IntPtr.Zero;
+		private string strLogName;
+		private MaxDBConnection dbConnection;
 #endif
 
 		public MaxDBLogger()
@@ -81,60 +82,54 @@ namespace MaxDB.Data.Utils
 #if !SAFE
 		public MaxDBLogger(MaxDBConnection conn)
 		{
-			if (m_traceSwitch.TraceSQL)
+            if (mSwitcher.TraceSQL)
 			{
-				m_conn = conn;
+				dbConnection = conn;
 
-				m_prop = SQLDBC.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
-				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "SQL", "1");
-				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "TIMESTAMP", "1");
+				mProperties = UnsafeNativeMethods.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
+				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "SQL", "1");
+				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "TIMESTAMP", "1");
 
-				m_logname = Path.GetTempPath() + "adonetlog.html";
-				SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "FILENAME", "\"" + m_logname + "\"");
-				if (m_traceSwitch.TraceFull)
-					SQLDBC.SQLDBC_ConnectProperties_setProperty(m_prop, "PACKET", "1");
-				SQLDBC.SQLDBC_Environment_setTraceOptions(m_conn.m_envHandler, m_prop);
+				strLogName = Path.GetTempPath() + "adonetlog.html";
+				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "FILENAME", "\"" + strLogName + "\"");
+                if (mSwitcher.TraceFull)
+					UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "PACKET", "1");
+				UnsafeNativeMethods.SQLDBC_Environment_setTraceOptions(dbConnection.mEnviromentHandler, mProperties);
 			}
 		}
 #endif
-
-		public MaxDBTraceLevel Level
-		{
-			get
-			{
-				return m_traceSwitch.Level;	
-			}
-		}
 
 		public bool TraceSQL
 		{
 			get
 			{
-				return m_traceSwitch.TraceSQL;
+                return mSwitcher.TraceSQL;
 			}
 		}
 
+#if SAFE
 		public bool TraceFull
 		{
 			get
 			{
-				return m_traceSwitch.TraceFull;
+                return mSwitcher.TraceFull;
 			}
 		}
+#endif // SAFE
 
 		public void SqlTrace(DateTime dt, string msg)
 		{
 #if SAFE
-			if (m_traceSwitch.TraceSQL)
-				Trace.WriteLine(dt.ToString(Consts.TimeStampFormat) + " " + msg);
+			if (mSwitcher.TraceSQL)
+                Trace.WriteLine(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " " + msg);
 #endif // SAFE
         }
 
+#if SAFE
 		public void SqlTraceParseInfo(DateTime dt, object objInfo)
 		{
-#if SAFE
 			MaxDBParseInfo parseInfo = (MaxDBParseInfo)objInfo;
-			if (m_traceSwitch.TraceSQL)
+			if (mSwitcher.TraceSQL)
 			{
 				if (parseInfo.ParamInfo != null && parseInfo.ParamInfo.Length > 0)
 				{
@@ -142,11 +137,11 @@ namespace MaxDB.Data.Utils
 					SqlTrace(dt, "I   T              L    P   IO    N");
 					foreach (DBTechTranslator info in parseInfo.ParamInfo)
 					{
-						Trace.Write(dt.ToString(Consts.TimeStampFormat) + " ");
+                        Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
 
 						SqlTraceTransl(info);
 
-						if (FunctionCode.IsQuery(parseInfo.m_funcCode))
+						if (FunctionCode.IsQuery(parseInfo.FuncCode))
 						{
 							if(!info.IsOutput) 
 							{
@@ -184,44 +179,42 @@ namespace MaxDB.Data.Utils
 					SqlTrace(dt, "I   T              L           P           N");
 					foreach(DBTechTranslator info in parseInfo.ColumnInfo)
 					{
-						Trace.Write(dt.ToString(Consts.TimeStampFormat) + " ");
+                        Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
 						SqlTraceTransl(info);
 						Trace.WriteLine(info.ColumnName);
 					}
 				}
             }
-#endif // SAFE
         }
 
 		public void SqlTraceDataHeader(DateTime dt)
 		{
-#if SAFE
 			SqlTrace(dt, "I".PadRight(NumSize) + "T".PadRight(TypeSize) + "L".PadRight(LenSize) + "I".PadRight(InputSize) + "DATA");
-#endif // SAFE
         }
+#endif // SAFE
 
 #if SAFE
-		private void SqlTraceTransl(DBTechTranslator info)
+		private static void SqlTraceTransl(DBTechTranslator info)
 		{
-			Trace.Write(info.ColumnIndex.ToString().PadRight(4));
+            Trace.Write(info.ColumnIndex.ToString(CultureInfo.InvariantCulture).PadRight(4));
 			Trace.Write(info.ColumnTypeName.PadRight(15));
-			Trace.Write((info.PhysicalLength - 1).ToString().PadRight(12));
-			Trace.Write(info.Precision.ToString().PadRight(12));
+            Trace.Write((info.PhysicalLength - 1).ToString(CultureInfo.InvariantCulture).PadRight(12));
+            Trace.Write(info.Precision.ToString(CultureInfo.InvariantCulture).PadRight(12));
         }
 #endif // SAFE
 
         public void Flush()
 		{
-			if (m_traceSwitch.TraceSQL)
+            if (mSwitcher.TraceSQL)
 			{
 #if SAFE
 				Trace.Flush();
 #else
 
-				if (!File.Exists(m_logname))
+				if (!File.Exists(strLogName))
 					return;
 				string tmpFile = Path.GetTempFileName();
-				File.Copy(m_logname, tmpFile, true);
+				File.Copy(strLogName, tmpFile, true);
 				StreamReader sr = new StreamReader(tmpFile);
 				string header = sr.ReadLine();
 				if (header != null)
@@ -249,8 +242,8 @@ namespace MaxDB.Data.Utils
 		{
 #if !SAFE
 			Flush();
-			if (m_conn != null && m_traceSwitch.TraceSQL && m_prop != IntPtr.Zero)
-				SQLDBC.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(m_prop);
+            if (dbConnection != null && mSwitcher.TraceSQL && mProperties != IntPtr.Zero)
+				UnsafeNativeMethods.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(mProperties);
 #endif
 		}
 

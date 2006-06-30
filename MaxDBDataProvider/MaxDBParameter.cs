@@ -18,6 +18,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 using MaxDB.Data.MaxDBProtocol;
+using System.Globalization;
 
 namespace MaxDB.Data
 {
@@ -29,16 +30,16 @@ namespace MaxDB.Data
 #endif // NET20
         ICloneable
     {
-        internal MaxDBType m_dbType = MaxDBType.VarCharA;
-        internal ParameterDirection m_direction = ParameterDirection.Input;
-        private bool m_fNullable = false, m_fSourceNullable = false;
-        private string m_sParamName;
-        private string m_sSourceColumn;
-        private int m_size;
-        private byte m_precision, m_scale;
-        private DataRowVersion m_sourceVersion = DataRowVersion.Current;
-        internal object m_value;
-        internal object m_inputValue;
+        internal MaxDBType dbType = MaxDBType.VarCharA;
+        internal ParameterDirection mDirection = ParameterDirection.Input;
+        private bool bNullable, bSourceNullable;
+        private string strParamName;
+        private string strSourceColumn;
+        private int iSize;
+        private byte byPrecision, byScale;
+        private DataRowVersion mSourceVersion = DataRowVersion.Current;
+        internal object objValue;
+        internal object objInputValue;
 
         public MaxDBParameter()
         {
@@ -46,38 +47,42 @@ namespace MaxDB.Data
 
         public MaxDBParameter(string parameterName, MaxDBType type)
         {
-            m_sParamName = parameterName;
-            m_dbType = type;
+            strParamName = parameterName;
+            dbType = type;
         }
 
-        public MaxDBParameter(string parameterName, object val)
+        public MaxDBParameter(string parameterName, object value)
         {
-            m_sParamName = parameterName;
-            m_dbType = _inferType(Type.GetTypeCode(val.GetType()));
-            Value = val;
+            if (value == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+
+            strParamName = parameterName;
+            dbType = _inferType(Type.GetTypeCode(value.GetType()));
+            Value = value;
         }
 
         public MaxDBParameter(string parameterName, MaxDBType type, int size)
             : this(parameterName, type)
         {
-            m_size = size;
+            iSize = size;
         }
 
         public MaxDBParameter(string parameterName, MaxDBType type, int size, string sourceColumn)
             : this(parameterName, type, size)
         {
-            m_sSourceColumn = sourceColumn;
+            strSourceColumn = sourceColumn;
         }
 
         public MaxDBParameter(string parameterName, MaxDBType type, int size, ParameterDirection direction,
-            bool isNullable, byte precision, byte scale, string sourceColumn, DataRowVersion sourceVersion, object val)
-            :
-                this(parameterName, type, size, sourceColumn)
+            bool isNullable, byte precision, byte scale, string sourceColumn, DataRowVersion sourceVersion, object value)
+            : this(parameterName, type, size, sourceColumn)
         {
-            m_fNullable = isNullable;
-            m_direction = direction;
-            m_sourceVersion = sourceVersion;
-            Value = val;
+            bNullable = isNullable;
+            mDirection = direction;
+            mSourceVersion = sourceVersion;
+            Value = value;
+            Scale = scale;
+            Precision = precision;
         }
 
 #if NET20
@@ -88,22 +93,22 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_size;
+                return iSize;
             }
             set
             {
-                m_size = value;
+                iSize = value;
             }
         }
 
-        private MaxDBType _inferType(TypeCode type)
+        private static MaxDBType _inferType(TypeCode type)
         {
             switch (type)
             {
                 case TypeCode.Empty:
                 case TypeCode.Object:
                 case TypeCode.DBNull:
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALID_DATATYPE));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INVALID_DATATYPE));
 
                 case TypeCode.Char:
                     return MaxDBType.CharB;
@@ -141,13 +146,13 @@ namespace MaxDB.Data
                     return MaxDBType.Float;
 
                 case TypeCode.DateTime:
-                    return MaxDBType.TimeStamp;
+                    return MaxDBType.Timestamp;
 
                 case TypeCode.String:
                     return MaxDBType.StrUni;
 
                 default:
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_UNKNOWN_DATATYPE));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.UNKNOWN_DATATYPE));
 			}
         }
 
@@ -155,7 +160,7 @@ namespace MaxDB.Data
 
         public object Clone()
         {
-            return new MaxDBParameter(m_sParamName, m_dbType, m_size, m_direction, m_fNullable, 0, 0, m_sSourceColumn, m_sourceVersion, m_value);
+            return new MaxDBParameter(strParamName, dbType, iSize, mDirection, bNullable, 0, 0, strSourceColumn, mSourceVersion, objValue);
         }
 
         #endregion
@@ -170,11 +175,11 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_direction;
+                return mDirection;
             }
             set
             {
-                m_direction = value;
+                mDirection = value;
             }
         }
 
@@ -186,7 +191,7 @@ namespace MaxDB.Data
         {
             get
             {
-                switch (m_dbType)
+                switch (dbType)
                 {
                     case MaxDBType.Boolean:
                         return DbType.Boolean;
@@ -216,7 +221,7 @@ namespace MaxDB.Data
                         return DbType.Date;
                     case MaxDBType.Time:
                         return DbType.Time;
-                    case MaxDBType.TimeStamp:
+                    case MaxDBType.Timestamp:
                         return DbType.DateTime;
 
                     case MaxDBType.Unicode:
@@ -234,53 +239,53 @@ namespace MaxDB.Data
                 {
                     case DbType.SByte:
                     case DbType.Byte:
-                        m_dbType = MaxDBType.CharB;
+                        dbType = MaxDBType.CharB;
                         break;
                     case DbType.UInt16:
                     case DbType.UInt32:
                     case DbType.UInt64:
                     case DbType.Int64:
-                        m_dbType = MaxDBType.Fixed;
+                        dbType = MaxDBType.Fixed;
                         break;
                     case DbType.Boolean:
-                        m_dbType = MaxDBType.Boolean;
+                        dbType = MaxDBType.Boolean;
                         break;
                     case DbType.Int16:
-                        m_dbType = MaxDBType.SmallInt;
+                        dbType = MaxDBType.SmallInt;
                         break;
                     case DbType.Int32:
-                        m_dbType = MaxDBType.Integer;
+                        dbType = MaxDBType.Integer;
                         break;
                     case DbType.Single:
-                        m_dbType = MaxDBType.Number;
+                        dbType = MaxDBType.Number;
                         break;
                     case DbType.Double:
-                        m_dbType = MaxDBType.Number;
+                        dbType = MaxDBType.Number;
                         break;
                     case DbType.Decimal:
-                        m_dbType = MaxDBType.Number;
+                        dbType = MaxDBType.Number;
                         break;
                     case DbType.Date:
-                        m_dbType = MaxDBType.Date;
+                        dbType = MaxDBType.Date;
                         break;
                     case DbType.Time:
-                        m_dbType = MaxDBType.Time;
+                        dbType = MaxDBType.Time;
                         break;
                     case DbType.DateTime:
-                        m_dbType = MaxDBType.TimeStamp;
+                        dbType = MaxDBType.Timestamp;
                         break;
                     case DbType.AnsiString:
                     case DbType.Guid:
-                        m_dbType = MaxDBType.VarCharA;
+                        dbType = MaxDBType.VarCharA;
                         break;
                     case DbType.String:
-                        m_dbType = MaxDBType.VarCharUni;//?? unicode
+                        dbType = MaxDBType.VarCharUni;//?? unicode
                         break;
                     case DbType.StringFixedLength:
-                        m_dbType = MaxDBType.CharE;//?? unicode
+                        dbType = MaxDBType.CharE;//?? unicode
                         break;
                     default:
-                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONNETSQL, value.ToString(), string.Empty));
+                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONNETSQL, value.ToString(), string.Empty));
                 }
 
             }
@@ -294,20 +299,24 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_value == null ? DBNull.Value : m_value;
+                return objValue == null ? DBNull.Value : objValue;
             }
             set
             {
-                m_value = value;
+                objInputValue = objValue = value;
 
-                if (value == null || value == DBNull.Value)
-                    m_inputValue = DBNull.Value;
-                else
+                if (value == null)
                 {
-                    switch (m_dbType)
+                    objInputValue = DBNull.Value;
+                    return;
+                }
+
+                if (value != DBNull.Value)
+                {
+                    switch (dbType)
                     {
                         case MaxDBType.Boolean:
-                            m_inputValue = bool.Parse(value.ToString());
+                            objInputValue = bool.Parse(value.ToString());
                             break;
 
                         case MaxDBType.Fixed:
@@ -315,19 +324,19 @@ namespace MaxDB.Data
                         case MaxDBType.VFloat:
                         case MaxDBType.Number:
                         case MaxDBType.NoNumber:
-                            m_inputValue = double.Parse(value.ToString());
+                            objInputValue = double.Parse(value.ToString(), CultureInfo.InvariantCulture);
                             break;
 
                         case MaxDBType.Integer:
-                            m_inputValue = int.Parse(value.ToString());
+                            objInputValue = int.Parse(value.ToString(), CultureInfo.InvariantCulture);
                             break;
 
                         case MaxDBType.SmallInt:
-                            m_inputValue = short.Parse(value.ToString());
+                            objInputValue = short.Parse(value.ToString(), CultureInfo.InvariantCulture);
                             break;
 
                         default:
-                            m_inputValue = value;
+                            objInputValue = value;
                             break;
                     }
                 }
@@ -342,11 +351,11 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_fNullable;
+                return bNullable;
             }
             set
             {
-                m_fNullable = value;
+                bNullable = value;
             }
         }
 
@@ -358,11 +367,11 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_fSourceNullable;
+                return bSourceNullable;
             }
             set
             {
-                m_fSourceNullable = value;
+                bSourceNullable = value;
             }
         }
 
@@ -374,11 +383,11 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_sourceVersion;
+                return mSourceVersion;
             }
             set
             {
-                m_sourceVersion = value;
+                mSourceVersion = value;
             }
         }
 
@@ -390,11 +399,11 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_sParamName;
+                return strParamName;
             }
             set
             {
-                m_sParamName = value;
+                strParamName = value;
             }
         }
 
@@ -406,11 +415,11 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_sSourceColumn;
+                return strSourceColumn;
             }
             set
             {
-                m_sSourceColumn = value;
+                strSourceColumn = value;
             }
         }
 
@@ -418,11 +427,11 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_precision;
+                return byPrecision;
             }
             set
             {
-                m_precision = value;
+                byPrecision = value;
             }
         }
 
@@ -430,11 +439,11 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_scale;
+                return byScale;
             }
             set
             {
-                m_scale = value;
+                byScale = value;
             }
         }
 

@@ -131,7 +131,7 @@ namespace MaxDB.Test
 #else
                     new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
 #endif // NET20
-                maxdbconn.SQLMode = SqlMode.Oracle;
+                maxdbconn.SqlMode = SqlMode.Oracle;
 				maxdbconn.Open();
 
                 DateTime start_time = DateTime.Now;

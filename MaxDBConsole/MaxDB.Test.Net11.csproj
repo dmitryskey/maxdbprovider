@@ -120,12 +120,6 @@
                     HintPath = "C:\WINNT\Microsoft.NET\Framework\v1.1.4322\System.XML.dll"
                 />
                 <Reference
-                    Name = "nunit.framework"
-                    AssemblyName = "nunit.framework"
-                    HintPath = "..\..\..\..\Program Files\NUnit V2.1\\bin\nunit.framework.dll"
-                    AssemblyFolderKey = "hklm\dn\nunit.framework"
-                />
-                <Reference
                     Name = "System.Windows.Forms"
                     AssemblyName = "System.Windows.Forms"
                     HintPath = "..\..\..\..\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Windows.Forms.dll"
@@ -134,6 +128,11 @@
                     Name = "MaxDB.Data.Net11"
                     Project = "{96EABFAC-9C28-40C6-AD1F-08121496C11E}"
                     Package = "{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"
+                />
+                <Reference
+                    Name = "nunit.framework"
+                    AssemblyName = "nunit.framework"
+                    HintPath = "..\..\..\..\Program Files\NUnit 2.2.7\bin\nunit.framework.dll"
                 />
             </References>
         </Build>

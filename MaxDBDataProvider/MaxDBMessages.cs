@@ -18,252 +18,272 @@
 using System;
 using System.Resources;
 using System.Text;
+using System.Globalization;
 
 namespace MaxDB.Data
 {
 	#region "Message translator class"
 
-	public class MaxDBMessages
+    internal struct MaxDBError
+    {
+        public const string
+
+            // Connection is not opened
+            CONNECTION_NOTOPENED = "connection_notopened",
+
+            // Value overflow.
+            VALUEOVERFLOW = "valueoverflow",
+
+            // Database exception (with error position).
+            DATABASEEXCEPTION = "databaseexception",
+
+            // Database exception (without error position).
+            DATABASEEXCEPTION_WOERRPOS = "databaseexception_woerrpos",
+
+            // Invalid column index.
+            INVALID_COLUMNINDEX = "invalid_columnindex",
+
+            // Invalid column name.
+            INVALID_COLUMNNAME = "invalid_columnname",
+
+            // Invalid column name buffer.
+            COLUMNNAME_BUFFER = "columnname_buffer",
+
+            // An object is closed but shouldn't.
+            OBJECTISCLOSED = "objectisclosed",
+
+            // A time out.
+            TIMEOUT = "timeout",
+
+            // No longdata packet.
+            LONGDATAEXPECTED = "longdata_expected",
+
+            // Invalid startposition for long data. 
+            INVALID_STARTPOSITION = "invalid_startposition",
+
+            // SQL -> .NET type conversion.
+            CONVERSIONSQLNET = "conversion_sqlnet",
+
+            // .NET -> SQL type conversion.
+            CONVERSIONNETSQL = "conversion_netsql",
+
+            // Data -> any type conversion.
+            CONVERSIONDATA = "conversion_data",
+
+            // VDN Number -> BigDecimal conversion.
+            CONVERSIONVDNnumber = "conversion_VDNnumber",
+
+            // VDN Number -> Special Null value.
+            CONVERSIONSpecialNullValue = "conversion_SpecialNullValue",
+
+            // Unsupported blob navigation.
+            MOVEBACKWARDINBLOB = "movebackwardinblob",
+
+            // Try to read ASCII data from LONG column_
+            ASCIIREADFROMLONG = "asciireadfromlong",
+
+            // Try to read binary data from LONG column.
+            BINARYREADFROMLONG = "binaryreadfromlong",
+
+            // Try to put ASCII data into LONG column.
+            ASCIIPUTTOLONG = "asciiputtolong",
+
+            // Try to put binary data into LONG column.
+            BINARYPUTTOLONG = "binaryputtolong",
+
+            // Call of cancel occured.
+            STATEMENT_CANCELLED = "statement_cancelled",
+
+            // Try to execute null statement.
+            SQLSTATEMENT_NULL = "sqlstatement_null",
+
+            // Column value is null.
+            COLUMNVALUE_NULL = "columnvalue_null",
+
+            // Try to use null data adapter
+            ADAPTER_NULL = "adapter_null",
+
+            // Try to use null select command
+            SELECT_NULL = "select_null",
+
+            // Base table is not found
+            BASETABLE_NOTFOUND = "basetable_notfound",
+
+            // Try to execute too long statement.
+            SQLSTATEMENT_TOOLONG = "sqlstatement_toolong",
+
+            // IN or OUT param missing.
+            MISSINGINOUT = "missinginout",
+
+            // Statement in batch generated result set.
+            BATCHRESULTSET = "batchresultset",
+
+            // Statement in batch generated result set.
+            BATCHRESULTSET_WITHNUMBER = "batchresultset_withnumber",
+
+            // Procedure call in batch contained OUT/INOUT.
+            BATCHPROCOUT = "batchprocout",
+
+            // Procedure call in batch contained OUT/INOUT.
+            BATCHMISSINGIN = "batchmissingin",
+
+            // A statement executed as update delivered a result set.
+            SQLSTATEMENT_RESULTSET = "sqlstatement_resultset",
+
+            // SQL command doesn't return a result set.
+            SQLCOMMAND_NORESULTSET = "sqlcommand_noresultset",
+
+            // A statement assumed to be a procedure call is not one.
+            SQLSTATEMENT_NOPROCEDURE = "sqlstatement_noprocedure",
+
+            // Column index not found.
+            COLINDEX_NOTFOUND = "colindex_notfound",
+
+            // Column name not found.
+            COLNAME_NOTFOUND = "colname_notfound",
+
+            // User name missing.
+            NOUSER = "nouser",
+
+            // Password missing.
+            NOPASSWORD = "nopassword",
+
+            // Password invalid.
+            INVALIDPASSWORD = "invalidpassword",
+
+            //No data found
+            NODATA_FOUND = "nodata_found",
+
+            //Invalid data type
+            INVALID_DATATYPE = "invalid_datatype",
+
+            //Unknown data type
+            UNKNOWN_DATATYPE = "unknown_datatype",
+
+            // Try to get record at position < first.
+            RESULTSET_BEFOREFIRST = "resultset_beforefirst",
+
+            // Try to get record at position > last.
+            RESULTSET_AFTERLAST = "resultset_afterlast",
+
+            // Try to retrieve unnamed parameter by name.
+            UNNAMED_PARAMETER = "unnamed_parameter",
+
+            // No column names delivered from kernel.
+            NO_COLUMNNAMES = "no_columnnames",
+
+            // Connection field is null.
+            INTERNAL_CONNECTIONNULL = "internal_connectionnull",
+
+            // Cant not set isolation level.
+            CONNECTION_ISOLATIONLEVEL = "connection_isolationlevel",
+
+            // No more input expected at this place.
+            INTERNAL_UNEXPECTEDINPUT = "internal_unexpectedinput",
+
+            // No more output expected at this place.
+            INTERNAL_UNEXPECTEDOUTPUT = "internal_unexpectedoutput",
+
+            // Internal error: parse id is null.
+            INTERNAL_INVALIDPARSEID = "internal_invalidParseid",
+
+            // getObject function failed
+            GETOBJECT_FAILED = "getobject_failed",
+
+            //Fetch operation delivered no data part.
+            FETCH_NODATAPART = "fetch_nodatapart",
+
+            //Fetch operation 
+            FETCH_DATA = "fetch_data",
+
+            // Runtime: connect to host failed.
+            HOST_CONNECT = "host_connect",
+
+            // Runtime: execution failed.
+            EXEC_FAILED = "exec_failed",
+
+            // Runtime: receive of connect failed.
+            RECV_CONNECT = "recv_connect",
+
+            // Runtime: receive garbled reply
+            REPLY_GARBLED = "connectreply_garbled",
+
+            // Runtime: reconnect on admin session unsupported
+            ADMIN_RECONNECT = "admin_reconnect",
+
+            // Runtime: chunk overflow in read
+            CHUNKOVERFLOW = "chunkoverflow",
+
+            // Reading from a stream resulted in an IOException
+            STREAM_IOEXCEPTION = "stream_ioexception",
+
+            // Column nullable unknown
+            DBNULL_UNKNOWN = "dbnull_unknown",
+
+            // Output parameter value truncated
+            PARAMETER_TRUNC = "parameter_truncated",
+
+            // Parameter is null
+            PARAMETER_NULL = "parameter_null",
+
+            // Index is out if range
+            INDEX_OUTOFRANGE = "index_outofrange",
+
+            // Unsupported database features
+            SPECIAL_NUMBER_UNSUPPORTED = "special_number_unsupported",
+            OMS_UNSUPPORTED = "oms_unsupported",
+            TABLEDIRECT_UNSUPPORTED = "tabledirect_unsupported",
+
+            // Streams
+            CONVERSION_STRINGSTREAM = "streamconversion_string",
+            CONVERSION_BYTESTREAM = "streamconversion_bytes",
+            STREAM_ISATEND = "stream_isatend",
+            CONVERSION_STRUCTURETYPE = "conversion_structuretype",
+            STRUCTURE_ARRAYWRONGLENTGH = "structure_arraywronglength",
+            STRUCT_ELEMENT_NULL = "structure_element_null",
+            STRUCT_ELEMENT_CONVERSION = "structure_element_conversion",
+            STRUCT_ELEMENT_OVERFLOW = "structure_element_overflow",
+
+            // Connection
+            CONNECTION_WRONGSERVERCHALLENGERECEIVED = "connection_wrongserverchallengereceived",
+            CONNECTION_CHALLENGERESPONSENOTSUPPORTED = "connection_challengeresponsenotsupported",
+            SSL_CERTIFICATE = "ssl_certificate",
+
+            // communication errors
+            COMMOK = "commok",
+            COMMCONNECTDOWN = "commconnectiondown",
+            COMMTASKLIMIT = "commtasklimit",
+            COMMTIMEOUT = "commtimeout",
+            COMMCRASH = "commcrash",
+            COMMRESTARTREQUIRED = "commrestartrequired",
+            COMMSHUTDOWN = "commshutdown",
+            COMMSENDLINEDOWN = "commsendlinedown",
+            COMMRECVLINEDOWN = "commrecvlinedown",
+            COMMPACKETLIMIT = "commpacketlimit",
+            COMMRELEASED = "commreleased",
+            COMMWOULDBLOCK = "commwouldblock",
+            COMMUNKNOWNREQUEST = "communknownrequest",
+            COMMSERVERDBUNKNOWN = "commserverdbunknown",
+
+            // big integer messages
+            BIGINT_OVERFLOW = "bigint_overflow",
+            BIGINT_UNDERFLOW = "bigint_underflow",
+            BIGINT_RADIX_OVERFLOW = "bigint_radix_overflow",
+
+            HASH_CHANGE_KEY = "hash_change_key",
+
+            // the rest
+            ERROR = "error",
+            UNKNOWNTYPE = "unknowntype";
+    }
+
+	internal class MaxDBMessages
 	{
 		private static ResourceManager rm = new ResourceManager("MaxDBMessages", typeof(MaxDBMessages).Assembly);
 
-		public const string 
-
-			// Connection is not opened
-			ERROR_CONNECTION_NOTOPENED = "error_connection_notopened",
-
-			// Value overflow.
-			ERROR_VALUEOVERFLOW = "error_valueoverflow",
-
-			// Database exception (with error position).
-			ERROR_DATABASEEXCEPTION = "error_databaseexception",
-
-			// Database exception (without error position).
-			ERROR_DATABASEEXCEPTION_WOERRPOS = "error_databaseexception_woerrpos",
-
-			// Invalid column index.
-			ERROR_INVALID_COLUMNINDEX = "error_invalid_columnindex",
-
-			// Invalid column name.
-			ERROR_INVALID_COLUMNNAME = "error_invalid_columnname",
-
-			// Invalid column name buffer.
-			ERROR_COLUMNNAME_BUFFER = "error_columnname_buffer",
-
-			// An object is closed but shouldn't.
-			ERROR_OBJECTISCLOSED = "error_objectisclosed",
-
-			// A time out.
-			ERROR_TIMEOUT = "error_timeout",
-
-			// No longdata packet.
-			ERROR_LONGDATAEXPECTED = "error_longdata_expected",
-
-			// Invalid startposition for long data. 
-			ERROR_INVALID_STARTPOSITION = "error_invalid_startposition",
-
-			// SQL -> .NET type conversion.
-			ERROR_CONVERSIONSQLNET = "error_conversion_sqlnet",
-
-			// .NET -> SQL type conversion.
-			ERROR_CONVERSIONNETSQL = "error_conversion_netsql",
-
-			// Data -> any type conversion.
-			ERROR_CONVERSIONDATA = "error_conversion_data",
-
-			// VDN Number -> BigDecimal conversion.
-			ERROR_CONVERSIONVDNnumber = "error_conversion_VDNnumber",
-
-			// VDN Number -> Special Null value.
-			ERROR_CONVERSIONSpecialNullValue = "error_conversion_SpecialNullValue",
-
-			// Unsupported blob navigation.
-			ERROR_MOVEBACKWARDINBLOB = "error_movebackwardinblob",
-
-			// Try to read ASCII data from LONG column_
-			ERROR_ASCIIREADFROMLONG = "error_asciireadfromlong",
-
-			// Try to read binary data from LONG column.
-			ERROR_BINARYREADFROMLONG = "error_binaryreadfromlong",
-
-			// Try to put ASCII data into LONG column.
-			ERROR_ASCIIPUTTOLONG = "error_asciiputtolong",
-
-			// Try to put binary data into LONG column.
-			ERROR_BINARYPUTTOLONG = "error_binaryputtolong",
-
-			// Call of cancel occured.
-			ERROR_STATEMENT_CANCELLED="error_statement_cancelled",
-
-			// Try to execute null statement.
-			ERROR_SQLSTATEMENT_NULL = "error_sqlstatement_null",
-
-			// Column value is null.
-			ERROR_COLUMNVALUE_NULL = "error_columnvalue_null",
-
-			// Try to use null data adapter
-			ERROR_ADAPTER_NULL = "error_adapter_null",
-
-			// Try to use null select command
-			ERROR_SELECT_NULL = "error_select_null",
-
-			// Base table is not found
-			ERROR_BASETABLE_NOTFOUND = "error_basetable_notfound",
-
-			// Try to execute too long statement.
-			ERROR_SQLSTATEMENT_TOOLONG = "error_sqlstatement_toolong",
-
-			// IN or OUT param missing.
-			ERROR_MISSINGINOUT = "error_missinginout",
-
-            // Statement in batch generated result set.
-            ERROR_BATCHRESULTSET="error_batchresultset",
-
-            // Statement in batch generated result set.
-            ERROR_BATCHRESULTSET_WITHNUMBER="error_batchresultset_withnumber",
-
-            // Procedure call in batch contained OUT/INOUT.
-            ERROR_BATCHPROCOUT="error_batchprocout",
-
-            // Procedure call in batch contained OUT/INOUT.
-            ERROR_BATCHMISSINGIN="error_batchmissingin",
-
-			// A statement executed as update delivered a result set.
-			ERROR_SQLSTATEMENT_RESULTSET = "error_sqlstatement_resultset",
-
-			// SQL command doesn't return a result set.
-			ERROR_SQLCOMMAND_NORESULTSET = "error_sqlcommand_noresultset",
-
-			// A statement assumed to be a procedure call is not one.
-			ERROR_SQLSTATEMENT_NOPROCEDURE = "error_sqlstatement_noprocedure",
-
-			// Column index not found.
-			ERROR_COLINDEX_NOTFOUND = "error_colindex_notfound",
-
-			// Column name not found.
-			ERROR_COLNAME_NOTFOUND = "error_colname_notfound",
-
-			// User name missing.
-			ERROR_NOUSER = "error_nouser",
- 
-			// Password missing.
-			ERROR_NOPASSWORD = "error_nopassword",
-
-			// Password invalid.
-			ERROR_INVALIDPASSWORD = "error_invalidpassword",
-
-			//No data found
-			ERROR_NODATA_FOUND = "error_nodata_found",
-
-			//Invalid data type
-			ERROR_INVALID_DATATYPE = "error_invalid_datatype",
-
-			//Unknown data type
-			ERROR_UNKNOWN_DATATYPE = "error_unknown_datatype",
-
-			// Try to get record at position < first.
-			ERROR_RESULTSET_BEFOREFIRST = "error_resultset_beforefirst",
-
-			// Try to get record at position > last.
-			ERROR_RESULTSET_AFTERLAST = "error_resultset_afterlast",
-
-			// Try to retrieve unnamed parameter by name.
-			ERROR_UNNAMED_PARAMETER = "error_unnamed_parameter",
-
-			// No column names delivered from kernel.
-			ERROR_NO_COLUMNNAMES = "error_no_columnnames",
-
-			// Connection field is null.
-			ERROR_INTERNAL_CONNECTIONNULL = "error_internal_connectionnull",
-
-			// Cant not set isolation level.
-			ERROR_CONNECTION_ISOLATIONLEVEL = "error_connection_isolationlevel",
-
-			// No more input expected at this place.
-			ERROR_INTERNAL_UNEXPECTEDINPUT = "error_internal_unexpectedinput",
-
-			// No more output expected at this place.
-			ERROR_INTERNAL_UNEXPECTEDOUTPUT = "error_internal_unexpectedoutput",
-
-			// Internal error: parse id is null.
-			ERROR_INTERNAL_INVALIDPARSEID = "error_internal_invalidParseid",
-
-			// getObject function failed
-			ERROR_GETOBJECT_FAILED = "error_getobject_failed",
-
-			//Fetch operation delivered no data part.
-			ERROR_FETCH_NODATAPART = "error_fetch_nodatapart",
-
-			//Fetch operation error_
-			ERROR_FETCH_DATA = "error_fetch_data",
-
-			// Runtime: connect to host failed.
-			ERROR_HOST_CONNECT = "error_host_connect",
-
-			// Runtime: execution failed.
-			ERROR_EXEC_FAILED = "error_exec_failed",
-    
-			// Runtime: receive of connect failed.
-			ERROR_RECV_CONNECT = "error_recv_connect",
-
-			// Runtime: receive garbled reply
-			ERROR_REPLY_GARBLED = "error_connectreply_garbled",
-
-			// Runtime: reconnect on admin session unsupported
-			ERROR_ADMIN_RECONNECT = "error_admin_reconnect",
-
-			// Runtime: chunk overflow in read
-			ERROR_CHUNKOVERFLOW = "error_chunkoverflow",
-
-			// Reading from a stream resulted in an IOException
-			ERROR_STREAM_IOEXCEPTION = "error_stream_ioexception",
-
-			// Column nullable unknown
-			ERROR_DBNULL_UNKNOWN = "error_dbnull_unknown",
-
-			// Output parameter value truncated
-			ERROR_PARAM_TRUNC = "error_param_trunc",
-
-			// Unsupported database features
-			ERROR_SPECIAL_NUMBER_UNSUPPORTED = "error_special_number_unsupported",
-			ERROR_OMS_UNSUPPORTED = "error_oms_unsupported",
-			ERROR_TABLEDIRECT_UNSUPPORTED = "error_tabledirect_unsupported",
-	
-			// Streams
-			ERROR_CONVERSION_STRINGSTREAM  = "error_stream_conversion_string",
-			ERROR_CONVERSION_BYTESTREAM = "error_stream_conversion_bytes",
-			ERROR_STREAM_ISATEND = "error_stream_isatend",
-			ERROR_CONVERSION_STRUCTURETYPE = "error_conversion_structuretype",	
-			ERROR_STRUCTURE_ARRAYWRONGLENTGH = "error_structure_arraywronglength",
-			ERROR_STRUCT_ELEMENT_NULL = "error_structure_element_null",
-			ERROR_STRUCT_ELEMENT_CONVERSION = "error_structure_element_conversion",
-			ERROR_STRUCT_ELEMENT_OVERFLOW = "error_structure_element_overflow",
-
-			// Connection
-			ERROR_CONNECTION_WRONGSERVERCHALLENGERECEIVED = "error_connection_wrongserverchallengereceived",
-			ERROR_CONNECTION_CHALLENGERESPONSENOTSUPPORTED = "error_connection_challengeresponsenotsupported",
-            ERROR_SSL_CERTIFICATE = "error_ssl_certificate",
-
-			// communication errors
-			COMMERROR_OK = "commerror_ok",
-			COMMERROR_CONNECTDOWN = "commerror_connectiondown",
-			COMMERROR_TASKLIMIT = "commerror_tasklimit",
-			COMMERROR_TIMEOUT = "commerror_timeout",
-			COMMERROR_CRASH = "commerror_crash",
-			COMMERROR_RESTARTREQUIRED = "commerror_restartrequired",
-			COMMERROR_SHUTDOWN = "commerror_shutdown",
-			COMMERROR_SENDLINEDOWN = "commerror_sendlinedown",
-			COMMERROR_RECVLINEDOWN = "commerror_recvlinedown",
-			COMMERROR_PACKETLIMIT = "commerror_packetlimit",
-			COMMERROR_RELEASED = "commerror_released",
-			COMMERROR_WOULDBLOCK = "commerror_wouldblock",
-			COMMERROR_UNKNOWNREQUEST = "commerror_unknownrequest",
-			COMMERROR_SERVERDBUNKNOWN = "commerror_serverdbunknown",
-			
-			// the rest
-			ERROR = "error",
-			UNKNOWNTYPE = "unknowntype";
-
+        private MaxDBMessages()
+        {
+        }
 
 		public static string Extract(string key)
 		{
@@ -292,7 +312,7 @@ namespace MaxDB.Data
 				// retrieve text and format it
 				string msg = rm.GetString(key);
 				if (args != null)
-					return string.Format(msg, args);
+                    return string.Format(CultureInfo.InvariantCulture, msg, args);
 				else
 					return msg;
 			} 

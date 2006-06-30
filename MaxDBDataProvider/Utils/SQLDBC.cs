@@ -17,7 +17,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace MaxDB.Data.Utils
+namespace MaxDB.Data.Utilities
 {
 #if !SAFE
 
@@ -25,7 +25,7 @@ namespace MaxDB.Data.Utils
 
 	#region "Enumerations"
 
-	public enum SQLDBC_Retcode 
+	internal enum SQLDBC_Retcode 
 	{
 		SQLDBC_INVALID_OBJECT           =-10909, // Application tries to use an invalid object reference. 
 		SQLDBC_OK                       = 0,	 // Function call successful. 
@@ -37,7 +37,7 @@ namespace MaxDB.Data.Utils
 		SQLDBC_NEED_DATA                = 99     // Late binding, data is needed for execution. 
 	}
 
-	public enum SQLDBC_StringEncodingType 
+	internal enum SQLDBC_StringEncodingType 
 	{
 		Unknown     = 0,
 		Ascii       = 1,
@@ -46,7 +46,7 @@ namespace MaxDB.Data.Utils
 		UTF8        = 4
 	};
 
-	public enum SQLDBC_HostType 
+	internal enum SQLDBC_HostType 
 	{
 		SQLDBC_HOSTTYPE_MIN         = 0, 
 		SQLDBC_HOSTTYPE_PARAMETER_NOTSET = 0, 
@@ -86,20 +86,20 @@ namespace MaxDB.Data.Utils
 		SQLDBC_HOSTTYPE_MAX = SQLDBC_HOSTTYPE_USERDEFINED  
 	}
 
-	public enum ColumnNullBehavior 
+	internal enum ColumnNullBehavior 
 	{
 		columnNoNulls = 0,
 		columnNullable = 1,
 		columnNullableUnknown = 2
 	}
 
-	public enum SQLDBC_BOOL : byte
+	internal enum SQLDBC_BOOL
 	{
 		SQLDBC_FALSE = 0,
 		SQLDBC_TRUE = 1
 	}
 
-	public enum SQLDBC_ParameterMode 
+	internal enum SQLDBC_ParameterMode 
 	{
 		Unknown = 0,
 		In = 1,
@@ -112,7 +112,7 @@ namespace MaxDB.Data.Utils
 	#region "Structures"
 
 	[StructLayout(LayoutKind.Sequential)]
-	public struct ODBCDATE
+	internal struct OdbcDate
 	{
 		public short year;
 		public ushort month;
@@ -120,7 +120,7 @@ namespace MaxDB.Data.Utils
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
-	public struct ODBCTIME
+	internal struct OdbcTime
 	{
 		public ushort hour;
 		public ushort minute;
@@ -128,7 +128,7 @@ namespace MaxDB.Data.Utils
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
-	public struct ODBCTIMESTAMP
+	internal struct OdbcTimeStamp
 	{
 		public short year;
 		public ushort month;
@@ -143,11 +143,15 @@ namespace MaxDB.Data.Utils
 
 	#region "ODBC Date/Time format converter"
 
-	public class ODBCConverter
+	internal sealed class ODBCConverter
 	{
-		public static unsafe byte[] GetBytes(ODBCDATE dt)
+        private ODBCConverter()
+        {
+        }
+
+		public static unsafe byte[] GetBytes(OdbcDate dt)
 		{
-			byte[] result = new byte[sizeof(ODBCDATE)];
+			byte[] result = new byte[sizeof(OdbcDate)];
 
 			Array.Copy(BitConverter.GetBytes(dt.year), 0, result, 0, sizeof(short));
 			Array.Copy(BitConverter.GetBytes(dt.month), 0, result, sizeof(short), sizeof(ushort));
@@ -156,9 +160,9 @@ namespace MaxDB.Data.Utils
 			return result;
 		}
 
-		public static unsafe byte[] GetBytes(ODBCTIME tm)
+		public static unsafe byte[] GetBytes(OdbcTime tm)
 		{
-			byte[] result = new byte[sizeof(ODBCTIME)];
+			byte[] result = new byte[sizeof(OdbcTime)];
 
 			Array.Copy(BitConverter.GetBytes(tm.hour), 0, result, 0, sizeof(ushort));
 			Array.Copy(BitConverter.GetBytes(tm.minute), 0, result, sizeof(ushort), sizeof(ushort));
@@ -167,9 +171,9 @@ namespace MaxDB.Data.Utils
 			return result;
 		}
 
-		public static unsafe byte[] GetBytes(ODBCTIMESTAMP ts)
+		public static unsafe byte[] GetBytes(OdbcTimeStamp ts)
 		{
-			byte[] result = new byte[sizeof(ODBCTIMESTAMP)];
+			byte[] result = new byte[sizeof(OdbcTimeStamp)];
 
 			Array.Copy(BitConverter.GetBytes(ts.year), 0, result, 0, sizeof(short));
 			Array.Copy(BitConverter.GetBytes(ts.month), 0, result, sizeof(short), sizeof(ushort));
@@ -182,9 +186,9 @@ namespace MaxDB.Data.Utils
 			return result;
 		}
 
-		public static unsafe ODBCDATE GetDate(byte[] data)
+		public static unsafe OdbcDate GetDate(byte[] data)
 		{
-			ODBCDATE dt_val;
+			OdbcDate dt_val;
 			
 			dt_val.year = BitConverter.ToInt16(data, 0);
 			dt_val.month = BitConverter.ToUInt16(data, sizeof(short));
@@ -193,20 +197,20 @@ namespace MaxDB.Data.Utils
 			return dt_val;
 		}
 
-		public static unsafe ODBCTIME GetTime(byte[] data)
+		public static unsafe OdbcTime GetTime(byte[] data)
 		{
-			ODBCTIME tm_val;
+			OdbcTime tmval;
 
-			tm_val.hour = BitConverter.ToUInt16(data, 0);
-			tm_val.minute = BitConverter.ToUInt16(data, sizeof(ushort));
-			tm_val.second = BitConverter.ToUInt16(data, 2 * sizeof(ushort));
+			tmval.hour = BitConverter.ToUInt16(data, 0);
+			tmval.minute = BitConverter.ToUInt16(data, sizeof(ushort));
+			tmval.second = BitConverter.ToUInt16(data, 2 * sizeof(ushort));
 
-			return tm_val;
+			return tmval;
 		}
 
-		public static unsafe ODBCTIMESTAMP GetTimeStamp(byte[] data)
+		public static unsafe OdbcTimeStamp GetTimeStamp(byte[] data)
 		{
-			ODBCTIMESTAMP ts_val;
+			OdbcTimeStamp ts_val;
 
 			ts_val.year = BitConverter.ToInt16(data, 0);
 			ts_val.month = BitConverter.ToUInt16(data, sizeof(short));
@@ -219,26 +223,26 @@ namespace MaxDB.Data.Utils
 			return ts_val;
 		}
 
-		public static DateTime GetDateTime(ODBCDATE dt_val)
+		public static DateTime GetDateTime(OdbcDate dt_val)
 		{
 			return new DateTime(dt_val.year, dt_val.month, dt_val.day);
 		}
 
-		public static DateTime GetDateTime(ODBCTIME tm_val)
+		public static DateTime GetDateTime(OdbcTime tmval)
 		{
 			return new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, 
-				tm_val.hour, tm_val.minute, tm_val.second);
+				tmval.hour, tmval.minute, tmval.second);
 		}
 
-		public static DateTime GetDateTime(ODBCTIMESTAMP ts_val)
+		public static DateTime GetDateTime(OdbcTimeStamp ts_val)
 		{
 			return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second).AddTicks(
 				(ts_val.fraction / 1000) * (TimeSpan.TicksPerMillisecond / 1000));
 		}
 
-		public static TimeSpan GetTimeSpan(ODBCTIME tm_val)
+		public static TimeSpan GetTimeSpan(OdbcTime tmval)
 		{
-			return new TimeSpan(tm_val.hour, tm_val.minute, tm_val.second);
+			return new TimeSpan(tmval.hour, tmval.minute, tmval.second);
 		}
 	}
 
@@ -247,7 +251,7 @@ namespace MaxDB.Data.Utils
 	/// <summary>
 	/// Summary description for SQLDBC.
 	/// </summary>
-	public class SQLDBC
+	internal struct UnsafeNativeMethods
 	{
 		#region "Constants"
 
@@ -302,9 +306,6 @@ namespace MaxDB.Data.Utils
 		public extern static IntPtr SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
 
 		[DllImport("libSQLDBC_C")]
-		public extern static string SQLDBC_ConnectProperties_getProperty(IntPtr conn_prop, string key, string defaultvalue);
-
-		[DllImport("libSQLDBC_C")]
 		public extern static void SQLDBC_ConnectProperties_setProperty(IntPtr conn_prop, string key, string defaultvalue);
 
 		[DllImport("libSQLDBC_C")]
@@ -351,13 +352,7 @@ namespace MaxDB.Data.Utils
 		public extern static SQLDBC_Retcode SQLDBC_Connection_close(IntPtr conn);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static IntPtr SQLDBC_Connection_createStatement(IntPtr conn);
-
-		[DllImport("libSQLDBC_C")]
 		public extern static IntPtr SQLDBC_Connection_createPreparedStatement(IntPtr conn);
-
-		[DllImport("libSQLDBC_C")]
-		public extern static void SQLDBC_Connection_releaseStatement(IntPtr conn, IntPtr stmt);
 
 		[DllImport("libSQLDBC_C")]
 		public extern static void SQLDBC_Connection_releasePreparedStatement(IntPtr conn, IntPtr stmt);
@@ -376,13 +371,7 @@ namespace MaxDB.Data.Utils
 		public extern static void SQLDBC_Statement_setMaxRows(IntPtr stmt, uint rows);  
 
 		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_Statement_executeASCII(IntPtr stmt, string query);
-
-		[DllImport("libSQLDBC_C")]
 		public extern static SQLDBC_BOOL SQLDBC_Statement_isQuery(IntPtr stmt);
-
-		[DllImport("libSQLDBC_C")]
-		public extern static IntPtr SQLDBC_Statement_getResultSet(IntPtr stmt);
 
 		[DllImport("libSQLDBC_C")]
 		public unsafe extern static SQLDBC_Retcode SQLDBC_Statement_getTableName(IntPtr stmt, IntPtr buffer, SQLDBC_StringEncodingType encoding, 
@@ -413,9 +402,6 @@ namespace MaxDB.Data.Utils
  
 		[DllImport("libSQLDBC_C")]
 		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_executeASCII(IntPtr stmt);
-
-		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_clearParameters(IntPtr stmt);
 		
 		[DllImport("libSQLDBC_C")]
 		public extern static IntPtr SQLDBC_PreparedStatement_getResultSet(IntPtr stmt);
@@ -443,18 +429,6 @@ namespace MaxDB.Data.Utils
 		public extern static SQLDBC_Retcode SQLDBC_ResultSet_next(IntPtr result);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_ResultSet_prev(IntPtr result);
-
-		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_ResultSet_first(IntPtr result);
-
-		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_ResultSet_last(IntPtr result);
-
-		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_ResultSet_relative(IntPtr result, short offset);
-
-		[DllImport("libSQLDBC_C")]
 		public extern static IntPtr SQLDBC_ResultSet_getResultSetMetaData(IntPtr hdl); 
 
 		[DllImport("libSQLDBC_C")]
@@ -472,9 +446,6 @@ namespace MaxDB.Data.Utils
 		public extern static int SQLDBC_ParameterMetaData_getParameterLength(IntPtr hdl, short param);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static int SQLDBC_ParameterMetaData_getPhysicalLength(IntPtr hdl, short param);
-
-		[DllImport("libSQLDBC_C")]
 		public extern static SQLDBC_ParameterMode SQLDBC_ParameterMetaData_getParameterMode(IntPtr hdl, short param);
 
 		#endregion
@@ -490,12 +461,6 @@ namespace MaxDB.Data.Utils
 
 		[DllImport("libSQLDBC_C")]
 		public extern static int SQLDBC_ResultSetMetaData_getColumnType(IntPtr hdl, short column);
-
-		[DllImport("libSQLDBC_C")]
-		public extern static int SQLDBC_ResultSetMetaData_getColumnLength(IntPtr hdl, short column); 
-
-		[DllImport("libSQLDBC_C")]
-		public extern static int SQLDBC_ResultSetMetaData_getColumnPrecision(IntPtr hdl, short column); 
 
 		[DllImport("libSQLDBC_C")]
 		public extern static int SQLDBC_ResultSetMetaData_getPrecision(IntPtr hdl, short column);

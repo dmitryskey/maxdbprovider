@@ -18,136 +18,148 @@ using System;
 using System.Text;
 using MaxDB.Data.MaxDBProtocol;
 
-namespace MaxDB.Data.Utils
+namespace MaxDB.Data.Utilities
 {
 	/// <summary>
 	/// Summary description for ByteArray.
 	/// </summary>
-	public class ByteArray
+	internal class ByteArray
 	{
-		protected byte[] m_data; //data buffer
-		protected int m_offset = 0; //data buffer offset
-		protected bool m_swapMode = Consts.IsLittleEndian;
+		protected byte[] byData; //data buffer
+		protected bool bSwapMode = Consts.IsLittleEndian;
+ 
+#if SAFE
+        protected int iOffset; //data buffer offset
 
-		public ByteArray(byte[] data)
+        public ByteArray(byte[] data)
 		{
-			m_data = data;
+			byData = data;
 		}
 
-		public ByteArray(byte[] data, int offset)
+        public ByteArray(byte[] data, int offset)
 		{
-			m_data = data;
-			m_offset = offset; 
+			byData = data;
+			iOffset = offset; 
 		}
 
-		public ByteArray(byte[] data, int offset, bool swapMode)
+        public ByteArray(byte[] data, int offset, bool swapMode)
 		{
-			m_data = data;
-			m_offset = offset; 
-			m_swapMode = swapMode;
+			byData = data;
+			iOffset = offset; 
+			bSwapMode = swapMode;
 		}
 
-		public ByteArray(int size)
+        public ByteArray(int size)
 		{
-			m_data = new byte[size];
+			byData = new byte[size];
 		}
 
-		public ByteArray(int size, bool swapMode)
-		{
-			m_data = new byte[size];
-			m_swapMode = swapMode;
-		}
+#else
+        public ByteArray(int size, bool swapMode)
+        {
+            byData = new byte[size];
+            bSwapMode = swapMode;
+        }
+#endif // !SAFE
 
-		public ByteArray(int size, bool swapMode, int offset)
-		{
-			m_data = new byte[size];
-			m_swapMode = swapMode;
-			m_offset = offset;
-		}
-
+#if SAFE
+#if NET20
         public ByteArray Clone()
         {
-            return new ByteArray(m_data, m_offset, m_swapMode); 
+            return new ByteArray(byData, iOffset, bSwapMode); 
         }
+#endif // NET20
 
 		public ByteArray Clone(int offset)
 		{
-			return new ByteArray(m_data, m_offset + offset, m_swapMode); 
+			return new ByteArray(byData, iOffset + offset, bSwapMode); 
 		}
 
 		public ByteArray Clone(int offset, bool swapMode)
 		{
-			return new ByteArray(m_data, m_offset + offset, swapMode); 
+			return new ByteArray(byData, iOffset + offset, swapMode); 
 		}
 
-		public byte[] arrayData
+        public int Length
 		{
 			get
 			{
-				return m_data;
+				return byData.Length;
 			}
 		}
 
-		public int Length
+        public bool Swapped
 		{
 			get
 			{
-				return m_data.Length;
+				return bSwapMode;
 			}
-		}
+        }
 
-		public int Offset
+        public int Offset
 		{
 			get
 			{
-				return m_offset;
+				return iOffset;
 			}
 			set
 			{
-				m_offset = value;
+				iOffset = value;
 			}
 		}
+#endif // SAFE
 
-		public bool Swapped
+        public byte[] GetArrayData()
 		{
-			get
-			{
-				return m_swapMode;
-			}
+			return byData;
 		}
 
 		public byte[] ReadBytes(int offset, int len)
 		{
-			offset += m_offset;
+#if SAFE
+			offset += iOffset;
+#endif // SAFE
 			byte[] res = new byte[len];
-			Array.Copy(m_data, offset, res, 0, len);
+			Array.Copy(byData, offset, res, 0, len);
 			return res;
 		}
 
 		public void WriteBytes(byte[] values, int offset)
 		{
-			offset += m_offset;
-			values.CopyTo(m_data, offset);
+            if (values == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+
+#if SAFE
+			offset += iOffset;
+#endif // SAFE
+            values.CopyTo(byData, offset);
 		}
 
+#if SAFE
 		public void WriteBytes(byte[] values, int offset, int len)
-		{
-			offset += m_offset;
-			Array.Copy(values, 0, m_data, offset, len);
+        {
+			offset += iOffset;
+            Array.Copy(values, 0, byData, offset, len);
 		}
+#endif // SAFE
 
 		public void WriteBytes(byte[] values, int offset, int len, byte[] filler)
 		{
-			offset += m_offset;
+            if (values == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
 
-			int copyLen = values.Length;
+#if SAFE
+			offset += iOffset;
+#endif // SAFE
+
+            int copyLen = values.Length;
 			int fillLen = 0;
 
 			if (copyLen > len) 
 				copyLen = len;
 			else if (copyLen < len) 
 				fillLen = len - copyLen;
-			Array.Copy(values, 0, m_data, offset, copyLen);
+			Array.Copy(values, 0, byData, offset, copyLen);
 			
 			if (fillLen > 0)
 			{
@@ -157,7 +169,7 @@ namespace MaxDB.Data.Utils
 				while(fillLen > 0) 
 				{
 					chunkLen = Math.Min(fillLen, Consts.FillBufSize);
-					Array.Copy(filler, 0, m_data, offset, chunkLen);
+					Array.Copy(filler, 0, byData, offset, chunkLen);
 					fillLen -= chunkLen;
 					offset += chunkLen;
 				}
@@ -167,198 +179,195 @@ namespace MaxDB.Data.Utils
 		}
 
 		public byte ReadByte(int offset)
-		{
-			offset += m_offset;
-			return m_data[offset];
+        {
+#if SAFE
+			offset += iOffset;
+#endif // SAFE
+            return byData[offset];
 		}
 
-		public void WriteByte(byte val, int offset)
-		{
-			offset += m_offset;
-			m_data[offset] = val;
+		public void WriteByte(byte value, int offset)
+        {
+#if SAFE
+			offset += iOffset;
+#endif // SAFE
+            byData[offset] = value;
 		}
 
 		public ushort ReadUInt16(int offset)
-		{
-			offset += m_offset;
-			if (BitConverter.IsLittleEndian == m_swapMode)
-				return BitConverter.ToUInt16(m_data, offset);
+        {
+#if SAFE
+			offset += iOffset;
+#endif // SAFE
+            if (BitConverter.IsLittleEndian == bSwapMode)
+				return BitConverter.ToUInt16(byData, offset);
 			else
 			{
-				if (m_swapMode)
-					return (ushort)(m_data[offset + 1] * 0x100 + m_data[offset]);
+				if (bSwapMode)
+					return (ushort)(byData[offset + 1] * 0x100 + byData[offset]);
 				else
-					return (ushort)(m_data[offset] * 0x100 + m_data[offset + 1]);
+					return (ushort)(byData[offset] * 0x100 + byData[offset + 1]);
 			}
 		}
 
-		public void WriteUInt16(ushort val, int offset)
+#if SAFE
+		public void WriteUInt16(ushort value, int offset)
 		{
-			WriteValue(val, offset, 2);
+			WriteValue(value, offset, 2);
 		}
+#endif // SAFE
 
 		public short ReadInt16(int offset)
-		{
-			offset += m_offset;
-			if (BitConverter.IsLittleEndian == m_swapMode)
-				return BitConverter.ToInt16(m_data, offset);
+        {
+#if SAFE
+			offset += iOffset;
+#endif // SAFE
+            if (BitConverter.IsLittleEndian == bSwapMode)
+				return BitConverter.ToInt16(byData, offset);
 			else
 				return (short)ReadUInt16(offset);
 		}
 
-		public void WriteInt16(short val, int offset)
+		public void WriteInt16(short value, int offset)
 		{
-			WriteValue(val, offset, 2);
+			WriteValue(value, offset, 2);
 		}
 
 		public uint ReadUInt32(int offset)
-		{
-			offset += m_offset;
-			if (BitConverter.IsLittleEndian == m_swapMode)
-				return BitConverter.ToUInt32(m_data, offset);
+        {
+#if SAFE
+			offset += iOffset;
+#endif // SAFE
+            if (BitConverter.IsLittleEndian == bSwapMode)
+				return BitConverter.ToUInt32(byData, offset);
 			else
 			{
-				if (m_swapMode)
+				if (bSwapMode)
 					return (uint)(ReadUInt16(offset + 2) * 0x10000 + ReadUInt16(offset));
 				else
 					return (uint)(ReadUInt16(offset) * 0x10000 + ReadUInt16(offset + 2));
 			}
 		}
 
-		public void WriteUInt32(uint val, int offset)
+#if SAFE
+		public void WriteUInt32(uint value, int offset)
 		{
-			WriteValue(val, offset, 4);
+			WriteValue(value, offset, 4);
 		}
+#endif // SAFE
 
 		public int ReadInt32(int offset)
-		{
-			offset += m_offset;
-			if (BitConverter.IsLittleEndian == m_swapMode)
-				return BitConverter.ToInt32(m_data, offset);
+        {
+#if SAFE
+			offset += iOffset;
+#endif // SAFE
+            if (BitConverter.IsLittleEndian == bSwapMode)
+				return BitConverter.ToInt32(byData, offset);
 			else
 				return (int)ReadUInt32(offset);
 		}
 
-		public void WriteInt32(int val, int offset)
+		public void WriteInt32(int value, int offset)
 		{
-			WriteValue(val, offset, 4);
-		}
+			WriteValue(value, offset, 4);
+        }
 
+#if SAFE
 		public ulong ReadUInt64(int offset)
 		{
-			if (BitConverter.IsLittleEndian == m_swapMode)
-				return BitConverter.ToUInt64(m_data, offset);
+			if (BitConverter.IsLittleEndian == bSwapMode)
+				return BitConverter.ToUInt64(byData, offset);
 			else
 			{
-				if (m_swapMode)
+				if (bSwapMode)
 					return (ulong)(ReadUInt32(offset + 4) * 0x100000000 + ReadUInt32(offset));
 				else
 					return (ulong)(ReadUInt32(offset) * 0x100000000 + ReadUInt32(offset + 4));
 			}
 		}
 
-		public void WriteUInt64(ulong val, int offset)
-		{
-			WriteValue(val, offset, 8);
-		}
-
 		public long ReadInt64(int offset)
 		{
-			offset += m_offset;
-			if (BitConverter.IsLittleEndian == m_swapMode)
-				return BitConverter.ToInt64(m_data, offset);
+			offset += iOffset;
+			if (BitConverter.IsLittleEndian == bSwapMode)
+				return BitConverter.ToInt64(byData, offset);
 			else
 				return (long)ReadUInt64(offset);
 		}
 
-		public void WriteInt64(long val, int offset)
+        public void WriteInt64(long value, int offset)
 		{
-			WriteValue(val, offset, 8);
+			WriteValue(value, offset, 8);
+		}
+#endif // SAFE
+
+        public string ReadAscii(int offset, int len)
+        {
+#if SAFE
+			offset += iOffset;
+#endif // SAFE
+            return Encoding.ASCII.GetString(byData, offset, len);
 		}
 
-		public float ReadFloat(int offset)
+		public void WriteAscii(string value, int offset)
 		{
-			offset += m_offset;
-			return BitConverter.ToSingle(m_data, offset);
-		}
-
-		public void WriteFloat(float val, int offset)
-		{
-			WriteBytes(BitConverter.GetBytes(val), offset);
-		}
-
-		public double ReadDouble(int offset)
-		{
-			offset += m_offset;
-			return BitConverter.ToDouble(m_data, offset);
-		}
-
-		public void WriteDouble(double val, int offset)
-		{
-			WriteBytes(BitConverter.GetBytes(val), offset);
-		}
-
-		public string ReadASCII(int offset, int len)
-		{
-			offset += m_offset;
-			return Encoding.ASCII.GetString(m_data, offset, len);
-		}
-
-		public void WriteASCII(string val, int offset)
-		{
-			WriteBytes(Encoding.ASCII.GetBytes(val), offset);
-		}
-
-		public void WriteASCII(string val, int offset, int len)
-		{
-			WriteBytes(Encoding.ASCII.GetBytes(val), offset, len, Consts.BlankBytes);
+			WriteBytes(Encoding.ASCII.GetBytes(value), offset);
 		}
 
 		public string ReadUnicode(int offset, int len)
-		{
-			offset += m_offset;
-			if (m_swapMode)
-				return Encoding.Unicode.GetString(m_data, offset, len);
+        {
+#if SAFE
+			offset += iOffset;
+#endif // SAFE
+            if (bSwapMode)
+				return Encoding.Unicode.GetString(byData, offset, len);
 			else
-				return Encoding.BigEndianUnicode.GetString(m_data, offset, len);
+				return Encoding.BigEndianUnicode.GetString(byData, offset, len);
 		}
 
-		public void WriteUnicode(string val, int offset)
+		public void WriteUnicode(string value, int offset)
 		{
-			WriteUnicode(val, offset, val.Length);
+            if (value == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+
+			WriteUnicode(value, offset, value.Length);
 		}
 
-		public void WriteUnicode(string val, int offset, int len)
+		public void WriteUnicode(string value, int offset, int len)
 		{
-			if (m_swapMode)
-				WriteBytes(Encoding.Unicode.GetBytes(val), offset, len * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            if (value == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+
+			if (bSwapMode)
+				WriteBytes(Encoding.Unicode.GetBytes(value), offset, len * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
 			else
-                WriteBytes(Encoding.BigEndianUnicode.GetBytes(val), offset, len * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+                WriteBytes(Encoding.BigEndianUnicode.GetBytes(value), offset, len * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
 		}
 
-		protected void WriteValue(ulong val, int offset, int bytes)
-		{
-			offset += m_offset;
-			for(int i = 0; i < bytes; i++)
-			{
-				if (m_swapMode)
-					m_data[i + offset] = (byte)(val & 0xFF);
-				else
-					m_data[bytes - i - 1 + offset] = (byte)(val & 0xFF);
-				val >>= 8;
-			}
-		}
+#if !SAFE
+        public double ReadDouble(int offset)
+        {
+            return BitConverter.ToDouble(byData, offset);
+        }
 
-		protected void WriteValue(long val, int offset, int bytes)
-		{
-			offset += m_offset;
-			for(int i = 0; i < bytes; i++)
+        public void WriteDouble(double val, int offset)
+        {
+            WriteBytes(BitConverter.GetBytes(val), offset);
+        }
+#endif // !SAFE
+
+		private void WriteValue(long value, int offset, int bytes)
+        {
+#if SAFE
+			offset += iOffset;
+#endif // SAFE
+            for (int i = 0; i < bytes; i++)
 			{
-				if (m_swapMode)
-					m_data[i + offset] = (byte)(val & 0xFF);
+				if (bSwapMode)
+					byData[i + offset] = (byte)(value & 0xFF);
 				else
-					m_data[bytes - i - 1 + offset] = (byte)(val & 0xFF);
-				val >>= 8;
+					byData[bytes - i - 1 + offset] = (byte)(value & 0xFF);
+				value >>= 8;
 			}
 		}
 	}

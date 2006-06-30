@@ -28,12 +28,15 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Authentication;
 #endif // NET20
 
-namespace MaxDB.Data.Utils
+namespace MaxDB.Data.Utilities
 {
 	/// <summary>
 	/// Interface to support tcp and ssl connection.
 	/// </summary>
-	public interface ISocketIntf
+    /// 
+
+#if SAFE
+	public interface IMaxDBSocket
 	{
 		bool ReopenSocketAfterInfoPacket{get;}
 		bool DataAvailable{get;}
@@ -41,26 +44,26 @@ namespace MaxDB.Data.Utils
 		string Host{get;}
 		int Port{get;}
 
-		ISocketIntf Clone();
+		IMaxDBSocket Clone();
 		void Close();
 	}
 
-	public class SocketClass : ISocketIntf
+	internal class SocketClass : IMaxDBSocket, IDisposable
 	{
-		protected string m_host;
-        protected int m_port;
-        protected int m_timeout;
-        protected TcpClient m_client;
+		private string strHost;
+        private int iPort;
+        private int iTimeout;
+        private TcpClient mClient;
 
-		public SocketClass(string host, int port, int timeout, bool checksocket) 
+		public SocketClass(string host, int port, int timeout, bool check_socket) 
 		{
-			m_host = host;
-			m_port = port;
-			m_timeout = timeout;
+			strHost = host;
+			iPort = port;
+			iTimeout = timeout;
 			
 			try
 			{
-				if (checksocket && timeout > 0)
+				if (check_socket && timeout > 0)
 				{
 					Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 					bool connect_succeeded = false;
@@ -76,7 +79,7 @@ namespace MaxDB.Data.Utils
 						sock.Blocking = false;
 						try 
 						{
-							sock.Connect(new IPEndPoint(ipAddr, m_port));
+							sock.Connect(new IPEndPoint(ipAddr, iPort));
 						}
 						catch(SocketException ex)
 						{
@@ -89,7 +92,7 @@ namespace MaxDB.Data.Utils
 						ArrayList checkError = new ArrayList();
 						checkError.Add(sock);
 
-						Socket.Select(null, checkWrite, checkError, m_timeout * 1000000);
+						Socket.Select(null, checkWrite, checkError, iTimeout * 1000000);
 						sock.Blocking = true;
 						sock.Close();
 
@@ -101,21 +104,21 @@ namespace MaxDB.Data.Utils
 					}
 
 					if (!connect_succeeded)
-						throw new Exception();
+						throw new MaxDBException();
 				}
 
-				m_client = new TcpClient(host, port);
-				m_client.ReceiveTimeout = m_timeout;
+				mClient = new TcpClient(host, port);
+				mClient.ReceiveTimeout = iTimeout;
 			}
 			catch(Exception ex)
 			{
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_HOST_CONNECT, m_host, m_port), ex);
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT, strHost, iPort), ex);
 			}
 		}
 
 		#region SocketIntf Members
 
-		bool ISocketIntf.ReopenSocketAfterInfoPacket
+		public virtual bool ReopenSocketAfterInfoPacket
 		{
 			get
 			{
@@ -123,118 +126,156 @@ namespace MaxDB.Data.Utils
 			}
 		}
 
-		bool ISocketIntf.DataAvailable
+		public virtual bool DataAvailable
 		{
 			get
 			{
-				if (m_client != null)
-					return m_client.GetStream().DataAvailable;
+				if (mClient != null)
+					return mClient.GetStream().DataAvailable;
 				else
 					return false;
 			}
 		}
 
-		Stream ISocketIntf.Stream
+#if NET20
+        protected TcpClient Client
+        {
+            get 
+            { 
+                return mClient; 
+            }
+            set
+            {
+                mClient = value;
+            }
+        }
+
+		public int Timeout
+        {
+            get 
+            { 
+                return iTimeout; 
+            }
+        }
+#endif // NET20
+
+		public virtual Stream Stream
 		{
 			get
 			{
-				if (m_client != null)
-					return m_client.GetStream();
+				if (mClient != null)
+					return mClient.GetStream();
 				else
 					return null;
 			}
 		}
 
-		string ISocketIntf.Host
+		public string Host
 		{
 			get
 			{
-				return m_host;
+				return strHost;
 			}
 		}
 
-		int ISocketIntf.Port
+		public int Port
 		{
 			get
 			{
-				return m_port;
+				return iPort;
 			}
 		}
 
-		ISocketIntf ISocketIntf.Clone()
+		public virtual IMaxDBSocket Clone()
 		{
-			return new SocketClass(m_host, m_port, m_timeout, false);
+			return new SocketClass(strHost, iPort, iTimeout, false);
 		}
 
-		void ISocketIntf.Close()
+		public virtual void Close()
 		{
-			m_client.Close();
-			m_client = null;
+			mClient.Close();
+			mClient = null;
 		}
 
 		#endregion
-	}
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (disposing && mClient != null)
+                ((IDisposable)mClient).Dispose();
+        }
+
+        #endregion
+    }
 
 #if NET20
 
-    public class SslSocketClass : SocketClass, ISocketIntf
+    internal class SslSocketClass : SocketClass, IMaxDBSocket
     {
-        SslStream m_sslStream;
-        private string m_certificateError;
-        private string m_server;
+        SslStream mSslStream;
+        private string strCertificateError;
+        private string strServer;
 
-        public SslSocketClass(string host, int port, int timeout, bool checksocket, string server)
-            : base(host, port, timeout, checksocket)
+        public SslSocketClass(string host, int port, int timeout, bool check_socket, string server)
+            : base(host, port, timeout, check_socket)
         {
-            m_server = server;
-            m_sslStream = new SslStream(m_client.GetStream(),
+            strServer = server;
+            mSslStream = new SslStream(Client.GetStream(),
                 false,
                 new RemoteCertificateValidationCallback(ValidateServerCertificate),
                 null
                 );
             try
             {
-                m_sslStream.AuthenticateAsClient(server);
+                mSslStream.AuthenticateAsClient(server);
             }
             catch (AuthenticationException e)
             {
-                throw new MaxDBException(m_certificateError + ". " + e.Message);
+                throw new MaxDBException(strCertificateError + ". " + e.Message);
             }
         }
 
         // The following method is invoked by the RemoteCertificateValidationDelegate.
         private bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            m_certificateError = string.Empty;
+            strCertificateError = string.Empty;
 
             if (sslPolicyErrors == SslPolicyErrors.None)
                 return true;
 
-            m_certificateError = MaxDBMessages.Extract(MaxDBMessages.ERROR_SSL_CERTIFICATE, sslPolicyErrors);
+            strCertificateError = MaxDBMessages.Extract(MaxDBError.SSL_CERTIFICATE, sslPolicyErrors);
 
             // Do not allow this client to communicate with unauthenticated servers.
             return false;
         }
 
-        Stream ISocketIntf.Stream
+        public override Stream Stream
         {
             get
             {
-                return m_sslStream;
+                return mSslStream;
             }
         }
 
-        ISocketIntf ISocketIntf.Clone()
+        public override IMaxDBSocket Clone()
         {
-            return new SslSocketClass(m_host, m_port, m_timeout, false, m_server);
+            return new SslSocketClass(Host, Port, Timeout, false, strServer);
         }
 
-        void ISocketIntf.Close()
+        public override void Close()
         {
-            m_sslStream.Close();
-            m_sslStream = null;
-            m_client.Close();
-            m_client = null;
+            mSslStream.Close();
+            mSslStream = null;
+            Client.Close();
+            Client = null;
         }
     }
 
@@ -244,23 +285,23 @@ namespace MaxDB.Data.Utils
 
     public class JoinStream : Stream
 	{
-		protected Stream[] streams;
-		protected Stream currentStream;
-		protected int currentIndex = -1;
+		private Stream[] mStreams;
+		private Stream mCurrentStream;
+		private int mCurrentIndex = -1;
 
 		public JoinStream(Stream[] streams)
 		{
-			this.streams = streams;
-			nextStream();
+			this.mStreams = streams;
+			NextStream();
 		}
 
-		protected void nextStream()
+		protected void NextStream()
 		{
-			currentIndex++;
-			if (currentIndex >= streams.Length) 
-				currentStream = null;
+			mCurrentIndex++;
+			if (mCurrentIndex >= mStreams.Length) 
+				mCurrentStream = null;
 			else 
-				currentStream = streams[currentIndex];
+				mCurrentStream = mStreams[mCurrentIndex];
 		}
 
 		public override int Read(byte[] buffer, int offset, int count)
@@ -268,11 +309,11 @@ namespace MaxDB.Data.Utils
 			int result = 0;
 			int chunkLen;
 
-			while (currentStream != null && count > 0) 
+			while (mCurrentStream != null && count > 0) 
 			{
-				chunkLen = currentStream.Read(buffer, offset, count);
+				chunkLen = mCurrentStream.Read(buffer, offset, count);
 				if (chunkLen == 0) 
-					nextStream();
+					NextStream();
 				else 
 				{
 					offset += chunkLen;
@@ -280,21 +321,21 @@ namespace MaxDB.Data.Utils
 					result += chunkLen;
 				}
 			}
-			if (result == 0 && currentStream == null) 
+			if (result == 0 && mCurrentStream == null) 
 				result = 0;
 			return result;
 		}
 
 		public override void Close()
 		{
-			for (int i = currentIndex; i < streams.Length; i++) 
+			for (int i = mCurrentIndex; i < mStreams.Length; i++) 
 			{
 				try 
 				{
-					if (streams[i] != null) 
-						streams[i].Close();
+					if (mStreams[i] != null) 
+						mStreams[i].Close();
 				}
-				catch 
+				catch(ObjectDisposedException) 
 				{
 					// ignore
 				}
@@ -303,17 +344,10 @@ namespace MaxDB.Data.Utils
 
 		public override void Flush()
 		{
-			for (int i = currentIndex; i < streams.Length; i++) 
+			for (int i = mCurrentIndex; i < mStreams.Length; i++) 
 			{
-				try 
-				{
-					if (streams[i] != null) 
-						streams[i].Flush();
-				}
-				catch 
-				{
-					// ignore
-				}
+    			if (mStreams[i] != null) 
+						mStreams[i].Flush();
 			}
 		}
 
@@ -322,17 +356,21 @@ namespace MaxDB.Data.Utils
 			get
 			{
 				long length = 0;
-				for (int i = currentIndex; i < streams.Length; i++) 
+				for (int i = mCurrentIndex; i < mStreams.Length; i++) 
 				{
-					try 
-					{
-						if (streams[i] != null) 
-							length += streams[i].Length;
-					}
-					catch 
-					{
-						// ignore
-					}
+                    try
+                    {
+                        if (mStreams[i] != null)
+                            length += mStreams[i].Length;
+                    }
+                    catch (NotSupportedException)
+                    {
+                        // ignore
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // ignore
+                    }
 				}
 				return length;
 			}
@@ -394,46 +432,46 @@ namespace MaxDB.Data.Utils
 
 	#region "Join text reader class reimplemetation"
 
-	public class JoinTextReader : TextReader
+	internal class JoinTextReader : TextReader
 	{
-		protected TextReader[] readers;
-		protected TextReader currentReader;
-		protected int currentIndex = -1;
+		protected TextReader[] mReaders;
+		protected TextReader mCurrentReader;
+		protected int iCurrentIndex = -1;
     
 		public JoinTextReader(TextReader[] readers)
 		{
-			this.readers = readers;
-			this.NextReader();
+			mReaders = readers;
+			NextReader();
 		}
     
 
 		protected void NextReader()
 		{
-			currentIndex++;
-			if (currentIndex >= readers.Length)
-				currentReader = null;
+			iCurrentIndex++;
+			if (iCurrentIndex >= mReaders.Length)
+				mCurrentReader = null;
 			else 
-				currentReader = readers[currentIndex];
+				mCurrentReader = mReaders[iCurrentIndex];
 		}
     
-		public override int Read(char[] b, int off, int len)
+		public override int Read(char[] buffer, int index, int count)
 		{
 			int result = 0;
 			int chunkLen;
         
-			while (currentReader != null && len > 0) 
+			while (mCurrentReader != null && count > 0) 
 			{
-				chunkLen = currentReader.Read(b, off, len);
+				chunkLen = mCurrentReader.Read(buffer, index, count);
 				if (chunkLen == -1) 
 					NextReader();
 				else 
 				{
-					off += chunkLen;
-					len -= chunkLen;
+					index += chunkLen;
+					count -= chunkLen;
 					result += chunkLen;
 				}
 			}
-			if (result == 0 && currentReader == null) 
+			if (result == 0 && mCurrentReader == null) 
 				result = -1;
       
 			return result;
@@ -442,27 +480,27 @@ namespace MaxDB.Data.Utils
 		public override int Read()    
 		{
 			int result = 0;
-			while (currentReader != null) 
+			while (mCurrentReader != null) 
 			{
-				result = currentReader.Read();
+				result = mCurrentReader.Read();
 				if (result == -1)
 					NextReader();
 			}
-			if (currentReader == null) 
+			if (mCurrentReader == null) 
 				result = -1;
 			return result;
 		}
     
 		public override void Close()
 		{
-			foreach (TextReader reader in readers) 
+			foreach (TextReader reader in mReaders) 
 			{
 				try 
 				{
 					if (reader != null) 
 						reader.Close();
 				}
-				catch 
+				catch(ObjectDisposedException) 
 				{
 					// ignore
 				}
@@ -473,18 +511,16 @@ namespace MaxDB.Data.Utils
 
 	#region "Stream filter class reimplementation"
 
-	public class StreamFilter : Stream
+	internal class FilteredStream : Stream
 	{
-		private int maxlength;
-
-		private Stream ips;
-
-		private int readlength = 0;
+		private int iMaxLength;
+		private Stream mStream;
+		private int iReadlength;
     
-		public StreamFilter(Stream ips, int length)
+		public FilteredStream(Stream stream, int length)
 		{
-			this.maxlength = length;
-			this.ips = ips;
+			iMaxLength = length;
+			mStream = stream;
 		}
 
 		public override int Read(byte[] buffer, int offset, int count)
@@ -495,17 +531,17 @@ namespace MaxDB.Data.Utils
 			if (offset < 0 || offset > buffer.Length || count < 0	|| (offset + count) > buffer.Length || (offset + count) < 0) 
 				throw new OverflowException();
 
-			if (readlength >= maxlength) 
+			if (iReadlength >= iMaxLength) 
 				return -1;
 
-			if (readlength + count > maxlength) 
-				count = maxlength - readlength;
+			if (iReadlength + count > iMaxLength) 
+				count = iMaxLength - iReadlength;
 
 			if (count <= 0) 
 				return 0;
 
-			count = ips.Read(buffer, offset, count);
-			readlength += count;
+			count = mStream.Read(buffer, offset, count);
+			iReadlength += count;
 			return count;
 		}
 
@@ -562,14 +598,14 @@ namespace MaxDB.Data.Utils
 
 		public override void Flush()
 		{
-			ips.Flush();
+			mStream.Flush();
 		}
 
 		public override long Length
 		{
 			get
 			{
-				return ips.Length;
+				return mStream.Length;
 			}
 		}
 	}
@@ -578,49 +614,49 @@ namespace MaxDB.Data.Utils
 
 	#region "Text reader filter class reimplementation"
 
-	public class TextReaderFilter : TextReader 
+	internal class TextReaderFilter : TextReader 
 	{
-		private int maxlength;
-		private TextReader ips;
-		private int readlength = 0;
+		private int iMaxLength;
+		private TextReader mStream;
+		private int iReadLength;
 	
-		public TextReaderFilter(TextReader ips, int length) 
+		public TextReaderFilter(TextReader stream, int length) 
 		{
-			this.maxlength = length;
-			this.ips = ips;
+			iMaxLength = length;
+			mStream = stream;
 		}
 
 		public override int Read()  
 		{
-			if (maxlength <= readlength++)
+			if (iMaxLength <= iReadLength++)
 				return -1;
 			else
-				return ips.Read();
+				return mStream.Read();
 		}
 
-		public override int Read(char[] b, int off, int len) 
+		public override int Read(char[] buffer, int index, int count) 
 		{
-			if (b == null) 
-				throw new NullReferenceException();
+			if (buffer == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "buffer"));
 
-			if (off < 0 || off > b.Length || len < 0 || (off + len) > b.Length || (off + len) < 0) 
-				throw new IndexOutOfRangeException();
+			if (index < 0 || index > buffer.Length || count < 0 || (index + count) > buffer.Length || (index + count) < 0)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INDEX_OUTOFRANGE, index));
 
-			if (readlength >= maxlength) 
+			if (iReadLength >= iMaxLength) 
 				return -1;
-			if (readlength + len > maxlength) 
-				len = maxlength - readlength;
-			if (len <= 0) 
+			if (iReadLength + count > iMaxLength) 
+				count = iMaxLength - iReadLength;
+			if (count <= 0) 
 				return 0;
 
-			len = ips.Read(b, off, len);
-			readlength += len;
-			return len;
+			count = mStream.Read(buffer, index, count);
+			iReadLength += count;
+			return count;
 		}
 
 		public override void Close()
 		{
-			ips.Close();
+			mStream.Close();
 		}
 	}
 
@@ -634,27 +670,26 @@ namespace MaxDB.Data.Utils
 		{
 		}
 
-		public override int Read(char[] cbuf, int off, int len)
+		public override int Read(char[] buffer, int index, int count)
 		{
+            if (buffer == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "buffer"));
+
 			try 
 			{
-				byte[] bbuf = new byte[len];
-				int result = BaseStream.Read(bbuf, 0, len);
+				byte[] bbuf = new byte[count];
+				int result = BaseStream.Read(bbuf, 0, count);
             
 				if (result == -1) 
 					return -1; 
 
-				int off_i = off;
+				int off_i = index;
 				for(int i = 0; i < result; i++, off_i++) 
 				{
 					int current= bbuf[i] & 0xFF;
-					cbuf[off_i] = (char)current;
+					buffer[off_i] = (char)current;
 				}
 				return result;
-			} 
-			catch(IOException ioEx) 
-			{
-				throw ioEx;
 			} 
 			catch(Exception ex) 
 			{
@@ -667,20 +702,20 @@ namespace MaxDB.Data.Utils
 
 	#region "Stream class based on reader"
 
-	public class ReaderStream : Stream
+	internal class ReaderStream : Stream
 	{
-		private TextReader reader;
-		private char[] charBuf = new char [4096];
-		private byte [] byteBuf;
-		private int bufPos = 0;
-		private int bufExtent = 0;
-		private bool atEnd = false;
-		private bool sevenbit = false;
+		private TextReader mReader;
+		private char[] chBuffer = new char[4096];
+		private byte[] byBuffer;
+		private int iBufPos;
+		private int iBufExtent;
+		private bool bAtEnd;
+		private bool bSevenBit;
 
-		public ReaderStream(TextReader reader, bool sevenbit)
+		public ReaderStream(TextReader reader, bool sevenBit)
 		{
-			this.reader = reader;
-			this.sevenbit = sevenbit;
+			mReader = reader;
+			bSevenBit = sevenBit;
 		}
 
 		public override bool CanRead
@@ -749,20 +784,20 @@ namespace MaxDB.Data.Utils
 
 		public override void Close()
 		{
-			bufPos = 0;
-			bufExtent = 0;
-			reader.Close();
+			iBufPos = 0;
+			iBufExtent = 0;
+			mReader.Close();
 		}
 
 		public override int ReadByte()
 		{
 			int result;
 
-			if (bufPos >= bufExtent) 
+			if (iBufPos >= iBufExtent) 
 				FillBuffer();
 
-			result = byteBuf[bufPos];
-			bufPos++;
+			result = byBuffer[iBufPos];
+			iBufPos++;
 			return result;
 		}
 
@@ -773,18 +808,18 @@ namespace MaxDB.Data.Utils
 
 			while ((count > 0) && !atEnd) 
 			{
-				if (bufPos >= bufExtent) 
+				if (iBufPos >= iBufExtent) 
 					FillBuffer();
-				if (bufPos >= bufExtent) 
+				if (iBufPos >= iBufExtent) 
 					break;
 
-				int copySize = Math.Min(count, bufExtent - bufPos);
-				Array.Copy(byteBuf, bufPos, buffer, offset, copySize);
-				bufPos += copySize;
+				int copySize = Math.Min(count, iBufExtent - iBufPos);
+				Array.Copy(byBuffer, iBufPos, buffer, offset, copySize);
+				iBufPos += copySize;
 				offset += copySize;
 				count -= copySize;
 				bytesCopied += copySize;
-				atEnd = this.atEnd;
+				atEnd = this.bAtEnd;
 			}
 			if (bytesCopied == 0) 
 				bytesCopied = -1;
@@ -793,21 +828,22 @@ namespace MaxDB.Data.Utils
 
 		private void FillBuffer()
 		{
-			bufPos = 0;
-			bufExtent = 0;
-			int charsRead = reader.Read(charBuf, 0, charBuf.Length);
-			if (charsRead < charBuf.Length) 
-				atEnd = true;
+			iBufPos = 0;
+			iBufExtent = 0;
+			int charsRead = mReader.Read(chBuffer, 0, chBuffer.Length);
+			if (charsRead < chBuffer.Length) 
+				bAtEnd = true;
 			
 			if (charsRead < 0) 
 				return;
 
-			if (sevenbit)
-				byteBuf = Encoding.ASCII.GetBytes(charBuf, 0, charsRead);
+			if (bSevenBit)
+				byBuffer = Encoding.ASCII.GetBytes(chBuffer, 0, charsRead);
 			else
-				byteBuf = Encoding.GetEncoding(1252).GetBytes(charBuf, 0, charsRead);
-			bufExtent = byteBuf.Length;
+				byBuffer = Encoding.GetEncoding(1252).GetBytes(chBuffer, 0, charsRead);
+			iBufExtent = byBuffer.Length;
 		}
 	}
 	#endregion
+#endif // SAFE
 }
