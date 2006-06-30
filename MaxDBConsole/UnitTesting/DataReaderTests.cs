@@ -56,34 +56,39 @@ namespace MaxDB.UnitTesting
 			{
 				ClearTestTable();
 
-				MaxDBCommand cmd = new MaxDBCommand(string.Empty, m_conn);
-				
-				// insert 100 records
-				cmd.CommandText = "INSERT INTO Test (id, name) VALUES (:id, 'test')";
-				cmd.Parameters.Add(new MaxDBParameter(":id", 1));
-				for (int i = 1; i <= 100; i++)
-				{
-					cmd.Parameters[0].Value = i;
-					cmd.ExecuteNonQuery();
-				}
-				
-				cmd = new MaxDBCommand("SELECT * FROM Test WHERE id >= 50", m_conn);
+                using (MaxDBCommand cmd = new MaxDBCommand(string.Empty, mconn))
+                {
+                    // insert 100 records
+                    cmd.CommandText = "INSERT INTO Test (id, name) VALUES (:id, 'test')";
+                    cmd.Parameters.Add(new MaxDBParameter(":id", 1));
+                    for (int i = 1; i <= 100; i++)
+                    {
+                        cmd.Parameters[0].Value = i;
+                        cmd.ExecuteNonQuery();
+                    }
+                }
 
-				// execute it one time
-				reader = cmd.ExecuteReader();
-				Assert.IsNotNull(reader);
-				while(reader.Read());
-				Assert.IsTrue(reader.HasRows);
-				Assert.AreEqual(7, reader.FieldCount);
-				reader.Close();
+                using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test WHERE id >= 50", mconn))
+                {
+                    // execute it one time
+                    using (reader = cmd.ExecuteReader())
+                    {
+                        Assert.IsNotNull(reader);
+                        while (reader.Read()) ;
+                        Assert.IsTrue(reader.HasRows);
+                        Assert.AreEqual(7, reader.FieldCount);
+                        reader.Close();
 
-				// execute it again
-				reader = cmd.ExecuteReader();
-				Assert.IsNotNull(reader);
-				while(reader.Read());
-				Assert.IsTrue(reader.HasRows);
-				Assert.AreEqual(7, reader.FieldCount);
-				reader.Close();
+                        // execute it again
+                        reader = cmd.ExecuteReader();
+                        Assert.IsNotNull(reader);
+                        while (reader.Read()) ;
+                        Assert.IsTrue(reader.HasRows);
+                        Assert.AreEqual(7, reader.FieldCount);
+                        reader.Close();
+                        reader = null;
+                    }
+                }
 			}
 			catch (Exception ex)
 			{
@@ -104,13 +109,15 @@ namespace MaxDB.UnitTesting
 
 				for (int x=0; x < 10; x++)
 				{
-					MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name, b1) VALUES(:val, 'Test', NULL)", m_conn);
-					cmd.Parameters.Add(new MaxDBParameter(":val", x));
-					int affected = cmd.ExecuteNonQuery();
-					Assert.AreEqual(1, affected );
+                    using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name, b1) VALUES(:val, 'Test', NULL)", mconn))
+                    {
+                        cmd.Parameters.Add(new MaxDBParameter(":val", x));
+                        int affected = cmd.ExecuteNonQuery();
+                        Assert.AreEqual(1, affected);
+                    }
 
-					cmd = new MaxDBCommand("SELECT * FROM Test", m_conn);
-					cmd.ExecuteReader().Close();
+					using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
+					    cmd.ExecuteReader().Close();
 				}
 			}
 			catch (Exception ex)
@@ -127,34 +134,41 @@ namespace MaxDB.UnitTesting
 			{
 				ClearTestTable();
 
-				MaxDBCommand cmd = new MaxDBCommand(string.Empty, m_conn);
-				
-				cmd.CommandText = "INSERT INTO Test(id,name) VALUES(1,'test1')";
-				cmd.ExecuteNonQuery();
-				cmd.CommandText = "INSERT INTO Test(id,name) VALUES(2,'test2')";
-				cmd.ExecuteNonQuery();
-				cmd.CommandText = "INSERT INTO Test(id,name) VALUES(3,'test3')";
-				cmd.ExecuteNonQuery();
+                using (MaxDBCommand cmd = new MaxDBCommand(string.Empty, mconn))
+                {
+                    ExecuteNonQuery("INSERT INTO Test(id,name) VALUES(1,'test1')");
+                    ExecuteNonQuery("INSERT INTO Test(id,name) VALUES(2,'test2')");
+                    ExecuteNonQuery("INSERT INTO Test(id,name) VALUES(3,'test3')");
 
-				cmd.CommandText = "SELECT * FROM Test";
-				reader = cmd.ExecuteReader(CommandBehavior.SingleRow);
-				Assert.IsTrue(reader.Read(), "First read");
-				Assert.IsFalse(reader.Read(), "Second read");
-				reader.Close();
+                    cmd.CommandText = "SELECT * FROM Test";
+                    
+                    using(reader = cmd.ExecuteReader(CommandBehavior.SingleRow))
+                    {
+                        Assert.IsTrue(reader.Read(), "First read");
+                        Assert.IsFalse(reader.Read(), "Second read");
+                        reader.Close();
+                    }
 
-				cmd.CommandText = "SELECT * FROM test WHERE id = 1";
-				reader = cmd.ExecuteReader(CommandBehavior.SingleRow);
-				Assert.IsTrue(reader.Read());
-				Assert.AreEqual("test1", reader.GetString(1));
-				Assert.IsFalse(reader.Read());
-				reader.Close();
+                    cmd.CommandText = "SELECT * FROM test WHERE id = 1";
 
-				cmd.CommandText = "SELECT * FROM test WHERE rowno <= 2";
-				reader = cmd.ExecuteReader(CommandBehavior.SingleRow);
-				Assert.IsTrue(reader.Read());
-				Assert.AreEqual("test1", reader.GetString(1));
-				Assert.IsFalse(reader.Read());
-				reader.Close();
+                    using (reader = cmd.ExecuteReader(CommandBehavior.SingleRow))
+                    {
+                        Assert.IsTrue(reader.Read());
+                        Assert.AreEqual("test1", reader.GetString(1));
+                        Assert.IsFalse(reader.Read());
+                        reader.Close();
+                    }
+
+                    cmd.CommandText = "SELECT * FROM test WHERE rowno <= 2";
+
+                    using (reader = cmd.ExecuteReader(CommandBehavior.SingleRow))
+                    {
+                        Assert.IsTrue(reader.Read());
+                        Assert.AreEqual("test1", reader.GetString(1));
+                        Assert.IsFalse(reader.Read());
+                        reader.Close();
+                    }
+                }
 			}
 			catch (Exception ex)
 			{
@@ -174,20 +188,21 @@ namespace MaxDB.UnitTesting
 			{
 				ClearTestTable();
 
-				MaxDBCommand cmd = new MaxDBCommand(String.Empty, m_conn);
+                using (MaxDBCommand cmd = new MaxDBCommand(String.Empty, mconn))
+                {
+                    ExecuteNonQuery("INSERT INTO Test(id, name) VALUES(1, 'test')");
 
-				cmd.CommandText = "INSERT INTO Test(id, name) VALUES(1, 'test')";
-				cmd.ExecuteNonQuery();
+                    cmd.CommandText = "SELECT * FROM Test";
 
-				cmd.CommandText = "SELECT * FROM Test";
+                    using (reader = cmd.ExecuteReader(CommandBehavior.CloseConnection))
+                    {
+                        Assert.IsTrue(reader.Read());
+                        reader.Close();
+                        Assert.IsTrue(mconn.State == ConnectionState.Closed);
+                    }
 
-				reader = cmd.ExecuteReader(CommandBehavior.CloseConnection);
-				Assert.IsTrue(reader.Read());
-				reader.Close();
-				reader = null;
-				Assert.IsTrue(m_conn.State == ConnectionState.Closed);
-
-				m_conn.Open();
+                    mconn.Open();
+                }
 			}
 			catch (Exception ex) 
 			{
@@ -207,21 +222,22 @@ namespace MaxDB.UnitTesting
 			{
 				ClearTestTable();
 
-				MaxDBCommand cmd = new MaxDBCommand(string.Empty, m_conn);
-				
-				cmd.CommandText = "INSERT INTO Test(id, name) VALUES(1, 'test1')";
-				cmd.ExecuteNonQuery();
-				cmd.CommandText = "INSERT INTO Test(id, name) VALUES(2, 'test2')";
-				cmd.ExecuteNonQuery();
-				cmd.CommandText = "INSERT INTO Test(id, name) VALUES(3, 'test3')";
-				cmd.ExecuteNonQuery();
+                using (MaxDBCommand cmd = new MaxDBCommand(string.Empty, mconn))
+                {
+                    ExecuteNonQuery("INSERT INTO Test(id, name) VALUES(1, 'test1')");
+                    ExecuteNonQuery("INSERT INTO Test(id, name) VALUES(2, 'test2')");
+                    ExecuteNonQuery("INSERT INTO Test(id, name) VALUES(3, 'test3')");
 
-				cmd.CommandText = "SELECT * FROM Test FOR UPDATE";
-				reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly);
-				DataTable table = reader.GetSchemaTable();
-				Assert.AreEqual(7, table.Rows.Count);
-				Assert.AreEqual(16, table.Columns.Count);
-				Assert.IsFalse(reader.Read());
+                    cmd.CommandText = "SELECT * FROM Test FOR UPDATE";
+
+                    using (reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))
+                    {
+                        DataTable table = reader.GetSchemaTable();
+                        Assert.AreEqual(7, table.Rows.Count);
+                        Assert.AreEqual(16, table.Columns.Count);
+                        Assert.IsFalse(reader.Read());
+                    }
+                }
 			}
 			catch (Exception ex)
 			{
@@ -241,35 +257,37 @@ namespace MaxDB.UnitTesting
 			{
 				ClearTestTable();
 
-				MaxDBCommand cmd = new MaxDBCommand(string.Empty, m_conn);
-				
-				cmd.CommandText = "INSERT INTO Test(id, name) VALUES(1, 'Test')";
-				cmd.ExecuteNonQuery();
-				cmd.CommandText = "INSERT INTO Test(id, name) VALUES(2, :null)";
-				cmd.Parameters.Add(":null", MaxDBType.VarCharA).Value = DBNull.Value;
-				cmd.ExecuteNonQuery();
-				cmd.CommandText = "INSERT INTO Test(id, name) VALUES(3, 'Test2')";
-				cmd.ExecuteNonQuery();
+                using (MaxDBCommand cmd = new MaxDBCommand(string.Empty, mconn))
+                {
+                    ExecuteNonQuery("INSERT INTO Test(id, name) VALUES(1, 'Test')");
 
-				cmd.CommandText = "SELECT * FROM Test";
+                    cmd.CommandText = "INSERT INTO Test(id, name) VALUES(2, :null)";
+                    cmd.Parameters.Add(":null", MaxDBType.VarCharA).Value = DBNull.Value;
+                    cmd.ExecuteNonQuery();
+                    ExecuteNonQuery("INSERT INTO Test(id, name) VALUES(3, 'Test2')");
 
-				reader = cmd.ExecuteReader();
-				reader.Read();
-				Assert.AreEqual(1, reader.GetValue(0));
-				Assert.AreEqual(1, reader.GetInt32(0));
-				Assert.AreEqual("Test", reader.GetValue(1).ToString());
-				Assert.AreEqual("Test", reader.GetString(1));
-				reader.Read();
-				Assert.AreEqual(2, reader.GetValue(0));
-				Assert.AreEqual(2, reader.GetInt32(0));
-				Assert.AreEqual(DBNull.Value, reader.GetValue(1));
-				Assert.AreEqual(null, reader.GetString(1));
-				reader.Read();
-				Assert.AreEqual(3, reader.GetValue(0));
-				Assert.AreEqual(3, reader.GetInt32(0));
-				Assert.AreEqual("Test2", reader.GetValue(1).ToString());
-				Assert.AreEqual("Test2", reader.GetString(1));
-				Assert.IsFalse(reader.Read());
+                    cmd.CommandText = "SELECT * FROM Test";
+
+                    using (reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        Assert.AreEqual(1, reader.GetValue(0));
+                        Assert.AreEqual(1, reader.GetInt32(0));
+                        Assert.AreEqual("Test", reader.GetValue(1).ToString());
+                        Assert.AreEqual("Test", reader.GetString(1));
+                        reader.Read();
+                        Assert.AreEqual(2, reader.GetValue(0));
+                        Assert.AreEqual(2, reader.GetInt32(0));
+                        Assert.AreEqual(DBNull.Value, reader.GetValue(1));
+                        Assert.AreEqual(null, reader.GetString(1));
+                        reader.Read();
+                        Assert.AreEqual(3, reader.GetValue(0));
+                        Assert.AreEqual(3, reader.GetInt32(0));
+                        Assert.AreEqual("Test2", reader.GetValue(1).ToString());
+                        Assert.AreEqual("Test2", reader.GetString(1));
+                        Assert.IsFalse(reader.Read());
+                    }
+                }
 			}
 			catch (Exception ex) 
 			{
@@ -288,14 +306,16 @@ namespace MaxDB.UnitTesting
 			try 
 			{
 				ClearTestTable();
-				MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name) VALUES (123, 'a')", m_conn);
-				cmd.ExecuteNonQuery();
+				
+                ExecuteNonQuery("INSERT INTO Test (id, name) VALUES (123, 'a')");
 
-				cmd = new MaxDBCommand("SELECT * FROM Test", m_conn);
-				reader = cmd.ExecuteReader();
-				reader.Read();
-				Assert.AreEqual(123, reader.GetByte(0));
-				Assert.AreEqual(97, reader.GetByte(1));
+                using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
+                    using (reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        Assert.AreEqual(123, reader.GetByte(0));
+                        Assert.AreEqual(97, reader.GetByte(1));
+                    }
 			}
 			catch (Exception ex) 
 			{
@@ -320,29 +340,33 @@ namespace MaxDB.UnitTesting
 			{
 				ClearTestTable();
 
-				MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name, b1) VALUES(1, :t, :b1)", m_conn);
-				cmd.Parameters.Add(":t", "Test");
-				cmd.Parameters.Add(":b1", MaxDBType.LongB).Value = bytes;
-				cmd.ExecuteNonQuery();
+                using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name, b1) VALUES(1, :t, :b1)", mconn))
+                {
+                    cmd.Parameters.Add(":t", "Test");
+                    cmd.Parameters.Add(":b1", MaxDBType.LongB).Value = bytes;
+                    cmd.ExecuteNonQuery();
 
-				cmd.CommandText = "SELECT * FROM Test";
+                    cmd.CommandText = "SELECT * FROM Test";
 
-				//  now check with sequential access
-				reader = cmd.ExecuteReader();
-				Assert.IsTrue(reader.Read());
-				int mylen = len;
-				int startIndex = 0;
-				byte[] buff = new byte[8192];
-				while (mylen > 0)
-				{
-					int readLen = Math.Min(mylen, buff.Length);
-					int retVal = (int)reader.GetBytes(5, startIndex, buff, 0, readLen);
-					Assert.AreEqual(readLen, retVal);
-					for (int i = 0; i < readLen; i++)
-						Assert.AreEqual(bytes[startIndex+i], buff[i]);
-					startIndex += readLen;
-					mylen -= readLen;
-				}
+                    //  now check with sequential access
+                    using (reader = cmd.ExecuteReader())
+                    {
+                        Assert.IsTrue(reader.Read());
+                        int mylen = len;
+                        int startIndex = 0;
+                        byte[] buff = new byte[8192];
+                        while (mylen > 0)
+                        {
+                            int readLen = Math.Min(mylen, buff.Length);
+                            int retVal = (int)reader.GetBytes(5, startIndex, buff, 0, readLen);
+                            Assert.AreEqual(readLen, retVal);
+                            for (int i = 0; i < readLen; i++)
+                                Assert.AreEqual(bytes[startIndex + i], buff[i]);
+                            startIndex += readLen;
+                            mylen -= readLen;
+                        }
+                    }
+                }
 			}
 			catch (Exception ex) 
 			{
@@ -361,13 +385,15 @@ namespace MaxDB.UnitTesting
 			try 
 			{
 				ClearTestTable();
-				MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name) VALUES (1, 'a')", m_conn);
-				cmd.ExecuteNonQuery();
+				
+                ExecuteNonQuery("INSERT INTO Test (id, name) VALUES (1, 'a')");
 
-				cmd = new MaxDBCommand("SELECT * FROM Test", m_conn);
-				reader = cmd.ExecuteReader();
-				reader.Read();
-				Assert.AreEqual('a', reader.GetChar(1));
+				using(MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
+                    using (reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        Assert.AreEqual('a', reader.GetChar(1));
+                    }
 			}
 			catch (Exception ex) 
 			{
@@ -396,30 +422,34 @@ namespace MaxDB.UnitTesting
 			{
 				ClearTestTable();
 
-				MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name, c1) VALUES(1, :t, :c1)", m_conn);
-				cmd.Parameters.Add(":t", "Test");
-				cmd.Parameters.Add(":c1", MaxDBType.LongA).Value = chars;
-				cmd.ExecuteNonQuery();
+                using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name, c1) VALUES(1, :t, :c1)", mconn))
+                {
+                    cmd.Parameters.Add(":t", "Test");
+                    cmd.Parameters.Add(":c1", MaxDBType.LongA).Value = chars;
+                    cmd.ExecuteNonQuery();
 
-				cmd.CommandText = "SELECT * FROM Test";
+                    cmd.CommandText = "SELECT * FROM Test";
 
-				// now check with sequential access
-				reader = cmd.ExecuteReader();
-				Assert.IsTrue(reader.Read());
-				int mylen = len;
-				int startIndex = 0;
-				char[] buff = new char[8192];
+                    // now check with sequential access
+                    using (reader = cmd.ExecuteReader())
+                    {
+                        Assert.IsTrue(reader.Read());
+                        int mylen = len;
+                        int startIndex = 0;
+                        char[] buff = new char[8192];
 
-				while (mylen > 0)
-				{
-					int readLen = Math.Min(mylen, buff.Length);
-					int retVal = (int)reader.GetChars(6, startIndex, buff, 0, readLen);
-					Assert.AreEqual(readLen, retVal);
-					for (int i = 0; i < readLen; i++)
-						Assert.AreEqual(chars[startIndex + i], buff[i]);
-					startIndex += readLen;
-					mylen -= readLen;
-				}
+                        while (mylen > 0)
+                        {
+                            int readLen = Math.Min(mylen, buff.Length);
+                            int retVal = (int)reader.GetChars(6, startIndex, buff, 0, readLen);
+                            Assert.AreEqual(readLen, retVal);
+                            for (int i = 0; i < readLen; i++)
+                                Assert.AreEqual(chars[startIndex + i], buff[i]);
+                            startIndex += readLen;
+                            mylen -= readLen;
+                        }
+                    }
+                }
 			}
 			catch (Exception ex) 
 			{
@@ -438,13 +468,15 @@ namespace MaxDB.UnitTesting
 			try 
 			{
 				ClearTestTable();
-				MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name) VALUES (1, 'Text value')", m_conn);
-				cmd.ExecuteNonQuery();
+				
+                ExecuteNonQuery("INSERT INTO Test (id, name) VALUES (1, 'Text value')");
 
-				cmd = new MaxDBCommand("SELECT * FROM Test", m_conn);
-				reader = cmd.ExecuteReader();
-				reader.Read();
-				Assert.AreEqual( "Text value", reader["name"].ToString());
+                using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
+                    using (reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        Assert.AreEqual("Text value", reader["name"].ToString());
+                    }
 			}
 			catch (Exception ex) 
 			{
@@ -466,21 +498,25 @@ namespace MaxDB.UnitTesting
 
 				DateTime dt = DateTime.Now;
 
-				MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, d, t, dt) VALUES (1, :a, :b, :c)", m_conn);
-				cmd.Parameters.Add(new MaxDBParameter(":a", MaxDBType.Date)).Value = dt.Date;
-				cmd.Parameters.Add(new MaxDBParameter(":b", MaxDBType.Time)).Value = dt.TimeOfDay;
-				cmd.Parameters.Add(new MaxDBParameter(":c", MaxDBType.TimeStamp)).Value = dt;
-				cmd.ExecuteNonQuery();
+                using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, d, t, dt) VALUES (1, :a, :b, :c)", mconn))
+                {
+                    cmd.Parameters.Add(new MaxDBParameter(":a", MaxDBType.Date)).Value = dt.Date;
+                    cmd.Parameters.Add(new MaxDBParameter(":b", MaxDBType.Time)).Value = dt.TimeOfDay;
+                    cmd.Parameters.Add(new MaxDBParameter(":c", MaxDBType.Timestamp)).Value = dt;
+                    cmd.ExecuteNonQuery();
+                }
 
-				cmd = new MaxDBCommand("SELECT * FROM Test", m_conn);
-				reader = cmd.ExecuteReader();
-				reader.Read();
+				using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
+                    using (reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
 
-				long period = TimeSpan.TicksPerMillisecond / 1000;
+                        long period = TimeSpan.TicksPerMillisecond / 1000;
 
-				Assert.AreEqual(dt.Date, reader["d"]);
-				Assert.AreEqual(dt.TimeOfDay.Ticks / TimeSpan.TicksPerSecond, ((DateTime)reader["t"]).Ticks / TimeSpan.TicksPerSecond);
-				Assert.AreEqual(dt.Ticks / period, ((DateTime)reader["dt"]).Ticks / period);
+                        Assert.AreEqual(dt.Date, reader["d"]);
+                        Assert.AreEqual(dt.TimeOfDay.Ticks / TimeSpan.TicksPerSecond, ((DateTime)reader["t"]).Ticks / TimeSpan.TicksPerSecond);
+                        Assert.AreEqual(dt.Ticks / period, ((DateTime)reader["dt"]).Ticks / period);
+                    }
 			}
 			catch (Exception ex) 
 			{
@@ -499,9 +535,9 @@ namespace MaxDB.UnitTesting
 			MaxDBDataReader reader = null;
 			try 
 			{
-				MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", m_conn);
-				reader = cmd.ExecuteReader();
-				reader.GetInt32(0);
+				using(MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
+				    using (reader = cmd.ExecuteReader())
+				        reader.GetInt32(0);
 			}
 			catch (Exception) 
 			{

@@ -19,266 +19,447 @@ using System;
 using System.Data;
 using System.IO;
 using MaxDB.Data.MaxDBProtocol;
-using MaxDB.Data.Utils;
+using MaxDB.Data.Utilities;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
+using System.Globalization;
 
 namespace MaxDB.Data
 {
-	/// <summary>
-	/// Summary description for MaxDBException.
-	/// </summary>
-	/*
-	[Serializable]
-	public class MaxDBException : DataException
-	{
-		private int m_detailErrorCode = -708;
+    /// <summary>
+    /// Summary description for MaxDBException.
+    /// </summary>
 
-		public MaxDBException() : base()
-		{
-		}
+    [Serializable]
+    public class PartNotFoundException : Exception
+    {
+        public PartNotFoundException()
+            : base()
+        {
+        }
 
-		public MaxDBException(string message) : base(message)
-		{
-		}
+        public PartNotFoundException(string msg)
+            : base(msg)
+        {
+        }
 
-		public MaxDBException(string message, Exception innerException) : base(message, innerException)
-		{
-		}
+        public PartNotFoundException(string msg, Exception ex)
+            : base(msg, ex)
+        {
+        }
 
-		public MaxDBException(string message, int rc, Exception innerException) : base(message, innerException)
-		{
-			m_detailErrorCode = rc;
-		}
+        protected PartNotFoundException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
+    }
 
-		public int DetailErrorCode
-		{
-			get
-			{
-				return m_detailErrorCode;
-			}
-		}
-	}
-	*/
+    [Serializable]
+    public class MaxDBCommunicationException : DataException
+    {
+        public MaxDBCommunicationException()
+            : base()
+        {
+        }
 
-	public class PartNotFound : Exception 
-	{
-		public PartNotFound() : base() 
-		{
-		}
-	}
+        public MaxDBCommunicationException(int code)
+            : base(CommError.ErrorText[code])
+        {
+        }
 
-	[Serializable]
-	public class MaxDBCommunicationException : DataException
-	{
-		public MaxDBCommunicationException(int code) : base(CommError.ErrorText[code])
-		{
-		}
-	}
+        public MaxDBCommunicationException(string msg)
+            : base(msg)
+        {
+        }
 
-	[Serializable]
-	public class MaxDBException : DataException
-	{
-		private int m_errPos = -10899;
-		private string m_sqlState;
-		private int m_vendorCode;
+        public MaxDBCommunicationException(string msg, Exception ex)
+            : base(msg, ex)
+        {
+        }
 
-		public MaxDBException() : base()
-		{
-		}
+        protected MaxDBCommunicationException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
+    }
 
-		public MaxDBException(string message) : base(message)
-		{
-		}
+    [Serializable]
+    public class MaxDBException : DataException
+    {
+        private int iErrorPosition = -10899;
+        private string strSqlState;
+        private int iVendorCode;
 
-		public MaxDBException(string message, Exception innerException) : 
-			base(message, innerException)
-		{
-		}
+        public MaxDBException()
+            : base()
+        {
+        }
 
-		public MaxDBException(string message, string sqlState) : 
-			base(message)
-		{
-			m_sqlState = sqlState;
-		}
+        public MaxDBException(string message)
+            : base(message)
+        {
+        }
 
-		public MaxDBException(string message, string sqlState, Exception innerException) : 
-			base(message, innerException)
-		{
-			m_sqlState = sqlState;
-		}
+        public MaxDBException(string message, Exception innerException)
+            :
+            base(message, innerException)
+        {
+        }
 
-		public MaxDBException(string message, string sqlState, int vendorCode) : 
-			base(message)
-		{
-			m_sqlState = sqlState;
-			m_vendorCode = vendorCode;
-		}
+        protected MaxDBException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
 
-		public MaxDBException(string message, string sqlState, int vendorCode, Exception innerException) : 
-			base(message, innerException)
-		{
-			m_sqlState = sqlState;
-			m_vendorCode = vendorCode;
-		}
+        public MaxDBException(string message, string sqlState)
+            : base(message)
+        {
+            strSqlState = sqlState;
+        }
 
-		public MaxDBException(string message, string sqlState, int vendorCode, int errpos) : 
-			base(message)
-		{
-			m_sqlState = sqlState;
-			m_vendorCode = vendorCode;
-			m_errPos = errpos;
-		}
+        public MaxDBException(string message, string sqlState, Exception innerException)
+            :
+            base(message, innerException)
+        {
+            strSqlState = sqlState;
+        }
 
-		public MaxDBException(string message, string sqlState, int vendorCode, int errpos, Exception innerException) : 
-			base(message, innerException)
-		{
-			m_sqlState = sqlState;
-			m_vendorCode = vendorCode;
-			m_errPos = errpos;
-		}
+        public MaxDBException(string message, string sqlState, int vendorCode)
+            : base(message)
+        {
+            strSqlState = sqlState;
+            iVendorCode = vendorCode;
+        }
 
-		public int VendorCode
-		{
-			get
-			{
-				return m_vendorCode;
-			}
-		}
+        public MaxDBException(string message, string sqlState, int vendorCode, Exception innerException)
+            : base(message, innerException)
+        {
+            strSqlState = sqlState;
+            iVendorCode = vendorCode;
+        }
 
-		public int ErrorPos
-		{
-			get
-			{
-				return m_errPos;
-			}
-		}
+        public MaxDBException(string message, string sqlState, int vendorCode, int errorPosition)
+            : base(message)
+        {
+            strSqlState = sqlState;
+            iVendorCode = vendorCode;
+            iErrorPosition = errorPosition;
+        }
 
-		public string SQLState
-		{
-			get
-			{
-				return m_sqlState;
-			}
-		}
+        public MaxDBException(string message, string sqlState, int vendorCode, int errorPosition, Exception innerException)
+            : base(message, innerException)
+        {
+            strSqlState = sqlState;
+            iVendorCode = vendorCode;
+            iErrorPosition = errorPosition;
+        }
 
-		public virtual bool IsConnectionReleasing
-		{
-			get
-			{
-				switch(m_vendorCode) 
-				{
-					case -904:  // Space for result tables exhausted
-					case -708:  // SERVERDB system not available
-					case +700:  // Session inactivity timeout (work rolled back)
-					case -70:   // Session inactivity timeout (work rolled back)
-					case +710:  // Session terminated by shutdown (work rolled back)
-					case -71:   // Session terminated by shutdown (work rolled back)
-					case +750:  // Too many SQL statements (work rolled back)
-					case -75:   // Too many SQL statements (work rolled back)
-						return true;
-				}
-				return false;
-			}
-		}
+        [SecurityPermissionAttribute(SecurityAction.Demand, SerializationFormatter = true)]
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (info == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "info"));
+
+            base.GetObjectData(info, context);
+            info.AddValue("VendorCode", VendorCode);
+            info.AddValue("ErrorPos", ErrorPos);
+            info.AddValue("SqlState", SqlState);
+        }
+
+        public int VendorCode
+        {
+            get
+            {
+                return iVendorCode;
+            }
+        }
+
+        public int ErrorPos
+        {
+            get
+            {
+                return iErrorPosition;
+            }
+        }
+
+        public string SqlState
+        {
+            get
+            {
+                return strSqlState;
+            }
+        }
+
+        public virtual bool IsConnectionReleasing
+        {
+            get
+            {
+                switch (iVendorCode)
+                {
+                    case -904:  // Space for result tables exhausted
+                    case -708:  // SERVERDB system not available
+                    case +700:  // Session inactivity timeout (work rolled back)
+                    case -70:   // Session inactivity timeout (work rolled back)
+                    case +710:  // Session terminated by shutdown (work rolled back)
+                    case -71:   // Session terminated by shutdown (work rolled back)
+                    case +750:  // Too many SQL statements (work rolled back)
+                    case -75:   // Too many SQL statements (work rolled back)
+                        return true;
+                }
+                return false;
+            }
+        }
 
 #if !SAFE
-		public static void ThrowException(string message, IntPtr errorHndl)
+		public static void ThrowException(string message, IntPtr errorHandler)
 		{
-			ThrowException(message, errorHndl, null);
+			ThrowException(message, errorHandler, null);
 		}
 
-		public static void ThrowException(string message, IntPtr errorHndl, Exception innerException)
+		public static void ThrowException(string message, IntPtr errorHandler, Exception innerException)
 		{
-			throw new MaxDBException(message + ": " + SQLDBC.SQLDBC_ErrorHndl_getErrorText(errorHndl), 
-				SQLDBC.SQLDBC_ErrorHndl_getSQLState(errorHndl), SQLDBC.SQLDBC_ErrorHndl_getErrorCode(errorHndl),
+			throw new MaxDBException(message + ": " + UnsafeNativeMethods.SQLDBC_ErrorHndl_getErrorText(errorHandler), 
+				UnsafeNativeMethods.SQLDBC_ErrorHndl_getSQLState(errorHandler), UnsafeNativeMethods.SQLDBC_ErrorHndl_getErrorCode(errorHandler),
 				innerException);
 		}
 #endif
-	}
+    }
 
-	public class DatabaseException : MaxDBException 
-	{
-		public DatabaseException(string message, string sqlState, int vendorCode, int errpos) : base((errpos > 1) 
-			? MaxDBMessages.Extract(MaxDBMessages.ERROR_DATABASEEXCEPTION, vendorCode.ToString(), errpos.ToString(), message)
-			: MaxDBMessages.Extract(MaxDBMessages.ERROR_DATABASEEXCEPTION_WOERRPOS, vendorCode.ToString(), message),
-			sqlState, vendorCode, errpos)
-		{     
-		}
-	}
+    [Serializable]
+    public class DatabaseException : MaxDBException
+    {
+        public DatabaseException()
+            : base()
+        {
+        }
 
-	[Serializable]
-	public class MaxDBConnectionException : MaxDBException 
-	{
-		public MaxDBConnectionException(MaxDBException ex) : base(ex.Message, "08000", ex.VendorCode) 
-		{
-		}
+        public DatabaseException(string message)
+            : base(message)
+        {
+        }
 
-		public override bool IsConnectionReleasing
-		{
-			get
-			{
-				return true;
-			}
-		}
-	}
+        public DatabaseException(string message, Exception innerException)
+            :
+            base(message, innerException)
+        {
+        }
 
-	[Serializable]
-	public class MaxDBTimeoutException : DatabaseException
-	{
-		public MaxDBTimeoutException() : base(MaxDBMessages.Extract(MaxDBMessages.ERROR_TIMEOUT), "08000", 700, 0)
-		{
-		}
+        public DatabaseException(string message, string sqlState, int vendorCode, int errorPosition)
+            : base((errorPosition > 1)
+            ? MaxDBMessages.Extract(MaxDBError.DATABASEEXCEPTION,
+                vendorCode.ToString(CultureInfo.InvariantCulture), errorPosition.ToString(CultureInfo.InvariantCulture), message)
+            : MaxDBMessages.Extract(MaxDBError.DATABASEEXCEPTION_WOERRPOS, vendorCode.ToString(CultureInfo.InvariantCulture), message),
+            sqlState, vendorCode, errorPosition)
+        {
+        }
 
-		public override bool IsConnectionReleasing
-		{
-			get
-			{
-				return true;
-			}
-		}
-	}
+        protected DatabaseException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
+    }
 
-	public class MaxDBConversionException : MaxDBException
-	{
-		public MaxDBConversionException(string msg) : base(msg)
-		{
-		}
-	}
+    [Serializable]
+    public class MaxDBConnectionException : MaxDBException
+    {
+        public MaxDBConnectionException()
+            : base()
+        {
+        }
 
-	public class MaxDBValueOverflowException : MaxDBException
-	{
-		public MaxDBValueOverflowException(string typeName, int colIndex) : base(MaxDBMessages.Extract(MaxDBMessages.ERROR_VALUEOVERFLOW, colIndex.ToString()))
-		{
-		}
-	}
+        public MaxDBConnectionException(string message)
+            : base(message)
+        {
+        }
 
-	public class StreamIOException : IOException 
-	{
-		private DataException m_sqlException;
+        public MaxDBConnectionException(string message, Exception innerException)
+            :
+            base(message, innerException)
+        {
+        }
 
-		public StreamIOException(DataException sqlEx) : base()
-		{
-			m_sqlException = sqlEx;
-		}
+        public MaxDBConnectionException(MaxDBException ex)
+            : base((ex == null ? string.Empty : ex.Message), "08000", (ex == null ? -1 : ex.VendorCode))
+        {
+        }
 
-		public DataException SqlException 
-		{
-			get
-			{
-				return m_sqlException;
-			}
-		}
-	}
+        protected MaxDBConnectionException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
 
-	public class InvalidColumnException : DataException 
-	{
-		public InvalidColumnException(int columnIndex) :
-			base(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALID_COLUMNINDEX, columnIndex))
-		{
-		}
+        public override bool IsConnectionReleasing
+        {
+            get
+            {
+                return true;
+            }
+        }
+    }
 
-		public InvalidColumnException(string columnName) :
-			base(MaxDBMessages.Extract(MaxDBMessages.ERROR_INVALID_COLUMNNAME, columnName))
-		{
-		}
-	}
+    [Serializable]
+    public class MaxDBTimeoutException : DatabaseException
+    {
+        public MaxDBTimeoutException()
+            : base(MaxDBMessages.Extract(MaxDBError.TIMEOUT), "08000", 700, 0)
+        {
+        }
+
+        public MaxDBTimeoutException(string message)
+            : base(message)
+        {
+        }
+
+        public MaxDBTimeoutException(string message, Exception innerException)
+            :
+            base(message, innerException)
+        {
+        }
+
+        protected MaxDBTimeoutException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
+
+        public override bool IsConnectionReleasing
+        {
+            get
+            {
+                return true;
+            }
+        }
+    }
+
+    [Serializable]
+    public class MaxDBConversionException : MaxDBException
+    {
+        public MaxDBConversionException()
+            : base()
+        {
+        }
+
+        public MaxDBConversionException(string msg)
+            : base(msg)
+        {
+        }
+
+        public MaxDBConversionException(string msg, Exception ex)
+            : base(msg, ex)
+        {
+        }
+
+        protected MaxDBConversionException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
+    }
+
+    [Serializable]
+    public class MaxDBValueOverflowException : MaxDBException
+    {
+        public MaxDBValueOverflowException()
+            : base()
+        {
+        }
+
+        public MaxDBValueOverflowException(string msg)
+            : base(msg)
+        {
+        }
+
+        public MaxDBValueOverflowException(string msg, Exception ex)
+            : base(msg, ex)
+        {
+        }
+
+        public MaxDBValueOverflowException(int colIndex)
+            : base(MaxDBMessages.Extract(MaxDBError.VALUEOVERFLOW, colIndex.ToString(CultureInfo.InvariantCulture)))
+        {
+        }
+
+        protected MaxDBValueOverflowException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
+    }
+
+    [Serializable]
+    public class StreamIOException : IOException
+    {
+        private DataException mSqlException;
+
+        public StreamIOException()
+            : base()
+        {
+        }
+
+        public StreamIOException(string msg)
+            : base(msg)
+        {
+        }
+
+        public StreamIOException(string msg, Exception ex)
+            : base(msg, ex)
+        {
+        }
+
+        public StreamIOException(DataException sqlEx)
+            : base()
+        {
+            mSqlException = sqlEx;
+        }
+
+        protected StreamIOException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
+
+        public DataException SqlException
+        {
+            get
+            {
+                return mSqlException;
+            }
+        }
+
+        [SecurityPermissionAttribute(SecurityAction.Demand, SerializationFormatter = true)]
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (info == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "info"));
+
+            base.GetObjectData(info, context);
+            info.AddValue("mSqlException", mSqlException);
+        }
+
+    }
+
+    [Serializable]
+    public class InvalidColumnException : DataException
+    {
+        public InvalidColumnException()
+            : base()
+        {
+        }
+
+        public InvalidColumnException(int columnIndex)
+            : base(MaxDBMessages.Extract(MaxDBError.INVALID_COLUMNINDEX, columnIndex))
+        {
+        }
+
+        public InvalidColumnException(string columnName)
+            : base(MaxDBMessages.Extract(MaxDBError.INVALID_COLUMNNAME, columnName))
+        {
+        }
+
+        public InvalidColumnException(string columnName, Exception ex)
+            : base(MaxDBMessages.Extract(MaxDBError.INVALID_COLUMNNAME, columnName), ex)
+        {
+        }
+
+        protected InvalidColumnException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
+    }
 }

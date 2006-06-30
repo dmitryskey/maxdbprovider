@@ -21,27 +21,28 @@ using System.Reflection;
 using System.Collections;
 using MaxDB.Data.MaxDBProtocol;
 using System.Data.Common;
+using System.Globalization;
 
 namespace MaxDB.Data
 {
-    public class MaxDBConnectionStringBuilder : 
+    public class MaxDBConnectionStringBuilder :
 #if NET20
-        DbConnectionStringBuilder
+ DbConnectionStringBuilder
 #else
-        IDictionary, ICollection, ICustomTypeDescriptor
+        IDictionary, ICollection
 #endif
-        , IEnumerable
+, IEnumerable
     {
-        private Hashtable m_KeyValuePairs = new Hashtable();
-        private bool m_browsable = true;
+        private Hashtable mKeyValuePairs = new Hashtable();
+        private bool bBrowsable = true;
 
         public MaxDBConnectionStringBuilder()
         {
         }
 
-        public MaxDBConnectionStringBuilder(string connStr)
+        public MaxDBConnectionStringBuilder(string connectionString)
         {
-            ConnectionString = connStr;
+            ConnectionString = connectionString;
         }
 
 #if NET20
@@ -49,14 +50,14 @@ namespace MaxDB.Data
 #else
         public bool BrowsableConnectionString
 #endif // NET20
-        { 
+        {
             get
             {
-                return m_browsable;
-            } 
+                return bBrowsable;
+            }
             set
             {
-                m_browsable = value;
+                bBrowsable = value;
             }
         }
 
@@ -66,6 +67,9 @@ namespace MaxDB.Data
         public static void AppendKeyValuePair(StringBuilder builder, string keyword, string value)
 #endif // NET20
         {
+            if (builder == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "builder"));
+
             builder.Append(keyword).Append("=").Append(value).Append(";");
         }
 
@@ -74,9 +78,9 @@ namespace MaxDB.Data
 #else
         public bool ShouldSerialize(string keyword)
 #endif
-		{
-			return m_KeyValuePairs.ContainsKey(keyword);
-		}
+        {
+            return mKeyValuePairs.ContainsKey(keyword);
+        }
 
         public override string ToString()
         {
@@ -89,9 +93,9 @@ namespace MaxDB.Data
         public bool TryGetValue(string keyword, out object value)
 #endif
         {
-            if (m_KeyValuePairs.ContainsKey(keyword))
+            if (mKeyValuePairs.ContainsKey(keyword))
             {
-                value = m_KeyValuePairs[keyword];
+                value = mKeyValuePairs[keyword];
                 return true;
             }
             else
@@ -110,8 +114,8 @@ namespace MaxDB.Data
             get
             {
                 StringBuilder builder = new StringBuilder();
-                foreach (string key in m_KeyValuePairs)
-                    builder.Append(key).Append("=").Append(m_KeyValuePairs[key]).Append(";");
+                foreach (string key in mKeyValuePairs)
+                    builder.Append(key).Append("=").Append(mKeyValuePairs[key]).Append(";");
 
                 return builder.ToString();
             }
@@ -121,98 +125,125 @@ namespace MaxDB.Data
                 foreach (string param in paramArr)
                 {
                     if (param.Split('=').Length > 1)
-                        switch (param.Split('=')[0].Trim().ToUpper())
+                        switch (param.Split('=')[0].Trim().ToUpper(CultureInfo.InvariantCulture))
                         {
                             case "DATA SOURCE":
                             case "SERVER":
                             case "ADDRESS":
                             case "ADDR":
                             case "NETWORK ADDRESS":
-                                m_KeyValuePairs[ConnectionStringParams.DATA_SOURCE] = param.Split('=')[1].Trim();
+                                mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] = param.Split('=')[1].Trim();
                                 break;
                             case "INITIAL CATALOG":
                             case "DATABASE":
-                                m_KeyValuePairs[ConnectionStringParams.INITIAL_CATALOG] = param.Split('=')[1].Trim();
+                                mKeyValuePairs[ConnectionStringParams.INITIAL_CATALOG] = param.Split('=')[1].Trim();
                                 break;
                             case "USER ID":
                             case "LOGIN":
-                                m_KeyValuePairs[ConnectionStringParams.USER_ID] = param.Split('=')[1].Trim();
+                                mKeyValuePairs[ConnectionStringParams.USER_ID] = param.Split('=')[1].Trim();
                                 break;
                             case "PASSWORD":
                             case "PWD":
-                                m_KeyValuePairs[ConnectionStringParams.PASSWORD] = param.Split('=')[1].Trim();
+                                mKeyValuePairs[ConnectionStringParams.PASSWORD] = param.Split('=')[1].Trim();
                                 break;
                             case "TIMEOUT":
+                                mKeyValuePairs[ConnectionStringParams.TIMEOUT] = 0;
                                 try
                                 {
-                                    m_KeyValuePairs[ConnectionStringParams.TIMEOUT] = int.Parse(param.Split('=')[1]);
+                                    mKeyValuePairs[ConnectionStringParams.TIMEOUT] = int.Parse(param.Split('=')[1], CultureInfo.InvariantCulture);
                                 }
-                                catch
+                                catch (IndexOutOfRangeException)
                                 {
-                                    m_KeyValuePairs[ConnectionStringParams.TIMEOUT] = 0;
+                                }
+                                catch (ArgumentNullException)
+                                {
+                                }
+                                catch (FormatException)
+                                {
+                                }
+                                catch (OverflowException)
+                                {
                                 }
                                 break;
                             case "SPACE OPTION":
-                                if (param.Split('=')[1].Trim().ToUpper() == "TRUE" || 
-                                    param.Split('=')[1].Trim().ToUpper() == "YES" ||
+                                if (string.Compare(param.Split('=')[1].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
+                                    string.Compare(param.Split('=')[1].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
                                     param.Split('=')[1].Trim() == "1")
-                                    m_KeyValuePairs[ConnectionStringParams.SPACE_OPTION] = true;
+                                    mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] = true;
                                 break;
                             case "CACHE":
-                                m_KeyValuePairs[ConnectionStringParams.CACHE] = param.Split('=')[1].Trim();
+                                mKeyValuePairs[ConnectionStringParams.CACHE] = param.Split('=')[1].Trim();
                                 break;
                             case "CACHE LIMIT":
+                                mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] = 0;
                                 try
                                 {
-                                    m_KeyValuePairs[ConnectionStringParams.CACHE_LIMIT] = int.Parse(param.Split('=')[1]);
+                                    mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] = int.Parse(param.Split('=')[1], CultureInfo.InvariantCulture);
                                 }
-                                catch
+                                catch (IndexOutOfRangeException)
                                 {
-                                    m_KeyValuePairs[ConnectionStringParams.CACHE_LIMIT] = 0;
+                                }
+                                catch (ArgumentNullException)
+                                {
+                                }
+                                catch (FormatException)
+                                {
+                                }
+                                catch (OverflowException)
+                                {
                                 }
                                 break;
                             case "CACHE SIZE":
+                                mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] = 0;
                                 try
                                 {
-                                    m_KeyValuePairs[ConnectionStringParams.CACHE_SIZE] = int.Parse(param.Split('=')[1]);
+                                    mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] = int.Parse(param.Split('=')[1], CultureInfo.InvariantCulture);
                                 }
-                                catch
+                                catch (IndexOutOfRangeException)
                                 {
-                                    m_KeyValuePairs[ConnectionStringParams.CACHE_SIZE] = 0;
+                                }
+                                catch (ArgumentNullException)
+                                {
+                                }
+                                catch (FormatException)
+                                {
+                                }
+                                catch (OverflowException)
+                                {
                                 }
                                 break;
                             case "ENCRYPT":
-                                if (param.Split('=')[1].Trim().ToUpper() == "TRUE" || 
-                                    param.Split('=')[1].Trim().ToUpper() == "YES" ||
+                                if (string.Compare(param.Split('=')[1].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
+                                    string.Compare(param.Split('=')[1].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
                                     param.Split('=')[1].Trim() == "1")
-                                    m_KeyValuePairs[ConnectionStringParams.ENCRYPT] = true;
+                                    mKeyValuePairs[ConnectionStringParams.ENCRYPT] = true;
                                 break;
                             case "MODE":
-                                string mode = param.Split('=')[1].Trim().ToUpper();
-                                if (mode == SqlModeName.Value[SqlMode.Ansi])
+                                string mode = param.Split('=')[1].Trim().ToUpper(CultureInfo.InvariantCulture);
+                                if (mode == SqlModeName.Value[(byte)SqlMode.Ansi])
                                 {
-                                    m_KeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Ansi;
+                                    mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Ansi;
                                     break;
                                 }
-                                if (mode == SqlModeName.Value[SqlMode.Db2])
+                                if (mode == SqlModeName.Value[(byte)SqlMode.Db2])
                                 {
-                                    m_KeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Db2;
+                                    mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Db2;
                                     break;
                                 }
-                                if (mode == SqlModeName.Value[SqlMode.Oracle])
+                                if (mode == SqlModeName.Value[(byte)SqlMode.Oracle])
                                 {
-                                    m_KeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Oracle;
+                                    mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Oracle;
                                     break;
                                 }
-                                if (mode == SqlModeName.Value[SqlMode.SAPR3])
+                                if (mode == SqlModeName.Value[(byte)SqlMode.SapR3])
                                 {
-                                    m_KeyValuePairs[ConnectionStringParams.MODE] = SqlMode.SAPR3;
+                                    mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.SapR3;
                                     break;
                                 }
-                                m_KeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Internal;
+                                mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Internal;
                                 break;
                             case "SSL HOST":
-                                m_KeyValuePairs[ConnectionStringParams.SSL_HOST] = param.Split('=')[1].Trim();
+                                mKeyValuePairs[ConnectionStringParams.SSL_HOST] = param.Split('=')[1].Trim();
                                 break;
                         }
                 }
@@ -224,11 +255,11 @@ namespace MaxDB.Data
         {
             get
             {
-                return (string)m_KeyValuePairs[ConnectionStringParams.DATA_SOURCE];
+                return (string)mKeyValuePairs[ConnectionStringParams.DATA_SOURCE];
             }
             set
             {
-                m_KeyValuePairs[ConnectionStringParams.DATA_SOURCE] = value;
+                mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] = value;
             }
         }
 
@@ -236,23 +267,23 @@ namespace MaxDB.Data
         {
             get
             {
-                return (string)m_KeyValuePairs[ConnectionStringParams.INITIAL_CATALOG];
+                return (string)mKeyValuePairs[ConnectionStringParams.INITIAL_CATALOG];
             }
             set
             {
-                m_KeyValuePairs[ConnectionStringParams.INITIAL_CATALOG] = value;
+                mKeyValuePairs[ConnectionStringParams.INITIAL_CATALOG] = value;
             }
         }
 
-        public string UserID
+        public string UserId
         {
             get
             {
-                return (string)m_KeyValuePairs[ConnectionStringParams.USER_ID];
+                return (string)mKeyValuePairs[ConnectionStringParams.USER_ID];
             }
             set
             {
-                m_KeyValuePairs[ConnectionStringParams.USER_ID] = value;
+                mKeyValuePairs[ConnectionStringParams.USER_ID] = value;
             }
         }
 
@@ -260,11 +291,11 @@ namespace MaxDB.Data
         {
             get
             {
-                return (string)m_KeyValuePairs[ConnectionStringParams.PASSWORD];
+                return (string)mKeyValuePairs[ConnectionStringParams.PASSWORD];
             }
             set
             {
-                m_KeyValuePairs[ConnectionStringParams.PASSWORD] = value;
+                mKeyValuePairs[ConnectionStringParams.PASSWORD] = value;
             }
         }
 
@@ -272,29 +303,29 @@ namespace MaxDB.Data
         {
             get
             {
-                if (m_KeyValuePairs[ConnectionStringParams.TIMEOUT] != null)
-                    return (int)m_KeyValuePairs[ConnectionStringParams.TIMEOUT];
+                if (mKeyValuePairs[ConnectionStringParams.TIMEOUT] != null)
+                    return (int)mKeyValuePairs[ConnectionStringParams.TIMEOUT];
                 else
                     return 0;
             }
             set
             {
-                m_KeyValuePairs[ConnectionStringParams.TIMEOUT] = value;
+                mKeyValuePairs[ConnectionStringParams.TIMEOUT] = value;
             }
         }
 
-        public int Mode
+        public SqlMode Mode
         {
-            get 
+            get
             {
-                if (m_KeyValuePairs[ConnectionStringParams.MODE] != null)
-                    return (int)m_KeyValuePairs[ConnectionStringParams.MODE];
+                if (mKeyValuePairs[ConnectionStringParams.MODE] != null)
+                    return (SqlMode)mKeyValuePairs[ConnectionStringParams.MODE];
                 else
                     return SqlMode.Internal;
             }
             set
             {
-                m_KeyValuePairs[ConnectionStringParams.MODE] = value;
+                mKeyValuePairs[ConnectionStringParams.MODE] = value;
             }
         }
 
@@ -302,14 +333,14 @@ namespace MaxDB.Data
         {
             get
             {
-                if (m_KeyValuePairs[ConnectionStringParams.SPACE_OPTION] != null)
-                    return (bool)m_KeyValuePairs[ConnectionStringParams.SPACE_OPTION];
+                if (mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] != null)
+                    return (bool)mKeyValuePairs[ConnectionStringParams.SPACE_OPTION];
                 else
                     return false;
             }
             set
             {
-                m_KeyValuePairs[ConnectionStringParams.SPACE_OPTION] = value;
+                mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] = value;
             }
         }
 
@@ -317,14 +348,14 @@ namespace MaxDB.Data
         {
             get
             {
-                if (m_KeyValuePairs[ConnectionStringParams.ENCRYPT] != null)
-                    return (bool)m_KeyValuePairs[ConnectionStringParams.ENCRYPT];
+                if (mKeyValuePairs[ConnectionStringParams.ENCRYPT] != null)
+                    return (bool)mKeyValuePairs[ConnectionStringParams.ENCRYPT];
                 else
                     return false;
             }
             set
             {
-                m_KeyValuePairs[ConnectionStringParams.ENCRYPT] = value;
+                mKeyValuePairs[ConnectionStringParams.ENCRYPT] = value;
             }
         }
 
@@ -332,11 +363,11 @@ namespace MaxDB.Data
         {
             get
             {
-                return (string)m_KeyValuePairs[ConnectionStringParams.SSL_HOST];
+                return (string)mKeyValuePairs[ConnectionStringParams.SSL_HOST];
             }
             set
             {
-                m_KeyValuePairs[ConnectionStringParams.SSL_HOST] = value;
+                mKeyValuePairs[ConnectionStringParams.SSL_HOST] = value;
             }
         }
 
@@ -344,11 +375,11 @@ namespace MaxDB.Data
         {
             get
             {
-                return (string)m_KeyValuePairs[ConnectionStringParams.CACHE];
+                return (string)mKeyValuePairs[ConnectionStringParams.CACHE];
             }
             set
             {
-                m_KeyValuePairs[ConnectionStringParams.CACHE] = value;
+                mKeyValuePairs[ConnectionStringParams.CACHE] = value;
             }
         }
 
@@ -356,14 +387,14 @@ namespace MaxDB.Data
         {
             get
             {
-                if (m_KeyValuePairs[ConnectionStringParams.CACHE_SIZE] != null)
-                    return (int)m_KeyValuePairs[ConnectionStringParams.CACHE_SIZE];
+                if (mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] != null)
+                    return (int)mKeyValuePairs[ConnectionStringParams.CACHE_SIZE];
                 else
                     return 0;
             }
             set
             {
-                m_KeyValuePairs[ConnectionStringParams.CACHE_SIZE] = value;
+                mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] = value;
             }
         }
 
@@ -371,22 +402,26 @@ namespace MaxDB.Data
         {
             get
             {
-                if (m_KeyValuePairs[ConnectionStringParams.CACHE_LIMIT] != null)
-                    return (int)m_KeyValuePairs[ConnectionStringParams.CACHE_LIMIT];
+                if (mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] != null)
+                    return (int)mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT];
                 else
                     return 0;
             }
             set
             {
-                m_KeyValuePairs[ConnectionStringParams.CACHE_LIMIT] = value;
+                mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] = value;
             }
         }
 
         #region IDictionary Members
 
+#if NET20
+        public new void Add(string key, object value)
+#else
         public void Add(object key, object value)
+#endif
         {
-            m_KeyValuePairs[key] = value;
+            mKeyValuePairs[key] = value;
         }
 
 #if NET20
@@ -395,17 +430,17 @@ namespace MaxDB.Data
         public void Clear()
 #endif // NET20
         {
-            m_KeyValuePairs.Clear();
+            mKeyValuePairs.Clear();
         }
 
         public bool Contains(object key)
         {
-            return m_KeyValuePairs.ContainsKey(key);
+            return mKeyValuePairs.ContainsKey(key);
         }
 
         public IDictionaryEnumerator GetEnumerator()
         {
-            return m_KeyValuePairs.GetEnumerator();
+            return mKeyValuePairs.GetEnumerator();
         }
 
 #if NET20
@@ -416,7 +451,7 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_KeyValuePairs.IsFixedSize;
+                return mKeyValuePairs.IsFixedSize;
             }
         }
 
@@ -428,7 +463,7 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_KeyValuePairs.IsReadOnly;
+                return mKeyValuePairs.IsReadOnly;
             }
         }
 
@@ -440,14 +475,28 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_KeyValuePairs.Keys;
+                return mKeyValuePairs.Keys;
             }
         }
 
-        public void Remove(object key)
+#if NET20
+        public override bool Remove(string keyword)
         {
-            m_KeyValuePairs.Remove(key);
+            if (Contains(keyword))
+            {
+                mKeyValuePairs.Remove(keyword);
+                return true;
+            }
+            else
+                return false;
         }
+#else
+		public void Remove(object key)
+		{
+			if (Contains(key))
+				mKeyValuePairs.Remove(key);
+		}
+#endif
 
 #if NET20
         public override ICollection Values
@@ -457,19 +506,23 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_KeyValuePairs.Values;
+                return mKeyValuePairs.Values;
             }
         }
 
-        public object this[object key]
+#if NET20
+        public override object this[string keyword]
+#else
+        public object this[object keyword]
+#endif // NET20
         {
             get
             {
-                return m_KeyValuePairs[key];
+                return mKeyValuePairs[keyword];
             }
             set
             {
-                m_KeyValuePairs[key] = value;
+                mKeyValuePairs[keyword] = value;
             }
         }
 
@@ -479,7 +532,12 @@ namespace MaxDB.Data
 
         public void CopyTo(Array array, int index)
         {
-            m_KeyValuePairs.CopyTo(array, index);
+            mKeyValuePairs.CopyTo(array, index);
+        }
+
+        public void CopyTo(string[] array, int index)
+        {
+            mKeyValuePairs.CopyTo(array, index);
         }
 
 #if NET20
@@ -490,7 +548,7 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_KeyValuePairs.Count;
+                return mKeyValuePairs.Count;
             }
         }
 
@@ -498,7 +556,7 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_KeyValuePairs.IsSynchronized;
+                return mKeyValuePairs.IsSynchronized;
             }
         }
 
@@ -506,7 +564,7 @@ namespace MaxDB.Data
         {
             get
             {
-                return m_KeyValuePairs.SyncRoot;
+                return mKeyValuePairs.SyncRoot;
             }
         }
 
@@ -516,71 +574,7 @@ namespace MaxDB.Data
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return m_KeyValuePairs.GetEnumerator();
-        }
-
-        #endregion
-
-        #region ICustomTypeDescriptor Members
-
-        public AttributeCollection GetAttributes()
-        {
-            throw new Exception("The method or operation is not implemented.");
-        }
-
-        public string GetClassName()
-        {
-            return typeof(MaxDBConnectionStringBuilder).Name;
-        }
-
-        public string GetComponentName()
-        {
-            return Assembly.GetExecutingAssembly().FullName;
-        }
-
-        public TypeConverter GetConverter()
-        {
-            return new CollectionConverter();
-        }
-
-        public EventDescriptor GetDefaultEvent()
-        {
-            return null;
-        }
-
-        public PropertyDescriptor GetDefaultProperty()
-        {
-            return null;
-        }
-
-        public object GetEditor(Type editorBaseType)
-        {
-            return null;
-        }
-
-        public EventDescriptorCollection GetEvents(Attribute[] attributes)
-        {
-            return EventDescriptorCollection.Empty;
-        }
-
-        public EventDescriptorCollection GetEvents()
-        {
-            return EventDescriptorCollection.Empty;
-        }
-
-        public PropertyDescriptorCollection GetProperties(Attribute[] attributes)
-        {
-            return PropertyDescriptorCollection.Empty;
-        }
-
-        public PropertyDescriptorCollection GetProperties()
-        {
-            return PropertyDescriptorCollection.Empty;
-        }
-
-        public object GetPropertyOwner(PropertyDescriptor pd)
-        {
-            return null;
+            return mKeyValuePairs.GetEnumerator();
         }
 
         #endregion

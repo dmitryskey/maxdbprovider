@@ -25,101 +25,116 @@ using MaxDB.Data.MaxDBProtocol;
 namespace MaxDB.Data
 {
     [System.ComponentModel.DesignerCategory("Code")]
-	public sealed class MaxDBDataAdapter : DbDataAdapter, IDbDataAdapter
-	{
-		private MaxDBCommand m_selectCommand;
-		private MaxDBCommand m_insertCommand;
-		private MaxDBCommand m_updateCommand;
-		private MaxDBCommand m_deleteCommand;
+    public sealed class MaxDBDataAdapter : DbDataAdapter, IDbDataAdapter
+    {
+        private MaxDBCommand cmdSelect;
+        private MaxDBCommand cmdInsert;
+        private MaxDBCommand cmdUpdate;
+        private MaxDBCommand cmdDelete;
 
 #if NET20
-        private int m_batchUpdSize = 0;
-        private MaxDBCommand m_batchInsertCmd;
-        private MaxDBCommand m_batchUpdateCmd;
-        private MaxDBCommand m_batchDeleteCmd;
-        private List<MaxDBParameterCollection> m_batchInsertParams = new List<MaxDBParameterCollection>();
-        private List<MaxDBParameterCollection> m_batchUpdateParams = new List<MaxDBParameterCollection>();
-        private List<MaxDBParameterCollection> m_batchDeleteParams = new List<MaxDBParameterCollection>();
-        private StatementType m_currentType = StatementType.Select;
+        private int batUpdateSize;
+        private MaxDBCommand batInsertCmd;
+        private MaxDBCommand batUpdateCmd;
+        private MaxDBCommand batDeleteCmd;
+        private List<MaxDBParameterCollection> lstInsertParams = new List<MaxDBParameterCollection>();
+        private List<MaxDBParameterCollection> lstUpdateParams = new List<MaxDBParameterCollection>();
+        private List<MaxDBParameterCollection> lstDeleteParams = new List<MaxDBParameterCollection>();
+        private StatementType stCurrentType = StatementType.Select;
 #endif // NET20
 
-		static private readonly object EventRowUpdated = new object(); 
-		static private readonly object EventRowUpdating = new object(); 
+        static private readonly object EventRowUpdated = new object();
+        static private readonly object EventRowUpdating = new object();
 
-		public MaxDBDataAdapter()
-		{
-		}
+        public MaxDBDataAdapter()
+        {
+        }
 
-		public MaxDBDataAdapter(MaxDBCommand selectCommand)
-		{
-            m_selectCommand = selectCommand;
-		}
+        public MaxDBDataAdapter(MaxDBCommand selectCommand)
+        {
+            cmdSelect = selectCommand;
+        }
 
-		public MaxDBDataAdapter(string selectCmdText, MaxDBConnection connection) 
-		{
-			m_selectCommand = new MaxDBCommand(selectCmdText, connection);
-		}
+        public MaxDBDataAdapter(string selectCmdText, MaxDBConnection connection)
+        {
+            cmdSelect = new MaxDBCommand(selectCmdText, connection);
+        }
 
-		public MaxDBDataAdapter(string selectCmdText, string selectConnString) 
-		{
-			m_selectCommand = new MaxDBCommand(selectCmdText, new MaxDBConnection(selectConnString));
-		}
+        public MaxDBDataAdapter(string selectCmdText, string connectionString)
+        {
+            cmdSelect = new MaxDBCommand(selectCmdText, new MaxDBConnection(connectionString));
+        }
 
-		/*
-		 * Implement abstract methods inherited from DbDataAdapter.
-		 */
-		override protected RowUpdatedEventArgs CreateRowUpdatedEvent(DataRow dataRow, IDbCommand command, StatementType statementType, DataTableMapping tableMapping)
-		{
-			return new MaxDBRowUpdatedEventArgs(dataRow, command, statementType, tableMapping);
-		}
+        /*
+         * Implement abstract methods inherited from DbDataAdapter.
+         */
+        override protected RowUpdatedEventArgs CreateRowUpdatedEvent(DataRow dataRow, IDbCommand command, StatementType statementType, DataTableMapping tableMapping)
+        {
+            return new MaxDBRowUpdatedEventArgs(dataRow, command, statementType, tableMapping);
+        }
 
-		override protected RowUpdatingEventArgs CreateRowUpdatingEvent(DataRow dataRow, IDbCommand command, StatementType statementType, DataTableMapping tableMapping)
-		{
-			return new MaxDBRowUpdatingEventArgs(dataRow, command, statementType, tableMapping);
-		}
+        override protected RowUpdatingEventArgs CreateRowUpdatingEvent(DataRow dataRow, IDbCommand command, StatementType statementType, DataTableMapping tableMapping)
+        {
+            return new MaxDBRowUpdatingEventArgs(dataRow, command, statementType, tableMapping);
+        }
 
-		override protected void OnRowUpdating(RowUpdatingEventArgs value)
-		{
+        override protected void OnRowUpdating(RowUpdatingEventArgs value)
+        {
 #if NET20
-            m_currentType = value.StatementType;
+            stCurrentType = value.StatementType;
+            EventHandler<MaxDBRowUpdatingEventArgs> handler = (EventHandler<MaxDBRowUpdatingEventArgs>) Events[EventRowUpdating];
+#else
+            MaxDBRowUpdatingEventHandler handler = (MaxDBRowUpdatingEventHandler) Events[EventRowUpdating];
 #endif // NET20
-			MaxDBRowUpdatingEventHandler handler = (MaxDBRowUpdatingEventHandler) Events[EventRowUpdating];
-			if ((null != handler) && (value is MaxDBRowUpdatingEventArgs)) 
-				handler(this, (MaxDBRowUpdatingEventArgs) value);
-		}
 
-		override protected void OnRowUpdated(RowUpdatedEventArgs value)
-		{
-			MaxDBRowUpdatedEventHandler handler = (MaxDBRowUpdatedEventHandler) Events[EventRowUpdated];
-			if ((null != handler) && (value is MaxDBRowUpdatedEventArgs)) 
-				handler(this, (MaxDBRowUpdatedEventArgs) value);
-		}
+            if ((null != handler) && (value.GetType() == typeof(MaxDBRowUpdatingEventArgs)))
+                handler(this, (MaxDBRowUpdatingEventArgs)value);
+        }
 
-		public event MaxDBRowUpdatingEventHandler RowUpdating
-		{
-			add 
-			{ 
-				Events.AddHandler(EventRowUpdating, value); 
-			}
-			remove 
-			{ 
-				Events.RemoveHandler(EventRowUpdating, value); 
-			}
-		}
+        override protected void OnRowUpdated(RowUpdatedEventArgs value)
+        {
+#if NET20
+            EventHandler<MaxDBRowUpdatedEventArgs> handler = (EventHandler<MaxDBRowUpdatedEventArgs>)Events[EventRowUpdated];
+#else
+            MaxDBRowUpdatedEventHandler handler = (MaxDBRowUpdatedEventHandler)Events[EventRowUpdated];
+#endif // NET20
+            if ((null != handler) && (value.GetType() == typeof(MaxDBRowUpdatedEventArgs)))
+                handler(this, (MaxDBRowUpdatedEventArgs)value);
+        }
 
-		public event MaxDBRowUpdatedEventHandler RowUpdated
-		{
-			add 
-			{ 
-				Events.AddHandler(EventRowUpdated, value); 
-			}
-			remove 
-			{ 
-				Events.RemoveHandler(EventRowUpdated, value); 
-			}
-		}
+#if NET20
+        public event EventHandler<MaxDBRowUpdatingEventArgs> RowUpdating
+#else
+        public event MaxDBRowUpdatingEventHandler RowUpdating
+#endif // NET20
+        {
+            add
+            {
+                Events.AddHandler(EventRowUpdating, value);
+            }
+            remove
+            {
+                Events.RemoveHandler(EventRowUpdating, value);
+            }
+        }
 
-		#region IDbDataAdapter Members
+#if NET20
+        public event EventHandler<MaxDBRowUpdatedEventArgs> RowUpdated
+#else
+        public event MaxDBRowUpdatedEventHandler RowUpdated
+#endif // NET20
+        {
+            add
+            {
+                Events.AddHandler(EventRowUpdated, value);
+            }
+            remove
+            {
+                Events.RemoveHandler(EventRowUpdated, value);
+            }
+        }
+
+        #region IDbDataAdapter Members
 
 #if NET20
         public new MaxDBCommand UpdateCommand
@@ -127,27 +142,27 @@ namespace MaxDB.Data
 		public MaxDBCommand UpdateCommand
 #endif  // NET20
         {
-			get 
-			{ 
-				return m_updateCommand; 
-			}
-			set 
-			{ 
-				m_updateCommand = value; 
-			}
-		}
+            get
+            {
+                return cmdUpdate;
+            }
+            set
+            {
+                cmdUpdate = value;
+            }
+        }
 
-		IDbCommand IDbDataAdapter.UpdateCommand
-		{
-			get 
-			{ 
-				return UpdateCommand; 
-			}
-			set 
-			{ 
-				UpdateCommand = (MaxDBCommand)value; 
-			}
-		}
+        IDbCommand IDbDataAdapter.UpdateCommand
+        {
+            get
+            {
+                return UpdateCommand;
+            }
+            set
+            {
+                UpdateCommand = (MaxDBCommand)value;
+            }
+        }
 
 #if NET20
         public new MaxDBCommand SelectCommand
@@ -155,27 +170,27 @@ namespace MaxDB.Data
 		public MaxDBCommand SelectCommand
 #endif // NET20
         {
-			get 
-			{ 
-				return m_selectCommand; 
-			}
-			set 
-			{ 
-				m_selectCommand = value; 
-			}
-		}
+            get
+            {
+                return cmdSelect;
+            }
+            set
+            {
+                cmdSelect = value;
+            }
+        }
 
-		IDbCommand IDbDataAdapter.SelectCommand
-		{
-			get
-			{
-				return SelectCommand;
-			}
-			set
-			{
-				SelectCommand = (MaxDBCommand)value; 
-			}
-		}
+        IDbCommand IDbDataAdapter.SelectCommand
+        {
+            get
+            {
+                return SelectCommand;
+            }
+            set
+            {
+                SelectCommand = (MaxDBCommand)value;
+            }
+        }
 
 #if NET20
         public new MaxDBCommand DeleteCommand
@@ -183,27 +198,27 @@ namespace MaxDB.Data
 		public MaxDBCommand DeleteCommand
 #endif // NET20
         {
-			get 
-			{ 
-				return m_deleteCommand; 
-			}
-			set 
-			{ 
-				m_deleteCommand = value; 
-			}
-		}
+            get
+            {
+                return cmdDelete;
+            }
+            set
+            {
+                cmdDelete = value;
+            }
+        }
 
-		IDbCommand IDbDataAdapter.DeleteCommand
-		{
-			get 
-			{ 
-				return DeleteCommand; 
-			}
-			set 
-			{ 
-				DeleteCommand = (MaxDBCommand)value; 
-			}
-		}
+        IDbCommand IDbDataAdapter.DeleteCommand
+        {
+            get
+            {
+                return DeleteCommand;
+            }
+            set
+            {
+                DeleteCommand = (MaxDBCommand)value;
+            }
+        }
 
 #if NET20
         public new MaxDBCommand InsertCommand
@@ -211,39 +226,39 @@ namespace MaxDB.Data
 		public MaxDBCommand InsertCommand
 #endif // NET20
         {
-			get 
-			{ 
-				return m_insertCommand; 
-			}
-			set 
-			{ 
-				m_insertCommand = value; 
-			}
-		}
+            get
+            {
+                return cmdInsert;
+            }
+            set
+            {
+                cmdInsert = value;
+            }
+        }
 
-		IDbCommand IDbDataAdapter.InsertCommand
-		{
-			get 
-			{ 
-				return InsertCommand; 
-			}
-			set 
-			{ 
-				InsertCommand = (MaxDBCommand)value; 
-			}
-		}
-    	#endregion
+        IDbCommand IDbDataAdapter.InsertCommand
+        {
+            get
+            {
+                return InsertCommand;
+            }
+            set
+            {
+                InsertCommand = (MaxDBCommand)value;
+            }
+        }
+        #endregion
 
 #if NET20
         public override int UpdateBatchSize
         {
             get
             {
-                return m_batchUpdSize;
+                return batUpdateSize;
             }
             set
             {
-                m_batchUpdSize = value; 
+                batUpdateSize = value;
             }
         }
 
@@ -253,64 +268,65 @@ namespace MaxDB.Data
 
         protected override void TerminateBatching()
         {
-            if (m_batchInsertCmd != null)
-                m_batchInsertCmd.Cancel();
-            if (m_batchUpdateCmd != null)
-                m_batchUpdateCmd.Cancel();
-            if (m_batchDeleteCmd != null)
-                m_batchDeleteCmd.Cancel();
+            if (batInsertCmd != null)
+                batInsertCmd.Cancel();
+            if (batUpdateCmd != null)
+                batUpdateCmd.Cancel();
+            if (batDeleteCmd != null)
+                batDeleteCmd.Cancel();
         }
 
         protected override int AddToBatch(IDbCommand command)
         {
-            if (m_currentType == StatementType.Insert)
+            MaxDBCommand addCommand = (MaxDBCommand)command;
+            switch (stCurrentType)
             {
-                m_batchInsertCmd = (MaxDBCommand)command;
-                m_batchInsertParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
+                case StatementType.Insert:
+                    batInsertCmd = addCommand;
+                    lstInsertParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
+                    break;
+                case StatementType.Update:
+                    batUpdateCmd = addCommand;
+                    lstUpdateParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
+                    break;
+                case StatementType.Delete:
+                    batDeleteCmd = addCommand;
+                    lstDeleteParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
+                    break;
+                default:
+                    break;
             }
 
-            if (m_currentType == StatementType.Update)
-            {
-                m_batchUpdateCmd = (MaxDBCommand)command;
-                m_batchUpdateParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
-            }
-
-            if (m_currentType == StatementType.Delete)
-            {
-                m_batchDeleteCmd = (MaxDBCommand)command;
-                m_batchDeleteParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
-            }
-
-            return m_batchInsertParams.Count + m_batchUpdateParams.Count + m_batchDeleteParams.Count - 1;
+            return lstInsertParams.Count + lstUpdateParams.Count + lstDeleteParams.Count - 1;
         }
 
         protected override void ClearBatch()
         {
-            m_batchInsertCmd = null;
-            m_batchUpdateCmd = null;
-            m_batchDeleteCmd = null;
-            m_batchInsertParams.Clear();
-            m_batchUpdateParams.Clear();
-            m_batchDeleteParams.Clear();
+            batInsertCmd = null;
+            batUpdateCmd = null;
+            batDeleteCmd = null;
+            lstInsertParams.Clear();
+            lstUpdateParams.Clear();
+            lstDeleteParams.Clear();
         }
 
         protected override int ExecuteBatch()
         {
             int rowAffected = 0;
-            if (m_batchInsertCmd != null)
+            if (batInsertCmd != null)
             {
-                m_batchInsertCmd.ExecuteBatch(m_batchInsertParams.ToArray());
-                rowAffected += m_batchInsertCmd.m_rowsAffected;
+                batInsertCmd.ExecuteBatch(lstInsertParams.ToArray());
+                rowAffected += batInsertCmd.iRowsAffected;
             }
-            if (m_batchUpdateCmd != null)
+            if (batUpdateCmd != null)
             {
-                m_batchUpdateCmd.ExecuteBatch(m_batchUpdateParams.ToArray());
-                rowAffected += m_batchUpdateCmd.m_rowsAffected;
+                batUpdateCmd.ExecuteBatch(lstUpdateParams.ToArray());
+                rowAffected += batUpdateCmd.iRowsAffected;
             }
-            if (m_batchDeleteCmd != null)
+            if (batDeleteCmd != null)
             {
-                m_batchDeleteCmd.ExecuteBatch(m_batchDeleteParams.ToArray());
-                rowAffected += m_batchDeleteCmd.m_rowsAffected;
+                batDeleteCmd.ExecuteBatch(lstDeleteParams.ToArray());
+                rowAffected += batDeleteCmd.iRowsAffected;
             }
             return rowAffected;
         }
@@ -318,45 +334,47 @@ namespace MaxDB.Data
 
     }
 
+#if !NET20
 	public delegate void MaxDBRowUpdatingEventHandler(object sender, MaxDBRowUpdatingEventArgs e);
 	public delegate void MaxDBRowUpdatedEventHandler(object sender, MaxDBRowUpdatedEventArgs e);
+#endif
 
-	public class MaxDBRowUpdatingEventArgs : RowUpdatingEventArgs
-	{
-		public MaxDBRowUpdatingEventArgs(DataRow row, IDbCommand command, StatementType statementType, DataTableMapping tableMapping) 
-			: base(row, command, statementType, tableMapping) 
-		{
-		}
+    public class MaxDBRowUpdatingEventArgs : RowUpdatingEventArgs
+    {
+        public MaxDBRowUpdatingEventArgs(DataRow row, IDbCommand command, StatementType statementType, DataTableMapping tableMapping)
+            : base( row, command, statementType, tableMapping)
+        {
+        }
 
-		// Hide the inherited implementation of the command property.
-		new public MaxDBCommand Command
-		{
-			get  
-			{ 
-				return (MaxDBCommand)base.Command; 
-			}
-			set  
-			{ 
-				base.Command = value; 
-			}
-		}
-	}
+        // Hide the inherited implementation of the command property.
+        new public MaxDBCommand Command
+        {
+            get
+            {
+                return (MaxDBCommand)base.Command;
+            }
+            set
+            {
+                base.Command = value;
+            }
+        }
+    }
 
-	public class MaxDBRowUpdatedEventArgs : RowUpdatedEventArgs
-	{
-		public MaxDBRowUpdatedEventArgs(DataRow row, IDbCommand command, StatementType statementType, DataTableMapping tableMapping)
-			: base(row, command, statementType, tableMapping) 
-		{
-		}
+    public class MaxDBRowUpdatedEventArgs : RowUpdatedEventArgs
+    {
+        public MaxDBRowUpdatedEventArgs(DataRow row, IDbCommand command, StatementType statementType, DataTableMapping tableMapping)
+            : base( row, command, statementType, tableMapping)
+        {
+        }
 
-		// Hide the inherited implementation of the command property.
-		new public MaxDBCommand Command
-		{
-			get  
-			{ 
-				return (MaxDBCommand)base.Command; 
-			}
-		}
-	}
+        // Hide the inherited implementation of the command property.
+        new public MaxDBCommand Command
+        {
+            get
+            {
+                return (MaxDBCommand)base.Command;
+            }
+        }
+    }
 }
 

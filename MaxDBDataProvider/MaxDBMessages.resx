@@ -117,306 +117,328 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="error_connection_notopened" xml:space="preserve">
+  <data name="connection_notopened" xml:space="preserve">
     <value>Connection is not opened.</value>
   </data>
-  <data name="error_valueoverflow" xml:space="preserve">
+  <data name="valueoverflow" xml:space="preserve">
     <value>Parameter {0}: value too large.</value>
     <comment>{0} - position of parameter</comment>
   </data>
-  <data name="error_databaseexception" xml:space="preserve">
+  <data name="databaseexception" xml:space="preserve">
     <value>[{0}] (at {1}): {2}</value>
     <comment>{0} - vendor code, {1} - error position, {2} - reason (localized)</comment>
   </data>
-  <data name="error_databaseexception_woerrpos" xml:space="preserve">
+  <data name="databaseexception_woerrpos" xml:space="preserve">
     <value>[{0}]: {1}</value>
     <comment>{0} - vendor code, {1} - reason (localized)</comment>
   </data>
-  <data name="error_invalid_columnindex" xml:space="preserve">
+  <data name="invalid_columnindex" xml:space="preserve">
     <value>Invalid column index {0}.</value>
     <comment>{0} - the column index</comment>
   </data>
-  <data name="error_invalid_columnname" xml:space="preserve">
+  <data name="invalid_columnname" xml:space="preserve">
     <value>Invalid column {0}.</value>
     <comment>{0} - the column name</comment>
   </data>
-  <data name="error_objectisclosed" xml:space="preserve">
+  <data name="objectisclosed" xml:space="preserve">
     <value>Object is closed.</value>
   </data>
-  <data name="error_timeout" xml:space="preserve">
+  <data name="timeout" xml:space="preserve">
     <value>Timeout</value>
   </data>
   <data name="error" xml:space="preserve">
     <value>Error</value>
   </data>
-  <data name="error_longdata_expected" xml:space="preserve">
-    <value>Expected a longdata part as reply to getval.</value>
+  <data name="longdata_expected" xml:space="preserve">
+    <value>Expected a long data part as reply to get value.</value>
   </data>
-  <data name="error_conversion_sqlnet" xml:space="preserve">
-    <value>Cannot convert SQL type {0} to _NET type {1}.</value>
+  <data name="conversion_sqlnet" xml:space="preserve">
+    <value>Cannot convert SQL type {0} to .NET type {1}.</value>
     <comment>{0} - SQL type, {1} - _NET type</comment>
   </data>
-  <data name="error_conversion_netsql" xml:space="preserve">
-    <value>Cannot convert _NET type {0} to SQL type {1}.</value>
+  <data name="conversion_netsql" xml:space="preserve">
+    <value>Cannot convert .NET type {0} to SQL type {1}.</value>
     <comment>{0} - _NET type, {1} - SQL type</comment>
   </data>
-  <data name="error_conversion_data" xml:space="preserve">
+  <data name="conversion_data" xml:space="preserve">
     <value>Cannot convert data {0} to type {1}.</value>
     <comment>{0} - Data, {1} - Type</comment>
   </data>
   <data name="unknowntype" xml:space="preserve">
     <value>&lt;unknown&gt;</value>
   </data>
-  <data name="error_conversion_VDNnumber" xml:space="preserve">
+  <data name="conversion_VDNnumber" xml:space="preserve">
     <value>Cannot convert VDN number [{0}].</value>
     <comment>{0} - _NET type</comment>
   </data>
-  <data name="error_conversion_SpecialNullValue" xml:space="preserve">
+  <data name="conversion_SpecialNullValue" xml:space="preserve">
     <value>Result of arithmetic operation leads to an overflow or a division by 0.</value>
   </data>
-  <data name="error_movebackwardinblob" xml:space="preserve">
+  <data name="movebackwardinblob" xml:space="preserve">
     <value>Moving backwards in Blob is not supported.</value>
   </data>
-  <data name="error_asciireadfromlong" xml:space="preserve">
+  <data name="asciireadfromlong" xml:space="preserve">
     <value>Cannot read ASCII data from this LONG column.</value>
   </data>
-  <data name="error_binaryreadfromlong" xml:space="preserve">
+  <data name="binaryreadfromlong" xml:space="preserve">
     <value>Cannot read binary data from this LONG column.</value>
   </data>
-  <data name="error_asciiputtolong" xml:space="preserve">
+  <data name="asciiputtolong" xml:space="preserve">
     <value>Cannot put ASCII data into this LONG column.</value>
   </data>
-  <data name="error_binaryputtolong" xml:space="preserve">
+  <data name="binaryputtolong" xml:space="preserve">
     <value>Cannot put binary data into this LONG column.</value>
   </data>
-  <data name="error_sqlstatement_null" xml:space="preserve">
+  <data name="sqlstatement_null" xml:space="preserve">
     <value>SQL statement is null.</value>
   </data>
-  <data name="error_columnvalue_null" xml:space="preserve">
+  <data name="columnvalue_null" xml:space="preserve">
     <value>Failed to get the value since column's value is NULL</value>
   </data>
-  <data name="error_adapter_null" xml:space="preserve">
+  <data name="adapter_null" xml:space="preserve">
     <value>Data adapter is null.</value>
   </data>
-  <data name="error_select_null" xml:space="preserve">
+  <data name="select_null" xml:space="preserve">
     <value>Select command is null.</value>
   </data>
-  <data name="error_basetable_notfound" xml:space="preserve">
-    <value>Base table name is not found_ Propably FOR UPDATE suffix is not specified.</value>
+  <data name="basetable_notfound" xml:space="preserve">
+    <value>Base table name is not found. Probably FOR UPDATE suffix is not specified.</value>
   </data>
-  <data name="error_sqlstatement_toolong" xml:space="preserve">
-    <value>SQL statement is too long_ Increase the DB parameter PACKET_SIZE.</value>
+  <data name="sqlstatement_toolong" xml:space="preserve">
+    <value>SQL statement is too long. Increase the DB parameter PACKET_SIZE.</value>
   </data>
-  <data name="error_missinginout" xml:space="preserve">
-    <value>IN or OUT param missing at position {0}.</value>
+  <data name="missinginout" xml:space="preserve">
+    <value>IN or OUT parameter missing at position {0}.</value>
     <comment>{0} - parameter position (number)</comment>
   </data>
-  <data name="error_sqlstatement_resultset" xml:space="preserve">
+  <data name="sqlstatement_resultset" xml:space="preserve">
     <value>SQL statement would generate a result set.</value>
   </data>
-  <data name="error_sqlcommand_noresultset" xml:space="preserve">
+  <data name="sqlcommand_noresultset" xml:space="preserve">
     <value>SQL command doesn't return a result set.</value>
   </data>
-  <data name="error_colindex_notfound" xml:space="preserve">
+  <data name="colindex_notfound" xml:space="preserve">
     <value>Column index {0} was not found.</value>
     <comment>{0} - the column index (number)</comment>
   </data>
-  <data name="error_colname_notfound" xml:space="preserve">
+  <data name="colname_notfound" xml:space="preserve">
     <value>Column name {0} was not found.</value>
     <comment>{0} - the column name</comment>
   </data>
-  <data name="error_sqlstatement_noprocedure" xml:space="preserve">
+  <data name="sqlstatement_noprocedure" xml:space="preserve">
     <value>SQL statement does not call a DB procedure.</value>
   </data>
-  <data name="error_special_number_unsupported" xml:space="preserve">
+  <data name="special_number_unsupported" xml:space="preserve">
     <value>The number value {0} is not supported.</value>
     <comment>{0} - the NaN or INF value</comment>
   </data>
-  <data name="error_nouser" xml:space="preserve">
+  <data name="nouser" xml:space="preserve">
     <value>No user name given.</value>
   </data>
-  <data name="error_nopassword" xml:space="preserve">
+  <data name="nopassword" xml:space="preserve">
     <value>No password given.</value>
   </data>
-  <data name="error_invalidpassword" xml:space="preserve">
+  <data name="invalidpassword" xml:space="preserve">
     <value>The password is invalid.</value>
   </data>
-  <data name="error_nodata_found" xml:space="preserve">
+  <data name="nodata_found" xml:space="preserve">
     <value>No data found.</value>
   </data>
-  <data name="error_invalid_datatype" xml:space="preserve">
+  <data name="invalid_datatype" xml:space="preserve">
     <value>Invalid data type.</value>
   </data>
-  <data name="error_unknown_datatype" xml:space="preserve">
+  <data name="unknown_datatype" xml:space="preserve">
     <value>Unknown data type.</value>
   </data>
-  <data name="error_resultset_beforefirst" xml:space="preserve">
+  <data name="resultset_beforefirst" xml:space="preserve">
     <value>Result set is positioned before first row.</value>
   </data>
-  <data name="error_resultset_afterlast" xml:space="preserve">
+  <data name="resultset_afterlast" xml:space="preserve">
     <value>Result set is positioned after last row.</value>
   </data>
-  <data name="error_unnamed_parameter" xml:space="preserve">
+  <data name="unnamed_parameter" xml:space="preserve">
     <value>Parameter must be named.</value>
   </data>
-  <data name="error_no_columnnames" xml:space="preserve">
+  <data name="no_columnnames" xml:space="preserve">
     <value>Could not get column names from database kernel.</value>
   </data>
-  <data name="error_internal_connectionnull" xml:space="preserve">
+  <data name="internal_connectionnull" xml:space="preserve">
     <value>Internal error: connection field is null, but should not.</value>
   </data>
-  <data name="error_internal_unexpectedinput" xml:space="preserve">
+  <data name="internal_unexpectedinput" xml:space="preserve">
     <value>Internal error: input parameter at index {0} was not expected.</value>
   </data>
-  <data name="error_internal_unexpectedoutput" xml:space="preserve">
+  <data name="internal_unexpectedoutput" xml:space="preserve">
     <value>Internal error: output parameter at index {0} was not expected.</value>
   </data>
-  <data name="error_internal_invalidParseid" xml:space="preserve">
+  <data name="internal_invalidParseid" xml:space="preserve">
     <value>Internal error: parse id is null.</value>
   </data>
-  <data name="error_host_connect" xml:space="preserve">
+  <data name="host_connect" xml:space="preserve">
     <value>Cannot connect to host {0}:{1}.</value>
     <comment>{0} - host name, {1} - port name</comment>
   </data>
-  <data name="error_recv_connect" xml:space="preserve">
+  <data name="recv_connect" xml:space="preserve">
     <value>Receive of connect failed.</value>
   </data>
-  <data name="error_connectreply_garbled" xml:space="preserve">
+  <data name="connectreply_garbled" xml:space="preserve">
     <value>Reply is garbled.</value>
   </data>
-  <data name="error_chunkoverflow" xml:space="preserve">
+  <data name="chunkoverflow" xml:space="preserve">
     <value>Read {0} bytes at position {1} in buffer of length {2}.</value>
     <comment>{0} - bytes still to read (number), {1} - read bytes (number), {2} - buffer length (number)</comment>
   </data>
-  <data name="error_admin_reconnect" xml:space="preserve">
+  <data name="admin_reconnect" xml:space="preserve">
     <value>Reconnect for admin session not supported.</value>
   </data>
-  <data name="error_stream_ioexception" xml:space="preserve">
+  <data name="stream_ioexception" xml:space="preserve">
     <value>IO Exception in stream read: {0}</value>
   </data>
-  <data name="error_stream_conversion_string" xml:space="preserve">
+  <data name="streamconversion_string" xml:space="preserve">
     <value>Character data argument cannot be converted to binary/structured stream.</value>
   </data>
-  <data name="error_stream_conversion_bytes" xml:space="preserve">
+  <data name="streamconversion_bytes" xml:space="preserve">
     <value>Binary data argument cannot be converted to character/structured stream.</value>
   </data>
-  <data name="error_stream_isatend" xml:space="preserve">
+  <data name="streamisatend" xml:space="preserve">
     <value>Stream is empty or already closed.</value>
   </data>
-  <data name="error_conversion_structuretype" xml:space="preserve">
+  <data name="conversion_structuretype" xml:space="preserve">
     <value>Structure member {0} has unsupported data type {1}.</value>
   </data>
-  <data name="error_structure_arraywronglength" xml:space="preserve">
+  <data name="structure_arraywronglength" xml:space="preserve">
     <value>Number of items in input and structure do not match (required {0}, input was {1}).</value>
   </data>
-  <data name="error_structure_element_null" xml:space="preserve">
+  <data name="structure_element_null" xml:space="preserve">
     <value>Input structure element #{0} is null.</value>
   </data>
-  <data name="error_structure_element_conversion" xml:space="preserve">
+  <data name="structure_element_conversion" xml:space="preserve">
     <value>Conversion of structure element of type {0} from {1} is not possible.</value>
   </data>
-  <data name="error_structure_element_overflow" xml:space="preserve">
+  <data name="structure_element_overflow" xml:space="preserve">
     <value>Conversion of structure element of type {0} failed (overflow), value was {1}.</value>
   </data>
-  <data name="error_invalid_startposition" xml:space="preserve">
+  <data name="invalid_startposition" xml:space="preserve">
     <value>Internal error: Invalid start position for LONG data.</value>
   </data>
-  <data name="error_fetch_nodatapart" xml:space="preserve">
+  <data name="fetch_nodatapart" xml:space="preserve">
     <value>Fetch operation delivered no data part.</value>
   </data>
-  <data name="error_connection_wrongserverchallengereceived" xml:space="preserve">
+  <data name="connection_wrongserverchallengereceived" xml:space="preserve">
     <value>Connect failed, wrong format of server challenge [{0}] </value>
   </data>
-  <data name="error_connection_challengeresponsenotsupported" xml:space="preserve">
+  <data name="connection_challengeresponsenotsupported" xml:space="preserve">
     <value>Secure connect using challenge response authentication is not supported</value>
   </data>
-  <data name="commerror_ok" xml:space="preserve">
+  <data name="commok" xml:space="preserve">
     <value>OK</value>
   </data>
-  <data name="commerror_connectiondown" xml:space="preserve">
+  <data name="commconnectiondown" xml:space="preserve">
     <value>Connection down, session released</value>
   </data>
-  <data name="commerror_tasklimit" xml:space="preserve">
+  <data name="commtasklimit" xml:space="preserve">
     <value>Task limit</value>
   </data>
-  <data name="commerror_timeout" xml:space="preserve">
+  <data name="commtimeout" xml:space="preserve">
     <value>Time out</value>
   </data>
-  <data name="commerror_crash" xml:space="preserve">
+  <data name="commcrash" xml:space="preserve">
     <value>Crash</value>
   </data>
-  <data name="commerror_restartrequired" xml:space="preserve">
+  <data name="commrestartrequired" xml:space="preserve">
     <value>Restart required</value>
   </data>
-  <data name="commerror_shutdown" xml:space="preserve">
+  <data name="commshutdown" xml:space="preserve">
     <value>Shutdown</value>
   </data>
-  <data name="commerror_sendlinedown" xml:space="preserve">
+  <data name="commsendlinedown" xml:space="preserve">
     <value>Send line down</value>
   </data>
-  <data name="commerror_recvlinedown" xml:space="preserve">
+  <data name="commrecvlinedown" xml:space="preserve">
     <value>Receive line down</value>
   </data>
-  <data name="commerror_packetlimit" xml:space="preserve">
+  <data name="commpacketlimit" xml:space="preserve">
     <value>Packet limit</value>
   </data>
-  <data name="commerror_released" xml:space="preserve">
+  <data name="commreleased" xml:space="preserve">
     <value>Released</value>
   </data>
-  <data name="commerror_wouldblock" xml:space="preserve">
+  <data name="commwouldblock" xml:space="preserve">
     <value>Would block</value>
   </data>
-  <data name="commerror_unknownrequest" xml:space="preserve">
+  <data name="communknownrequest" xml:space="preserve">
     <value>Unknown request</value>
   </data>
-  <data name="commerror_serverdbunknown" xml:space="preserve">
+  <data name="commserverdbunknown" xml:space="preserve">
     <value>Server or DB unknown</value>
   </data>
-  <data name="error_exec_failed" xml:space="preserve">
+  <data name="exec_failed" xml:space="preserve">
     <value>Execution failed</value>
   </data>
-  <data name="error_getobject_failed" xml:space="preserve">
+  <data name="getobject_failed" xml:space="preserve">
     <value>getObject function failed</value>
   </data>
-  <data name="error_dbnull_unknown" xml:space="preserve">
+  <data name="dbnull_unknown" xml:space="preserve">
     <value>Column nullable unknown</value>
   </data>
-  <data name="error_param_trunc" xml:space="preserve">
+  <data name="parameter_truncated" xml:space="preserve">
     <value>Parameter truncated</value>
   </data>
-  <data name="error_oms_unsupported" xml:space="preserve">
+  <data name="oms_unsupported" xml:space="preserve">
     <value>OMS stream object is not supported</value>
   </data>
-  <data name="error_tabledirect_unsupported" xml:space="preserve">
+  <data name="tabledirect_unsupported" xml:space="preserve">
     <value>TableDirect parameter is not supported</value>
   </data>
-  <data name="error_statement_cancelled" xml:space="preserve">
+  <data name="statement_cancelled" xml:space="preserve">
     <value>SQL statement cancelled.</value>
   </data>
-  <data name="error_ssl_certificate" xml:space="preserve">
+  <data name="ssl_certificate" xml:space="preserve">
     <value>Certificate error:</value>
   </data>
-  <data name="error_connection_isolationlevel" xml:space="preserve">
+  <data name="connection_isolationlevel" xml:space="preserve">
     <value>Can not set isolation level</value>
   </data>
-  <data name="error_fetch_data" xml:space="preserve">
+  <data name="fetch_data" xml:space="preserve">
     <value>Fetch data error</value>
   </data>
-  <data name="error_columnname_buffer" xml:space="preserve">
+  <data name="columnname_buffer" xml:space="preserve">
     <value>Can not allocate buffer for the column name</value>
   </data>
-  <data name="error_batchprocout" xml:space="preserve">
+  <data name="batchprocout" xml:space="preserve">
     <value>Called DB procedure in batch contained OUT or INOUT parameters.</value>
   </data>
-  <data name="error_batchresultset" xml:space="preserve">
+  <data name="batchresultset" xml:space="preserve">
     <value>SQL statement in batch would create a result set.</value>
   </data>
-  <data name="error_batchresultset_withnumber" xml:space="preserve">
+  <data name="batchresultset_withnumber" xml:space="preserve">
     <value>Batch command number {0} generates a result set</value>
     <comment>{0} - command number</comment>
   </data>
-  <data name="error_batchmissingin" xml:space="preserve">
+  <data name="batchmissingin" xml:space="preserve">
     <value>Missing IN/INOUT parameter at row {0} and position {1}.</value>
     <comment>{0} - row number (number), {1} - position (number)</comment>
+  </data>
+  <data name="parameter_null" xml:space="preserve">
+    <value>Parameter {0} is null.</value>
+    <comment>{0} - parameter name</comment>
+  </data>
+  <data name="index_outofrange" xml:space="preserve">
+    <value>Index {0} is out of range</value>
+    <comment>{0} - position of index</comment>
+  </data>
+  <data name="bigint_overflow" xml:space="preserve">
+    <value>Overflow in {0}.</value>
+    <comment>{0} - operator</comment>
+  </data>
+  <data name="bigint_radix_overflow" xml:space="preserve">
+    <value>Radix must be between 2 and 36</value>
+  </data>
+  <data name="bigint_underflow" xml:space="preserve">
+    <value>Underflow in {0}.</value>
+    <comment>{0} - operator</comment>
+  </data>
+  <data name="hash_change_key" xml:space="preserve">
+    <value>Cannot change key during hash operation</value>
   </data>
 </root>

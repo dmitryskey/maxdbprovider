@@ -33,19 +33,19 @@ namespace MaxDB.Data
 #endif
         ,IDataParameterCollection, ICloneable
 	{
-		private MaxDBParameter[] m_collection = new MaxDBParameter[0];
+		private MaxDBParameter[] mCollection = new MaxDBParameter[0];
 
 		#region "IDataParameterCollection implementation"
 
-		object IDataParameterCollection.this[string index]
+		object IDataParameterCollection.this[string parameterName]
 		{
 			get
 			{
-				return this[IndexOf(index)];
+                return this[IndexOf(parameterName)];
 			}
 			set
 			{
-				this[IndexOf(index)] = (MaxDBParameter)value;
+                this[IndexOf(parameterName)] = (MaxDBParameter)value;
 			}
 		}
 
@@ -83,9 +83,9 @@ namespace MaxDB.Data
 			RemoveAt(IndexOf(parameterName));
 		}
 
-		private int _cultureAwareCompare(string strA, string strB)
+		private static int _cultureAwareCompare(string strA, string strB)
 		{
-			return CultureInfo.CurrentCulture.CompareInfo.Compare(strA, strB, CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase);
+			return CultureInfo.InvariantCulture.CompareInfo.Compare(strA, strB, CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase);
 		}
 
 		#endregion
@@ -98,8 +98,13 @@ namespace MaxDB.Data
 		public void CopyTo(Array array, int index)
 #endif // NET20
 		{
-			m_collection.CopyTo(array, index);
+			mCollection.CopyTo(array, index);
 		}
+
+        public void CopyTo(MaxDBParameter[] array, int index)
+        {
+            mCollection.CopyTo(array, index);
+        }
 
 #if NET20
         public override int Count
@@ -109,7 +114,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				return m_collection.Length;
+				return mCollection.Length;
 			}
 		}
 
@@ -121,7 +126,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				return m_collection.IsSynchronized;
+				return mCollection.IsSynchronized;
 			}
 		}
 
@@ -133,7 +138,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				return m_collection.SyncRoot;
+				return mCollection.SyncRoot;
 			}
 		}
 
@@ -147,7 +152,7 @@ namespace MaxDB.Data
 		public IEnumerator GetEnumerator()
 #endif // NET20
         {
-			return m_collection.GetEnumerator();
+			return mCollection.GetEnumerator();
 		}
 
 		#endregion
@@ -155,13 +160,13 @@ namespace MaxDB.Data
 		#region "IList implementation"
 		
 #if NET20
-        public override int Add(object val)
+        public override int Add(object value)
 #else
-		public int Add(object val)
+		public int Add(object value)
 #endif
 		{
-			Add((MaxDBParameter)val);
-			return m_collection.Length - 1;
+			Add((MaxDBParameter)value);
+			return mCollection.Length - 1;
 		}
 
 #if NET20
@@ -170,17 +175,17 @@ namespace MaxDB.Data
 		public void Clear()
 #endif // NET20
 		{
-			m_collection = new MaxDBParameter[0];
+			mCollection = new MaxDBParameter[0];
 		}
 
 #if NET20
-        public override bool Contains(object parameter)
+        public override bool Contains(object value)
 #else
-		public bool Contains(object parameter)
+		public bool Contains(object value)
 #endif // NET20
 		{
-			foreach(MaxDBParameter param in m_collection)
-				if (param == parameter)
+			foreach(MaxDBParameter param in mCollection)
+				if (param == value)
 					return true;
 
 			return false;
@@ -193,27 +198,39 @@ namespace MaxDB.Data
 #endif // NET20
 		{
 #if NET20
-            List<MaxDBParameter> tmp_array = new List<MaxDBParameter>(m_collection);
+            List<MaxDBParameter> tmp_array = new List<MaxDBParameter>(mCollection);
 #else
-            ArrayList tmp_array = new ArrayList(m_collection);
+            ArrayList tmp_array = new ArrayList(mCollection);
 #endif // NET20
 			tmp_array.RemoveAt(index);
-			m_collection = new MaxDBParameter[tmp_array.Count];
-			tmp_array.CopyTo(m_collection);
+			mCollection = new MaxDBParameter[tmp_array.Count];
+			tmp_array.CopyTo(mCollection);
 		}
 
 #if NET20
-        public override int IndexOf(object parameter)
+        public override int IndexOf(object value)
 #else
-		public int IndexOf(object parameter)
+		public int IndexOf(object value)
 #endif // NET20
 		{
-			for (int index = 0; index < m_collection.Length; index++)
-				if (m_collection[index] == parameter)
+			for (int index = 0; index < mCollection.Length; index++)
+				if (mCollection[index] == value)
 					return index;
 
 			return -1;
 		}
+
+        public void Insert(int index, MaxDBParameter value)
+        {
+#if NET20
+            List<MaxDBParameter> tmp_array = new List<MaxDBParameter>(mCollection);
+#else
+            ArrayList tmp_array = new ArrayList(mCollection);
+#endif // NET20
+            tmp_array.Insert(index, (MaxDBParameter)value);
+            mCollection = new MaxDBParameter[tmp_array.Count];
+            tmp_array.CopyTo(mCollection);
+        }
 
 #if NET20
         public override void Insert(int index, object value)
@@ -221,14 +238,7 @@ namespace MaxDB.Data
 		public void Insert(int index, object value)
 #endif // NET20
 		{
-#if NET20
-            List<MaxDBParameter> tmp_array = new List<MaxDBParameter>(m_collection);
-#else
-            ArrayList tmp_array = new ArrayList(m_collection);
-#endif // NET20
-            tmp_array.Insert(index, (MaxDBParameter)value);
-            m_collection = new MaxDBParameter[tmp_array.Count];
-			tmp_array.CopyTo(m_collection);
+            Insert(index, (MaxDBParameter)value);
 		}
 
 #if NET20
@@ -239,7 +249,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				return m_collection.IsFixedSize;
+				return mCollection.IsFixedSize;
 			}
 		}
 
@@ -251,7 +261,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				return m_collection.IsReadOnly;
+				return mCollection.IsReadOnly;
 			}
 		}
 
@@ -261,20 +271,25 @@ namespace MaxDB.Data
 		public void Remove(object value)
 #endif // NET20
 		{
-			int index = ((IList)this).IndexOf(value);
-			if (index >=0)
-				RemoveAt(index);
+            Remove((MaxDBParameter)value);
 		}
+
+        public void Remove(MaxDBParameter value)
+        {
+            int index = ((IList)this).IndexOf(value);
+			if (index >=0)
+			    RemoveAt(index);
+        }
 
 		object IList.this[int index]
 		{
 			get
 			{
-				return m_collection[index];
+				return mCollection[index];
 			}
 			set
 			{
-				m_collection[index] = (MaxDBParameter)value;
+				mCollection[index] = (MaxDBParameter)value;
 			}
 		}
 
@@ -288,26 +303,29 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				return (MaxDBParameter)m_collection[index];
+				return (MaxDBParameter)mCollection[index];
 			}
 			set
 			{
-				m_collection[index] = value;
+				mCollection[index] = value;
 			}
 		}
 
-		public MaxDBParameter Add(MaxDBParameter val)
+		public MaxDBParameter Add(MaxDBParameter value)
 		{
-			if (val.ParameterName != null)
+            if (value == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+
+			if (value.ParameterName != null)
 			{
-				MaxDBParameter[] new_collection = new MaxDBParameter[m_collection.Length + 1];
-				m_collection.CopyTo(new_collection, 0);
-				new_collection[m_collection.Length] = val;
-				m_collection = new_collection;
-				return val;
+				MaxDBParameter[] new_collection = new MaxDBParameter[mCollection.Length + 1];
+				mCollection.CopyTo(new_collection, 0);
+				new_collection[mCollection.Length] = value;
+				mCollection = new_collection;
+				return value;
 			}
 			else
-				throw new ArgumentException(MaxDBMessages.Extract(MaxDBMessages.ERROR_UNNAMED_PARAMETER));
+				throw new ArgumentException(MaxDBMessages.Extract(MaxDBError.UNNAMED_PARAMETER));
 		}
 
 		public MaxDBParameter Add(string parameterName, MaxDBType type)
@@ -315,9 +333,9 @@ namespace MaxDB.Data
 			return Add(new MaxDBParameter(parameterName, type));
 		}
 
-		public MaxDBParameter Add(string parameterName, object val)
+		public MaxDBParameter Add(string parameterName, object value)
 		{
-			return Add(new MaxDBParameter(parameterName, val));
+			return Add(new MaxDBParameter(parameterName, value));
 		}
 
 		public MaxDBParameter Add(string parameterName, MaxDBType dbType, int size)
@@ -331,9 +349,9 @@ namespace MaxDB.Data
 		}
 
 		public MaxDBParameter Add(string parameterName, MaxDBType type, int size, ParameterDirection direction,
-			bool isNullable, byte precision, byte scale, string sourceColumn, DataRowVersion sourceVersion, object val)
+			bool isNullable, byte precision, byte scale, string sourceColumn, DataRowVersion sourceVersion, object value)
 		{
-			return Add(new MaxDBParameter(parameterName, type, size, direction, isNullable, precision, scale, sourceColumn, sourceVersion, val));
+			return Add(new MaxDBParameter(parameterName, type, size, direction, isNullable, precision, scale, sourceColumn, sourceVersion, value));
 		}
 
 #if NET20
@@ -342,13 +360,16 @@ namespace MaxDB.Data
         public void AddRange(Array values)
 #endif // NET20
         {
+            if (values == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+
             foreach(MaxDBParameter param in values)
                 Add(param);
         }
 
         public Array ToArray()
         {
-            return m_collection;
+            return mCollection;
         }
  
 #if NET20

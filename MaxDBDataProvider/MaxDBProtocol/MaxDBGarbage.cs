@@ -23,127 +23,128 @@ namespace MaxDB.Data.MaxDBProtocol
 {
 #if SAFE
 
-	public class GarbageParseid 
+	internal class GarbageParseId 
 	{
-		protected int m_canTreshold = 20;
-		protected bool m_objPending = false;
-		protected bool m_currentEmptyRun = false;
-		protected bool m_currentEmptyRun2 = false;
-		private ArrayList m_garbage;
-		private bool m_supportsMultipleDropParseIDs;
+		protected int iCanTrashOld = 20;
+		protected bool bObjPending;
+		protected bool bCurrentEmptyRun;
+		protected bool bCurrentEmptyRun2;
+		private ArrayList lstGarbage;
+		private bool bSupportsMultipleDropParseIDs;
 
-		public GarbageParseid(bool asupportsMultipleDropParseIDs) : base() 
+		public GarbageParseId(bool supportMultipleDropParseIds) : base() 
 		{
-			m_supportsMultipleDropParseIDs = asupportsMultipleDropParseIDs;
-			m_garbage = new ArrayList(m_canTreshold);
+			bSupportsMultipleDropParseIDs = supportMultipleDropParseIds;
+			lstGarbage = new ArrayList(iCanTrashOld);
 		}
 
 		public bool IsPending 
 		{
 			get
 			{
-				m_objPending = (GarbageSize >= m_canTreshold);
-				return m_objPending;
+				bObjPending = (GarbageSize >= iCanTrashOld);
+				return bObjPending;
 			}
 		}
 
-		public void ForceGarbageCollection()
+		public void EmptyCan(MaxDBConnection connection) 
 		{
-			m_objPending = true;
-		}
+            if (connection == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "connection"));
 
-		public void EmptyCan(MaxDBConnection conn) 
-		{
-			if(m_currentEmptyRun)
+			if(bCurrentEmptyRun)
 				return;
-			m_currentEmptyRun=true;
+			bCurrentEmptyRun=true;
 
 			MaxDBRequestPacket requestPacket;
-			m_objPending = false;
+			bObjPending = false;
 			while(GarbageSize > 0) 
 			{
 				try 
 				{
-					requestPacket = conn.GetRequestPacket();
+					requestPacket = connection.GetRequestPacket();
 					requestPacket.Init(short.MaxValue);
 					EmptyCan(requestPacket);
-					conn.Execute(requestPacket, this, GCMode.GC_NONE);
+					connection.Execute(requestPacket, this, GCMode.GC_NONE);
 				} 
-				catch  
+				catch(MaxDBException)  
 				{ 
 					// ignore 
 				}
 			}
-			m_currentEmptyRun = false;
+			bCurrentEmptyRun = false;
 		}
 
 
-		public void throwIntoGarbageCan(object obj)
+		public void ThrowIntoGarbageCan(object obj)
 		{
-			m_garbage.Add(obj);
+			lstGarbage.Add(obj);
 		}
 
 		protected int GarbageSize
 		{
 			get
 			{
-				return m_garbage.Count;
+				return lstGarbage.Count;
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.Synchronized)]
 		public bool EmptyCan(MaxDBRequestPacket requestPacket)
 		{
-			if (m_currentEmptyRun2)
+            if (requestPacket == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "requestPacket"));
+
+			if (bCurrentEmptyRun2)
 				return false;
 			
-			m_currentEmptyRun2 = true;
+			bCurrentEmptyRun2 = true;
 
 			bool packetActionFailed = false;
 			int sz = GarbageSize;
 
-			if (!m_supportsMultipleDropParseIDs)
+			if (!bSupportsMultipleDropParseIDs)
 				while(sz > 0 && !packetActionFailed) 
 				{
-						object obj = m_garbage[sz - 1];
-						m_garbage.RemoveAt(sz - 1);
-						packetActionFailed = !requestPacket.DropPid((byte[])obj, false);
+						object obj = lstGarbage[sz - 1];
+						lstGarbage.RemoveAt(sz - 1);
+						packetActionFailed = !requestPacket.DropParseId((byte[])obj, false);
 						if(packetActionFailed) 
-							m_garbage.Add(obj);
+							lstGarbage.Add(obj);
 						sz--;
 				}
 			else 
 			{
 				if (sz > 0)
 				{
-					object obj = m_garbage[sz - 1];
-					m_garbage.RemoveAt(sz - 1);
-					packetActionFailed = !requestPacket.DropPid((byte[])obj, false);
+					object obj = lstGarbage[sz - 1];
+					lstGarbage.RemoveAt(sz - 1);
+					packetActionFailed = !requestPacket.DropParseId((byte[])obj, false);
 					if(packetActionFailed) 
-						m_garbage.Add(obj);
+						lstGarbage.Add(obj);
 					else 
 					{
 						sz--;
 						while(sz>0 && !packetActionFailed) 
 						{
-							obj = m_garbage[sz - 1];
-							m_garbage.RemoveAt(sz - 1);
-							packetActionFailed = !requestPacket.DropPidAddtoParsidPart((byte[])obj);
+							obj = lstGarbage[sz - 1];
+							lstGarbage.RemoveAt(sz - 1);
+							packetActionFailed = !requestPacket.DropParseIdAddToParseIdPart((byte[])obj);
 							if(packetActionFailed) 
-								m_garbage.Add(obj);
+								lstGarbage.Add(obj);
 							sz--;
 						}
 					}
 				}
 			}
 
-			m_currentEmptyRun2 = false;
+			bCurrentEmptyRun2 = false;
 			return !packetActionFailed;
 		}
 
-		public void emptyCan() 
+		public void EmptyCan() 
 		{
-			m_garbage.Clear();
+			lstGarbage.Clear();
 		}
     }
 #endif // SAFE

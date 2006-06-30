@@ -11,14 +11,14 @@ namespace MaxDB.UnitTesting
 	[TestFixture()]
 	public class ConnectionTests
 	{
-		private string m_connStr;
+		private string mconnStr;
 #if SAFE
-		private string m_connStrBadAddr;
+		private string mconnStrBadAddr;
 #endif // SAFE
-        private string m_connStrBadLogin;
-		private string m_connStrBadPassword;
-		private string m_connStrBadDbName;
-        private NameValueCollection m_AppSettings =
+        private string mconnStrBadLogin;
+		private string mconnStrBadPassword;
+		private string mconnStrBadDbName;
+        private NameValueCollection mAppSettings =
 #if NET20
             System.Configuration.ConfigurationManager.AppSettings;
 #else
@@ -35,40 +35,38 @@ namespace MaxDB.UnitTesting
 		[TestFixtureSetUp]
 		public void Init() 
 		{
-			m_connStr = m_AppSettings["ConnectionString"];
+			mconnStr = mAppSettings["ConnectionString"];
 #if SAFE
-			m_connStrBadAddr = m_AppSettings["ConnectionStringBadAddr"];
+			mconnStrBadAddr = mAppSettings["ConnectionStringBadAddr"];
 #endif // SAFE
-            m_connStrBadLogin = m_AppSettings["ConnectionStringBadAddr"];
-			m_connStrBadPassword = m_AppSettings["ConnectionStringBadPassword"];
-			m_connStrBadDbName = m_AppSettings["ConnectionStringBadDbName"];
+            mconnStrBadLogin = mAppSettings["ConnectionStringBadLogin"];
+			mconnStrBadPassword = mAppSettings["ConnectionStringBadPassword"];
+			mconnStrBadDbName = mAppSettings["ConnectionStringBadDbName"];
 		}
 
 		[Test] 
 		public void TestConnection()
 		{
-			MaxDBConnection maxdbconn = new MaxDBConnection(m_connStr);
-				
-			maxdbconn.Open();
-			maxdbconn.Close();
+            TestConnectionByString(mconnStr);
 		}
 
 #if SAFE
 		[Test] 
 		public void TestConnectionTimeout()
 		{
-			MaxDBConnection maxdbconn = new MaxDBConnection(m_connStrBadAddr);
-			
-			DateTime start = DateTime.Now;
+            using(MaxDBConnection maxdbconn = new MaxDBConnection(mconnStrBadAddr))
+            {
+                DateTime start = DateTime.Now;
 
-			try
-			{
-				maxdbconn.Open();
-			}
-			catch(MaxDBException)
-			{
-				Assert.IsTrue(DateTime.Now.Subtract(start).TotalSeconds <= maxdbconn.ConnectionTimeout + 2, "Timeout exceeded");
-			}
+                try
+                {
+                    maxdbconn.Open();
+                }
+                catch (MaxDBException)
+                {
+                    Assert.IsTrue(DateTime.Now.Subtract(start).TotalSeconds <= maxdbconn.ConnectionTimeout + 2, "Timeout exceeded");
+                }
+            }
         }
 #endif // SAFE
 
@@ -76,30 +74,30 @@ namespace MaxDB.UnitTesting
 		[ExpectedException(typeof(MaxDBException))]
 		public void TestConnectionBadLogin()
 		{
-			MaxDBConnection maxdbconn = new MaxDBConnection(m_connStrBadLogin);
-				
-			maxdbconn.Open();
-			maxdbconn.Close();
+            TestConnectionByString(mconnStrBadLogin);
 		}
 
 		[Test]
 		[ExpectedException(typeof(MaxDBException))]
 		public void TestConnectionBadPassword()
 		{
-			MaxDBConnection maxdbconn = new MaxDBConnection(m_connStrBadPassword);
-				
-			maxdbconn.Open();
-			maxdbconn.Close();
+            TestConnectionByString(mconnStrBadPassword);
 		}
 
 		[Test]
 		[ExpectedException(typeof(MaxDBException))]
 		public void TestConnectionBadDbName()
 		{
-			MaxDBConnection maxdbconn = new MaxDBConnection(m_connStrBadDbName);
-				
-			maxdbconn.Open();
-			maxdbconn.Close();
+            TestConnectionByString(mconnStrBadDbName);
 		}
+
+        private void TestConnectionByString(string connection)
+        {
+            using (MaxDBConnection maxdbconn = new MaxDBConnection(connection))
+            {
+                maxdbconn.Open();
+                maxdbconn.Close();
+            }
+        }
 	}
 }

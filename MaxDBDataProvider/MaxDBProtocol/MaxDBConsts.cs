@@ -17,12 +17,13 @@
 
 using System;
 using System.Text;
+using System.Globalization;
 
 namespace MaxDB.Data.MaxDBProtocol
 {
 	#region "Offsets"
 
-	internal class HeaderOffset 
+	internal struct HeaderOffset 
 	{
 		public const byte
 			ActSendLen        =      0,   // INT4
@@ -38,7 +39,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			END               =     24;
 	}
 
-	internal class ConnectPacketOffset
+	internal struct ConnectPacketOffset
 	{
 		public const int 
 			MessCode	     =	   0,   // C2
@@ -63,7 +64,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	//
 	// offsets of vsp001::tsp1_packet
 	//
-	internal class PacketHeaderOffset
+	internal struct PacketHeaderOffset
 	{
 		public const byte 
 			MessCode		=	0,  // enum1
@@ -82,7 +83,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	//
 	// offsets of vsp001::tsp1_segment
 	//
-	internal class SegmentHeaderOffset
+	internal struct SegmentHeaderOffset
 	{
 		// common header
 		public const byte 
@@ -116,7 +117,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	//
 	// offsets of vsp001::tsp1_part
 	//
-	internal class PartHeaderOffset 
+	internal struct PartHeaderOffset 
 	{
 		public const byte 
 			PartKind	= 0,   // enum1
@@ -133,7 +134,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	//
 	// copy of vsp001::tsp1_segment_kind
 	//
-	internal class SegmKind 
+	internal struct SegmKind 
 	{
 		public const byte 
 			Nil                =   0,
@@ -144,7 +145,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			LastSegmentKind    =   5;
 	}
 
-	internal class SegmentCmdOption 
+	internal struct SegmentCmdOption 
 	{
 		public const byte 
 			selfetch_off         =   1,
@@ -154,7 +155,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	//
 	// copy of vsp001::tsp1_producer
 	//
-	internal class Producer 
+	internal struct Producer 
 	{
 		public const byte 
 			Nil             =   0,
@@ -167,7 +168,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	//
 	// copy of vsp001::tsp1_cmd_mess_type.
 	//
-	internal class CmdMessType 
+	internal struct CmdMessType 
 	{
 		public const byte 
 			Nil                     =   0,
@@ -236,7 +237,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	//
 	// copy of vsp001::tsp1_part_kind
 	//
-	internal class PartKind 
+	internal struct PartKind 
 	{
 		public const byte 
 			Nil                     =   0,
@@ -249,7 +250,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			GetInfo                 =   7,
 			Modulname               =   8,
 			Page                    =   9,
-			Parsid                  =  10,
+			ParseId                  =  10,
 			ParsidOfSelect          =  11,
 			ResultCount             =  12,
 			ResultTableName         =  13,
@@ -271,10 +272,10 @@ namespace MaxDB.Data.MaxDBProtocol
 			Procid                  =  29,
 			LongDemand             =  30,
 			MessageList             =  31,
-			Vardata_ShortInfo       =  32,
+			VardataShortInfo       =  32,
 			Vardata                 =  33,
 			Feature                 =  34,
-			Clientid                =  35;
+			ClientId                =  35;
 
 		public static readonly string[] Name = new string[]{
 										 "Nil",
@@ -315,7 +316,7 @@ namespace MaxDB.Data.MaxDBProtocol
 										 "Clientid"};
  	}
 
-	internal class Feature 
+	internal struct Feature 
 	{
 		public const byte 
 			MultipleDropParseid   =  1,
@@ -330,7 +331,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	//
 	// The _E-values can be used to build a set by ORing them
 	//
-	internal class PartAttributes 
+	internal struct PartAttributes 
 	{
 		public const byte 
 			LastPacket              =   0,
@@ -349,7 +350,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	/// <summary>
 	/// copy of gsp00::tsp00_LongDescBlock and related constants
 	/// </summary>
-	internal class LongDesc 
+	internal struct LongDesc 
 	{
 		// tsp00_LdbChange
 		public const byte 
@@ -406,7 +407,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			Size = 40;
 	}
 
-	internal class Packet
+	internal struct Packet
 	{
 		//
 		// indicators for fields with variable length
@@ -426,7 +427,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		public const string MaxPasswordLenTag  = "maxpasswordlen";
 	}
 
-	internal class GCMode
+	internal struct GCMode
 	{
 		public const int 
 			/**
@@ -450,7 +451,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			GC_NONE    = 3;
 	}
 
-	internal class FunctionCode 
+	internal struct FunctionCode 
 	{
 		public const int 
 			Nil          =   0,
@@ -518,14 +519,16 @@ namespace MaxDB.Data.MaxDBProtocol
 				reuse_upd_mselect_found
 			};
 
+#if SAFE
 		public static bool IsQuery(int code)
 		{
 			return (code == FunctionCode.Select || code == FunctionCode.Show ||	
 				code == FunctionCode.DBProcWithResultSetExecute || code == FunctionCode.Explain); 
 		}
+#endif // SAFE
 	}
 
-	internal class Ports
+	internal struct Ports
 	{
 		public const int 
 			Default        =   7210,
@@ -533,28 +536,28 @@ namespace MaxDB.Data.MaxDBProtocol
 			DefaultNI      =   7269;
 	}
 
-	internal class CommError
+	internal struct CommError
 	{
 		public static readonly string[] ErrorText = 
 			{
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_OK),
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_CONNECTDOWN),
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_TASKLIMIT),
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_TIMEOUT),
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_CRASH),
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_RESTARTREQUIRED),
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_SHUTDOWN),
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_SENDLINEDOWN),
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_RECVLINEDOWN),
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_PACKETLIMIT),
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_RELEASED),
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_WOULDBLOCK),
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_UNKNOWNREQUEST),
-				MaxDBMessages.Extract(MaxDBMessages.COMMERROR_SERVERDBUNKNOWN)
+				MaxDBMessages.Extract(MaxDBError.COMMOK),
+				MaxDBMessages.Extract(MaxDBError.COMMCONNECTDOWN),
+				MaxDBMessages.Extract(MaxDBError.COMMTASKLIMIT),
+				MaxDBMessages.Extract(MaxDBError.COMMTIMEOUT),
+				MaxDBMessages.Extract(MaxDBError.COMMCRASH),
+				MaxDBMessages.Extract(MaxDBError.COMMRESTARTREQUIRED),
+				MaxDBMessages.Extract(MaxDBError.COMMSHUTDOWN),
+				MaxDBMessages.Extract(MaxDBError.COMMSENDLINEDOWN),
+				MaxDBMessages.Extract(MaxDBError.COMMRECVLINEDOWN),
+				MaxDBMessages.Extract(MaxDBError.COMMPACKETLIMIT),
+				MaxDBMessages.Extract(MaxDBError.COMMRELEASED),
+				MaxDBMessages.Extract(MaxDBError.COMMWOULDBLOCK),
+				MaxDBMessages.Extract(MaxDBError.COMMUNKNOWNREQUEST),
+				MaxDBMessages.Extract(MaxDBError.COMMSERVERDBUNKNOWN)
 			};
 	}
 
-	internal class RTEReturnCodes
+	internal struct RTEReturnCodes
 	{
 		// rte return codes
 		public const byte 
@@ -574,7 +577,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			SQLSERVER_DB_UNKNOWN    =     13;
 	}
 
-	internal class RSQLTypes
+	internal struct RSQLTypes
 	{
 		// request/reply types
 		public const byte 
@@ -600,14 +603,14 @@ namespace MaxDB.Data.MaxDBProtocol
 			NORMAL                		=      0;
 	}
 
-	internal class SwapMode
+	internal struct SwapMode
 	{
 		public const byte 
 			NotSwapped	=	1,
 			Swapped		=	2;
 	}
 
-	internal class SQLType
+	internal struct SqlType
 	{
 		// user types
 		public const byte 
@@ -619,7 +622,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			EVENT          =	5;
 	}
 
-	internal class ArgType
+	internal struct ArgType
 	{
 		//geo03.h
 		public const byte 
@@ -633,7 +636,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			OMIT_REPLY_PART = 	0x72;   // = r
 	}
 
-	internal class DataType 
+	internal struct DataType 
 	{
 		public const byte
 			MIN       		= 0,            
@@ -725,7 +728,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	}
 
 	//copies of tsp1_param_opt_type, tsp1_param_io_type, tsp1_param_info
-	internal class ParamInfo 
+	internal struct ParamInfo 
 	{
 		// param modes, declared as set values
 		public const int 
@@ -752,7 +755,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		    END			    = 12;
 	}
 
-	internal class Vsp00Consts
+	internal struct Vsp00Consts
 	{
 		public const int  KnlIdentifier  = 32;
 		public const byte DefinedBinary  = 0;
@@ -763,7 +766,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		public const byte FullSwap       = 2;
 	}
 
-	internal class StreamHandle 
+	internal struct StreamHandle 
 	{
         public const int 
             Header_Length = 20,
@@ -826,7 +829,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		NOT_AVAILABLE =	4	// Constant indicating that the current position is not available.
 	}
 
-    internal class ConnectionStringParams
+    internal struct ConnectionStringParams
     {
         public const string
             DATA_SOURCE = "DATA SOURCE",
@@ -848,18 +851,93 @@ namespace MaxDB.Data.MaxDBProtocol
 	/// </summary>
 	internal class Consts
 	{
+        public static bool IsLittleEndian
+        {
+            get
+            {
+                return BitConverter.IsLittleEndian;
+            }
+        }
+
+        private static readonly int iUnicodeWidth = System.Text.Encoding.Unicode.GetByteCount(BlankChar);
+        public static int UnicodeWidth
+        {
+            get
+            {
+                return iUnicodeWidth;
+            }
+        }
+
+        public const int FillBufSize = 1024;
+        public const string BlankChar = " ";
+
+#if SAFE
+        private static readonly byte[] byBlankBytes = InitializeBlankBytes;
+        public static byte[] BlankBytes
+        {
+            get
+            {
+                return byBlankBytes;
+            }
+        }
+
+        private static byte[] InitializeBlankBytes
+        {
+            get
+            {
+                byte[] blanks = new byte[FillBufSize];
+                for (int i = 0; i < FillBufSize; i++)
+                    blanks[i] = Encoding.ASCII.GetBytes(BlankChar)[0];
+                return blanks;
+            }
+        }
+#endif // SAFE
+
+        private static readonly byte[] byBlankUnicodeBytes = InitializeBlankUnicodeBytes;
+        public static byte[] BlankUnicodeBytes
+        {
+            get
+            {
+                return byBlankUnicodeBytes;
+            }
+        }
+
+        private static byte[] InitializeBlankUnicodeBytes
+        {
+            get
+            {
+                byte[] blanks = new byte[FillBufSize * iUnicodeWidth];
+                for (int i = 0; i < FillBufSize; i += UnicodeWidth)
+                {
+                    if (IsLittleEndian)
+                        Encoding.Unicode.GetBytes(BlankChar).CopyTo(blanks, i);
+                    else
+                        Encoding.BigEndianUnicode.GetBytes(BlankChar).CopyTo(blanks, i);
+                }
+
+                return blanks;
+            }
+        }
+
+        private Consts()
+        {
+        }
+
+#if SAFE
 		// some constants
 		public const byte ASCIIClient              =      0;
 		public const byte UnicodeSwapClient        =     19;
 		public const byte UnicodeClient			   =     20;
 		public const byte RSQL_DOTNET              =     13;
 
-		public static readonly int UnicodeWidth = System.Text.Encoding.Unicode.GetByteCount(" ");
-		public const int FillBufSize = 1024;
-		public const string BlankChar = " ";
-		public static readonly byte[] ZeroBytes = new byte [FillBufSize];
-		public static readonly byte[] BlankBytes = new byte[FillBufSize];
-		public static readonly byte[] BlankUnicodeBytes = new byte[FillBufSize * UnicodeWidth];
+        private static readonly byte[] byZeroBytes = new byte[FillBufSize];
+        public static byte[] ZeroBytes
+        {
+            get 
+            { 
+                return byZeroBytes; 
+            }
+        }
 
 		public const int AlignValue	= 8;
 
@@ -870,30 +948,17 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public const string AppID = "ODB";
 		public const string AppVersion = "70400";//"10100";
-		public static readonly bool IsLittleEndian = BitConverter.IsLittleEndian;
+
 		public const string CursorPrefix = "ADONET_CURSOR_";
 		public const string TimeStampFormat = "yyyy-MM-dd hh:mm:ss.ffffff";
 
-		static Consts()
-		{
-			for (int i = 0; i < FillBufSize; i += UnicodeWidth) 
-			{
-				ZeroBytes[i] = ZeroBytes [i + 1] = 0;
-				BlankBytes[i] = BlankBytes[i + 1] = Encoding.ASCII.GetBytes(BlankChar)[0];
-                if (IsLittleEndian)
-				    Encoding.Unicode.GetBytes(BlankChar).CopyTo(BlankUnicodeBytes, i);
-                else
-				    Encoding.BigEndianUnicode.GetBytes(BlankChar).CopyTo(BlankUnicodeBytes, i);
-			}
-		}
-
-		public static string ToHexString(byte[] array, int offset, int length)
+        public static string ToHexString(byte[] array, int offset, int length)
 		{
 			if (array != null)
 			{
 				StringBuilder result = new StringBuilder((array.Length - offset) * 2);
 				for(int i = offset; i < array.Length && i < length; i++)
-					result.Append(array[i].ToString("X2"));
+                    result.Append(array[i].ToString("X2", CultureInfo.InvariantCulture));
 
 				return result.ToString();
 			}
@@ -910,5 +975,6 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			return ToHexString(array, 0, array.Length);
 		}
-	}
+#endif // SAFE
+    }
 }

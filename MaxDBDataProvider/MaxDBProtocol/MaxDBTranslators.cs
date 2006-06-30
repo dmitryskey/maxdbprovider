@@ -22,7 +22,7 @@ using System.Threading;
 using System.ComponentModel;
 using System.Globalization;
 using System.Data;
-using MaxDB.Data.Utils;
+using MaxDB.Data.Utilities;
 
 namespace MaxDB.Data.MaxDBProtocol
 {
@@ -32,41 +32,34 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	internal abstract class DBTechTranslator
 	{
-		protected int m_logicalLength;
-		protected int m_physicalLength;
-		protected int m_bufpos;   // bufpos points to actual data, defbyte is at -1
-		protected byte m_mode;
-		protected byte m_ioType;
-		protected byte m_dataType;
-		protected bool m_writeAllowed = false;
-		protected string m_charDatatypePostfix = string.Empty;
-		private string m_colName;
-		private int m_colIndex;
+		protected int iLogicalLength;
+		protected int iPhysicalLength;
+		protected int iBufPos;   // bufpos points to actual data, defbyte is at -1
+		protected byte byMode;
+		protected byte byIOType;
+		protected byte byDataType;
+		private string strColumnName;
+		private int iColumnIndex;
 
-		public const int nullDefineByte = 1;
-		public const int specialNullValueDefineByte = 2;
-		public const int unknownDefineByte = -1;
+		public const int iNullDefineByte = 1;
+		public const int iSpecialNullValueDefineByte = 2;
+		public const int iUnknownDefineByte = -1;
 
 		protected DBTechTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos)
 		{
-			m_mode = (byte) mode;
-			m_ioType = (byte) ioType;
-			m_dataType = (byte) dataType;
-			m_logicalLength = len;
-			m_physicalLength = ioLen;
-			m_bufpos = bufpos;
-		}
-
-		public void AllowWrites() 
-		{
-			m_writeAllowed = true;
+			byMode = (byte) mode;
+			byIOType = (byte) ioType;
+			byDataType = (byte) dataType;
+			iLogicalLength = len;
+			iPhysicalLength = ioLen;
+			iBufPos = bufpos;
 		}
 
 		public int BufPos 
 		{
 			get
 			{
-				return m_bufpos;
+				return iBufPos;
 			}
 		}
 
@@ -74,7 +67,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return m_logicalLength;
+				return iLogicalLength;
 			}
 		}
 
@@ -90,7 +83,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return m_physicalLength;
+				return iPhysicalLength;
 			}
 		}
 
@@ -98,11 +91,11 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return m_colIndex;
+				return iColumnIndex;
 			}
 			set
 			{
-				m_colIndex = value;
+				iColumnIndex = value;
 			}
 		}
 
@@ -110,7 +103,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return GeneralColumnInfo.GetTypeName(m_dataType);
+				return GeneralColumnInfo.GetTypeName(byDataType);
 			}
 		}
 
@@ -118,7 +111,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return GeneralColumnInfo.GetType(m_dataType);
+				return GeneralColumnInfo.GetType(byDataType);
 			}
 		}
 
@@ -126,7 +119,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return GeneralColumnInfo.GetMaxDBType(m_dataType);
+				return GeneralColumnInfo.GetMaxDBType(byDataType);
 			}
 		}
 
@@ -134,7 +127,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return m_logicalLength;
+				return iLogicalLength;
 			}
 		}
 
@@ -142,59 +135,44 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return m_colName;
+				return strColumnName;
 			}
 			set
 			{
-				m_colName = value;
+				strColumnName = value;
 			}
 		}
 
-		protected bool IsUnicodeColumn 
-		{
-			get
-			{
-				switch (m_dataType) 
-				{
-					case DataType.STRUNI:
-					case DataType.LONGUNI:
-						return true;
-					default:
-						return false;
-				}
-			}
-		}
-
-		protected MaxDBConversionException CreateGetException(string requestedType)
+        protected MaxDBConversionException CreateGetException(string requestedType)
 		{
 			return new MaxDBConversionException(MaxDBMessages.Extract(
-				MaxDBMessages.ERROR_CONVERSIONSQLNET, ColumnTypeName, requestedType));
+				MaxDBError.CONVERSIONSQLNET, ColumnTypeName, requestedType));
 		}
 
 		protected MaxDBConversionException CreateSetException(string requestedType)
 		{
 			return new MaxDBConversionException(MaxDBMessages.Extract(
-				MaxDBMessages.ERROR_CONVERSIONNETSQL, requestedType, ColumnTypeName));
+				MaxDBError.CONVERSIONNETSQL, requestedType, ColumnTypeName));
 		}
 
 		protected MaxDBConversionException CreateParseException(string data, string requestedType)
 		{
 			if (requestedType == null) 
 				requestedType = ColumnTypeName;
-			return new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONDATA, data, requestedType));
+			return new MaxDBConversionException(MaxDBMessages.Extract(MaxDBError.CONVERSIONDATA, data, requestedType));
 		}
 
-		public virtual Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public virtual Stream GetASCIIStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			throw CreateGetException("ASCIIStream");
 		}
 
-		public virtual Stream GetUnicodeStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public virtual Stream GetUnicodeStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			throw CreateGetException("UnicodeStream");
 		}
 
-		public virtual Stream GetBinaryStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public virtual Stream GetBinaryStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			throw CreateGetException("BinaryStream");
 		}
@@ -204,17 +182,17 @@ namespace MaxDB.Data.MaxDBProtocol
 			throw CreateGetException("bool");
 		}
 
-		public virtual byte GetByte(ISQLParamController controller, ByteArray mem)
+		public virtual byte GetByte(ISqlParameterController controller, ByteArray mem)
 		{
 			throw CreateGetException("byte");
 		}
 
-		public virtual byte[] GetBytes(ISQLParamController controller, ByteArray mem)
+		public virtual byte[] GetBytes(ISqlParameterController controller, ByteArray mem)
 		{
 			throw CreateGetException("byte[]");
 		}
 
-		public virtual long GetBytes(ISQLParamController controller, ByteArray mem, long fldOffset, byte[] buffer, int bufferoffset, int length)
+		public virtual long GetBytes(ISqlParameterController controller, ByteArray mem, long fldOffset, byte[] buffer, int bufferoffset, int length)
 		{
 			byte[] bytes = GetBytes(controller, mem);
 			if (bytes == null) return 0;
@@ -267,7 +245,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			throw CreateGetException("Int64");
 		}
 
-		public virtual object GetValue(ISQLParamController controller, ByteArray mem)
+		public virtual object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
 			throw CreateGetException("object");
 		}
@@ -277,7 +255,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			throw CreateGetException("object[]");
 		}
 
-		public virtual string GetString(ISQLParamController controller, ByteArray mem)
+		public virtual string GetString(ISqlParameterController controller, ByteArray mem)
 		{
 			object rawResult = GetValue(controller, mem);
 
@@ -287,7 +265,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				return rawResult.ToString();
 		}
 
-		public virtual long GetChars(ISQLParamController controller, ByteArray mem, long fldOffset, char[] buffer, int bufferoffset, int length)
+		public virtual long GetChars(ISqlParameterController controller, ByteArray mem, long fldOffset, char[] buffer, int bufferoffset, int length)
 		{
 			string str = GetString(controller, mem);
 			if (str == null) return 0;
@@ -324,7 +302,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return (m_ioType != ParamInfo.Output);
+				return (byIOType != ParamInfo.Output);
 			}
 		}
 
@@ -332,7 +310,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return (m_ioType != ParamInfo.Input);
+				return (byIOType != ParamInfo.Input);
 			}
 		}
 
@@ -340,7 +318,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return GeneralColumnInfo.IsLong(m_dataType);
+				return GeneralColumnInfo.IsLong(byDataType);
 			}
 		}
 
@@ -348,26 +326,26 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return GeneralColumnInfo.IsTextual(m_dataType);
+				return GeneralColumnInfo.IsTextual(byDataType);
 			}
 		}
 
 		public bool IsDBNull(ByteArray mem) 
 		{
-			return (mem.ReadByte(m_bufpos - 1) == 0xFF);
+			return (mem.ReadByte(iBufPos - 1) == 0xFF);
 		}
 
 		public int CheckDefineByte(ByteArray mem) 
 		{
-			int defByte = mem.ReadByte(m_bufpos - 1);
+			int defByte = mem.ReadByte(iBufPos - 1);
 			switch(defByte)
 			{
 				case -1:
-					return nullDefineByte;
+					return iNullDefineByte;
 				case -2:
-					return specialNullValueDefineByte;
+					return iSpecialNullValueDefineByte;
 				default:
-					return unknownDefineByte;
+					return iUnknownDefineByte;
 			}
 		}
 
@@ -375,115 +353,69 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				if ((m_mode & ParamInfo.Mandatory) != 0) 
+				if ((byMode & ParamInfo.Mandatory) != 0) 
 					return false;
 
-				if ((m_mode & ParamInfo.Optional) != 0) 
+				if ((byMode & ParamInfo.Optional) != 0) 
 					return true;
 				
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_DBNULL_UNKNOWN));
-			}
-		}
-
-		public bool IsSearchable 
-		{
-			get
-			{
-				return true;
-			}
-		}
-
-		public bool IsSigned 
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		public bool IsWritable
-		{
-			get
-			{
-				return m_writeAllowed;
-			}
-		}
-
-		public bool IsStreamKind
-		{
-			get
-			{
-				return false;
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.DBNULL_UNKNOWN));
 			}
 		}
 
 		public void Put(DataPart dataPart, object data)
 		{
-			if (m_ioType != ParamInfo.Output) 
+			if (byIOType != ParamInfo.Output) 
 			{
 				if (data == null) 
-					dataPart.WriteNull(m_bufpos, m_physicalLength - 1);
+					dataPart.WriteNull(iBufPos, iPhysicalLength - 1);
 				else 
 				{
 					PutSpecific(dataPart, data);
-					dataPart.AddArg(m_bufpos, m_physicalLength - 1);
-				}
-			}
-		}
-
-		public void PutProcOutput(DataPart dataPart, object data)
-		{
-			if (m_ioType != ParamInfo.Input) 
-			{
-				if (data == null) 
-					dataPart.WriteNull(m_bufpos, m_physicalLength - 1);
-				else 
-				{
-					PutSpecific(dataPart, data);
-					dataPart.AddArg(m_bufpos, m_physicalLength - 1);
+					dataPart.AddArg(iBufPos, iPhysicalLength - 1);
 				}
 			}
 		}
 
 		protected void CheckFieldLimits(int byteLength)
 		{
-			if (byteLength > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], m_colIndex + 1);
+			if (byteLength > iPhysicalLength - 1) 
+				throw new MaxDBValueOverflowException(iColumnIndex + 1);
 		}
 
 		protected abstract void PutSpecific(DataPart dataPart, object data);
 		protected abstract object TransSpecificForInput(object obj);
 
-		public virtual object TransObjectForInput(object val)
+		public virtual object TransObjectForInput(object value)
 		{
 			object result;
-			if (val == null) 
+			if (value == null) 
 				return null;
 			
-			result = TransSpecificForInput(val);
+			result = TransSpecificForInput(value);
 			if (result != null) 
 				return result;
 			
-			if (val is string) 
-				return TransStringForInput((string) val);
+			if (value.GetType() == typeof(string)) 
+				return TransStringForInput((string) value);
 
-			if (val is BigDecimal) 
-				return TransStringForInput(VDNNumber.BigDecimal2PlainString((BigDecimal)val));
+			if (value.GetType() == typeof(BigDecimal)) 
+				return TransStringForInput(VDNNumber.BigDecimal2PlainString((BigDecimal)value));
 
-			if (val.GetType().IsArray) 
+			if (value.GetType().IsArray) 
 			{
-				if (val is byte[])
-					return TransBytesForInput((byte[]) val);
+				if (value.GetType() == typeof(byte[]))
+					return TransBytesForInput((byte[]) value);
 					
-				if (val is char[])
-					return TransStringForInput (new String ((char[]) val));
+				if (value.GetType() == typeof(char[]))
+					return TransStringForInput (new String ((char[]) value));
 	
 				// cannot convert other arrays
-				throw CreateSetException(val.GetType().FullName);
+				throw CreateSetException(value.GetType().FullName);
 			}
 			else 
 				// default conversion to string
-				return TransStringForInput(val.ToString());
+				return TransStringForInput(value.ToString());
 		}
 
 		public virtual object TransCharacterStreamForInput(Stream stream, int length)
@@ -529,7 +461,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		public virtual object TransDoubleForInput(double val)
 		{
 			if(double.IsInfinity(val) || double.IsNaN(val)) 
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SPECIAL_NUMBER_UNSUPPORTED, val.ToString()));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SPECIAL_NUMBER_UNSUPPORTED, val.ToString(CultureInfo.InvariantCulture)));
 
 			return TransObjectForInput(new BigDecimal(val));
 		}
@@ -537,7 +469,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		public virtual object TransFloatForInput(float val)
 		{
 			if(float.IsInfinity(val) || float.IsNaN(val)) 
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SPECIAL_NUMBER_UNSUPPORTED, val.ToString()));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SPECIAL_NUMBER_UNSUPPORTED, val.ToString(CultureInfo.InvariantCulture)));
 
 			return TransObjectForInput(new BigDecimal(val));
 		}
@@ -562,37 +494,32 @@ namespace MaxDB.Data.MaxDBProtocol
 			throw CreateSetException("String");
 		}
 
-		public byte BigDecimal2Byte(BigDecimal bd)
-		{
-			return (bd == null ? (byte)0 : (byte)bd); 
-		}
-
-		public double BigDecimal2Double(BigDecimal bd)
+		public static double BigDecimal2Double(BigDecimal bd)
 		{
 			return (bd == null ? 0.0 : (double)bd); 		
 		}
 
-		public float BigDecimal2Float(BigDecimal bd)
+		public static float BigDecimal2Float(BigDecimal bd)
 		{
 			return (bd == null ? 0 : (float)bd); 
 		}
 
-		public decimal BigDecimal2Decimal(BigDecimal bd)
+		public static decimal BigDecimal2Decimal(BigDecimal bd)
 		{
 			return (bd == null ? 0 : (decimal)bd); 
 		}
 
-		public short BigDecimal2Int16(BigDecimal bd)
+		public static short BigDecimal2Int16(BigDecimal bd)
 		{
 			return (bd == null ? (short)0 : (short)bd); 
 		}
 
-		public int BigDecimal2Int32(BigDecimal bd)
+        public static int BigDecimal2Int32(BigDecimal bd)
 		{
 			return (bd == null ? 0 : (int)bd); 
 		}
 
-		public long BigDecimal2Int64(BigDecimal bd)
+        public static long BigDecimal2Int64(BigDecimal bd)
 		{
 			return (bd == null ? 0 : (long)bd); 
 		}
@@ -614,7 +541,6 @@ namespace MaxDB.Data.MaxDBProtocol
 		protected CharDataTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos) :
 			base(mode, ioType, dataType, len, ioLen, bufpos)
 		{
-			m_charDatatypePostfix = " ASCII";
 		}
 
 		public override bool IsCaseSensitive 
@@ -628,10 +554,10 @@ namespace MaxDB.Data.MaxDBProtocol
 		protected override void PutSpecific(DataPart dataPart, object data)
 		{
 			byte[] bytes = Encoding.GetEncoding(1251).GetBytes(data.ToString());
-			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
-			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
-			dataPart.WriteASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
+			if (bytes.Length > iPhysicalLength - 1) 
+				throw new MaxDBValueOverflowException(-1);
+			dataPart.WriteDefineByte((byte) ' ', iBufPos - 1);
+			dataPart.WriteAsciiBytes(bytes, iBufPos, iPhysicalLength - 1);
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)
@@ -641,7 +567,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				return DateTime.MinValue;
 			try 
 			{
-				return DateTime.Parse(strValue);
+                return DateTime.Parse(strValue, CultureInfo.InvariantCulture);
 			}
 			catch 
 			{
@@ -660,7 +586,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 		}
 
-		public override object GetValue(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
 			return GetString(controller, mem);
 		}
@@ -690,15 +616,15 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			try 
 			{
-				return (int.Parse(val.Trim()) != 0);
+                return (int.Parse(val.Trim(), CultureInfo.InvariantCulture) != 0);
 			}
 			catch
 			{
-				throw CreateParseException(val, "Boolean");
+				throw CreateParseException(val, typeof(bool).Name);
 			}
 		}
 
-		public override byte[] GetBytes(ISQLParamController controller, ByteArray mem)
+		public override byte[] GetBytes(ISqlParameterController controller, ByteArray mem)
 		{
 			string result = GetString(controller, mem);
 			if (result != null)
@@ -707,7 +633,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				return null;
 		}
 
-		public override byte GetByte(ISQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISqlParameterController controller, ByteArray mem)
 		{
 			byte[] bytes = GetBytes(controller, mem);
 			if (bytes == null || bytes.Length == 0)
@@ -716,7 +642,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				return bytes[0];
 		}
 
-		public override Stream GetUnicodeStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetUnicodeStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			string asString = GetString(controller, mem);
 
@@ -756,12 +682,12 @@ namespace MaxDB.Data.MaxDBProtocol
 			return BigDecimal2Int64(GetBigDecimal(mem));
 		}
 
-		public override string GetString(ISQLParamController controller, ByteArray mem)
+		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
             if (!IsDBNull(mem))
             {
-                string result = mem.ReadASCII(m_bufpos, m_logicalLength);
-                switch (m_dataType)
+                string result = mem.ReadAscii(iBufPos, iLogicalLength);
+                switch (byDataType)
                 {
                     case DataType.VARCHARA:
                     case DataType.VARCHARB:
@@ -868,16 +794,15 @@ namespace MaxDB.Data.MaxDBProtocol
 		public UnicodeStringTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos, bool swapMode) :
 			base(mode, ioType, dataType, len, ioLen, bufpos)
 		{
-			m_charDatatypePostfix = " UNICODE";
 			m_enc = swapMode ? Encoding.Unicode : Encoding.BigEndianUnicode;
 		}
 
-		public override string GetString(ISQLParamController controller, ByteArray mem)
+		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
             if (!IsDBNull(mem))
             {
-                string result =  m_enc.GetString(mem.ReadBytes(m_bufpos, m_logicalLength * Consts.UnicodeWidth));
-                switch (m_dataType)
+                string result =  m_enc.GetString(mem.ReadBytes(iBufPos, iLogicalLength * Consts.UnicodeWidth));
+                switch (byDataType)
                 {
                     case DataType.VARCHARA:
                     case DataType.VARCHARB:
@@ -892,12 +817,12 @@ namespace MaxDB.Data.MaxDBProtocol
                 return null;
 		}
 
-		public override object GetValue(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
 			return GetString(controller, mem);
 		}
      
-		public override byte[] GetBytes(ISQLParamController controller, ByteArray mem)
+		public override byte[] GetBytes(ISqlParameterController controller, ByteArray mem)
 		{
 			string result = GetString(controller, mem);
 			if (result != null)
@@ -927,8 +852,8 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		protected override void PutSpecific(DataPart dataPart, object data)
 		{
-			dataPart.WriteDefineByte ((byte) 1, m_bufpos - 1);
-			dataPart.WriteUnicodeBytes ((byte []) data, m_bufpos, m_physicalLength - 1);
+			dataPart.WriteDefineByte ((byte) 1, iBufPos - 1);
+			dataPart.WriteUnicodeBytes ((byte []) data, iBufPos, iPhysicalLength - 1);
 		}
 	}
 
@@ -943,7 +868,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 		}
 
-		public override string GetString(ISQLParamController controller, ByteArray mem)
+		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
 			string result = null;
 
@@ -968,7 +893,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 		}
 
-		public override string GetString(ISQLParamController controller, ByteArray mem)
+		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
 			string result = null;
 
@@ -996,8 +921,8 @@ namespace MaxDB.Data.MaxDBProtocol
 		protected override void PutSpecific (DataPart dataPart, object data)
 		{
 			byte[] bytes = (byte[]) data;
-			dataPart.WriteDefineByte(0, m_bufpos - 1);
-			dataPart.WriteBytes(bytes, m_bufpos, m_physicalLength - 1);
+			dataPart.WriteDefineByte(0, iBufPos - 1);
+			dataPart.WriteBytes(bytes, iBufPos, iPhysicalLength - 1);
 		}
 	}
 
@@ -1012,30 +937,30 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 		}
 
-		public override byte GetByte(ISQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISqlParameterController controller, ByteArray mem)
 		{
 			byte[] result = null;
 			if (IsDBNull(mem))
 				return 0;
 			else
-				result = mem.ReadBytes(m_bufpos, 1);
+				result = mem.ReadBytes(iBufPos, 1);
 			return result[0];
 		}
     
-		public override byte[] GetBytes(ISQLParamController controller, ByteArray mem)
+		public override byte[] GetBytes(ISqlParameterController controller, ByteArray mem)
 		{
 			if (IsDBNull(mem))
 				return null;
 			else
-				return mem.ReadBytes(m_bufpos, 1);
+				return mem.ReadBytes(iBufPos, 1);
 		}
 
-		public override object GetValue(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
 			return GetBytes(controller, mem);
 		}
 
-		public override string GetString(ISQLParamController controller, ByteArray mem)
+		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
 			byte[] rawResult;
 
@@ -1064,7 +989,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		protected override object TransSpecificForInput(object obj)
 		{
-			if (obj is byte[]) 
+			if (obj.GetType() == typeof(byte[])) 
 				return TransBytesForInput((byte[]) obj);
 			else
 				return null;
@@ -1076,30 +1001,6 @@ namespace MaxDB.Data.MaxDBProtocol
 				return null;
 			else 
 				return TransBytesForInput(Encoding.Unicode.GetBytes(val));
-		}
-
-		public object TransUnicodeStreamForInput(TextReader stream, int length)
-		{
-			if(length <= 0) 
-				return null;
-        
-			try 
-			{
-				char[] ba = new char[length];
-				int r = stream.Read(ba, 0, length);
-				if(r != length) 
-				{
-					if(r == -1) r=0;
-					char[] ba2 = ba;
-					ba = new char[r];
-					Array.Copy(ba2, 0, ba, 0, r);
-				}
-				return TransStringForInput(new string(ba));
-			} 
-			catch(Exception ex) 
-			{
-				throw new MaxDBException(ex.Message, ex);
-			}
 		}
 
 		public override object TransBinaryStreamForInput(Stream stream, int length)
@@ -1126,7 +1027,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			}    
 		}
 
-		public override Stream GetBinaryStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetBinaryStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			byte[] asBytes = GetBytes(null, mem);
 
@@ -1162,12 +1063,12 @@ namespace MaxDB.Data.MaxDBProtocol
 		public override bool GetBoolean(ByteArray mem)
 		{
 			if (!IsDBNull(mem)) 
-				return (mem.ReadByte(m_bufpos) == 0x00 ? false: true); 
+				return (mem.ReadByte(iBufPos) == 0x00 ? false: true); 
 			else
 				return false;
 		}
 
-		public override byte GetByte(ISQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISqlParameterController controller, ByteArray mem)
 		{
 			return GetBoolean(mem) ? (byte) 1 : (byte) 0;
 		}
@@ -1182,7 +1083,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return GetByte(null, mem);
 		}
 
-		public override object GetValue(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
 			if (!IsDBNull(mem))
 				return GetBoolean(mem);
@@ -1215,9 +1116,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		protected override object TransSpecificForInput(object obj)
 		{
-			if (obj is bool || obj is byte || obj is short || obj is int ||
-				obj is long || obj is ushort || obj is uint || obj is ulong ||
-				obj is float || obj is double || obj is decimal)
+            Type type = obj.GetType();
+			if (type == typeof(bool) || type == typeof(byte) || type == typeof(short) || type == typeof(int) ||
+				type == typeof(long) || type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong) ||
+				type == typeof(float) || type == typeof(double) || type == typeof(decimal))
 				return TransBooleanForInput((bool) obj);
 			else
 				throw CreateSetException(obj.GetType().FullName);
@@ -1260,28 +1162,6 @@ namespace MaxDB.Data.MaxDBProtocol
         
 		}
 
-		public BigDecimal GetBigDecimal(int scale, ByteArray mem)
-		{
-			BigDecimal result = null;
-			try 
-			{
-				switch (CheckDefineByte(mem)) 
-				{
-					case (DBTechTranslator.nullDefineByte):
-						return result;
-					case (DBTechTranslator.specialNullValueDefineByte):
-						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSpecialNullValue), string.Empty, -10811);
-				}
-				result = VDNNumber.Number2BigDecimal(mem.ReadBytes(m_bufpos, m_physicalLength - 1));
-				result = result.setScale(scale);
-				return result;
-			} 
-			catch
-			{
-				throw CreateParseException(result + " scale: " + scale, null);
-			}
-		}
-
 		public override BigDecimal GetBigDecimal(ByteArray mem)
 		{
 			BigDecimal result = null;
@@ -1289,12 +1169,12 @@ namespace MaxDB.Data.MaxDBProtocol
 			{
 				switch(CheckDefineByte(mem)) 
 				{
-					case DBTechTranslator.nullDefineByte:
+					case DBTechTranslator.iNullDefineByte:
 						return result;
-					case DBTechTranslator.specialNullValueDefineByte:
-						throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSpecialNullValue), string.Empty , -10811);
+					case DBTechTranslator.iSpecialNullValueDefineByte:
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSpecialNullValue), string.Empty , -10811);
 				}
-				result = VDNNumber.Number2BigDecimal(mem.ReadBytes(m_bufpos, m_physicalLength - 1));
+				result = VDNNumber.Number2BigDecimal(mem.ReadBytes(iBufPos, iPhysicalLength - 1));
 				if (!isFloatingPoint)
 					result = result.setScale(frac);
 				return result;
@@ -1310,7 +1190,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return GetInt32(mem) != 0;
 		}
 
-		public override byte GetByte(ISQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISqlParameterController controller, ByteArray mem)
 		{
 			return (byte)GetInt64(mem);
 		}
@@ -1319,24 +1199,24 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			switch (CheckDefineByte(mem)) 
 			{
-				case DBTechTranslator.nullDefineByte:
+				case DBTechTranslator.iNullDefineByte:
 					return 0;
-				case DBTechTranslator.specialNullValueDefineByte:
+				case DBTechTranslator.iSpecialNullValueDefineByte:
 					return double.NaN;
 			}
-			return BigDecimal2Double(VDNNumber.Number2BigDecimal(mem.ReadBytes(m_bufpos, m_physicalLength - 1)));
+			return BigDecimal2Double(VDNNumber.Number2BigDecimal(mem.ReadBytes(iBufPos, iPhysicalLength - 1)));
 		}
 
 		public override float GetFloat(ByteArray mem)
 		{
 			switch (CheckDefineByte(mem)) 
 			{
-				case DBTechTranslator.nullDefineByte:
+				case DBTechTranslator.iNullDefineByte:
 					return 0;
-				case DBTechTranslator.specialNullValueDefineByte:
+				case DBTechTranslator.iSpecialNullValueDefineByte:
 					return float.NaN;
 			}
-			return BigDecimal2Float(VDNNumber.Number2BigDecimal(mem.ReadBytes(m_bufpos, m_physicalLength - 1)));
+			return BigDecimal2Float(VDNNumber.Number2BigDecimal(mem.ReadBytes(iBufPos, iPhysicalLength - 1)));
 		}
 
 		public override int GetInt32(ByteArray mem)
@@ -1348,24 +1228,24 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			switch (CheckDefineByte(mem)) 
 			{
-				case DBTechTranslator.nullDefineByte:
+				case DBTechTranslator.iNullDefineByte:
 					return 0;
-				case DBTechTranslator.specialNullValueDefineByte:
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONSpecialNullValue), string.Empty , -10811);
+				case DBTechTranslator.iSpecialNullValueDefineByte:
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSpecialNullValue), string.Empty , -10811);
 			}
-			return VDNNumber.Number2Long(mem.ReadBytes(m_bufpos, m_physicalLength - 1));
+			return VDNNumber.Number2Long(mem.ReadBytes(iBufPos, iPhysicalLength - 1));
 		}
 
-		public override object GetValue(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
 			if(IsDBNull(mem))
 				return null;
         
-			switch (m_dataType) 
+			switch (byDataType) 
 			{
 				case DataType.FLOAT:
 				case DataType.VFLOAT:
-					if(m_logicalLength < 15)
+					if(iLogicalLength < 15)
 						return GetFloat(mem);
 					else
 						return GetDouble(mem);
@@ -1382,7 +1262,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return m_logicalLength;
+				return iLogicalLength;
 			}
 		}
 
@@ -1390,7 +1270,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				switch(m_dataType) 
+				switch(byDataType) 
 				{
 					case DataType.FIXED:
 						return frac;
@@ -1418,7 +1298,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			try 
 			{
 				BigDecimal bigD = new BigDecimal(val);
-				if (m_dataType == DataType.FIXED)
+				if (byDataType == DataType.FIXED)
 					bigD = bigD.setScale(frac);
             
 				return VDNNumber.BigDecimal2Number(bigD, 16);
@@ -1426,8 +1306,8 @@ namespace MaxDB.Data.MaxDBProtocol
 			catch 
 			{
 				// Detect nasty double values, and throw an SQL exception.
-				if(double.IsInfinity(val) || double.IsNaN(val)) 
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SPECIAL_NUMBER_UNSUPPORTED, val.ToString()));
+				if(double.IsInfinity(val) || double.IsNaN(val))
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SPECIAL_NUMBER_UNSUPPORTED, val.ToString(CultureInfo.InvariantCulture)));
 				else 
 					throw;
 			}
@@ -1438,7 +1318,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			try 
 			{
 				BigDecimal bigD = new BigDecimal(val);
-				if (m_dataType == DataType.FIXED)
+				if (byDataType == DataType.FIXED)
 					bigD = bigD.setScale(frac);
             
 				return VDNNumber.BigDecimal2Number(bigD, 14);
@@ -1446,8 +1326,8 @@ namespace MaxDB.Data.MaxDBProtocol
 			catch 
 			{
 				// Detect nasty double values, and throw an SQL exception.
-				if(float.IsInfinity(val) || float.IsNaN(val)) 
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_SPECIAL_NUMBER_UNSUPPORTED, val.ToString()));
+				if(float.IsInfinity(val) || float.IsNaN(val))
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SPECIAL_NUMBER_UNSUPPORTED, val.ToString(CultureInfo.InvariantCulture)));
 				else 
 					throw;
 			}
@@ -1470,39 +1350,40 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		protected override object TransSpecificForInput(object obj)
 		{
+            Type type = obj.GetType();
 			if (obj == null)
 				return null;
-			if (obj is BigDecimal) 
+			if (type == typeof(BigDecimal)) 
 				return TransBigDecimalForInput((BigDecimal)obj);
-			if (obj is bool) 
+			if (type == typeof(bool)) 
 				return TransBooleanForInput((bool)obj);
-			if (obj is byte)
+			if (type == typeof(byte))
 				return TransByteForInput((byte)obj);
-			if (obj is double) 
+			if (type == typeof(double)) 
 				return TransDoubleForInput((double)obj);
-			if (obj is float)
+			if (type == typeof(float))
 				return TransFloatForInput((float)obj);
-			if (obj is int) 
+			if (type == typeof(int)) 
 				return TransInt32ForInput((int)obj);
-			if (obj is long)
+			if (type == typeof(long))
 				return TransInt64ForInput((long)obj);
-			if (obj is short)
+			if (type == typeof(short))
 				return TransInt16ForInput((short)obj);
 
 			return null;
 		}
 
-		public override string GetString(ISQLParamController controller, ByteArray mem)
+		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
 			switch (CheckDefineByte(mem)) 
 			{
-				case DBTechTranslator.nullDefineByte:
+				case DBTechTranslator.iNullDefineByte:
 					return null;
-				case DBTechTranslator.specialNullValueDefineByte:
+				case DBTechTranslator.iSpecialNullValueDefineByte:
 					return ("NaN");
 			}
-			return VDNNumber.Number2String(mem.ReadBytes(m_bufpos, m_physicalLength - 1),
-				(m_dataType != DataType.FLOAT && m_dataType != DataType.VFLOAT), m_logicalLength, frac);
+			return VDNNumber.Number2String(mem.ReadBytes(iBufPos, iPhysicalLength - 1),
+				(byDataType != DataType.FLOAT && byDataType != DataType.VFLOAT), iLogicalLength, frac);
 		}
 
 		public override object TransStringForInput(string val)
@@ -1534,14 +1415,14 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 		}
 
-		public override object GetValue(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
 			return GetDateTime(mem);
 		}
 
-		public override string GetString(ISQLParamController controller, ByteArray mem)
+		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
-			return (!IsDBNull(mem) ? mem.ReadASCII(m_bufpos, m_physicalLength - 1) : null);
+			return (!IsDBNull(mem) ? mem.ReadAscii(iBufPos, iPhysicalLength - 1) : null);
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)
@@ -1553,7 +1434,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			if (!IsDBNull(mem)) 
 			{
-				byte[] raw = mem.ReadBytes(m_bufpos, m_physicalLength - 1);
+				byte[] raw = mem.ReadBytes(iBufPos, iPhysicalLength - 1);
 
 				int hour = ((int)raw[0] - '0') * 10 + ((int)raw[1] - '0');
 				int min = ((int)raw[3] - '0') * 10 + ((int)raw[4] - '0');
@@ -1598,7 +1479,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		protected override object TransSpecificForInput(object obj)
 		{
-			return (obj is DateTime) ? TransTimeForInput((DateTime)obj) : TransTimeForInput((TimeSpan)obj);
+			return (obj.GetType() == typeof(DateTime)) ? TransTimeForInput((DateTime)obj) : TransTimeForInput((TimeSpan)obj);
 		}
  
 		public override object TransStringForInput(string val)
@@ -1608,79 +1489,29 @@ namespace MaxDB.Data.MaxDBProtocol
         
 			try 
 			{
-				return TransTimeForInput(DateTime.Parse(val));
+                return TransTimeForInput(DateTime.Parse(val, CultureInfo.InvariantCulture));
 			}
 			catch
 			{
 				try 
 				{
-					return TransTimeForInput(TimeSpan.Parse(val));
+                    return TransTimeForInput(TimeSpan.Parse(val));
 				}
 				catch
 				{
-					// ignore
+                    throw CreateParseException(val, "Time");
 				}
 			}
-			throw CreateParseException(val, "Time");
+			
 		}
 
 		protected override void PutSpecific(DataPart dataPart, object data)
 		{
 			byte [] bytes = (byte[])data;
-			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
-			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
-			dataPart.WriteASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
-		}
-	}
-
-	#endregion
-
-	#region "Unicode time data translator"
-
-	internal class UnicodeTimeTranslator : TimeTranslator 
-	{
-		public UnicodeTimeTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos) 
-			: base(mode, ioType, dataType, len, ioLen, bufpos)
-		{
-		}
-
-		public override string GetString(ISQLParamController controller, ByteArray mem)
-		{
-			return (!IsDBNull(mem) ? mem.ReadUnicode(m_bufpos, m_physicalLength - 1) : null);
-		}
-
-		public override TimeSpan GetTimeSpan(ByteArray mem)
-		{
-			if (!IsDBNull(mem)) 
-			{
-				byte[] raw = mem.ReadBytes(m_bufpos, m_physicalLength - 1);
-
-				int hour = ((int)raw[1] - '0') * 10 + ((int)raw[3] - '0');
-				int min = ((int)raw[7] - '0') * 10 + ((int)raw[9] - '0');
-				int sec = ((int)raw[13] - '0') * 10 + ((int)raw[15] - '0');
-
-				return new TimeSpan(hour, min, sec);
-			}
-			else
-				return TimeSpan.MinValue;
-		}
-
-		protected override void PutSpecific(DataPart dataPart, object data)
-		{
-			byte[] bytes = (byte[])data;
-			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
-			dataPart.WriteDefineByte ((byte) 1, m_bufpos - 1);
-			dataPart.WriteUnicodeBytes(bytes, m_bufpos, m_physicalLength - 1);
-		}
-
-		public override object TransTimeForInput(DateTime dt)
-		{
-			byte[] chars = (byte[])base.TransTimeForInput(dt);
-			byte[] bytes = Encoding.Unicode.GetBytes(Encoding.ASCII.GetString(chars));
-			CheckFieldLimits(bytes.Length);
-			return bytes;
+			if (bytes.Length > iPhysicalLength - 1) 
+				throw new MaxDBValueOverflowException(-1);
+			dataPart.WriteDefineByte((byte) ' ', iBufPos - 1);
+			dataPart.WriteAsciiBytes(bytes, iBufPos, iPhysicalLength - 1);
 		}
 	}
 
@@ -1697,21 +1528,21 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 		}
 
-		public override object GetValue(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
 			return GetDateTime(mem);
 		}
 
-		public override string GetString(ISQLParamController controller, ByteArray mem)
+		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
-			return (!IsDBNull(mem) ? mem.ReadASCII(m_bufpos, m_physicalLength - 1) : null);
+			return (!IsDBNull(mem) ? mem.ReadAscii(iBufPos, iPhysicalLength - 1) : null);
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)
 		{
 			if (!IsDBNull(mem)) 
 			{
-				byte[] raw = mem.ReadBytes(m_bufpos, m_physicalLength - 1);
+				byte[] raw = mem.ReadBytes(iBufPos, iPhysicalLength - 1);
 
 				int year = ((int)raw[0] - '0') * 1000 + ((int)raw[1] - '0') * 100 + ((int)raw[2] - '0') * 10 +((int)raw[3] - '0');
 				int month = ((int)raw[5] - '0') * 10 + ((int)raw[6] - '0');
@@ -1800,7 +1631,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		protected override object TransSpecificForInput(object obj)
 		{
-			return (obj is DateTime) ? TransTimestampForInput((DateTime)obj) : null;
+			return (obj.GetType() == typeof(DateTime)) ? TransTimestampForInput((DateTime)obj) : null;
 		}
  
 		public override object TransStringForInput(string val)
@@ -1810,77 +1641,21 @@ namespace MaxDB.Data.MaxDBProtocol
         
 			try 
 			{
-				return TransSpecificForInput(DateTime.Parse(val));
+                return TransSpecificForInput(DateTime.Parse(val, CultureInfo.InvariantCulture));
 			}
 			catch
 			{
-				// ignore
+                throw CreateParseException(val, "Timestamp");
 			}
-			throw CreateParseException (val, "Timestamp");
 		}
 
 		protected override void PutSpecific(DataPart dataPart, object data)
 		{
 			byte [] bytes = (byte[])data;
-			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
-			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
-			dataPart.WriteASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
-		}
-	}
-
-	#endregion
-
-	#region "Unicode timestamp data translator"
-
-	internal class UnicodeTimestampTranslator : TimestampTranslator 
-	{
-		public UnicodeTimestampTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos) 
-			: base(mode, ioType, dataType, len, ioLen, bufpos)
-		{
-		}
-
-		public override string GetString(ISQLParamController controller, ByteArray mem)
-		{
-			return (!IsDBNull(mem) ? mem.ReadUnicode(m_bufpos, m_physicalLength - 1) : null);
-		}
-
-		public override DateTime GetDateTime(ByteArray mem)
-		{
-			if (!IsDBNull(mem)) 
-			{
-				byte[] raw = mem.ReadBytes(m_bufpos, m_physicalLength - 1);
-
-				int year = ((int)raw[1] - '0') * 1000 + ((int)raw[3] - '0') * 100 + ((int)raw[5] - '0') * 10 +((int)raw[7] - '0');
-				int month = ((int)raw[11] - '0') * 10 + ((int)raw[13] - '0');
-				int day = ((int)raw[17] - '0') * 10 + ((int)raw[19] - '0');
-				int hour = ((int)raw[23] - '0') * 10 + ((int)raw[25] - '0');
-				int min = ((int)raw[29] - '0') * 10 + ((int)raw[31] - '0');
-				int sec = ((int)raw[35] - '0') * 10 + ((int)raw[37] - '0');
-				int milli = ((int)raw[41] - '0') * 100 + ((int)raw[43] - '0') * 10 + ((int)raw[45] - '0');
-				int nano = ((int)raw[47] - '0') * 100 + ((int)raw[49] - '0') * 10 + ((int)raw[51] - '0');
-
-				return new DateTime(year, month, day, hour, min, sec, milli).AddTicks(nano * TimeSpan.TicksPerMillisecond / 1000);
-			}
-			else
-				return DateTime.MinValue;
-		}
-
-		protected override void PutSpecific(DataPart dataPart, object data)
-		{
-			byte[] bytes = (byte[])data;
-			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
-			dataPart.WriteDefineByte ((byte) 1, m_bufpos - 1);
-			dataPart.WriteUnicodeBytes(bytes, m_bufpos, m_physicalLength - 1);
-		}
-
-		public override object TransTimestampForInput(DateTime dt)
-		{
-			byte[] chars = (byte[])base.TransTimestampForInput(dt);
-			byte[] bytes = Encoding.Unicode.GetBytes(Encoding.ASCII.GetString(chars));
-			CheckFieldLimits(bytes.Length);
-			return bytes;
+			if (bytes.Length > iPhysicalLength - 1) 
+				throw new MaxDBValueOverflowException(-1);
+			dataPart.WriteDefineByte((byte) ' ', iBufPos - 1);
+			dataPart.WriteAsciiBytes(bytes, iBufPos, iPhysicalLength - 1);
 		}
 	}
 
@@ -1897,14 +1672,14 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 		}
 
-		public override object GetValue(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
 			return GetDateTime(mem);
 		}
 
-		public override string GetString(ISQLParamController controller, ByteArray mem)
+		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
-			return (!IsDBNull(mem) ? mem.ReadASCII(m_bufpos, m_physicalLength - 1) : null);
+			return (!IsDBNull(mem) ? mem.ReadAscii(iBufPos, iPhysicalLength - 1) : null);
 		}
 
 		public override TimeSpan GetTimeSpan(ByteArray mem)
@@ -1916,7 +1691,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			if (!IsDBNull(mem)) 
 			{
-				byte[] raw = mem.ReadBytes(m_bufpos, m_physicalLength - 1);
+				byte[] raw = mem.ReadBytes(iBufPos, iPhysicalLength - 1);
 
 				int year = ((int)raw[0] - '0') * 1000 + ((int)raw[1] - '0') * 100 + ((int)raw[2] - '0') * 10 +((int)raw[3] - '0');
 				int month = ((int)raw[5] - '0') * 10 + ((int)raw[6] - '0');
@@ -1964,7 +1739,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		protected override object TransSpecificForInput(object obj)
 		{
-			return (obj is DateTime) ? TransDateForInput((DateTime)obj) : null;
+			return (obj.GetType() == typeof(DateTime)) ? TransDateForInput((DateTime)obj) : null;
 		}
  
 		public override object TransStringForInput(string val)
@@ -1974,74 +1749,22 @@ namespace MaxDB.Data.MaxDBProtocol
         
 			try 
 			{
-				return TransSpecificForInput(DateTime.Parse(val));
+                return TransSpecificForInput(DateTime.Parse(val, CultureInfo.InvariantCulture));
 			}
 			catch
 			{
-				// ignore
-			}
-			throw CreateParseException (val, "Date");
+                throw CreateParseException(val, "Date");
+			}	
 		}
 
 		protected override void PutSpecific(DataPart dataPart, object data)
 		{
 			byte [] bytes = (byte[])data;
-			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
-			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
-			dataPart.WriteASCIIBytes(bytes, m_bufpos, m_physicalLength - 1);
+			if (bytes.Length > iPhysicalLength - 1) 
+				throw new MaxDBValueOverflowException(-1);
+			dataPart.WriteDefineByte((byte) ' ', iBufPos - 1);
+			dataPart.WriteAsciiBytes(bytes, iBufPos, iPhysicalLength - 1);
 		}
-	}
-
-	#endregion
-
-	#region "Unicode date data translator"
-
-	internal class UnicodeDateTranslator : DateTranslator 
-	{
-		public UnicodeDateTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos) :
-			base(mode, ioType, dataType, len, ioLen, bufpos)
-	{
-	}
-
-		public override string GetString(ISQLParamController controller, ByteArray mem)
-		{
-			return (!IsDBNull(mem) ? mem.ReadUnicode(m_bufpos, m_physicalLength - 1) : null);
-		}
-
-		public override DateTime GetDateTime(ByteArray mem)
-		{
-			if (!IsDBNull(mem)) 
-			{
-				byte[] raw = mem.ReadBytes(m_bufpos, m_physicalLength - 1);
-
-				int year = ((int)raw[1] - '0') * 1000 + ((int)raw[3] - '0') * 100 + ((int)raw[5] - '0') * 10 + ((int)raw[7] - '0');
-				int month = ((int)raw[11] - '0') * 10 + ((int)raw[13] - '0');
-				int day = ((int)raw[17] - '0') * 10 + ((int)raw[19] - '0');
-
-				return new DateTime(year - 1900, month - 1, day);
-			}
-			else
-				return DateTime.MinValue;
-		}
-
-		protected override void PutSpecific(DataPart dataPart, object data)
-		{
-			byte [] bytes = (byte[])data;
-			if (bytes.Length > m_physicalLength - 1) 
-				throw new MaxDBValueOverflowException(DataType.StrValues[m_dataType], -1);
-			dataPart.WriteDefineByte((byte) ' ', m_bufpos - 1);
-			dataPart.WriteUnicodeBytes(bytes, m_bufpos, m_physicalLength - 1);
-		}
-
-		public override object TransDateForInput(DateTime dt)
-		{
-			byte[] chars = (byte[])base.TransDateForInput(dt);
-			byte[] bytes = Encoding.Unicode.GetBytes(Encoding.ASCII.GetString(chars));
-			CheckFieldLimits(bytes.Length);
-			return bytes;
-		}
-
 	}
 
 	#endregion
@@ -2050,53 +1773,52 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	internal class StructureTranslator : DBTechTranslator 
 	{
-		DBProcParameterInfo      parameterStructure;
-		StructMemberTranslator[] structConverter;
-		bool unicode;
+		StructMemberTranslator[] mStructureConverter;
+		bool bUnicode;
 	
 		public StructureTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos, bool unicode) :
 			base(mode, ioType, dataType, len, ioLen, bufpos)
 		{
-			this.unicode = unicode;
-			this.structConverter = new StructMemberTranslator[0];
+			bUnicode = unicode;
+			mStructureConverter = new StructMemberTranslator[0];
 		}
 
 		protected override void PutSpecific(DataPart dataPart, object data)
 		{
 			byte[] bytes = (byte[]) data;
-			dataPart.WriteDefineByte(0, m_bufpos - 1);
-			dataPart.WriteBytes(bytes, m_bufpos, m_physicalLength - 1);
+			dataPart.WriteDefineByte(0, iBufPos - 1);
+			dataPart.WriteBytes(bytes, iBufPos, iPhysicalLength - 1);
 		}
 
-		public override byte GetByte(ISQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISqlParameterController controller, ByteArray mem)
 		{
 			byte[] result = null;
 			if (IsDBNull(mem)) 
 				return 0;
 			else 
-				result = mem.ReadBytes(m_bufpos, 1);
+				result = mem.ReadBytes(iBufPos, 1);
 			return result[0];
 		}
 
-		public override byte[] GetBytes(ISQLParamController controller, ByteArray mem)
+		public override byte[] GetBytes(ISqlParameterController controller, ByteArray mem)
 		{
 			if (!IsDBNull(mem))
-				return mem.ReadBytes(m_bufpos, m_logicalLength);
+				return mem.ReadBytes(iBufPos, iLogicalLength);
 			else
 				return null;
 		}
 
-		public override object GetValue(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
 			byte[] ba = GetBytes(null, mem);
 			if(ba != null) 
 			{	
-				object[] objArr = new object[structConverter.Length];
+				object[] objArr = new object[mStructureConverter.Length];
 				ByteArray sb = new ByteArray(ba, 0, mem.Swapped);
 				for(int i = 0; i < objArr.Length; i++)
-					objArr[i] = structConverter[i].GetValue(sb, 0);
+					objArr[i] = mStructureConverter[i].GetValue(sb, 0);
 			
-				return new DBProcStructure(objArr, parameterStructure.SQLTypeName);
+				return new DBProcStructure(objArr);
 			} 
 			else 
 				return null;
@@ -2120,11 +1842,11 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			object result = null;
 		
-			if (obj is byte[])
-				result = TransBytesForInput((byte[]) obj);
-			else if(obj is object[]) 
+			if (obj.GetType() == typeof(byte[]))
+                result = TransBytesForInput((byte[])obj);
+			else if(obj.GetType() == typeof(object[])) 
 				result = TransObjectArrayForInput((object[])obj);
-			else if(obj is DBProcStructure) 
+			else if(obj.GetType() == typeof(DBProcStructure)) 
 				result = TransObjectArrayForInput(((DBProcStructure)obj).Attributes);
 		
 			return result;
@@ -2132,19 +1854,19 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public object TransObjectArrayForInput(object[] objectArray) 
 		{
-			if(objectArray.Length != structConverter.Length)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCTURE_ARRAYWRONGLENTGH, 
-					structConverter.Length, objectArray.Length));
+			if(objectArray.Length != mStructureConverter.Length)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCTURE_ARRAYWRONGLENTGH, 
+					mStructureConverter.Length, objectArray.Length));
 		
-			ByteArray sb = new ByteArray(m_physicalLength - 1);
+			ByteArray sb = new ByteArray(iPhysicalLength - 1);
 			for(int i=0; i < objectArray.Length; i++) 
 			{
 				if (objectArray[i] == null) 
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_NULL, i+1));
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCT_ELEMENT_NULL, i+1));
 			
-				structConverter[i].PutValue(sb, objectArray[i]);
+				mStructureConverter[i].PutValue(sb, objectArray[i]);
 			}
-			return sb.arrayData;
+			return sb.GetArrayData();
 		}
 
 		public override object TransCharacterStreamForInput(Stream stream, int length)
@@ -2165,7 +1887,7 @@ namespace MaxDB.Data.MaxDBProtocol
 					Array.Copy(ba2, 0, ba, 0, r);
 				}
 				
-				return TransStringForInput(unicode ? Encoding.Unicode.GetString(ba) : Encoding.ASCII.GetString(ba));
+				return TransStringForInput(bUnicode ? Encoding.Unicode.GetString(ba) : Encoding.ASCII.GetString(ba));
 			} 
 			catch(Exception ex) 
 			{
@@ -2198,7 +1920,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 		}
 
-		public override Stream GetBinaryStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetBinaryStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			byte[] asBytes = GetBytes(null, mem);
 
@@ -2210,8 +1932,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public override void SetProcParamInfo(DBProcParameterInfo info) 
 		{
-			parameterStructure = info;
-			structConverter = StructMemberTranslator.CreateStructMemberTranslators(info, unicode);
+			mStructureConverter = StructMemberTranslator.CreateStructMemberTranslators(info, bUnicode);
 		}
 	}
 
@@ -2221,15 +1942,13 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	internal abstract class StructMemberTranslator
 	{
-		protected StructureElement structElement;
-		protected int index;
-		protected int offset;
+		protected StructureElement mStructElement;
+		protected int iOffset;
 	
-		public StructMemberTranslator(StructureElement structElement, int index, bool unicode) 
+		public StructMemberTranslator(StructureElement structElement, bool unicode) 
 		{
-			this.structElement = structElement;
-			this.index = index;						
-			this.offset = unicode ? structElement.m_unicodeOffset : structElement.m_ASCIIOffset;	  	    
+			mStructElement = structElement;
+			iOffset = unicode ? structElement.iUnicodeOffset : structElement.iASCIIOffset;	  	    
 		}
 	
 		public abstract object GetValue(ByteArray memory, int recordOffset);
@@ -2237,7 +1956,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	
 		protected void ThrowConversionError(string srcObj)
 		{
-			throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_CONVERSION, structElement.SQLTypeName, srcObj));
+			throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCT_ELEMENT_CONVERSION, mStructElement.SqlTypeName, srcObj));
 		}
 	
 		/// <summary>
@@ -2250,55 +1969,55 @@ namespace MaxDB.Data.MaxDBProtocol
 		public static StructMemberTranslator CreateStructMemberTranslator(DBProcParameterInfo paramInfo, int index, bool unicode) 
 		{
 			StructureElement s = paramInfo[index];
-			if(s.m_typeName.ToUpper().Trim() == "CHAR") 
+            if (string.Compare(s.strTypeName.Trim(), "CHAR", true, CultureInfo.InvariantCulture) == 0) 
 			{
-				if(s.m_codeType.ToUpper().Trim() == "BYTE") 
-					return new ByteStructureElementTranslator(s, index, unicode);
-				else if(s.m_codeType.ToUpper().Trim() == "ASCII") 
-					return new CharASCIIStructureElementTranslator(s, index, unicode);
-			} 
-			else if(s.m_typeName.ToUpper().Trim() == "WYDE") 
+                if (string.Compare(s.strCodeType.Trim(), "BYTE", true, CultureInfo.InvariantCulture) == 0) 
+					return new ByteStructureElementTranslator(s, unicode);
+                else if (string.Compare(s.strCodeType.Trim(), "ASCII", true, CultureInfo.InvariantCulture) == 0) 
+					return new CharASCIIStructureElementTranslator(s, unicode);
+			}
+            else if (string.Compare(s.strTypeName.Trim(), "WYDE", true, CultureInfo.InvariantCulture) == 0) 
 			{
 				if(unicode) 
-					return new WydeStructureElementTranslator(s, index, unicode);
+					return new WydeStructureElementTranslator(s, unicode);
 				else 
-					return new CharASCIIStructureElementTranslator(s, index, unicode);
-			} 
-			else if(s.m_typeName.ToUpper().Trim() == "SMALLINT") 
+					return new CharASCIIStructureElementTranslator(s, unicode);
+			}
+            else if (string.Compare(s.strTypeName.Trim(), "SMALLINT", true, CultureInfo.InvariantCulture) == 0) 
 			{
-				if(s.m_Length == 5) 
-					return new ShortStructureElementTranslator(s, index, unicode);
-			} 
-			else if(s.m_typeName.ToUpper().Trim() == "INTEGER") 
+				if(s.iLength == 5) 
+					return new ShortStructureElementTranslator(s, unicode);
+			}
+            else if (string.Compare(s.strTypeName.Trim(), "INTEGER", true, CultureInfo.InvariantCulture) == 0) 
 			{
-				if(s.m_Length == 10) 
-					return new IntStructureElementTranslator(s, index, unicode);
-				else if(s.m_Length == 19) 
-					return new LongStructureElementTranslator(s, index, unicode);
-			} 
-			else if(s.m_typeName.ToUpper().Trim() == "FIXED") 
+				if(s.iLength == 10) 
+					return new IntStructureElementTranslator(s, unicode);
+				else if(s.iLength == 19) 
+					return new LongStructureElementTranslator(s, unicode);
+			}
+            else if (string.Compare(s.strTypeName.Trim(), "FIXED", true, CultureInfo.InvariantCulture) == 0) 
 			{
-				if(s.m_Precision == 0) 
+				if(s.iPrecision == 0) 
 				{
-					if(s.m_Length == 5) 
-						return new ShortStructureElementTranslator(s, index, unicode);
-					else if(s.m_Length == 10) 
-						return new IntStructureElementTranslator(s, index, unicode);
-					else if(s.m_Length == 19) 
-						return new LongStructureElementTranslator(s, index, unicode);
+					if(s.iLength == 5) 
+						return new ShortStructureElementTranslator(s, unicode);
+					else if(s.iLength == 10) 
+						return new IntStructureElementTranslator(s, unicode);
+					else if(s.iLength == 19) 
+						return new LongStructureElementTranslator(s, unicode);
 				}
-			} 
-			else if(s.m_typeName.ToUpper().Trim() == "FLOAT") 
+			}
+            else if (string.Compare(s.strTypeName.Trim(), "FLOAT", true, CultureInfo.InvariantCulture) == 0) 
 			{
-				if(s.m_Length == 15) 
-					return new DoubleStructureElementTranslator(s, index,unicode);			
-				else if(s.m_Length == 6) 
-					return new FloatStructureElementTranslator(s, index, unicode);
-			} 
-			else if(s.m_typeName.ToUpper().Trim() == "BOOLEAN") 
-				return new BooleanStructureElementTranslator(s, index, unicode);
+				if(s.iLength == 15) 
+					return new DoubleStructureElementTranslator(s, unicode);			
+				else if(s.iLength == 6) 
+					return new FloatStructureElementTranslator(s, unicode);
+			}
+            else if (string.Compare(s.strTypeName.Trim(), "BOOLEAN", true, CultureInfo.InvariantCulture) == 0) 
+				return new BooleanStructureElementTranslator(s, unicode);
 
-			throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSION_STRUCTURETYPE, index, s.SQLTypeName));
+			throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSION_STRUCTURETYPE, index, s.SqlTypeName));
 		}
 
 		/// <summary>
@@ -2324,19 +2043,19 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	internal class BooleanStructureElementTranslator : StructMemberTranslator 
 	{
-		public BooleanStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
+		public BooleanStructureElementTranslator(StructureElement structElement, bool unicode) : base(structElement, unicode)
 		{
 		}
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			return (memory.ReadByte(offset + recordOffset) != 0);
+			return (memory.ReadByte(iOffset + recordOffset) != 0);
 		}
 		
 		public override void PutValue(ByteArray memory, object obj)
 		{
-			if(obj is bool)
-				memory.WriteByte((byte)((bool)obj ? 1 : 0), offset);
+			if(obj.GetType() == typeof(bool))
+				memory.WriteByte((byte)((bool)obj ? 1 : 0), iOffset);
 			else
 				ThrowConversionError(obj.GetType().FullName);
 		}
@@ -2348,14 +2067,14 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	internal class ByteStructureElementTranslator : StructMemberTranslator 
 	{
-		public ByteStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
+		public ByteStructureElementTranslator(StructureElement structElement, bool unicode) : base(structElement, unicode)
 		{
 		}
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			byte[] bytes = memory.ReadBytes(offset + recordOffset, structElement.m_Length);
-			if(structElement.m_Length == 1) 
+			byte[] bytes = memory.ReadBytes(iOffset + recordOffset, mStructElement.iLength);
+			if(mStructElement.iLength == 1) 
 				return bytes[0];				
 			else 
 				return bytes;
@@ -2363,9 +2082,9 @@ namespace MaxDB.Data.MaxDBProtocol
 		
 		public override void PutValue(ByteArray memory, object obj)
 		{
-			if(obj is byte[]) 
-				memory.WriteBytes((byte[])obj, offset);
-			else if(obj is byte) 
+			if(obj.GetType() == typeof(byte[])) 
+				memory.WriteBytes((byte[])obj, iOffset);
+			else if(obj.GetType() == typeof(byte)) 
 			{
 				byte[] ba = new byte[1];
 				ba[0] = (byte)obj;
@@ -2383,14 +2102,14 @@ namespace MaxDB.Data.MaxDBProtocol
 	internal class CharASCIIStructureElementTranslator : StructMemberTranslator 
 	{
 
-		public CharASCIIStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
+		public CharASCIIStructureElementTranslator(StructureElement structElement, bool unicode) : base(structElement, unicode)
 		{
 		}
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			byte[] bytes = memory.ReadBytes(offset + recordOffset, structElement.m_Length);
-			if(structElement.m_Length == 1) 
+			byte[] bytes = memory.ReadBytes(iOffset + recordOffset, mStructElement.iLength);
+			if(mStructElement.iLength == 1) 
 				return (char)bytes[0];		
 			else 
 				return Encoding.ASCII.GetString(bytes);
@@ -2399,16 +2118,16 @@ namespace MaxDB.Data.MaxDBProtocol
 		public override void PutValue(ByteArray memory, object obj)
 		{
 			string convStr = null;	
-			if(obj is char[]) 
+			if(obj.GetType() == typeof(char[])) 
 				convStr = new string((char[])obj);
-			else if(obj is string) 
+			else if(obj.GetType() == typeof(string)) 
 				convStr = (string)obj;
-			else if(obj is char) 
+			else if(obj.GetType() == typeof(char)) 
 				convStr = new string(new char[]{(char)obj});
 			else 
 				ThrowConversionError(obj.GetType().FullName);
 			
-			memory.WriteASCII(convStr, offset);
+			memory.WriteAscii(convStr, iOffset);
 		}
 	}
 
@@ -2418,14 +2137,14 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	internal class WydeStructureElementTranslator : StructMemberTranslator 
 	{
-		public WydeStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
+		public WydeStructureElementTranslator(StructureElement structElement, bool unicode) : base(structElement, unicode)
 		{
 		}
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			string ca  = memory.ReadUnicode(offset + recordOffset, structElement.m_Length * 2);
-			if(structElement.m_Length == 1) 
+			string ca  = memory.ReadUnicode(iOffset + recordOffset, mStructElement.iLength * 2);
+			if(mStructElement.iLength == 1) 
 				return ca[0];
 			else
 				return ca;
@@ -2434,16 +2153,16 @@ namespace MaxDB.Data.MaxDBProtocol
 		public override void PutValue(ByteArray memory, object obj)
 		{
 			string convStr = null;
-			if(obj is char[]) 
+			if(obj.GetType() == typeof(char[])) 
 				convStr = new string((char[])obj);
-			else if(obj is string) 
+			else if(obj.GetType() == typeof(string)) 
 				convStr = (string)obj;
-			else if(obj is char) 
+			else if(obj.GetType() == typeof(char)) 
 				convStr = new string(new char[]{(char)obj});
 			else 
 				ThrowConversionError(obj.GetType().FullName);
 			
-			memory.WriteUnicode(convStr, offset);
+			memory.WriteUnicode(convStr, iOffset);
 		}
 	}
 
@@ -2453,29 +2172,30 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	internal class ShortStructureElementTranslator : StructMemberTranslator 
 	{
-		public ShortStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
+		public ShortStructureElementTranslator(StructureElement structElement, bool unicode) : base(structElement, unicode)
 		{
 		}
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			return memory.ReadInt16(offset + recordOffset);
+			return memory.ReadInt16(iOffset + recordOffset);
 		}
 		
 		public override void PutValue(ByteArray memory, object obj)
 		{
-			if (obj is byte || obj is short || obj is int || obj is long 
-				|| obj is ushort || obj is uint || obj is ulong 
-				|| (obj is float && (float)obj <= short.MaxValue && (float)obj >= short.MinValue) 
-				|| (obj is double && (double)obj <= short.MaxValue && (double)obj >= short.MinValue)
-				|| (obj is decimal && (decimal)obj <= short.MaxValue && (decimal)obj >= short.MinValue))
-				memory.WriteInt16((short)obj, offset);
+            Type type = obj.GetType();
+			if (type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long) 
+				|| type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong) 
+				|| (type == typeof(float) && (float)obj <= short.MaxValue && (float)obj >= short.MinValue) 
+				|| (type == typeof(double) && (double)obj <= short.MaxValue && (double)obj >= short.MinValue)
+				|| (type == typeof(decimal) && (decimal)obj <= short.MaxValue && (decimal)obj >= short.MinValue))
+				memory.WriteInt16((short)obj, iOffset);
 			else
 			{
-				if (obj is float && ((float)obj > short.MaxValue || (float)obj < short.MinValue) 
-					|| (obj is double && ((double)obj > short.MaxValue || (double)obj < short.MinValue)
-					|| (obj is decimal && ((decimal)obj > short.MaxValue || (decimal)obj < short.MinValue))))
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
+				if (type == typeof(float) && ((float)obj > short.MaxValue || (float)obj < short.MinValue) 
+					|| (type == typeof(double) && ((double)obj > short.MaxValue || (double)obj < short.MinValue)
+					|| (type == typeof(decimal) && ((decimal)obj > short.MaxValue || (decimal)obj < short.MinValue))))
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCT_ELEMENT_OVERFLOW, mStructElement.SqlTypeName, obj.ToString()));
 				else
 					ThrowConversionError(obj.GetType().FullName);
 			}
@@ -2488,29 +2208,30 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	internal class IntStructureElementTranslator : StructMemberTranslator 
 	{
-		public IntStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
+		public IntStructureElementTranslator(StructureElement structElement, bool unicode) : base(structElement, unicode)
 		{
 		}
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			return memory.ReadInt32(offset + recordOffset);
+			return memory.ReadInt32(iOffset + recordOffset);
 		}
 		
 		public override void PutValue(ByteArray memory, object obj)
 		{
-			if (obj is byte || obj is short || obj is int || obj is long 
-				|| obj is ushort || obj is uint || obj is ulong 
-				|| (obj is float && (float)obj <= int.MaxValue && (float)obj >= int.MinValue) 
-				|| (obj is double && (double)obj <= int.MaxValue && (double)obj >= int.MinValue)
-				|| (obj is decimal && (decimal)obj <= int.MaxValue && (decimal)obj >= int.MinValue))
-				memory.WriteInt32((int)obj, offset);
+            Type type = obj.GetType();
+            if (type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long) 
+				|| type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong) 
+				|| (type == typeof(float) && (float)obj <= int.MaxValue && (float)obj >= int.MinValue) 
+				|| (type == typeof(double) && (double)obj <= int.MaxValue && (double)obj >= int.MinValue)
+				|| (type == typeof(decimal) && (decimal)obj <= int.MaxValue && (decimal)obj >= int.MinValue))
+				memory.WriteInt32((int)obj, iOffset);
 			else
 			{
-				if (obj is float && ((float)obj > int.MaxValue || (float)obj < int.MinValue) 
-					|| (obj is double && ((double)obj > int.MaxValue || (double)obj < int.MinValue)
-					|| (obj is decimal && ((decimal)obj > int.MaxValue || (decimal)obj < int.MinValue))))
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
+				if (type == typeof(float) && ((float)obj > int.MaxValue || (float)obj < int.MinValue) 
+					|| (type == typeof(double) && ((double)obj > int.MaxValue || (double)obj < int.MinValue)
+					|| (type == typeof(decimal) && ((decimal)obj > int.MaxValue || (decimal)obj < int.MinValue))))
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCT_ELEMENT_OVERFLOW, mStructElement.SqlTypeName, obj.ToString()));
 				else
 					ThrowConversionError(obj.GetType().FullName);
 			}
@@ -2524,29 +2245,30 @@ namespace MaxDB.Data.MaxDBProtocol
 	internal class LongStructureElementTranslator : StructMemberTranslator 
 	{
 
-		public LongStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
+		public LongStructureElementTranslator(StructureElement structElement, bool unicode) : base(structElement, unicode)
 		{
 		}
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			return memory.ReadInt64(offset + recordOffset);
+			return memory.ReadInt64(iOffset + recordOffset);
 		}
 		
 		public override void PutValue(ByteArray memory, object obj)
 		{
-			if (obj is byte || obj is short || obj is int || obj is long 
-				|| obj is ushort || obj is uint || obj is ulong 
-				|| (obj is float && (float)obj <= long.MaxValue && (float)obj >= long.MinValue) 
-				|| (obj is double && (double)obj <= long.MaxValue && (double)obj >= long.MinValue)
-				|| (obj is decimal && (decimal)obj <= long.MaxValue && (decimal)obj >= long.MinValue))
-				memory.WriteInt64((long)obj, offset);
+            Type type = obj.GetType();
+			if (type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long) 
+				|| type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong) 
+				|| (type == typeof(float) && (float)obj <= long.MaxValue && (float)obj >= long.MinValue) 
+				|| (type == typeof(double) && (double)obj <= long.MaxValue && (double)obj >= long.MinValue)
+				|| (type == typeof(decimal) && (decimal)obj <= long.MaxValue && (decimal)obj >= long.MinValue))
+				memory.WriteInt64((long)obj, iOffset);
 			else
 			{
-				if (obj is float && ((float)obj > long.MaxValue || (float)obj < long.MinValue) 
-					|| (obj is double && ((double)obj > long.MaxValue || (double)obj < long.MinValue)
-					|| (obj is decimal && ((decimal)obj > long.MaxValue || (decimal)obj < long.MinValue))))
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
+				if (type == typeof(float) && ((float)obj > long.MaxValue || (float)obj < long.MinValue) 
+					|| (type == typeof(double) && ((double)obj > long.MaxValue || (double)obj < long.MinValue)
+					|| (type == typeof(decimal) && ((decimal)obj > long.MaxValue || (decimal)obj < long.MinValue))))
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCT_ELEMENT_OVERFLOW, mStructElement.SqlTypeName, obj.ToString()));
 				else
 					ThrowConversionError(obj.GetType().FullName);
 			}
@@ -2559,27 +2281,28 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	internal class FloatStructureElementTranslator : StructMemberTranslator 
 	{
-		public FloatStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
+		public FloatStructureElementTranslator(StructureElement structElement, bool unicode) : base(structElement, unicode)
 		{
 		}
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			return BitConverter.ToSingle(memory.ReadBytes(offset, 4), 0); 
+			return BitConverter.ToSingle(memory.ReadBytes(iOffset, 4), 0); 
 		}
 		
 		public override void PutValue(ByteArray memory, object obj)
 		{
-			if (obj is byte || obj is short || obj is int || obj is long 
-				|| obj is ushort || obj is uint || obj is ulong || obj is float 
-				|| (obj is double && (double)obj <= long.MaxValue && (double)obj >= float.MinValue)
-				|| (obj is decimal && (decimal)obj <= long.MaxValue))
-				memory.WriteBytes(BitConverter.GetBytes((float)obj), offset);
+            Type type = obj.GetType();
+			if (type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long) 
+				|| type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong) || type == typeof(float) 
+				|| (type == typeof(double) && (double)obj <= long.MaxValue && (double)obj >= float.MinValue)
+				|| (type == typeof(decimal) && (decimal)obj <= long.MaxValue))
+				memory.WriteBytes(BitConverter.GetBytes((float)obj), iOffset);
 			else
 			{
-				if ((obj is double && ((double)obj > long.MaxValue || (double)obj < float.MinValue)
-					|| (obj is decimal && ((decimal)obj > long.MaxValue))))
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_STRUCT_ELEMENT_OVERFLOW, structElement.SQLTypeName, obj.ToString()));
+				if ((type == typeof(double) && ((double)obj > long.MaxValue || (double)obj < float.MinValue)
+					|| (type == typeof(decimal) && ((decimal)obj > long.MaxValue))))
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCT_ELEMENT_OVERFLOW, mStructElement.SqlTypeName, obj.ToString()));
 				else
 					ThrowConversionError(obj.GetType().FullName);
 			}
@@ -2592,13 +2315,13 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	internal class DoubleStructureElementTranslator : StructMemberTranslator 
 	{
-		public DoubleStructureElementTranslator(StructureElement structElement, int index, bool unicode) : base(structElement, index, unicode)
+		public DoubleStructureElementTranslator(StructureElement structElement, bool unicode) : base(structElement, unicode)
 		{
 		}
 
 		public override object GetValue(ByteArray memory, int recordOffset) 
 		{
-			return BitConverter.ToDouble(memory.ReadBytes(offset, 8), 0); 
+			return BitConverter.ToDouble(memory.ReadBytes(iOffset, 8), 0); 
 		}
 
 		public override void PutValue(ByteArray memory, object obj)
@@ -2606,7 +2329,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			if (obj is byte || obj is short || obj is int || obj is long 
 				|| obj is ushort || obj is uint || obj is ulong || obj is float || obj is double
 				|| (obj is decimal && (decimal)obj <= long.MaxValue && (decimal)obj >= long.MinValue))
-				memory.WriteBytes(BitConverter.GetBytes((double)obj), offset);
+				memory.WriteBytes(BitConverter.GetBytes((double)obj), iOffset);
 			else
 				ThrowConversionError(obj.GetType().FullName);
 		}
@@ -2641,7 +2364,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				return new BinaryProcedurePutValue(this, stream, length);
 			} 
 			else 
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSION_BYTESTREAM));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSION_BYTESTREAM));
 		}
     
 		public override object TransStringForInput(string val)
@@ -2652,7 +2375,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			if(IsASCII) 
 				return new ASCIIProcedurePutValue(this, Encoding.ASCII.GetBytes(val));
 			else 
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSION_STRINGSTREAM));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSION_STRINGSTREAM));
 		}
 
 		public override object TransCharacterStreamForInput(Stream stream, int length) 
@@ -2665,7 +2388,7 @@ namespace MaxDB.Data.MaxDBProtocol
 					return new ASCIIProcedurePutValue(this, stream, length);            
 			} 
 			else 
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSION_STRINGSTREAM));            
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSION_STRINGSTREAM));            
 		}
     
 		public override object TransBytesForInput(byte[] val)
@@ -2684,7 +2407,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		protected override object TransSpecificForInput(object obj)
 		{
-			if (obj is Stream)
+            if (obj.GetType() == typeof(Stream))
 				return TransASCIIStreamForInput((Stream) obj, -1);
 			else
 				return null;
@@ -2700,14 +2423,14 @@ namespace MaxDB.Data.MaxDBProtocol
 				return new ASCIIProcedurePutValue(this, stream, length);
 			} 
 			else 
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSION_STRINGSTREAM));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSION_STRINGSTREAM));
 		}
 
 		private bool IsASCII
 		{
 			get
 			{
-				return m_dataType == DataType.STRA || m_dataType == DataType.LONGA;
+				return byDataType == DataType.STRA || byDataType == DataType.LONGA;
 			}
 		}
 
@@ -2715,11 +2438,11 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return m_dataType == DataType.STRB || m_dataType == DataType.LONGB;
+				return byDataType == DataType.STRB || byDataType == DataType.LONGB;
 			}
 		}
     
-		private Stream GetStream(ISQLParamController controller, ByteArray mem, ByteArray longdata)
+		private Stream GetStream(ISqlParameterController controller, ByteArray mem, ByteArray longdata)
 		{
 			Stream result = null;
 			AbstractGetValue getval = null;
@@ -2727,31 +2450,31 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			if (!IsDBNull(mem)) 
 			{
-				descriptor = mem.ReadBytes(m_bufpos, m_logicalLength);
+				descriptor = mem.ReadBytes(iBufPos, iLogicalLength);
 				// return also NULL if the LONG hasn't been touched.
-				if (DescriptorIsNull(descriptor)) 
+				if (IsDescriptorNull(descriptor)) 
 					return null;
 			
-				getval = new GetLOBValue (controller.Connection, descriptor, longdata, m_dataType);
+				getval = new GetLOBValue (controller.Connection, descriptor, longdata);
 				result = getval.ASCIIStream;
 			}
 			return result;
 		}
 
-		public override Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetASCIIStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			return GetStream(controller, mem, longData);
 		}
 	
-		public override Stream GetBinaryStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetBinaryStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			if(IsBinary)
 				return GetStream(controller, mem, longData);
 			else
-				throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_BINARYREADFROMLONG));
+				throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBError.BINARYREADFROMLONG));
 		}
 
-		public override byte GetByte(ISQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISqlParameterController controller, ByteArray mem)
 		{
 			byte[] result = null;
 			if (IsDBNull(mem))
@@ -2761,7 +2484,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return result[0];
 		}
 
-		public override byte[] GetBytes(ISQLParamController controller, ByteArray mem)
+		public override byte[] GetBytes(ISqlParameterController controller, ByteArray mem)
 		{
 			Stream blobStream;
 			MemoryStream tmpStream;
@@ -2798,7 +2521,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return tmpStream.ToArray();
 		}
 
-		public virtual TextReader GetCharacterStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public virtual TextReader GetCharacterStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			Stream byteStream = GetASCIIStream(controller, mem, longData);
 			if (byteStream == null) 
@@ -2807,7 +2530,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return new RawByteReader(byteStream);
 		}
 
-		public override string GetString(ISQLParamController controller, ByteArray mem)
+		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
 			const int bufSize = 4096;
 			TextReader reader;
@@ -2840,7 +2563,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return result.ToString();
 		}
 
-		public override long GetChars(ISQLParamController controller, ByteArray mem, long fldOffset, char[] buffer, int bufferoffset, int length)
+		public override long GetChars(ISqlParameterController controller, ByteArray mem, long fldOffset, char[] buffer, int bufferoffset, int length)
 		{
 			const int bufSize = 4096;
 			TextReader reader;
@@ -2883,7 +2606,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return alreadyRead;
 		}
 
-		public override long GetBytes(ISQLParamController controller, ByteArray mem, long fldOffset, byte[] buffer, int bufferoffset, int length)
+		public override long GetBytes(ISqlParameterController controller, ByteArray mem, long fldOffset, byte[] buffer, int bufferoffset, int length)
 		{
 			const int bufSize = 4096;
 			Stream stream;
@@ -2926,7 +2649,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return alreadyRead;
 		}
 
-		protected bool DescriptorIsNull(byte[] descriptor) 
+        protected static bool IsDescriptorNull(byte[] descriptor) 
 		{
 			return descriptor[LongDesc.State] == LongDesc.StateStream;
 		}
@@ -2967,7 +2690,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return new UnicodeProcedurePutValue(this, reader, length);
 		}
 
-		public override Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetASCIIStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			TextReader reader = GetCharacterStream(controller, mem, longData);
 			if (reader == null) 
@@ -2976,7 +2699,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return new ReaderStream(reader, false);
 		}
 
-		public override TextReader GetCharacterStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public override TextReader GetCharacterStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			TextReader result = null;
 			AbstractGetValue getval;
@@ -2984,11 +2707,11 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			if (!IsDBNull(mem)) 
 			{
-				descriptor = mem.ReadBytes(m_bufpos, m_logicalLength);
-				if (DescriptorIsNull(descriptor))
+				descriptor = mem.ReadBytes(iBufPos, iLogicalLength);
+				if (IsDescriptorNull(descriptor))
 					return null;
             
-				getval = new GetUnicodeLOBValue(controller.Connection, descriptor, longData, IsUnicodeColumn);
+				getval = new GetUnicodeLOBValue(controller.Connection, descriptor, longData);
 				result = getval.CharacterStream;
 			}
 			return result;
@@ -3019,7 +2742,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				switch (m_dataType) 
+				switch (byDataType) 
 				{
 					case DataType.STRUNI:
 					case DataType.LONGUNI:
@@ -3038,17 +2761,17 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 		}
 
-		public override Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetASCIIStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
-			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_ASCIIREADFROMLONG));
+			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBError.ASCIIREADFROMLONG));
 		}
 
-		public override Stream GetBinaryStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetBinaryStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			return GetStream(controller, mem, longData);
 		}
 
-		public virtual TextReader GetCharacterStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public virtual TextReader GetCharacterStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			Stream byteStream = GetASCIIStream(controller, mem, longData);
 			if (byteStream == null) 
@@ -3057,7 +2780,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return new RawByteReader(byteStream);
 		}
 
-		public Stream GetStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public Stream GetStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			Stream result = null;
 			AbstractGetValue getval = null;
@@ -3065,15 +2788,15 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			if (!IsDBNull(mem)) 
 			{
-				descriptor = mem.ReadBytes(m_bufpos, m_logicalLength);
-				getval = new GetLOBValue(controller.Connection, descriptor, longData, m_dataType);
+				descriptor = mem.ReadBytes(iBufPos, iLogicalLength);
+				getval = new GetLOBValue(controller.Connection, descriptor, longData);
           
 				result = getval.ASCIIStream;
 			}
 			return result;
 		}
 
-		public override string GetString(ISQLParamController controller, ByteArray mem)
+		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
 			const int bufSize = 4096;
 			TextReader reader;
@@ -3107,7 +2830,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return result.ToString();
 		}
 
-		public override long GetChars(ISQLParamController controller, ByteArray mem, long fldOffset, char[] buffer, int bufferoffset, int length)
+		public override long GetChars(ISqlParameterController controller, ByteArray mem, long fldOffset, char[] buffer, int bufferoffset, int length)
 		{
 			const int bufSize = 4096;
 			TextReader reader;
@@ -3150,7 +2873,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return alreadyRead;
 		}
 
-		public override long GetBytes(ISQLParamController controller, ByteArray mem, long fldOffset, byte[] buffer, int bufferoffset, int length)
+		public override long GetBytes(ISqlParameterController controller, ByteArray mem, long fldOffset, byte[] buffer, int bufferoffset, int length)
 		{
 			const int bufSize = 4096;
 			Stream stream;
@@ -3204,17 +2927,17 @@ namespace MaxDB.Data.MaxDBProtocol
 		protected override void PutSpecific(DataPart dataPart, object data)
 		{
 			PutValue putval = (PutValue) data;
-			putval.PutDescriptor(dataPart, m_bufpos - 1);
+			putval.PutDescriptor(dataPart, iBufPos - 1);
 		}
 
 		public virtual object TransASCIIStreamForInput(Stream stream, int length)
 		{
-			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_ASCIIPUTTOLONG));
+			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBError.ASCIIPUTTOLONG));
 		}
 
 		public override object TransBinaryStreamForInput(Stream stream, int length)
 		{
-			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_BINARYPUTTOLONG));
+			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBError.BINARYPUTTOLONG));
 		}
 
 		/**
@@ -3226,17 +2949,15 @@ namespace MaxDB.Data.MaxDBProtocol
 		 */
 		public override object TransBytesForInput(byte [] val)
 		{
-			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_BINARYPUTTOLONG));
+			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBError.BINARYPUTTOLONG));
 		}
     
 		protected override object TransSpecificForInput(object obj)
 		{
-			object result = null;
-
-			if (obj is Stream) 
-				result = TransASCIIStreamForInput((Stream) obj, -1);
-        
-			return result;
+            if (obj.GetType() == typeof(Stream))
+                return TransASCIIStreamForInput((Stream)obj, -1);
+            else
+			    return null;
 		}
 
 		public object TransStreamForInput(Stream stream, int length)
@@ -3244,12 +2965,12 @@ namespace MaxDB.Data.MaxDBProtocol
 			if (stream == null) 
 				return null;
         
-			return new PutValue(stream, length, m_bufpos);
+			return new PutValue(stream, length, iBufPos);
 		}
    
 		public override object TransStringForInput(string val)
 		{
-			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBMessages.ERROR_ASCIIPUTTOLONG));
+			throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBError.ASCIIPUTTOLONG));
 		}
 	}
 
@@ -3262,15 +2983,14 @@ namespace MaxDB.Data.MaxDBProtocol
 		public ASCIIStreamTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos) :
 			base(mode, ioType, dataType, len, ioLen, bufpos)
 		{
-			m_charDatatypePostfix = " ASCII";
 		}
 
-		public override Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetASCIIStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			return GetStream (controller, mem, longData);
 		}
 
-		public override object GetValue(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
 			return GetString(controller, mem);
 		}
@@ -3279,21 +2999,12 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			return TransStreamForInput(stream, length);
 		}
-	
-		public object TransCharacterStreamForInput(TextReader reader, int length)
-		{
-			if (reader == null) 
-				return reader;
-
-			Stream stream = new ReaderStream(reader, false);
-			return TransStreamForInput(stream, length);
-		}
     
 		public override object TransStringForInput(string val)
 		{
 			if (val == null) 
 				return null;
-			return new PutValue(Encoding.GetEncoding(1252).GetBytes(val), m_bufpos);
+			return new PutValue(Encoding.GetEncoding(1252).GetBytes(val), iBufPos);
 		}
 	}
 
@@ -3308,12 +3019,12 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 		}
 
-		public override Stream GetBinaryStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetBinaryStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			return GetStream (controller, mem, longData);
 		}
 
-		public override byte GetByte(ISQLParamController controller, ByteArray mem)
+		public override byte GetByte(ISqlParameterController controller, ByteArray mem)
 		{
 			if (IsDBNull(mem))
 				return 0;
@@ -3321,7 +3032,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return GetBytes(controller, mem)[0];
 		}
     
-		public override byte[] GetBytes(ISQLParamController controller, ByteArray mem)
+		public override byte[] GetBytes(ISqlParameterController controller, ByteArray mem)
 		{
 			Stream blobStream;
 			MemoryStream tmpStream;
@@ -3358,7 +3069,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return tmpStream.ToArray();
 		}
 
-		public override object GetValue(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
 			return GetBytes(controller, mem);
 		}
@@ -3375,7 +3086,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			if (val == null) 
 				return null;
 		 
-			return new PutValue(val, m_bufpos);	
+			return new PutValue(val, iBufPos);	
 		}
   
 		public override object TransBinaryStreamForInput(Stream stream, int length)
@@ -3385,12 +3096,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		protected override object TransSpecificForInput(object obj)
 		{
-			object result = null;
-
-			if (obj is Stream) 
-				result = TransBinaryStreamForInput((Stream)obj, -1);
-        
-			return result;
+            if (obj.GetType() == typeof(Stream))
+                return TransBinaryStreamForInput((Stream)obj, -1);
+            else
+                return null;
 		}
 	}
 
@@ -3403,10 +3112,9 @@ namespace MaxDB.Data.MaxDBProtocol
 		public UnicodeStreamTranslator(int mode, int ioType, int dataType, int len, int ioLen, int bufpos) :
 			base(mode, ioType, dataType, len, ioLen, bufpos)
 		{
-			m_charDatatypePostfix = " UNICODE";
 		}
 
-		public override Stream GetASCIIStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public override Stream GetASCIIStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			TextReader reader = GetCharacterStream(controller, mem, longData);
 			if (reader == null) 
@@ -3415,12 +3123,12 @@ namespace MaxDB.Data.MaxDBProtocol
 			return new ReaderStream(reader, false);
 		}
 
-		public override object GetValue(ISQLParamController controller, ByteArray mem)
+		public override object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
 			return GetString(controller, mem);
 		}
 
-		public override TextReader GetCharacterStream(ISQLParamController controller, ByteArray mem, ByteArray longData)
+		public override TextReader GetCharacterStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)
 		{
 			TextReader result = null;
 			AbstractGetValue getval;
@@ -3428,8 +3136,8 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			if (!IsDBNull(mem)) 
 			{
-				descriptor = mem.ReadBytes(m_bufpos, m_logicalLength);
-				getval = new GetUnicodeLOBValue(controller.Connection, descriptor, longData, IsUnicodeColumn);
+				descriptor = mem.ReadBytes(iBufPos, iLogicalLength);
+				getval = new GetUnicodeLOBValue(controller.Connection, descriptor, longData);
 				result = getval.CharacterStream;
 			}
 			return result;
@@ -3449,7 +3157,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			if (reader == null) 
 				return null;
         
-			return new PutUnicodeValue(reader, length, m_bufpos);
+			return new PutUnicodeValue(reader, length, iBufPos);
 		}
 
 		public override object TransStringForInput(string val)
@@ -3457,7 +3165,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			if (val == null) 
 				return null;
         
-			return new PutUnicodeValue(val.ToCharArray(), m_bufpos);               
+			return new PutUnicodeValue(val.ToCharArray(), iBufPos);               
 		}
 	}
 

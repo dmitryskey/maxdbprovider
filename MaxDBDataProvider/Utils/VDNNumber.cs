@@ -19,20 +19,20 @@ using System;
 using System.Text;
 using MaxDB.Data.MaxDBProtocol;
 
-namespace MaxDB.Data.Utils
+namespace MaxDB.Data.Utilities
 {
 #if SAFE
 
 	internal abstract class VDNNumber 
 	{
-		private const int zeroExponentValue = 128;
-		private const int tensComplement = 9;
-		private const int numberDigits = 38;
-		private const String zerostring = "0000000000000000000000000000000000000000000000000000000000000000";
+		private const int iZeroExpValue = 128;
+		private const int iTensComplement = 9;
+		private const int iNumberDigits = 38;
+		private const String strZeroString = "0000000000000000000000000000000000000000000000000000000000000000";
 
 		public static byte[] BigDecimal2Number(BigDecimal dec) 
 		{
-			return BigDecimal2Number(dec, numberDigits);
+			return BigDecimal2Number(dec, iNumberDigits);
 		}
 
 		public static string BigDecimal2PlainString(BigDecimal val) 
@@ -101,7 +101,7 @@ namespace MaxDB.Data.Utils
 			exponent = chars.Length - firstDigit - scale;
 			digitCount = chars.Length - firstDigit;
 			if ((digitCount == 1) && (chars [firstDigit] == '0')) 
-				return new byte[]{(byte) zeroExponentValue};
+				return new byte[]{(byte) iZeroExpValue};
         
 			if (exponent > 0 && scale > 0) 
 			{
@@ -136,13 +136,13 @@ namespace MaxDB.Data.Utils
 			bool isNegative = false;
 			int negativeVal = 1;
 			byte[] number ;
-			char[] scratch = new char[numberDigits + 1];
+			char[] scratch = new char[iNumberDigits + 1];
 			char digit;
-			int scratchPos = numberDigits - 1; 
+			int scratchPos = iNumberDigits - 1; 
 			int exponent;
 
 			if (val == 0) 
-				return new byte[]{(byte) zeroExponentValue};
+				return new byte[]{(byte) iZeroExpValue};
         
 			if (val < 0) 
 			{
@@ -159,10 +159,10 @@ namespace MaxDB.Data.Utils
 				val /= 10;
 				scratchPos--;
 			}
-			exponent = numberDigits - scratchPos - 1;
+			exponent = iNumberDigits - scratchPos - 1;
 			scratchPos++;
-			number = new byte[numberDigits - scratchPos +1 ];
-			packDigits(scratch, scratchPos, numberDigits - scratchPos, isNegative, number);
+			number = new byte[iNumberDigits - scratchPos +1 ];
+			packDigits(scratch, scratchPos, iNumberDigits - scratchPos, isNegative, number);
 			if (isNegative) 
 				exponent = 64 - exponent;
 			else 
@@ -184,10 +184,10 @@ namespace MaxDB.Data.Utils
 			try
 			{
 				characteristic = rawNumber[0] & 0xff;
-				if (characteristic == zeroExponentValue) 
+				if (characteristic == iZeroExpValue) 
 					return new BigDecimal(0);
 				digits = new byte [digitCount + 2];
-				if (characteristic < zeroExponentValue) 
+				if (characteristic < iZeroExpValue) 
 				{
 					exponent = - (characteristic - 64);
 					digits[0] = (byte) '-';
@@ -200,12 +200,12 @@ namespace MaxDB.Data.Utils
 						if (val != 0) 
 							lastSignificant = i * 2;
                   
-						digits [i * 2] = (byte) (tensComplement - val + '0');
+						digits [i * 2] = (byte) (iTensComplement - val + '0');
 						val = (((char)rawNumber [i] ) & 0x0f);
 						if (val != 0) 
 							lastSignificant = i * 2 + 1;
                   
-						digits [i * 2 + 1] = (byte)(tensComplement - val + '0');
+						digits [i * 2 + 1] = (byte)(iTensComplement - val + '0');
 					}
 					digits [lastSignificant]++;
 				}
@@ -235,103 +235,7 @@ namespace MaxDB.Data.Utils
 			}
 			catch (Exception) 
 			{
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber, Consts.ToHexString(rawNumber)));
-			}
-		}
-
-		public static double ShortNumber2Double(byte[] rawNumber)
-		{
-			try 
-			{
-				long result = 0;
-				int characteristic;
-				int exponent;
-				bool isNegative;
-
-				characteristic = rawNumber[0] & 0xff;
-				if (characteristic == zeroExponentValue)
-					return 0;
-        
-				if (characteristic < zeroExponentValue) 
-				{
-					exponent = - (characteristic - 64);
-					isNegative = true;
-					int val;
-					int nullValCnt=1;
-
-					for (int i = 1; i < rawNumber.Length; ++i) 
-					{
-						//first halfbyte
-						val = ((((int) rawNumber [i]) & 0xff) >> 4);
-						if (val == 9) 
-							nullValCnt++;
-						else 
-						{
-							result *= (long)double10pow[nullValCnt + zeor10powindex];
-							exponent -= nullValCnt;
-							nullValCnt = 1;
-							result += tensComplement - val;
-						}
-
-						//second halfbyte
-						val = (((int)rawNumber [i] ) & 0x0f);
-						if (val == 9) 
-							nullValCnt++;
-              
-						else 
-						{
-							result *= (long)double10pow[nullValCnt + zeor10powindex];
-							exponent -= nullValCnt;
-							nullValCnt = 1;
-							result += tensComplement - val;
-						}
-					}
-					result++;
-				}
-				else 
-				{
-					exponent = characteristic - 192;
-					isNegative = false;
-					int val;
-					int nullValCnt = 1;
-
-					for (int i = 1; i < rawNumber.Length; ++i) 
-					{
-						//first halfbyte
-						val = ((((int) rawNumber [i]) & 0xf0) >> 4);
-						if (val == 0) 
-							nullValCnt++;
-						else 
-						{
-							result *= (long)double10pow[nullValCnt + zeor10powindex];
-							exponent -= nullValCnt;
-							nullValCnt = 1;
-							result += val;
-						}
-
-						//second halfbyte
-						val = (((int)rawNumber [i] ) & 0x0f);
-						if (val == 0) 
-							nullValCnt++;
-						else 
-						{
-							result *= (long)double10pow[nullValCnt + zeor10powindex];
-							exponent -= nullValCnt;
-							nullValCnt = 1;
-							result += val;
-						}
-					}
-				}
-				double myresult = result;
-				myresult *= double10pow[exponent + zeor10powindex];
-				if (isNegative) 
-					myresult = -myresult;
-        
-				return myresult;
-			}
-			catch(Exception) 
-			{
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber, Consts.ToHexString(rawNumber)));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONVDNnumber, Consts.ToHexString(rawNumber)));
 			}
 		}
 
@@ -344,10 +248,10 @@ namespace MaxDB.Data.Utils
 			int numberDigits = rawNumber.Length * 2 - 2;
 
 			characteristic = rawNumber[0] & 0xff;
-			if (characteristic == zeroExponentValue) 
+			if (characteristic == iZeroExpValue) 
 				return 0;
         
-			if (characteristic < zeroExponentValue) 
+			if (characteristic < iZeroExpValue) 
 			{
 				exponent = - (characteristic - 64);
 				if (exponent < 0 || exponent > numberDigits) 
@@ -366,7 +270,7 @@ namespace MaxDB.Data.Utils
 						val &= 0x0f;
                 
 					result *= 10;
-					result += tensComplement - val;
+					result += iTensComplement - val;
 				}
 				result++;
 			}
@@ -447,14 +351,14 @@ namespace MaxDB.Data.Utils
 			try 
 			{
 				characteristic = number[0] & 0xFF;
-				if(characteristic == zeroExponentValue) 
+				if(characteristic == iZeroExpValue) 
 					return "0";
             
 				char[] digits = new char[logicalLength];
 				int exponent;
 				int lastsignificant=0;
 				bool isnegative=false;
-				if(characteristic < zeroExponentValue) 
+				if(characteristic < iZeroExpValue) 
 				{
 					isnegative=true;
 					exponent = - (characteristic - 64);
@@ -497,7 +401,7 @@ namespace MaxDB.Data.Utils
 					if(exponent > 0) 
 					{
 						if(numberstr.Length < logicalLength) 
-							numberstr = numberstr + zerostring.Substring(0, logicalLength - numberstr.Length);
+							numberstr = numberstr + strZeroString.Substring(0, logicalLength - numberstr.Length);
                     
 						if(frac!=0) 
 							return sign + numberstr.Substring(0, exponent) + "." + numberstr.Substring(exponent, exponent + frac);
@@ -509,7 +413,7 @@ namespace MaxDB.Data.Utils
 					{
 						int zeroend = frac - (-exponent) - numberstr.Length;
 						if (zeroend < 0) zeroend = 0;
-						return sign + "0." + zerostring.Substring(0, -exponent) + numberstr + zerostring.Substring(0, zeroend);
+						return sign + "0." + strZeroString.Substring(0, -exponent) + numberstr + strZeroString.Substring(0, zeroend);
 					}
 				} 
 				else 
@@ -530,7 +434,7 @@ namespace MaxDB.Data.Utils
 								return sign + "0." + numberstr;
 						}
 						if(numberstr.Length <= exponent) 
-							return sign + numberstr + zerostring.Substring(0, exponent - numberstr.Length);
+							return sign + numberstr + strZeroString.Substring(0, exponent - numberstr.Length);
 						else 
 							return sign + numberstr.Substring(0, exponent) + "." + numberstr.Substring(exponent);
                     
@@ -539,40 +443,9 @@ namespace MaxDB.Data.Utils
 			} 
 			catch(Exception) 
 			{
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_CONVERSIONVDNnumber,  Consts.ToHexString(number)));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONVDNnumber,  Consts.ToHexString(number)));
 			}
 		}
-
-		private const int zeor10powindex = 64;
-		private static readonly double[] double10pow = {
-													1.0e-64, 1.0e-63, 1.0e-62, 1.0e-61,
-													1.0e-60, 1.0e-59, 1.0e-58, 1.0e-57, 1.0e-56,
-													1.0e-55, 1.0e-54, 1.0e-53, 1.0e-52, 1.0e-51,
-													1.0e-50, 1.0e-49, 1.0e-48, 1.0e-47, 1.0e-46,
-													1.0e-45, 1.0e-44, 1.0e-43, 1.0e-42, 1.0e-41,
-													1.0e-40, 1.0e-39, 1.0e-38, 1.0e-37, 1.0e-36,
-													1.0e-35, 1.0e-34, 1.0e-33, 1.0e-32, 1.0e-31,
-													1.0e-30, 1.0e-29, 1.0e-28, 1.0e-27, 1.0e-26,
-													1.0e-25, 1.0e-24, 1.0e-23, 1.0e-22, 1.0e-21,
-													1.0e-20, 1.0e-19, 1.0e-18, 1.0e-17, 1.0e-16,
-													1.0e-15, 1.0e-14, 1.0e-13, 1.0e-12, 1.0e-11,
-													1.0e-10, 1.0e-9 , 1.0e-8 , 1.0e-7 , 1.0e-6 ,
-													1.0e-5 , 1.0e-4 , 1.0e-3 , 1.0e-2 , 1.0e-1 ,
-													1.0e0,
-													1.0e1 , 1.0e2 , 1.0e3 , 1.0e4 , 1.0e5,
-													1.0e6 , 1.0e7 , 1.0e8 , 1.0e9 , 1.0e10,
-													1.0e11, 1.0e12, 1.0e13, 1.0e14, 1.0e15,
-													1.0e16, 1.0e17, 1.0e18, 1.0e19, 1.0e20,
-													1.0e21, 1.0e22, 1.0e23, 1.0e24, 1.0e25,
-													1.0e26, 1.0e27, 1.0e28, 1.0e29, 1.0e30,
-													1.0e31, 1.0e32, 1.0e33, 1.0e34, 1.0e35,
-													1.0e36, 1.0e37, 1.0e38, 1.0e39, 1.0e40,
-													1.0e41, 1.0e42, 1.0e43, 1.0e44, 1.0e45,
-													1.0e46, 1.0e47, 1.0e48, 1.0e49, 1.0e50,
-													1.0e51, 1.0e52, 1.0e53, 1.0e54, 1.0e55,
-													1.0e56, 1.0e57, 1.0e58, 1.0e59, 1.0e60,
-													1.0e61, 1.0e62, 1.0e63, 1.0e64,
-		};
     }
 
 #endif // SAFE

@@ -17,7 +17,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using MaxDB.Data.Utils;
+using MaxDB.Data.Utilities;
 
 namespace MaxDB.Data
 {
@@ -25,15 +25,14 @@ namespace MaxDB.Data
 #if NET20
         DbTransaction
 #else
-        IDbTransaction
+        IDbTransaction, IDisposable
 #endif // NET20
-        , IDisposable
     {
-		private MaxDBConnection m_connection;
+		private MaxDBConnection dbConnection;
 
 		internal MaxDBTransaction(MaxDBConnection conn)
 		{
-			m_connection = conn;
+			dbConnection = conn;
 		}
 
 		#region IDbTransaction Members
@@ -44,16 +43,16 @@ namespace MaxDB.Data
 		public void Commit()
 #endif // NET20
         {
-			m_connection.AssertOpen();
+			dbConnection.AssertOpen();
 
 			//>>> SQL TRACE
-			m_connection.m_logger.SqlTrace(DateTime.Now, "::COMMIT");
+			dbConnection.mLogger.SqlTrace(DateTime.Now, "::COMMIT");
 			//<<< SQL TRACE
 #if SAFE
-			m_connection.Commit();
+			dbConnection.Commit();
 #else
-			if(SQLDBC.SQLDBC_Connection_commit(m_connection.m_connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
-				MaxDBException.ThrowException("COMMIT", SQLDBC.SQLDBC_Connection_getError(m_connection.m_connHandler));
+			if(UnsafeNativeMethods.SQLDBC_Connection_commit(dbConnection.mConnectionHandler) != SQLDBC_Retcode.SQLDBC_OK) 
+				MaxDBException.ThrowException("COMMIT", UnsafeNativeMethods.SQLDBC_Connection_getError(dbConnection.mConnectionHandler));
 #endif // SAFE
         }
 
@@ -77,7 +76,7 @@ namespace MaxDB.Data
         {
 			get  
 			{ 
-				return m_connection; 
+				return dbConnection; 
 			}
 		}
  
@@ -90,9 +89,9 @@ namespace MaxDB.Data
 			get 
 			{
 #if SAFE
-				return m_connection.m_isolationLevel;
+				return dbConnection.mIsolationLevel;
 #else
-				switch (SQLDBC.SQLDBC_Connection_getTransactionIsolation(m_connection.m_connHandler))
+				switch (UnsafeNativeMethods.SQLDBC_Connection_getTransactionIsolation(dbConnection.mConnectionHandler))
 				{
 					case 0:
 						return IsolationLevel.ReadUncommitted;
@@ -115,16 +114,16 @@ namespace MaxDB.Data
         public void Rollback()
 #endif // NET20
         {
-			m_connection.AssertOpen();
+			dbConnection.AssertOpen();
 
 			//>>> SQL TRACE
-			m_connection.m_logger.SqlTrace(DateTime.Now, "::ROLLBACK");
+			dbConnection.mLogger.SqlTrace(DateTime.Now, "::ROLLBACK");
 			//<<< SQL TRACE
 #if SAFE
-			m_connection.Rollback();
+			dbConnection.Rollback();
 #else
-			if(SQLDBC.SQLDBC_Connection_rollback(m_connection.m_connHandler) != SQLDBC_Retcode.SQLDBC_OK) 
-				throw new MaxDBException("ROLLBACK" + SQLDBC.SQLDBC_Connection_getError(m_connection.m_connHandler));
+			if(UnsafeNativeMethods.SQLDBC_Connection_rollback(dbConnection.mConnectionHandler) != SQLDBC_Retcode.SQLDBC_OK) 
+				throw new MaxDBException("ROLLBACK" + UnsafeNativeMethods.SQLDBC_Connection_getError(dbConnection.mConnectionHandler));
 #endif // SAFE
         }
 
@@ -132,13 +131,26 @@ namespace MaxDB.Data
 
 		#region IDisposable Members
 
-        void IDisposable.Dispose()
+#if !NET20
+        public void Dispose()
         {
-            if (null != m_connection) 
-				// implicitly rollback if transaction still valid
-				Rollback();
-			GC.SuppressFinalize(this);
+            Dispose(true);
+            GC.SuppressFinalize(this);
 		}
+#endif // NET20
+
+#if NET20
+        protected override void Dispose(bool disposing)
+#else
+        private void Dispose(bool disposing)
+#endif // NET20
+        {
+#if NET20
+            base.Dispose(disposing);
+#endif // NET20
+            if (disposing && null != dbConnection)
+                Rollback();// implicitly rollback if transaction still valid
+        }
 
 		#endregion
 	}

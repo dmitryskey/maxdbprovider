@@ -17,7 +17,8 @@
 
 using System;
 using System.Text;
-using MaxDB.Data.Utils;
+using MaxDB.Data.Utilities;
+using System.Globalization;
 
 namespace MaxDB.Data.MaxDBProtocol
 {
@@ -28,7 +29,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	/// <summary>
 	/// Summary description for MaxDBPacket.
 	/// </summary>
-	public class MaxDBPacket : ByteArray
+	internal class MaxDBPacket : ByteArray
 	{
 		public MaxDBPacket(byte[] data) : base(data)
 		{
@@ -42,7 +43,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 		}
 
-		public void FillHeader(byte msgClass, int senderRef, int receiverRef, int maxSendLen)
+		public void FillHeader(byte msgClass, int senderRef)
 		{
 			// fill out header part
 			WriteUInt32(0, HeaderOffset.ActSendLen);
@@ -51,16 +52,16 @@ namespace MaxDB.Data.MaxDBProtocol
 			WriteByte(0, HeaderOffset.RTEFlags);
 			WriteByte(0, HeaderOffset.ResidualPackets);
 			WriteInt32(senderRef, HeaderOffset.SenderRef);
-			WriteInt32(receiverRef, HeaderOffset.ReceiverRef);
+			WriteInt32(0, HeaderOffset.ReceiverRef);
 			WriteUInt16(0, HeaderOffset.RTEReturnCode);
 			WriteUInt16(0, HeaderOffset.Filler);
-			WriteInt32(maxSendLen, HeaderOffset.MaxSendLen);
+			WriteInt32(0, HeaderOffset.MaxSendLen);
 		}
 
-		public void SetSendLength(int val)
+		public void SetSendLength(int value)
 		{
-			WriteInt32(val, HeaderOffset.ActSendLen);
-			WriteInt32(val, HeaderOffset.MaxSendLen);
+			WriteInt32(value, HeaderOffset.ActSendLen);
+			WriteInt32(value, HeaderOffset.MaxSendLen);
 		}
 
 		public int MaxSendLength
@@ -95,12 +96,12 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 		}
 
-		protected int AlignSize(int val)
+        protected static int AlignSize(int value)
 		{
-			if (val % Consts.AlignValue != 0)
-				return val + (Consts.AlignValue - val % Consts.AlignValue);
+			if (value % Consts.AlignValue != 0)
+				return value + (Consts.AlignValue - value % Consts.AlignValue);
 			else
-				return val;
+				return value;
 		}
 	}
 
@@ -108,19 +109,19 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	#region "MaxDB Connect Packet"
 
-	public struct ConnectPacketData
+	internal struct ConnectPacketData
 	{
 		public string DBName;
 		public int Port;
-		public int MaxSegSize;
+		public int MaxSegmentSize;
 		public int MaxDataLen;
 		public int PacketSize;
 		public int MinReplySize;
 	}
 
-	public class MaxDBConnectPacket : MaxDBPacket
+	internal class MaxDBConnectPacket : MaxDBPacket
 	{
-		private int m_curPos = HeaderOffset.END + ConnectPacketOffset.VarPart;
+		private int iCurrentPos = HeaderOffset.END + ConnectPacketOffset.VarPart;
 
 		public MaxDBConnectPacket(byte[] data) : base(data)
 		{
@@ -130,49 +131,49 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 		}
 			
-		public MaxDBConnectPacket(byte[] data, ConnectPacketData connData) : base(data)
+		public MaxDBConnectPacket(byte[] data, ConnectPacketData packetData) : base(data)
 		{
 			// fill body
 			WriteByte(Consts.ASCIIClient, HeaderOffset.END + ConnectPacketOffset.MessCode);
 			WriteByte(Consts.IsLittleEndian ? SwapMode.Swapped : SwapMode.NotSwapped, HeaderOffset.END + ConnectPacketOffset.MessCode + 1);
 			WriteUInt16(ConnectPacketOffset.END, HeaderOffset.END + ConnectPacketOffset.ConnectLength);
-			WriteByte(SQLType.USER, HeaderOffset.END + ConnectPacketOffset.ServiceType);
+			WriteByte(SqlType.USER, HeaderOffset.END + ConnectPacketOffset.ServiceType);
 			WriteByte(Consts.RSQL_DOTNET, HeaderOffset.END + ConnectPacketOffset.OSType);
 			WriteByte(0, HeaderOffset.END + ConnectPacketOffset.Filler1);
 			WriteByte(0, HeaderOffset.END + ConnectPacketOffset.Filler2);
-			WriteInt32(connData.MaxSegSize, HeaderOffset.END + ConnectPacketOffset.MaxSegmentSize);
-			WriteInt32(connData.MaxDataLen, HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
-			WriteInt32(connData.PacketSize, HeaderOffset.END + ConnectPacketOffset.PacketSize);
-			WriteInt32(connData.MinReplySize, HeaderOffset.END + ConnectPacketOffset.MinReplySize);
-			if (connData.DBName.Length > ConnectPacketOffset.DBNameSize)
-				connData.DBName = connData.DBName.Substring(0, ConnectPacketOffset.DBNameSize);
-			WriteASCII(connData.DBName.PadRight(ConnectPacketOffset.DBNameSize), HeaderOffset.END + ConnectPacketOffset.ServerDB);
-			WriteASCII("        ", HeaderOffset.END + ConnectPacketOffset.ClientDB);
+			WriteInt32(packetData.MaxSegmentSize, HeaderOffset.END + ConnectPacketOffset.MaxSegmentSize);
+			WriteInt32(packetData.MaxDataLen, HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
+			WriteInt32(packetData.PacketSize, HeaderOffset.END + ConnectPacketOffset.PacketSize);
+			WriteInt32(packetData.MinReplySize, HeaderOffset.END + ConnectPacketOffset.MinReplySize);
+			if (packetData.DBName.Length > ConnectPacketOffset.DBNameSize)
+				packetData.DBName = packetData.DBName.Substring(0, ConnectPacketOffset.DBNameSize);
+			WriteAscii(packetData.DBName.PadRight(ConnectPacketOffset.DBNameSize), HeaderOffset.END + ConnectPacketOffset.ServerDB);
+			WriteAscii("        ", HeaderOffset.END + ConnectPacketOffset.ClientDB);
 			// fill out variable part
-			WriteByte(4, m_curPos++);
-			WriteByte(ArgType.REM_PID, m_curPos++);
-			WriteASCII("0", m_curPos++);
-			WriteByte(0, m_curPos++);
+			WriteByte(4, iCurrentPos++);
+			WriteByte(ArgType.REM_PID, iCurrentPos++);
+			WriteAscii("0", iCurrentPos++);
+			WriteByte(0, iCurrentPos++);
 			// add port number
-			WriteByte(4, m_curPos++);
-			WriteByte(ArgType.PORT_NO, m_curPos++);
-			WriteUInt16((ushort)connData.Port, m_curPos);
-			m_curPos += 2;
+			WriteByte(4, iCurrentPos++);
+			WriteByte(ArgType.PORT_NO, iCurrentPos++);
+			WriteUInt16((ushort)packetData.Port, iCurrentPos);
+			iCurrentPos += 2;
 			// add aknowledge flag
-			WriteByte(3, m_curPos++);
-			WriteByte(ArgType.ACKNOWLEDGE, m_curPos++);
-			WriteByte(0, m_curPos++);
+			WriteByte(3, iCurrentPos++);
+			WriteByte(ArgType.ACKNOWLEDGE, iCurrentPos++);
+			WriteByte(0, iCurrentPos++);
 			// add omit reply part flag
-			WriteByte(3, m_curPos++);
-			WriteByte(ArgType.OMIT_REPLY_PART, m_curPos++);
-			WriteByte(1, m_curPos++);
+			WriteByte(3, iCurrentPos++);
+			WriteByte(ArgType.OMIT_REPLY_PART, iCurrentPos++);
+			WriteByte(1, iCurrentPos++);
 		}
 
 		public void FillPacketLength()
 		{
 			const int packetMinLen = ConnectPacketOffset.MinSize;
-			if (m_curPos < packetMinLen) m_curPos = packetMinLen;
-			WriteUInt16((ushort)(m_curPos - HeaderOffset.END), HeaderOffset.END + ConnectPacketOffset.ConnectLength);
+			if (iCurrentPos < packetMinLen) iCurrentPos = packetMinLen;
+			WriteUInt16((ushort)(iCurrentPos - HeaderOffset.END), HeaderOffset.END + ConnectPacketOffset.ConnectLength);
 		}
 
 		public void Close()
@@ -181,23 +182,15 @@ namespace MaxDB.Data.MaxDBProtocol
 			int requiredLength = ConnectPacketOffset.MinSize - HeaderOffset.END;
 
 			if (currentLength < requiredLength) 
-				m_curPos += requiredLength - currentLength;
-			WriteUInt16((ushort)(m_curPos - HeaderOffset.END), ConnectPacketOffset.ConnectLength);
-		}
-
-		public bool IsSwapped
-		{
-			get
-			{
-				return (ReadByte(HeaderOffset.END + ConnectPacketOffset.MessCode + 1) == SwapMode.Swapped);
-			}
+				iCurrentPos += requiredLength - currentLength;
+			WriteUInt16((ushort)(iCurrentPos - HeaderOffset.END), ConnectPacketOffset.ConnectLength);
 		}
 
 		public int PacketLength
 		{
 			get
 			{
-				return m_curPos;
+				return iCurrentPos;
 			}
 		}
 
@@ -225,50 +218,14 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 		}
 
-		public int MaxSegmentSize
-		{
-			get
-			{
-				return ReadInt32(HeaderOffset.END + ConnectPacketOffset.MaxSegmentSize);
-			}
-		}
-
-		public string ServerDB
-		{
-			get
-			{
-				string dbname = ReadASCII(HeaderOffset.END + ConnectPacketOffset.ServerDB, 8);
-				if (dbname.IndexOf("\0") >= 0)
-					dbname = dbname.Substring(0, dbname.IndexOf("\0"));
-				return dbname;
-			}
-		}
-
 		public string ClientDB
 		{
 			get
 			{
-				string dbname = ReadASCII(HeaderOffset.END + ConnectPacketOffset.ClientDB, 8);
+				string dbname = ReadAscii(HeaderOffset.END + ConnectPacketOffset.ClientDB, 8);
 				if (dbname.IndexOf("\0") >= 0)
 					dbname = dbname.Substring(0, dbname.IndexOf("\0"));
 				return dbname;
-			}
-		}
-
-		public int PortNumber
-		{
-			get
-			{
-				int pos = HeaderOffset.END + ConnectPacketOffset.VarPart;
-				while(pos < m_data.Length)
-				{
-					if (ReadByte(pos + 1) == ArgType.PORT_NO)
-						return ReadByte(pos + 2) * 0xFF + ReadByte(pos + 3);//port number is always not swapped
-					else
-						pos += ReadByte(pos);
-				}
-
-				return Ports.Default;
 			}
 		}
 
@@ -277,7 +234,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			get
 			{
 				int pos = HeaderOffset.END + ConnectPacketOffset.VarPart;
-				while(pos < m_data.Length)
+				while(pos < byData.Length)
 				{
 					byte len = ReadByte(pos);
 
@@ -285,8 +242,8 @@ namespace MaxDB.Data.MaxDBProtocol
 						break;
 
 					if (ReadByte(pos + 1) == ArgType.AUTH_ALLOW)
-						foreach(string authParam in Encoding.ASCII.GetString(m_data, pos + 2, len - 3).Split(','))
-							if (authParam.ToUpper() == Crypt.ScramMD5Name)
+						foreach(string authParam in Encoding.ASCII.GetString(byData, pos + 2, len - 3).Split(','))
+                            if (string.Compare(authParam, Crypt.ScramMD5Name, true, CultureInfo.InvariantCulture) == 0)
 								return true;
 					
 					pos += len;
@@ -301,30 +258,32 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	#region "MaxDB Request Packet"
 
-	public class MaxDBRequestPacket : MaxDBPacket
+	internal class MaxDBRequestPacket : MaxDBPacket
 	{
-		protected int m_length = PacketHeaderOffset.Segment;
-		protected short m_segments = 0;
-		protected int m_partOffset = -1, m_partLength = -1, m_segOffset = -1, m_segLength = -1;
-		protected short m_partArgs = -1, m_segParts = -1;
-		private byte m_currentSqlMode = SqlMode.SessionSqlmode;
-		private int m_replyReserve;
-        private int m_MaxNumberOfSeg = Consts.DefaultMaxNumberOfSegm;
-		private bool m_isAvailable = false;
-		private const string m_dropCmd = "Drop Parseid";
-		private const int resultCountSize = 6;
+		protected int iLength = PacketHeaderOffset.Segment;
+		protected short sSegments;
+		protected int iPartOffset = -1, iPartLength = -1, iSegmentOffset = -1, iSegmentLength = -1;
+		protected short sPartArguments = -1, sSegmentParts = -1;
+		private byte byCurrentSqlMode = (byte)SqlMode.SessionSqlMode;
+		private int iReplyReserve;
+        private int iMaxNumberOfSegment = Consts.DefaultMaxNumberOfSegm;
+		private const string strDropCmd = "Drop Parseid";
+		private const int iResultCountSize = 6;
 
-		protected MaxDBRequestPacket(byte[] data, byte clientEncoding, string appID, string appVer) : base(data, HeaderOffset.END)
+		protected MaxDBRequestPacket(byte[] data, byte clientEncoding, string appID, string appVersion) : base(data, HeaderOffset.END)
 		{
+            if (data == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+
 			WriteByte(clientEncoding, PacketHeaderOffset.MessCode);
 			WriteByte(Consts.IsLittleEndian ? SwapMode.Swapped : SwapMode.NotSwapped, PacketHeaderOffset.MessSwap);
-			WriteASCII(appVer, PacketHeaderOffset.ApplVersion);
-			WriteASCII(appID, PacketHeaderOffset.Appl);
+			WriteAscii(appVersion, PacketHeaderOffset.ApplVersion);
+			WriteAscii(appID, PacketHeaderOffset.Appl);
 			WriteInt32(data.Length - HeaderOffset.END - PacketHeaderOffset.Segment, PacketHeaderOffset.VarPartSize);
-			m_length = PacketHeaderOffset.Segment;
+			iLength = PacketHeaderOffset.Segment;
 		}
 
-		public MaxDBRequestPacket(byte[] data, string appID, string appVer) : this(data, Consts.ASCIIClient, appID, appVer)
+		public MaxDBRequestPacket(byte[] data, string appID, string appVersion) : this(data, Consts.ASCIIClient, appID, appVersion)
 		{
 		}
 
@@ -332,19 +291,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return m_partOffset + PartHeaderOffset.Data + m_partLength;
-			}
-		}
-
-		public bool IsAvailable
-		{
-			get
-			{
-				return m_isAvailable;
-			}
-			set
-			{
-				m_isAvailable = value;
+				return iPartOffset + PartHeaderOffset.Data + iPartLength;
 			}
 		}
 
@@ -352,7 +299,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return m_length;
+				return iLength;
 			}
 		}
 
@@ -360,14 +307,15 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return m_partArgs;
+				return sPartArguments;
 			}
 			set
 			{
-				m_partArgs = value;
+				sPartArguments = value;
 			}
 		}
 
+#if NET20
         public static int ResultCountPartSize
         {
             get
@@ -376,175 +324,197 @@ namespace MaxDB.Data.MaxDBProtocol
             }
         }
 
+		public void AddNullData(int len)
+        {
+            WriteByte(255, DataPos);
+            iPartLength += len + 1;
+        }
+
+		public void AddUndefinedResultCount()
+        {
+            NewPart(PartKind.ResultCount);
+            AddNullData(iResultCountSize);
+            sPartArguments++;
+        }
+#endif // NET20
+
 		public byte SwitchSqlMode(byte newMode) 
 		{
-			byte result = m_currentSqlMode;
+			byte result = byCurrentSqlMode;
 
-			m_currentSqlMode = newMode;
+			byCurrentSqlMode = newMode;
 			return result;
 		}
 
-        public void AddNullData(int len)
-        {
-            WriteByte(255, DataPos);
-            m_partLength += len + 1;
-        }
-
 		public void AddData(byte[] data) 
 		{
+            if (data == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+
 			WriteByte(0, DataPos);
 			WriteBytes(data, DataPos + 1);
-			m_partLength += data.Length + 1;
+			iPartLength += data.Length + 1;
 		}
 
 		public void AddBytes(byte[] data) 
 		{
+            if (data == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+
 			WriteBytes(data, DataPos);
-			m_partLength += data.Length;
+			iPartLength += data.Length;
 		}
 
 		public virtual void AddDataString(string data)
 		{
+            if (data == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+
 			WriteByte(0x20, DataPos);
 			WriteBytes(Encoding.ASCII.GetBytes(data), DataPos + 1, data.Length, Consts.BlankBytes);
-			m_partLength += data.Length + 1;
+			iPartLength += data.Length + 1;
 		}
 
 		public virtual void AddString(string data)
 		{
+            if (data == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+
 			WriteBytes(Encoding.ASCII.GetBytes(data), DataPos, data.Length, Consts.BlankBytes);
-			m_partLength += data.Length;
+			iPartLength += data.Length;
 		}
 
 		public void AddResultCount(int count) 
 		{
 			NewPart(PartKind.ResultCount);
 			byte[] fullNumber = VDNNumber.Long2Number (count);
-			byte[] countNumber = new byte[resultCountSize];
+			byte[] countNumber = new byte[iResultCountSize];
 			Array.Copy(fullNumber, 0, countNumber, 0, fullNumber.Length);
 			AddData(countNumber);
-			m_partArgs++;
+			sPartArguments++;
 		}
 
-        public void AddUndefResultCount()
-        {
-            NewPart(PartKind.ResultCount);
-            AddNullData(resultCountSize);
-            m_partArgs++;
-        }
-
-		public bool DropPid(byte [] pid, bool reset) 
+		public bool DropParseId(byte[] parseId, bool reset) 
 		{
+            if (parseId == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "pid"));
+
 			if (reset) 
 				Reset();
 			else 
 			{
-				if(m_segOffset != -1) 
+				if(iSegmentOffset != -1) 
 					CloseSegment();
 
-				int remainingSpace = Length - m_length - SegmentHeaderOffset.Part - PartHeaderOffset.Data
-					- m_replyReserve - Consts.ReserveForReply - m_dropCmd.Length
-					- SegmentHeaderOffset.Part - PartHeaderOffset.Data - pid.Length;
-				if (remainingSpace <= 0 || m_segments >= m_MaxNumberOfSeg) 
+				int remainingSpace = Length - iLength - SegmentHeaderOffset.Part - PartHeaderOffset.Data
+					- iReplyReserve - Consts.ReserveForReply - strDropCmd.Length
+					- SegmentHeaderOffset.Part - PartHeaderOffset.Data - parseId.Length;
+				if (remainingSpace <= 0 || sSegments >= iMaxNumberOfSegment) 
 					return false;
 			}
 
 			NewSegment(CmdMessType.Dbs, false, false);
 			NewPart(PartKind.Command);
-			m_partArgs = 1;
-			AddString(m_dropCmd);
-			NewPart(PartKind.Parsid);
-			m_partArgs = 1;
-			AddBytes(pid);
+			sPartArguments = 1;
+			AddString(strDropCmd);
+			NewPart(PartKind.ParseId);
+			sPartArguments = 1;
+			AddBytes(parseId);
 			return true;
 		}
 
-		public bool DropPidAddtoParsidPart(byte[] pid) 
+		public bool DropParseIdAddToParseIdPart(byte[] parseId) 
 		{
-			int remainingSpace = Length - m_length - SegmentHeaderOffset.Part - PartHeaderOffset.Data
-				- m_replyReserve - Consts.ReserveForReply - m_partLength - pid.Length;
+            if (parseId == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "pid"));
+
+			int remainingSpace = Length - iLength - SegmentHeaderOffset.Part - PartHeaderOffset.Data
+				- iReplyReserve - Consts.ReserveForReply - iPartLength - parseId.Length;
 			if(remainingSpace <= 0) 
 				return false;
-			AddBytes(pid);
-			m_partArgs++;
+			AddBytes(parseId);
+			sPartArguments++;
 			return true;
 		}
 
 		public void Init(short maxSegment) 
 		{
 			Reset();
-			m_MaxNumberOfSeg = maxSegment;
+			iMaxNumberOfSegment = maxSegment;
 		}
 
 		private void Reset()
 		{
-			m_length = PacketHeaderOffset.Segment;
-			m_segments = 0;
-			m_segOffset = -1;
-			m_segLength = -1;
-			m_segParts = -1;
-			m_partOffset = -1;
-			m_partLength = -1;
-			m_partArgs = -1;
-			m_replyReserve = 0;
+			iLength = PacketHeaderOffset.Segment;
+			sSegments = 0;
+			iSegmentOffset = -1;
+			iSegmentLength = -1;
+			sSegmentParts = -1;
+			iPartOffset = -1;
+			iPartLength = -1;
+			sPartArguments = -1;
+			iReplyReserve = 0;
 		}
 
 		public void Close() 
 		{
 			CloseSegment();
-			WriteInt32(m_length - PacketHeaderOffset.Segment, PacketHeaderOffset.VarPartLen);
-			WriteInt16(m_segments, PacketHeaderOffset.NoOfSegm);
+			WriteInt32(iLength - PacketHeaderOffset.Segment, PacketHeaderOffset.VarPartLen);
+			WriteInt16(sSegments, PacketHeaderOffset.NoOfSegm);
 		}
 
-		public void InitDbsCommand(bool autocommit, string cmd) 
+		public void InitDbsCommand(bool autoCommit, string cmd) 
 		{
-			InitDbsCommand(cmd, true, autocommit);
+			InitDbsCommand(cmd, true, autoCommit);
 		}
 
-		public bool InitDbsCommand(string cmd, bool reset, bool autocommit) 
+		public bool InitDbsCommand(string command, bool reset, bool autoCommit) 
 		{
+            if (command == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "command"));
+
 			if (!reset) 
 			{
 				CloseSegment();
-				if (m_data.Length - HeaderOffset.END - m_length - SegmentHeaderOffset.Part - PartHeaderOffset.Data
-					- m_replyReserve - Consts.ReserveForReply < cmd.Length || m_segments >= m_MaxNumberOfSeg) 
+				if (byData.Length - HeaderOffset.END - iLength - SegmentHeaderOffset.Part - PartHeaderOffset.Data
+					- iReplyReserve - Consts.ReserveForReply < command.Length || sSegments >= iMaxNumberOfSegment) 
 					return false;
 			}
-			InitDbs(reset, autocommit);
-			WriteASCII(cmd, DataPos);
-			m_partLength += cmd.Length;
-			m_partArgs = 1;
+			InitDbs(reset, autoCommit);
+			WriteAscii(command, DataPos);
+			iPartLength += command.Length;
+			sPartArguments = 1;
 			return true;
 		}
 
-		public int InitParseCommand(string cmd, bool reset, bool parseagain) 
+		public int InitParseCommand(string cmd, bool reset, bool parseAgain) 
 		{
-			InitParse(reset, parseagain);
+			InitParse(reset, parseAgain);
 			AddString(cmd);
-			m_partArgs = 1;
-			return this.m_partLength;
+			sPartArguments = 1;
+			return this.iPartLength;
 		}
 
-		public void InitDbs(bool autocommit) 
+		public void InitDbs(bool autoCommit) 
 		{
-			InitDbs(true, autocommit);
+			InitDbs(true, autoCommit);
 		}
 
-		public void InitDbs(bool reset, bool autocommit) 
+		public void InitDbs(bool reset, bool autoCommit) 
 		{
 			if (reset) 
 				Reset();
 		
-			NewSegment(CmdMessType.Dbs, autocommit, false);
+			NewSegment(CmdMessType.Dbs, autoCommit, false);
 			NewPart(PartKind.Command);
-			m_partArgs = 1;
+			sPartArguments = 1;
 		}
 
-		public void InitParse(bool reset, bool parseagain) 
+		public void InitParse(bool reset, bool parseAgain) 
 		{
 			if (reset) 
 				Reset();
-			NewSegment(CmdMessType.Parse, false, parseagain);
+			NewSegment(CmdMessType.Parse, false, parseAgain);
 			NewPart(PartKind.Command);
 			return;
 		}
@@ -555,44 +525,44 @@ namespace MaxDB.Data.MaxDBProtocol
 			ClosePart();
 			DataPartVariable data = NewVarDataPart();
 			data.AddRow(2);
-			data.WriteBytes(Encoding.ASCII.GetBytes(Crypt.ScramMD5Name), data.m_extent);
-			data.AddArg(data.m_extent, 0);
-			data.WriteBytes(challenge, data.m_extent);
-			data.AddArg(data.m_extent, 0);
+			data.WriteBytes(Encoding.ASCII.GetBytes(Crypt.ScramMD5Name), data.Extent);
+			data.AddArg(data.Extent, 0);
+			data.WriteBytes(challenge, data.Extent);
+			data.AddArg(data.Extent, 0);
 			data.Close();
 			return true;
 		}
 
-		public void InitExecute(byte [] parseID, bool autocommit)
+		public void InitExecute(byte [] parseId, bool autoCommit)
 		{
 			Reset();
-			NewSegment(CmdMessType.Execute, autocommit, false);
-			AddParseIdPart(parseID);
+			NewSegment(CmdMessType.Execute, autoCommit, false);
+			AddParseIdPart(parseId);
 		}
 
 		public void SetWithInfo()
 		{
-			WriteByte(1, m_segOffset + SegmentHeaderOffset.WithInfo);
+			WriteByte(1, iSegmentOffset + SegmentHeaderOffset.WithInfo);
 		}
 
 		public void SetMassCommand() 
 		{
-			WriteByte(1, m_segOffset + SegmentHeaderOffset.MassCmd);
+			WriteByte(1, iSegmentOffset + SegmentHeaderOffset.MassCmd);
 		}
 
 		#region "Part operations"
 
-		public DataPart InitGetValue(bool autocommit) 
+		public DataPart InitGetValue(bool autoCommit) 
 		{
 			Reset();
-			NewSegment(CmdMessType.GetValue, autocommit, false);
+			NewSegment(CmdMessType.GetValue, autoCommit, false);
 			return NewDataPart(PartKind.LongData);
 		}
 
-		public DataPart InitPutValue(bool autocommit) 
+		public DataPart InitPutValue(bool autoCommit) 
 		{
 			Reset();
-			NewSegment(CmdMessType.PutValue, autocommit, false);
+			NewSegment(CmdMessType.PutValue, autoCommit, false);
 			return NewDataPart(PartKind.LongData);
 		}
 
@@ -600,7 +570,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			int partDataOffs;
 			NewPart(PartKind.Vardata);
-			partDataOffs = m_partOffset + PartHeaderOffset.Data;
+			partDataOffs = iPartOffset + PartHeaderOffset.Data;
 			return new DataPartVariable(Clone(partDataOffs, false), this); //??? why DataPartVariable requires BigEndian?
 		}
 
@@ -620,7 +590,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		public DataPart NewDataPart(byte partKind) 
 		{
 			NewPart(partKind);
-			return new DataPartFixed(Clone(m_partOffset + PartHeaderOffset.Data), this);
+			return new DataPartFixed(Clone(iPartOffset + PartHeaderOffset.Data), this);
 		}
 
 		public void NewPart(byte kind) 
@@ -631,33 +601,21 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		private void InitPart(byte kind) 
 		{
-			m_segParts++;
-			m_partOffset = m_segOffset + m_segLength;
-			m_partLength = 0;
-			m_partArgs = 0;
-			WriteByte(kind, m_partOffset + PartHeaderOffset.PartKind);
-			WriteByte(0, m_partOffset + PartHeaderOffset.Attributes);
-			WriteInt16(1, m_partOffset + PartHeaderOffset.ArgCount);
-			WriteInt32(m_segOffset - PacketHeaderOffset.Segment, m_partOffset + PartHeaderOffset.SegmOffset);
-			WriteInt32(PartHeaderOffset.Data, m_partOffset + PartHeaderOffset.BufLen);
-			WriteInt32(m_data.Length - HeaderOffset.END - m_partOffset, m_partOffset + PartHeaderOffset.BufSize);
-		}
-
-		public void AddPartFeature(byte[] features)
-		{
-			if (features != null)
-			{
-				NewPart(PartKind.Feature);
-				WriteBytes(features, DataPos);
-				m_partLength += features.Length;
-				m_partArgs += (short)(features.Length / 2);
-				ClosePart();
-			}
+			sSegmentParts++;
+			iPartOffset = iSegmentOffset + iSegmentLength;
+			iPartLength = 0;
+			sPartArguments = 0;
+			WriteByte(kind, iPartOffset + PartHeaderOffset.PartKind);
+			WriteByte(0, iPartOffset + PartHeaderOffset.Attributes);
+			WriteInt16(1, iPartOffset + PartHeaderOffset.ArgCount);
+			WriteInt32(iSegmentOffset - PacketHeaderOffset.Segment, iPartOffset + PartHeaderOffset.SegmOffset);
+			WriteInt32(PartHeaderOffset.Data, iPartOffset + PartHeaderOffset.BufLen);
+			WriteInt32(byData.Length - HeaderOffset.END - iPartOffset, iPartOffset + PartHeaderOffset.BufSize);
 		}
 
 		public void AddPartAttr(byte attr)
 		{
-			int attrOffset = m_partOffset + PartHeaderOffset.Attributes;
+			int attrOffset = iPartOffset + PartHeaderOffset.Attributes;
 			WriteByte((byte)(ReadByte(attrOffset) | attr), attrOffset);
 		}
 
@@ -665,42 +623,45 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			DataPartVariable data = NewVarDataPart();
 			data.AddRow(2);
-			data.WriteBytes(Encoding.ASCII.GetBytes(Crypt.ScramMD5Name), data.m_extent);
-			data.AddArg(data.m_extent,0);
-			data.WriteBytes(clientProof, data.m_extent);
-			data.AddArg(data.m_extent, 0);
+			data.WriteBytes(Encoding.ASCII.GetBytes(Crypt.ScramMD5Name), data.Extent);
+			data.AddArg(data.Extent,0);
+			data.WriteBytes(clientProof, data.Extent);
+			data.AddArg(data.Extent, 0);
 			data.Close();
 		}
 
-		public void AddClientIDPart(string clientID)
+		public void AddClientIdPart(string clientId)
 		{
-			NewPart(PartKind.Clientid);
-			AddDataString(clientID);
-			m_partArgs = 1;
+			NewPart(PartKind.ClientId);
+			AddDataString(clientId);
+			sPartArguments = 1;
 		}
 
 		public void AddFeatureRequestPart(byte[] features) 
 		{
-			if ((features != null) && (features.Length != 0)) 
-			{
-				NewPart (PartKind.Feature);
-				AddBytes(features);
-				PartArgs += (short)(features.Length/2);
-				ClosePart();
-			}
+            if (features == null)
+                return;
+
+            if (features.Length > 0)
+            {
+                NewPart(PartKind.Feature);
+                AddBytes(features);
+                PartArgs += (short)(features.Length / 2);
+                ClosePart();
+            }
 		}
 
-		public void AddParseIdPart(byte[] parseID) 
+		public void AddParseIdPart(byte[] parseId) 
 		{
-			if (parseID != null) 
+			if (parseId != null) 
 			{
-				NewPart(PartKind.Parsid);
-				AddBytes(parseID);
-				m_partArgs = 1;
+				NewPart(PartKind.ParseId);
+				AddBytes(parseId);
+				sPartArguments = 1;
 				ClosePart();
 			}
 			else
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBMessages.ERROR_INTERNAL_INVALIDPARSEID));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INTERNAL_INVALIDPARSEID));
 		}
 
 		public void AddCursorPart(string cursorName) 
@@ -709,27 +670,27 @@ namespace MaxDB.Data.MaxDBProtocol
 			{
 				NewPart(PartKind.ResultTableName);
 				AddString(cursorName);
-				m_partArgs++;
+				sPartArguments++;
 				ClosePart();
 			}
 		}
 
 		private void ClosePart() 
 		{
-			ClosePart(m_partLength, m_partArgs);
+			ClosePart(iPartLength, sPartArguments);
 		}
 
 		public void ClosePart(int extent, short args)
 		{
-			if (m_partOffset == -1) 
+			if (iPartOffset == -1) 
 				return;
 
-			WriteInt32(extent, m_partOffset + PartHeaderOffset.BufLen);
-			WriteInt16(args, m_partOffset + PartHeaderOffset.ArgCount);
-			m_segLength += AlignSize(extent + PartHeaderOffset.Data);
-			m_partOffset = -1;
-			m_partLength = -1;
-			m_partArgs = -1;
+			WriteInt32(extent, iPartOffset + PartHeaderOffset.BufLen);
+			WriteInt16(args, iPartOffset + PartHeaderOffset.ArgCount);
+			iSegmentLength += AlignSize(extent + PartHeaderOffset.Data);
+			iPartOffset = -1;
+			iPartLength = -1;
+			sPartArguments = -1;
 		}
 
 		#endregion
@@ -740,42 +701,42 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			CloseSegment();
 
-			m_segOffset = m_length;
-			m_segLength = SegmentHeaderOffset.Part;
-			m_segParts = 0;
-			WriteInt32(0, m_segOffset + SegmentHeaderOffset.Len);
-			WriteInt32(m_segOffset - PacketHeaderOffset.Segment, m_segOffset + SegmentHeaderOffset.Offset);
-			WriteInt16(0, m_segOffset + SegmentHeaderOffset.NoOfParts);
-			WriteInt16(++m_segments, m_segOffset + SegmentHeaderOffset.OwnIndex);
-			WriteByte(SegmKind.Cmd, m_segOffset + SegmentHeaderOffset.SegmKind);
+			iSegmentOffset = iLength;
+			iSegmentLength = SegmentHeaderOffset.Part;
+			sSegmentParts = 0;
+			WriteInt32(0, iSegmentOffset + SegmentHeaderOffset.Len);
+			WriteInt32(iSegmentOffset - PacketHeaderOffset.Segment, iSegmentOffset + SegmentHeaderOffset.Offset);
+			WriteInt16(0, iSegmentOffset + SegmentHeaderOffset.NoOfParts);
+			WriteInt16(++sSegments, iSegmentOffset + SegmentHeaderOffset.OwnIndex);
+			WriteByte(SegmKind.Cmd, iSegmentOffset + SegmentHeaderOffset.SegmKind);
 
 			// request segment
-			WriteByte(kind, m_segOffset + SegmentHeaderOffset.MessType);
-			WriteByte(m_currentSqlMode, m_segOffset + SegmentHeaderOffset.SqlMode);
-			WriteByte(Producer.UserCmd, m_segOffset + SegmentHeaderOffset.Producer);
-			WriteByte((byte)(autocommit ? 1 : 0), m_segOffset + SegmentHeaderOffset.CommitImmediately);
-			WriteByte(0, m_segOffset + SegmentHeaderOffset.IgnoreCostwarning);
-			WriteByte(0, m_segOffset + SegmentHeaderOffset.Prepare);
-			WriteByte(0, m_segOffset + SegmentHeaderOffset.WithInfo);
-			WriteByte(0, m_segOffset + SegmentHeaderOffset.MassCmd);
-			WriteByte((byte)(parseagain?1:0), m_segOffset + SegmentHeaderOffset.ParsingAgain);
-			WriteByte(0, m_segOffset + SegmentHeaderOffset.CommandOptions);
+			WriteByte(kind, iSegmentOffset + SegmentHeaderOffset.MessType);
+			WriteByte(byCurrentSqlMode, iSegmentOffset + SegmentHeaderOffset.SqlMode);
+			WriteByte(Producer.UserCmd, iSegmentOffset + SegmentHeaderOffset.Producer);
+			WriteByte((byte)(autocommit ? 1 : 0), iSegmentOffset + SegmentHeaderOffset.CommitImmediately);
+			WriteByte(0, iSegmentOffset + SegmentHeaderOffset.IgnoreCostwarning);
+			WriteByte(0, iSegmentOffset + SegmentHeaderOffset.Prepare);
+			WriteByte(0, iSegmentOffset + SegmentHeaderOffset.WithInfo);
+			WriteByte(0, iSegmentOffset + SegmentHeaderOffset.MassCmd);
+			WriteByte((byte)(parseagain?1:0), iSegmentOffset + SegmentHeaderOffset.ParsingAgain);
+			WriteByte(0, iSegmentOffset + SegmentHeaderOffset.CommandOptions);
 
-			m_replyReserve += (m_segments == 2) ? Consts.ReserveFor2ndSegment : Consts.ReserveForReply;
+			iReplyReserve += (sSegments == 2) ? Consts.ReserveFor2ndSegment : Consts.ReserveForReply;
 		}
 
 		private void CloseSegment() 
 		{
-			if (m_segOffset == -1) 
+			if (iSegmentOffset == -1) 
 				return;
 
 			ClosePart();
-			WriteInt32(m_segLength, m_segOffset + SegmentHeaderOffset.Len);
-			WriteInt16(m_segParts, m_segOffset + SegmentHeaderOffset.NoOfParts);
-			m_length += m_segLength;
-			m_segOffset = -1;
-			m_segLength = -1;
-			m_segParts = -1;
+			WriteInt32(iSegmentLength, iSegmentOffset + SegmentHeaderOffset.Len);
+			WriteInt16(sSegmentParts, iSegmentOffset + SegmentHeaderOffset.NoOfParts);
+			iLength += iSegmentLength;
+			iSegmentOffset = -1;
+			iSegmentLength = -1;
+			sSegmentParts = -1;
 			return;
 		}
 
@@ -785,11 +746,14 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			StringBuilder dump = new StringBuilder();
 
-			dump.Append(ReadByte(PacketHeaderOffset.MessCode).ToString()).Append(" ");
-			dump.Append(ReadByte(PacketHeaderOffset.MessSwap).ToString()).Append(" swap ");
-			dump.Append(ReadASCII(PacketHeaderOffset.Appl, PacketHeaderOffset.VarPartSize - PacketHeaderOffset.Appl).ToString()).Append("-");
-			dump.Append(ReadASCII(PacketHeaderOffset.ApplVersion, PacketHeaderOffset.Appl - PacketHeaderOffset.ApplVersion).ToString());
-			dump.Append(" (transfer len ").Append((ReadInt32(PacketHeaderOffset.VarPartLen) + PacketHeaderOffset.Segment).ToString()).Append(")");
+            dump.Append(ReadByte(PacketHeaderOffset.MessCode).ToString(CultureInfo.InvariantCulture)).Append(" ");
+            dump.Append(ReadByte(PacketHeaderOffset.MessSwap).ToString(CultureInfo.InvariantCulture)).Append(" swap ");
+			dump.Append(ReadAscii(PacketHeaderOffset.Appl,
+                PacketHeaderOffset.VarPartSize - PacketHeaderOffset.Appl).ToString(CultureInfo.InvariantCulture)).Append("-");
+			dump.Append(ReadAscii(PacketHeaderOffset.ApplVersion,
+                PacketHeaderOffset.Appl - PacketHeaderOffset.ApplVersion).ToString(CultureInfo.InvariantCulture));
+			dump.Append(" (transfer len ").Append((ReadInt32(PacketHeaderOffset.VarPartLen) +
+                PacketHeaderOffset.Segment).ToString(CultureInfo.InvariantCulture)).Append(")");
 	
 			return dump.ToString();
 		}
@@ -801,18 +765,18 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	internal class MaxDBReplyPacket : MaxDBPacket
 	{
-		private int m_segmOffset;
-		private int m_partOffset;
-		private int m_cachedResultCount = int.MinValue;
-		private int m_cachedPartCount = int.MinValue;
-		private int m_currentSegment;
-		private int[] m_partIndices;
-		private int m_partIdx = -1;
+		private int iSegmOffset;
+		private int iPartOffset;
+		private int iCachedResultCount = int.MinValue;
+		private int iCachedPartCount = int.MinValue;
+		private int iCurrentSegment;
+		private int[] iPartIndices;
+		private int iPartIndex = -1;
 
 		public MaxDBReplyPacket(byte[] data) : base(data, 0, data[PacketHeaderOffset.MessSwap] == SwapMode.Swapped) 
 		{
-			m_segmOffset = PacketHeaderOffset.Segment;
-			m_currentSegment = 1;
+			iSegmOffset = PacketHeaderOffset.Segment;
+			iCurrentSegment = 1;
 			ClearPartCache();
 		}
 
@@ -820,28 +784,28 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		private void ClearPartCache()
 		{
-			m_cachedResultCount = int.MinValue;
-			m_cachedPartCount = int.MinValue;
+			iCachedResultCount = int.MinValue;
+			iCachedPartCount = int.MinValue;
 
-			int pc = ReadInt16(m_segmOffset + SegmentHeaderOffset.NoOfParts);
-			m_partIndices = new int[pc];
+			int pc = ReadInt16(iSegmOffset + SegmentHeaderOffset.NoOfParts);
+			iPartIndices = new int[pc];
 			int partofs = 0;
 			for(int i = 0; i < pc; i++) 
 			{
 				if(i == 0) 
-					partofs = m_partIndices[i] = m_segmOffset + SegmentHeaderOffset.Part;
+					partofs = iPartIndices[i] = iSegmOffset + SegmentHeaderOffset.Part;
 				else 
 				{
 					int partlen = ReadInt32(partofs + PartHeaderOffset.BufLen);
-					partofs = m_partIndices[i] = partofs + AlignSize(partlen + PartHeaderOffset.Data);
+					partofs = iPartIndices[i] = partofs + AlignSize(partlen + PartHeaderOffset.Data);
 				}
 			}
 		}
 
 		public int FindPart(int requestedKind)
 		{
-			m_partOffset = -1;
-			m_partIdx  = -1;
+			iPartOffset = -1;
+			iPartIndex  = -1;
 			int partsLeft = PartCount;
 			while(partsLeft > 0) 
 			{
@@ -850,7 +814,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				if(PartType == requestedKind) 
 					return PartPos;
 			}
-			throw new PartNotFound();
+			throw new PartNotFoundException();
 		}
 
 		public bool ExistsPart(int requestedKind) 
@@ -860,7 +824,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				FindPart(requestedKind);
 				return true;
 			}
-			catch (PartNotFound) 
+			catch (PartNotFoundException) 
 			{
 				return false;
 			}
@@ -868,31 +832,31 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public void ClearPartOffset()
 		{
-			m_partOffset = -1;
-			m_partIdx = -1;
+			iPartOffset = -1;
+			iPartIndex = -1;
 		}
 
 		public int PartCount
 		{
 			get
 			{
-				if (m_cachedPartCount == int.MinValue)
-					return m_cachedPartCount = ReadInt16(m_segmOffset + SegmentHeaderOffset.NoOfParts);
+				if (iCachedPartCount == int.MinValue)
+					return iCachedPartCount = ReadInt16(iSegmOffset + SegmentHeaderOffset.NoOfParts);
 				else 
-					return m_cachedPartCount;
+					return iCachedPartCount;
 			}
 		}
 
 		public int NextPart()
 		{
-			return m_partOffset = m_partIndices[++m_partIdx];
+			return iPartOffset = iPartIndices[++iPartIndex];
 		}
 
 		public int PartArgsCount 
 		{
 			get
 			{
-				return ReadInt16(m_partOffset + PartHeaderOffset.ArgCount);
+				return ReadInt16(iPartOffset + PartHeaderOffset.ArgCount);
 			}
 		}
 
@@ -900,7 +864,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return ReadByte(m_partOffset + PartHeaderOffset.PartKind);
+				return ReadByte(iPartOffset + PartHeaderOffset.PartKind);
 			}
 		}
 
@@ -908,7 +872,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return ReadInt32(m_partOffset + PartHeaderOffset.SegmOffset);
+				return ReadInt32(iPartOffset + PartHeaderOffset.SegmOffset);
 			}
 		}
 
@@ -916,7 +880,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return ReadInt32(m_partOffset + PartHeaderOffset.BufLen);
+				return ReadInt32(iPartOffset + PartHeaderOffset.BufLen);
 			}
 		}
 
@@ -924,7 +888,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return ReadInt32(m_partOffset + PartHeaderOffset.BufSize);
+				return ReadInt32(iPartOffset + PartHeaderOffset.BufSize);
 			}
 		}
 
@@ -932,7 +896,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return m_partOffset;
+				return iPartOffset;
 			}
 		}
 
@@ -940,7 +904,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return m_partOffset + PartHeaderOffset.Data;
+				return iPartOffset + PartHeaderOffset.Data;
 			}
 		}
 
@@ -953,7 +917,7 @@ namespace MaxDB.Data.MaxDBProtocol
 					FindPart(PartKind.Vardata);
 					return new DataPartVariable(new ByteArray(ReadBytes(PartDataPos , PartLength), 0, false), 1);//??? why DataPartVariable requires BigEndian
 				}
-				catch (PartNotFound)
+				catch (PartNotFoundException)
 				{
 					return null;
 				}
@@ -967,7 +931,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				int partAttributes;
 				bool result;
 
-				partAttributes = this.ReadByte(m_partOffset + PartHeaderOffset.Attributes);
+				partAttributes = this.ReadByte(iPartOffset + PartHeaderOffset.Attributes);
 				result = (partAttributes & PartAttributes.LastPacket_Ext) != 0;
 				return result;
 			}
@@ -977,26 +941,27 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			StringBuilder dump = new StringBuilder();
 
-			string partkindname = "Unknown Part " + PartType.ToString();
+            string partkindname = "Unknown Part " + PartType.ToString(CultureInfo.InvariantCulture);
 			if (PartType < PartKind.Name.Length)
-				partkindname = PartType.ToString() + " Part";
+                partkindname = PartType.ToString(CultureInfo.InvariantCulture) + " Part";
 
 			dump.Append("        ").Append(partkindname).Append(" ");
-			dump.Append(PartArgsCount.ToString()).Append(" Arguments (");
-			dump.Append(PartLength.ToString()).Append(" of ");
-			dump.Append(PartSize.ToString()).Append(") (Segment at ");
-			dump.Append(PartSegmentOffset.ToString()).Append(")\n").Append(dt.ToString(Consts.TimeStampFormat));
+            dump.Append(PartArgsCount.ToString(CultureInfo.InvariantCulture)).Append(" Arguments (");
+            dump.Append(PartLength.ToString(CultureInfo.InvariantCulture)).Append(" of ");
+            dump.Append(PartSize.ToString(CultureInfo.InvariantCulture)).Append(") (Segment at ");
+            dump.Append(PartSegmentOffset.ToString(CultureInfo.InvariantCulture)).Append(")\n").Append(dt.ToString(
+                Consts.TimeStampFormat, CultureInfo.InvariantCulture));
 
 			byte[] data = ReadBytes(PartDataPos, PartLength);
  
 			for(int i = 0; i <= data.Length / 0x10; i++)
 			{
-				dump.Append((i * 0x10).ToString("x").PadLeft(8)).Append("  ");
+                dump.Append((i * 0x10).ToString("x", CultureInfo.InvariantCulture).PadLeft(8)).Append("  ");
 
 				int tailLen = Math.Min(0x10, 0x10 - ((i + 1) * 0x10 - data.Length));
 
 				for (int k = 0; k < tailLen; k++)
-					dump.Append(data[i * 0x10 + k].ToString("x2")).Append(" ");
+                    dump.Append(data[i * 0x10 + k].ToString("x2", CultureInfo.InvariantCulture)).Append(" ");
 
 				dump.Append("  |".PadLeft((0x10 - tailLen + 1) * 3));
 				string dumpStr = Encoding.ASCII.GetString(data, i * 0x10, tailLen).PadRight(0x10);
@@ -1006,7 +971,7 @@ namespace MaxDB.Data.MaxDBProtocol
 					else
 						dump.Append("?");
 
-				dump.Append("|\n").Append(dt.ToString(Consts.TimeStampFormat));
+                dump.Append("|\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
 			}
 
 			return dump.ToString();
@@ -1020,7 +985,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return ReadInt32(m_segmOffset + SegmentHeaderOffset.Len);
+				return ReadInt32(iSegmOffset + SegmentHeaderOffset.Len);
 			}
 		}
 
@@ -1041,82 +1006,95 @@ namespace MaxDB.Data.MaxDBProtocol
 			else 
 				result = -1;
 
-			m_segmOffset = result;
-			m_currentSegment = 1;
+			iSegmOffset = result;
+			iCurrentSegment = 1;
 			ClearPartCache();
 			return result;
 		}
 
 		public int NextSegment() 
 		{
-			if (SegmCount <= m_currentSegment++)
+			if (SegmCount <= iCurrentSegment++)
 				return -1;
-			m_segmOffset += SegmLength;
+			iSegmOffset += SegmLength;
 			ClearPartCache();
-			return m_segmOffset;
+			return iSegmOffset;
 		}
 
 		public string DumpSegment(DateTime dt)
 		{
 			StringBuilder dump = new StringBuilder();
 
-			dump.Append("   ").Append(ReadByte(m_segmOffset + SegmentHeaderOffset.SegmKind).ToString());
-			dump.Append(" Segment ").Append(ReadInt16(m_segmOffset + SegmentHeaderOffset.OwnIndex).ToString());
-			dump.Append(" at ").Append(ReadInt32(m_segmOffset + SegmentHeaderOffset.Offset).ToString());
-			dump.Append("(").Append(ReadInt32(m_segmOffset + SegmentHeaderOffset.Len).ToString());
-			dump.Append(" of ").Append((ReadInt32(PacketHeaderOffset.VarPartSize) - m_segmOffset).ToString());
-			dump.Append(" bytes)\n").Append(dt.ToString(Consts.TimeStampFormat));
+            dump.Append("   ").Append(ReadByte(iSegmOffset + SegmentHeaderOffset.SegmKind).ToString(CultureInfo.InvariantCulture));
+            dump.Append(" Segment ").Append(ReadInt16(iSegmOffset + SegmentHeaderOffset.OwnIndex).ToString(CultureInfo.InvariantCulture));
+            dump.Append(" at ").Append(ReadInt32(iSegmOffset + SegmentHeaderOffset.Offset).ToString(CultureInfo.InvariantCulture));
+            dump.Append("(").Append(ReadInt32(iSegmOffset + SegmentHeaderOffset.Len).ToString(CultureInfo.InvariantCulture));
+            dump.Append(" of ").Append((ReadInt32(PacketHeaderOffset.VarPartSize) - iSegmOffset).ToString(CultureInfo.InvariantCulture));
+            dump.Append(" bytes)\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
 
-			switch (ReadByte(m_segmOffset + SegmentHeaderOffset.SegmKind))
+			switch (ReadByte(iSegmOffset + SegmentHeaderOffset.SegmKind))
 			{
 				case SegmKind.Cmd: 
 				case SegmKind.Proccall:
-					dump.Append("        messtype: ").Append(ReadByte(m_segmOffset + SegmentHeaderOffset.MessType).ToString());
-					dump.Append("  sqlmode: ").Append(ReadByte(m_segmOffset + SegmentHeaderOffset.SqlMode).ToString());
-					dump.Append("  producer: ").Append(ReadByte(m_segmOffset + SegmentHeaderOffset.Producer).ToString());
+                    dump.Append("        messtype: ").Append(ReadByte(iSegmOffset + 
+                        SegmentHeaderOffset.MessType).ToString(CultureInfo.InvariantCulture));
+					dump.Append("  sqlmode: ").Append(ReadByte(iSegmOffset +
+                        SegmentHeaderOffset.SqlMode).ToString(CultureInfo.InvariantCulture));
+					dump.Append("  producer: ").Append(ReadByte(iSegmOffset +
+                        SegmentHeaderOffset.Producer).ToString(CultureInfo.InvariantCulture));
 
-					dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat)).Append("        Options: ");
-					dump.Append((ReadByte(m_segmOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : ""));
-					dump.Append((ReadByte(m_segmOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : ""));
-					dump.Append((ReadByte(m_segmOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : ""));
-					dump.Append((ReadByte(m_segmOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : ""));
-					dump.Append((ReadByte(m_segmOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : ""));
-					dump.Append((ReadByte(m_segmOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : ""));
+                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture)).Append("        Options: ");
+					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : ""));
+					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : ""));
+					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : ""));
+					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : ""));
+					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : ""));
+					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : ""));
 					break;
 				case SegmKind.Return:
 				case SegmKind.Procreply:
-					dump.Append("        RC: ").Append(ReadInt16(m_segmOffset + SegmentHeaderOffset.ReturnCode).ToString());
-					dump.Append("  ").Append(ReadASCII(m_segmOffset + SegmentHeaderOffset.SqlState, 
-						SegmentHeaderOffset.ReturnCode- SegmentHeaderOffset.SqlState));
-					dump.Append("  (Pos ").Append(ReadInt32(m_segmOffset + SegmentHeaderOffset.ErrorPos).ToString());
-					dump.Append(") Function ").Append(ReadInt16(m_segmOffset + SegmentHeaderOffset.ErrorPos).ToString());
-					dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat));
+					dump.Append("        RC: ").Append(ReadInt16(iSegmOffset +
+                        SegmentHeaderOffset.ReturnCode).ToString(CultureInfo.InvariantCulture));
+					dump.Append("  ").Append(ReadAscii(iSegmOffset + SegmentHeaderOffset.SqlState, 
+						SegmentHeaderOffset.ReturnCode - SegmentHeaderOffset.SqlState));
+					dump.Append("  (Pos ").Append(ReadInt32(iSegmOffset +
+                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
+					dump.Append(") Function ").Append(ReadInt16(iSegmOffset +
+                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
+                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
 					break;
 				default:
 					dump.Append("unknown segment kind");
-					dump.Append("        messtype: ").Append(ReadByte(m_segmOffset + SegmentHeaderOffset.MessType).ToString());
-					dump.Append("  sqlmode: ").Append(ReadByte(m_segmOffset + SegmentHeaderOffset.SqlMode).ToString());
-					dump.Append("  producer: ").Append(ReadByte(m_segmOffset + SegmentHeaderOffset.Producer).ToString());
+					dump.Append("        messtype: ").Append(ReadByte(iSegmOffset +
+                        SegmentHeaderOffset.MessType).ToString(CultureInfo.InvariantCulture));
+					dump.Append("  sqlmode: ").Append(ReadByte(iSegmOffset +
+                        SegmentHeaderOffset.SqlMode).ToString(CultureInfo.InvariantCulture));
+					dump.Append("  producer: ").Append(ReadByte(iSegmOffset +
+                        SegmentHeaderOffset.Producer).ToString(CultureInfo.InvariantCulture));
 
-					dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat)).Append("        Options: ");
-					dump.Append((ReadByte(m_segmOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : ""));
-					dump.Append((ReadByte(m_segmOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : ""));
-					dump.Append((ReadByte(m_segmOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : ""));
-					dump.Append((ReadByte(m_segmOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : ""));
-					dump.Append((ReadByte(m_segmOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : ""));
-					dump.Append((ReadByte(m_segmOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : ""));
+                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture)).Append("        Options: ");
+					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : ""));
+					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : ""));
+					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : ""));
+					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : ""));
+					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : ""));
+					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : ""));
 
-					dump.Append("        RC: ").Append(ReadInt16(m_segmOffset + SegmentHeaderOffset.ReturnCode).ToString());
-					dump.Append("  ").Append(ReadASCII(m_segmOffset + SegmentHeaderOffset.SqlState, 
+					dump.Append("        RC: ").Append(ReadInt16(iSegmOffset +
+                        SegmentHeaderOffset.ReturnCode).ToString(CultureInfo.InvariantCulture));
+					dump.Append("  ").Append(ReadAscii(iSegmOffset + SegmentHeaderOffset.SqlState, 
 						SegmentHeaderOffset.ReturnCode- SegmentHeaderOffset.SqlState));
-					dump.Append("  (Pos ").Append(ReadInt32(m_segmOffset + SegmentHeaderOffset.ErrorPos).ToString());
-					dump.Append(") Function ").Append(ReadInt16(m_segmOffset + SegmentHeaderOffset.ErrorPos).ToString());
-					dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat));
+					dump.Append("  (Pos ").Append(ReadInt32(iSegmOffset +
+                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
+					dump.Append(") Function ").Append(ReadInt16(iSegmOffset +
+                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
+                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
 					break;
 			}
 
-			dump.Append("        ").Append(ReadInt16(m_segmOffset + SegmentHeaderOffset.NoOfParts).ToString());
-			dump.Append(" parts:\n").Append(dt.ToString(Consts.TimeStampFormat));
+			dump.Append("        ").Append(ReadInt16(iSegmOffset +
+                SegmentHeaderOffset.NoOfParts).ToString(CultureInfo.InvariantCulture));
+            dump.Append(" parts:\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
 
 			ClearPartOffset();
 			for(int i = 0; i < PartCount; i++) 
@@ -1140,9 +1118,9 @@ namespace MaxDB.Data.MaxDBProtocol
 				{
 					FindPart(PartKind.SessionInfoReturned);
 					//offset 2200 is taken from order interface manual
-					return int.Parse(ReadASCII(PartDataPos + 2200, 1));
+                    return int.Parse(ReadAscii(PartDataPos + 2200, 1), CultureInfo.InvariantCulture);
 				}
-				catch(PartNotFound)  
+				catch(PartNotFoundException)  
 				{
 					return -1;
 				}
@@ -1157,9 +1135,9 @@ namespace MaxDB.Data.MaxDBProtocol
 				{
 					FindPart(PartKind.SessionInfoReturned);
 					//offset 2202 is taken from order interface manual
-					return int.Parse(ReadASCII(PartDataPos + 2201, 2));
+                    return int.Parse(ReadAscii(PartDataPos + 2201, 2), CultureInfo.InvariantCulture);
 				}
-				catch(PartNotFound)  
+				catch(PartNotFoundException)  
 				{
 					return -1;
 				}
@@ -1174,9 +1152,9 @@ namespace MaxDB.Data.MaxDBProtocol
 				{
 					FindPart(PartKind.SessionInfoReturned);
 					//offset 2204 is taken from order interface manual
-					return int.Parse(ReadASCII(PartDataPos + 2203, 2));
+                    return int.Parse(ReadAscii(PartDataPos + 2203, 2), CultureInfo.InvariantCulture);
 				}
-				catch(PartNotFound) 
+				catch(PartNotFoundException) 
 				{
 					return -1;
 				}
@@ -1197,7 +1175,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			for (int i = 0; i < columnCount; ++i) 
 			{
 				nameLen = ReadByte(pos);
-				result[i] = ReadASCII(pos + 1, nameLen);
+				result[i] = ReadAscii(pos + 1, nameLen);
 				pos += nameLen + 1;
 			}
 			return result;
@@ -1296,9 +1274,9 @@ namespace MaxDB.Data.MaxDBProtocol
 				case DataType.UNICODE:
 				case DataType.VARCHARUNI:
 					if (spaceoption)
-						return new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, m_swapMode);
+						return new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
 					else
-						return new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, m_swapMode);
+						return new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
 				case DataType.LONGUNI:
 				case DataType.STRUNI:
 					if(isDBProcedure) 
@@ -1316,7 +1294,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return ReadInt16(m_segmOffset + SegmentHeaderOffset.ReturnCode); 
+				return ReadInt16(iSegmOffset + SegmentHeaderOffset.ReturnCode); 
 			}
 		}
 
@@ -1324,7 +1302,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return ReadASCII(m_segmOffset + SegmentHeaderOffset.SqlState, 5);
+				return ReadAscii(iSegmOffset + SegmentHeaderOffset.SqlState, 5);
 			}
 		}
 
@@ -1335,18 +1313,18 @@ namespace MaxDB.Data.MaxDBProtocol
 				try 
 				{
 					FindPart(PartKind.ErrorText);
-					return ReadASCII(PartDataPos, PartLength).Trim();
+					return ReadAscii(PartDataPos, PartLength).Trim();
 				}
-				catch(PartNotFound) 
+				catch(PartNotFoundException) 
 				{
-					return MaxDBMessages.Extract(MaxDBMessages.ERROR);
+					return MaxDBMessages.Extract(MaxDBError.ERROR);
 				}
 			}
 		}
 
 		public int ResultCount(bool positionedAtPart)
 		{
-			if(m_cachedResultCount == int.MinValue) 
+			if(iCachedResultCount == int.MinValue) 
 			{
 				if (!positionedAtPart) 
 				{
@@ -1354,16 +1332,16 @@ namespace MaxDB.Data.MaxDBProtocol
 					{
 						FindPart(PartKind.ResultCount);
 					}
-					catch (PartNotFound) 
+					catch (PartNotFoundException) 
 					{
-						return m_cachedResultCount--;
+						return iCachedResultCount--;
 					}
 				}
 				
-				return m_cachedResultCount = VDNNumber.Number2Int(ReadDataBytes(m_partOffset + PartHeaderOffset.Data, PartLength));
+				return iCachedResultCount = VDNNumber.Number2Int(ReadDataBytes(iPartOffset + PartHeaderOffset.Data, PartLength));
 			} 
 			else 
-				return m_cachedResultCount;
+				return iCachedResultCount;
 		}
 
 		public int SessionID
@@ -1373,9 +1351,9 @@ namespace MaxDB.Data.MaxDBProtocol
 				try 
 				{
 					FindPart(PartKind.SessionInfoReturned);
-					return Clone(m_offset, false).ReadInt32(PartDataPos + 1);//session ID is always BigEndian
+					return Clone(Offset, false).ReadInt32(PartDataPos + 1);//session ID is always BigEndian
 				}
-				catch(PartNotFound) 
+				catch(PartNotFoundException) 
 				{
 					return -1;
 				}
@@ -1391,7 +1369,7 @@ namespace MaxDB.Data.MaxDBProtocol
 					FindPart(PartKind.SessionInfoReturned);
 					return (ReadByte(PartDataPos) == 1);
 				}
-				catch(PartNotFound) 
+				catch(PartNotFoundException) 
 				{
 					return false;
 				}
@@ -1402,7 +1380,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return ReadInt16(m_segmOffset + SegmentHeaderOffset.FunctionCode);
+				return ReadInt16(iSegmOffset + SegmentHeaderOffset.FunctionCode);
 			}
 		}
 
@@ -1410,7 +1388,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return ReadInt32(m_segmOffset + SegmentHeaderOffset.ErrorPos);
+				return ReadInt32(iSegmOffset + SegmentHeaderOffset.ErrorPos);
 			}
 		}
 
@@ -1423,7 +1401,7 @@ namespace MaxDB.Data.MaxDBProtocol
 					FindPart(PartKind.Feature);
 					return ReadBytes(PartDataPos, PartLength);
 				}
-				catch(PartNotFound)  
+				catch(PartNotFoundException)  
 				{
 					return null;
 				}
@@ -1474,7 +1452,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			int errorPos = ErrorPos;
 
 			if (rc == -8000) 
-				errmsg = MaxDBMessages.Extract(MaxDBMessages.COMMERROR_RESTARTREQUIRED);
+				errmsg = MaxDBMessages.Extract(MaxDBError.COMMRESTARTREQUIRED);
 
 			return new MaxDBException(errmsg, state, rc, errorPos);
 		}
@@ -1492,7 +1470,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public string ReadString(int offset, int len) 
 		{
-			return ReadASCII(offset, len);
+			return ReadAscii(offset, len);
 		}
 
 		public byte[][] ParseLongDescriptors() 

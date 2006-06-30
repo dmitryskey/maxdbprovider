@@ -1,4 +1,6 @@
+using System;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
 //
@@ -6,14 +8,16 @@ using System.Runtime.CompilerServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 //
-[assembly: AssemblyTitle("MaxDB Data Provider")]
+[assembly: AssemblyTitle("MaxDB.Data.dll")]
 [assembly: AssemblyDescription(".Net Framework Data Provider for MaxDB database server")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("")]
-[assembly: AssemblyCopyright("")]
+[assembly: AssemblyCopyright("Copyright (C) 2005-2006 Dmitry S. Kataev\r\nCopyright (C) 2002-2003 SAP AG")]
 [assembly: AssemblyTrademark("")]
-[assembly: AssemblyCulture("")]		
+[assembly: AssemblyCulture("")]
+[assembly: ComVisible(false)]
+[assembly: CLSCompliant(false)]	
 
 //
 // Version information for an assembly consists of the following four values:
@@ -26,7 +30,7 @@ using System.Runtime.CompilerServices;
 // You can specify all the values or you can default the Revision and Build Numbers 
 // by using the '*' as shown below:
 
-[assembly: AssemblyVersion("0.5.0")]
+[assembly: AssemblyVersion("0.6.0")]
 
 //
 // In order to sign your assembly you must specify a key to use. Refer to the 
