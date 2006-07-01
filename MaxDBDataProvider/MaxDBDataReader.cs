@@ -337,7 +337,7 @@ namespace MaxDB.Data
 				case SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND:
 					return false;
 				default:
-					MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.FETCH_DATA),
+					MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.FETCH_DATA_FAILED),
 						UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
 					return false;
 			}

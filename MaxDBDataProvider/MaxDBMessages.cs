@@ -194,10 +194,10 @@ namespace MaxDB.Data
             FETCH_NODATAPART = "fetch_nodatapart",
 
             //Fetch operation 
-            FETCH_DATA = "fetch_data",
+            FETCH_DATA_FAILED = "fetch_data_failed",
 
             // Runtime: connect to host failed.
-            HOST_CONNECT = "host_connect",
+            HOST_CONNECT_FAILED = "host_connect_failed",
 
             // Runtime: execution failed.
             EXEC_FAILED = "exec_failed",

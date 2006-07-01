@@ -112,7 +112,7 @@ namespace MaxDB.Data.Utilities
 			}
 			catch(Exception ex)
 			{
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT, strHost, iPort), ex);
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT_FAILED, strHost, iPort), ex);
 			}
 		}
 

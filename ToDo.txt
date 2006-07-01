@@ -1,4 +1,4 @@
-1. SSL communication via Metalig.Org (Mono?)
-2. Batch updates
-3. Test cases
-4. Documentation
+1. Test cases
+2. Installer
+3. Documentation
+
