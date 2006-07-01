@@ -274,7 +274,7 @@
   <data name="internal_invalidParseid" xml:space="preserve">
     <value>Internal error: parse id is null.</value>
   </data>
-  <data name="host_connect" xml:space="preserve">
+  <data name="host_connect_failed" xml:space="preserve">
     <value>Cannot connect to host {0}:{1}.</value>
     <comment>{0} - host name, {1} - port name</comment>
   </data>
@@ -399,7 +399,7 @@
   <data name="connection_isolationlevel" xml:space="preserve">
     <value>Can not set isolation level</value>
   </data>
-  <data name="fetch_data" xml:space="preserve">
+  <data name="fetch_data_failed" xml:space="preserve">
     <value>Fetch data error</value>
   </data>
   <data name="columnname_buffer" xml:space="preserve">

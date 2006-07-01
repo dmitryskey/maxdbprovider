@@ -806,7 +806,7 @@ namespace MaxDB.Data
 
 			if (UnsafeNativeMethods.SQLDBC_Connection_connectASCII(mConnectionHandler, mConnArgs.host, mConnArgs.dbname, mConnArgs.username, 
 				mConnArgs.password, mConnectionPropertiesHandler) != SQLDBC_Retcode.SQLDBC_OK) 
-				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT, mConnArgs.host, mConnArgs.port),  
+				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT_FAILED, mConnArgs.host, mConnArgs.port),  
 					UnsafeNativeMethods.SQLDBC_Connection_getError(mConnectionHandler));
 		}
 

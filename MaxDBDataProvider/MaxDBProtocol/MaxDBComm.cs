@@ -116,7 +116,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 			catch(Exception ex)
 			{
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT, mSocket.Host, mSocket.Port), ex);
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT_FAILED, mSocket.Host, mSocket.Port), ex);
 			}
 		}
 

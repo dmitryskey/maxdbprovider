@@ -1,9 +1,14 @@
 <project name="MaxDBDataProvider" default="allframeworks" xmlns="http://nant.sf.net/schemas/nant-0.84.win32.net-1.0.xsd">
 	<description>ADO.NET Provider for MaxDB</description>
 
-	<property name="nunit-Net-1.1" value="D:\Program Files\NUnit V2.1" />
+	<property name="nunit-Net-1.1" value="D:\Program Files\NUnit 2.2.7" />
 	<property name="nunit-Net-2.0" value="D:\Program Files\NUnit-Net-2.0 2.2.7" />
 	<property name="nunit-mono" value="" />
+
+	<property name="MaxDB-7.5" value="win2000" />
+	<property name="MaxDB-7.6" value="r55s" />
+	<property name="UnicodeDB" value="uhoteldb" />
+	<property name="AsciiDB" value="hoteldb" />
 
 	<property name="fxcop.executable" value="D:\Program Files\Microsoft FxCop 1.35\fxcopcmd.exe"/>
 
@@ -56,7 +61,7 @@
 		<resgen input="MaxDBDataProvider/MaxDBMessages.resx" output="MaxDBDataProvider/MaxDBMessages.resources"/>
 		<csc output="${outdir}/MaxDB.Data.dll" target="library" unsafe="${unsafe}"
 			define="${defines}" debug="${debug}" optimize="${opt}">
-			<resources prefix="MaxDB.Data" dynamicprefix="true">
+			<resources>
 				<include name="MaxDBDataProvider/MaxDBMessages.resources"/>
 			</resources>
 			<references>
@@ -169,68 +174,125 @@
 
                  
 	<!-- testing targets -->
-	<target name="alltests" depends="test-net-1.1-safe, test-net-2.0-safe">
+	<target name="test-7.6-unicode">
+		<mkdir dir="results"/>
+
+		<!-- test 7.6 Unicode -->		
+		<echo message="Testing MaxDB 7.6 UNICODE"/>
+		<echo message="Starting database instance"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.6} -d ${UnicodeDB} -u dba,dba db_online" failonerror="true"/>
+		<property name="config" value="MaxDB_76_UNICODE"/>
+
+		<call target="alltests"/>
+
+		<echo message="Stopping database instance"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.6} -d ${UnicodeDB} -u dba,dba db_stop" failonerror="true"/>
+	</target>
+
+	<target name="test-7.6-ascii">
+		<mkdir dir="results"/>
+
+		<!-- test 7.6 ASCII -->		
+		<echo message="Testing MaxDB 7.6 ASCII"/>
+		<echo message="Starting database instance"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.6} -d ${AsciiDB} -u dba,dba db_online" failonerror="true"/>
+		<property name="config" value="MaxDB_76"/>
+
+		<call target="alltests"/>
+
+		<echo message="Stopping database instance"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.6} -d ${AsciiDB} -u dba,dba db_stop" failonerror="true"/>
+	</target>
+
+	<target name="test-7.5-unicode">
+		<mkdir dir="results"/>
+
+		<!-- test 7.5 Unicode -->		
+		<echo message="Testing MaxDB 7.5 UNICODE"/>
+		<echo message="Starting database instance"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${UnicodeDB} -u dba,dba db_online" failonerror="true"/>
+		<property name="config" value="MaxDB_75_UNICODE"/>
+
+		<call target="alltests"/>
+
+		<echo message="Stopping database instance"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${UnicodeDB} -u dba,dba db_stop" failonerror="true"/>
+
+		<!-- test 7.6 ASCII -->		
+		<echo message="Testing MaxDB 7.5 ASCII"/>
+		<echo message="Starting database instance"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${AsciiDB} -u dba,dba db_online" failonerror="true"/>
+		<property name="config" value="MaxDB_75"/>
+
+		<call target="alltests"/>
+
+		<echo message="Stopping database instance"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${AsciiDB} -u dba,dba db_stop" failonerror="true"/>
+	</target>
+
+	<target name="test-7.5-ascii">
+		<mkdir dir="results"/>
+
+		<!-- test 7.5 ASCII -->		
+		<echo message="Testing MaxDB 7.5 ASCII"/>
+		<echo message="Starting database instance"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${AsciiDB} -u dba,dba db_online" failonerror="true"/>
+		<property name="config" value="MaxDB_75"/>
+
+		<call target="alltests"/>
+
+		<echo message="Stopping database instance"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${AsciiDB} -u dba,dba db_stop" failonerror="true"/>
+	</target>
+
+
+	<target name="alltests">
+                <call target="test-net-1.1-safe"/>
+		<call target="test-net-1.1-unsafe"/>
+		<call target="test-net-2.0-safe"/>
+		<call target="test-net-2.0-unsafe"/>
 	</target>
 	
 	<target name="test-net-1.1-safe" depends="net-1.1-safe">
 		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
 		<property name="framework" value="net-1.1"/>
-		<call target="testclient"/>
+		<property name="unsafe" value="false"/>
+		<call target="testdb"/>
 	</target>
 
 	<target name="test-net-1.1-unsafe" depends="net-1.1-unsafe">
 		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
 		<property name="framework" value="net-1.1"/>
-		<call target="testclient"/>
+		<property name="unsafe" value="true"/>
+		<call target="testdb"/>
 	</target>
 
 	<target name="test-net-2.0-safe" depends="net-2.0-safe">
 		<property name="nunit-lib" value="${nunit-Net-2.0}/bin"/>
 		<property name="framework" value="net-2.0"/>
-		<call target="testclient"/>
+		<property name="unsafe" value="false"/>
+		<call target="testdb"/>
 	</target>
 
 	<target name="test-net-2.0-unsafe" depends="net-2.0-unsafe">
 		<property name="nunit-lib" value="${nunit-Net-2.0}/bin"/>
 		<property name="framework" value="net-2.0"/>
-		<call target="testclient"/>
+		<property name="unsafe" value="true"/>
+		<call target="testdb"/>
 	</target>
 
 	<target name="test-mono-1.0-safe" depends="mono-1.0-safe">
-        <property name="nunit" value="${nunit-mono}"/>
+        	<property name="nunit" value="${nunit-mono}"/>
 		<property name="framework" value="mono-1.0"/>
-		<call target="testclient"/>
+		<property name="unsafe" value="false"/>
+		<call target="testdb"/>
 	</target>
 
 	<target name="test-mono-1.0-unsafe" depends="mono-1.0-unsafe">
-        <property name="nunit" value="${nunit-mono}"/>
+        	<property name="nunit" value="${nunit-mono}"/>
 		<property name="framework" value="mono-1.0"/>
-		<call target="testclient"/>
-	</target>
-
-	<target name="testclient" description="Target to run NUnit tests">
-		<mkdir dir="results"/>
-		
-		<!-- test 7.6 Unicode -->		
-		<echo message="Testing MaxDB 7.6 UNICODE"/>
-		<echo message="Starting database instance"/>
-		<exec program="dbmcli" commandline="-n r55s -d uhoteldb -u dba,dba db_online" failonerror="true"/>
-		<property name="config" value="MaxDB_76_UNICODE"/>
-		<property name="unsafe" value= "false"/>
+		<property name="unsafe" value="true"/>
 		<call target="testdb"/>
-		<echo message="Stopping database instance"/>
-		<exec program="dbmcli" commandline="-n r55s -d uhoteldb -u dba,dba db_stop" failonerror="true"/>
-
-		<!-- test 7.6 -->		
-		<echo message="Testing MaxDB 7.6"/>
-		<echo message="Starting database instance"/>
-		<exec program="dbmcli" commandline="-n r55s -d hoteldb -u dba,dba db_online" failonerror="true"/>
-		<property name="config" value="MaxDB_76"/>
-		<property name="unsafe" value= "false"/>
-		<call target="testdb"/>
-		<echo message="Stopping database instance"/>
-		<exec program="dbmcli" commandline="-n r55s -d hoteldb -u dba,dba db_stop" failonerror="true"/>
-
 	</target>
 
 	<!-- execute the test suite against a single database instance, possibly using coverage	-->
@@ -249,7 +311,7 @@
 
 		<copy file="MaxDBConsole/Configs/${config}.config" tofile="${testfile}.config"/>
 
-		<exec program="${nunit-exe}" commandline="/xml=results/${outfile} ${testfile}" failonerror="true"/>
+		<exec program="${nunit-exe}" commandline="/xml=results/${outfile} ${testfile}" failonerror="false"/>
 	</target>
 
 	<!-- Run fxcop on the current build -->	
