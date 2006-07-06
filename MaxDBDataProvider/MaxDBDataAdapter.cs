@@ -32,7 +32,7 @@ namespace MaxDB.Data
         private MaxDBCommand cmdUpdate;
         private MaxDBCommand cmdDelete;
 
-#if NET20
+#if NET20 && !MONO
         private int batUpdateSize;
         private MaxDBCommand batInsertCmd;
         private MaxDBCommand batUpdateCmd;
@@ -41,7 +41,7 @@ namespace MaxDB.Data
         private List<MaxDBParameterCollection> lstUpdateParams = new List<MaxDBParameterCollection>();
         private List<MaxDBParameterCollection> lstDeleteParams = new List<MaxDBParameterCollection>();
         private StatementType stCurrentType = StatementType.Select;
-#endif // NET20
+#endif // NET20 && !MONO
 
         static private readonly object EventRowUpdated = new object();
         static private readonly object EventRowUpdating = new object();
@@ -65,9 +65,6 @@ namespace MaxDB.Data
             cmdSelect = new MaxDBCommand(selectCmdText, new MaxDBConnection(connectionString));
         }
 
-        /*
-         * Implement abstract methods inherited from DbDataAdapter.
-         */
         override protected RowUpdatedEventArgs CreateRowUpdatedEvent(DataRow dataRow, IDbCommand command, StatementType statementType, DataTableMapping tableMapping)
         {
             return new MaxDBRowUpdatedEventArgs(dataRow, command, statementType, tableMapping);
@@ -81,7 +78,9 @@ namespace MaxDB.Data
         override protected void OnRowUpdating(RowUpdatingEventArgs value)
         {
 #if NET20
+#if !MONO
             stCurrentType = value.StatementType;
+#endif // !MONO
             EventHandler<MaxDBRowUpdatingEventArgs> handler = (EventHandler<MaxDBRowUpdatingEventArgs>) Events[EventRowUpdating];
 #else
             MaxDBRowUpdatingEventHandler handler = (MaxDBRowUpdatingEventHandler) Events[EventRowUpdating];
@@ -249,7 +248,7 @@ namespace MaxDB.Data
         }
         #endregion
 
-#if NET20
+#if NET20 && !MONO
         public override int UpdateBatchSize
         {
             get
@@ -330,7 +329,7 @@ namespace MaxDB.Data
             }
             return rowAffected;
         }
-#endif // NET20
+#endif // NET20 && !MONO
 
     }
 

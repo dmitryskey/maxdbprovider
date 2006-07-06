@@ -32,11 +32,11 @@ namespace MaxDB.UnitTesting
 		protected MaxDBConnection mconn;
 		protected StreamWriter msw = null;
         protected NameValueCollection mAppSettings =
-#if NET20
+#if NET20 && !MONO
             System.Configuration.ConfigurationManager.AppSettings;
 #else
             System.Configuration.ConfigurationSettings.AppSettings;
-#endif // NET20
+#endif // NET20 && !MONO
 
         public BaseTest()
 		{
@@ -65,7 +65,7 @@ namespace MaxDB.UnitTesting
 			}
 			catch(MaxDBException ex)
 			{
-				if (ex.VendorCode != -4004)
+				if (ex.ErrorCode != -4004)
 					throw;
 			}
 

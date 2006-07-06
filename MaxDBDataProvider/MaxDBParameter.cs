@@ -423,7 +423,11 @@ namespace MaxDB.Data
             }
         }
 
+#if NET20 && MONO
+        public override byte Precision
+#else
         public byte Precision
+#endif // NET20 && MONO
         {
             get
             {
@@ -435,7 +439,11 @@ namespace MaxDB.Data
             }
         }
 
+#if NET20 && MONO
+        public override byte Scale
+#else
         public byte Scale
+#endif // NET20 && MONO
         {
             get
             {

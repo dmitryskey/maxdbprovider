@@ -24,7 +24,6 @@ namespace MaxDB.Test
 			//
 			// TODO: Add code to start application here
 			//
- 
 			PerfomanceTest();
 			return;
 
@@ -126,11 +125,11 @@ namespace MaxDB.Test
             try
             {
 				maxdbconn = 
-#if NET20
+#if NET20 && !MONO
                     new MaxDBConnection(System.Configuration.ConfigurationManager.AppSettings["ConnectionString"]);
 #else
                     new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
-#endif // NET20
+#endif // NET20 && !MONO
                 maxdbconn.SqlMode = SqlMode.Oracle;
 				maxdbconn.Open();
 

@@ -145,11 +145,11 @@ namespace MaxDB.Data
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BASETABLE_NOTFOUND));
 		}
 
-#if NET20
+#if NET20 
         protected override void ApplyParameterInfo(DbParameter parameter, DataRow row, StatementType statementType, bool whereClause)
         {
         }
-#endif // NET20
+#endif // NET20 
 
 #if NET20
         protected override string GetParameterName(int parameterOrdinal)

@@ -121,6 +121,8 @@ namespace MaxDB.Data
             }
             set
             {
+				if (value == null)
+					return;
                 string[] paramArr = value.Split(';');
                 foreach (string param in paramArr)
                 {
@@ -219,23 +221,23 @@ namespace MaxDB.Data
                                     mKeyValuePairs[ConnectionStringParams.ENCRYPT] = true;
                                 break;
                             case "MODE":
-                                string mode = param.Split('=')[1].Trim().ToUpper(CultureInfo.InvariantCulture);
-                                if (mode == SqlModeName.Value[(byte)SqlMode.Ansi])
+                                string mode = param.Split('=')[1].Trim();
+                                if (string.Compare(mode, SqlModeName.Value[(byte)SqlMode.Ansi], true, CultureInfo.InvariantCulture) == 0)
                                 {
                                     mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Ansi;
                                     break;
                                 }
-                                if (mode == SqlModeName.Value[(byte)SqlMode.Db2])
+                                if (string.Compare(mode, SqlModeName.Value[(byte)SqlMode.Db2], true, CultureInfo.InvariantCulture) == 0)
                                 {
                                     mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Db2;
                                     break;
                                 }
-                                if (mode == SqlModeName.Value[(byte)SqlMode.Oracle])
+                                if (string.Compare(mode, SqlModeName.Value[(byte)SqlMode.Oracle], true, CultureInfo.InvariantCulture) == 0)
                                 {
                                     mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Oracle;
                                     break;
                                 }
-                                if (mode == SqlModeName.Value[(byte)SqlMode.SapR3])
+                                if (string.Compare(mode, SqlModeName.Value[(byte)SqlMode.SapR3], true, CultureInfo.InvariantCulture) == 0)
                                 {
                                     mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.SapR3;
                                     break;

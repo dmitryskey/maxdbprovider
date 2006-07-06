@@ -23,6 +23,7 @@ using MaxDB.Data.Utilities;
 using System.Runtime.Serialization;
 using System.Security.Permissions;
 using System.Globalization;
+using System.Data.Common;
 
 namespace MaxDB.Data
 {
@@ -84,11 +85,16 @@ namespace MaxDB.Data
     }
 
     [Serializable]
-    public class MaxDBException : DataException
+    public class MaxDBException : 
+#if NET20
+        DbException
+#else
+        DataException
+#endif // NET20
     {
         private int iErrorPosition = -10899;
         private string strSqlState;
-        private int iVendorCode;
+        private int iErrorCode;
 
         public MaxDBException()
             : base()
@@ -128,21 +134,21 @@ namespace MaxDB.Data
             : base(message)
         {
             strSqlState = sqlState;
-            iVendorCode = vendorCode;
+            iErrorCode = vendorCode;
         }
 
         public MaxDBException(string message, string sqlState, int vendorCode, Exception innerException)
             : base(message, innerException)
         {
             strSqlState = sqlState;
-            iVendorCode = vendorCode;
+            iErrorCode = vendorCode;
         }
 
         public MaxDBException(string message, string sqlState, int vendorCode, int errorPosition)
             : base(message)
         {
             strSqlState = sqlState;
-            iVendorCode = vendorCode;
+            iErrorCode = vendorCode;
             iErrorPosition = errorPosition;
         }
 
@@ -150,7 +156,7 @@ namespace MaxDB.Data
             : base(message, innerException)
         {
             strSqlState = sqlState;
-            iVendorCode = vendorCode;
+            iErrorCode = vendorCode;
             iErrorPosition = errorPosition;
         }
 
@@ -161,16 +167,20 @@ namespace MaxDB.Data
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "info"));
 
             base.GetObjectData(info, context);
-            info.AddValue("VendorCode", VendorCode);
+            info.AddValue("VendorCode", ErrorCode);
             info.AddValue("ErrorPos", ErrorPos);
             info.AddValue("SqlState", SqlState);
         }
 
-        public int VendorCode
+#if NET20
+        public override int ErrorCode
+#else
+        public int ErrorCode
+#endif // NEt20
         {
             get
             {
-                return iVendorCode;
+                return iErrorCode;
             }
         }
 
@@ -194,7 +204,7 @@ namespace MaxDB.Data
         {
             get
             {
-                switch (iVendorCode)
+                switch (iErrorCode)
                 {
                     case -904:  // Space for result tables exhausted
                     case -708:  // SERVERDB system not available
@@ -279,7 +289,7 @@ namespace MaxDB.Data
         }
 
         public MaxDBConnectionException(MaxDBException ex)
-            : base((ex == null ? string.Empty : ex.Message), "08000", (ex == null ? -1 : ex.VendorCode))
+            : base((ex == null ? string.Empty : ex.Message), "08000", (ex == null ? -1 : ex.ErrorCode))
         {
         }
 
