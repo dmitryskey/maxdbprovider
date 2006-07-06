@@ -324,7 +324,7 @@ namespace MaxDB.UnitTesting
 			}
 			catch(MaxDBException ex)
 			{
-				if (ex.VendorCode != -6006)
+				if (ex.ErrorCode != -6006)
 					Assert.Fail(ex.Message);
 			}
 
@@ -350,7 +350,7 @@ namespace MaxDB.UnitTesting
                 }
                 catch (MaxDBException ex)
                 {
-                    if (ex.VendorCode != -102)
+                    if (ex.ErrorCode != -102)
                         Assert.Fail(ex.Message);
                 }
             }

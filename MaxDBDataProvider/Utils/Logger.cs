@@ -238,13 +238,22 @@ namespace MaxDB.Data.Utilities
 
 		#region IDisposable Members
 
-		void IDisposable.Dispose()
+		public void Dispose()
 		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
 #if !SAFE
-			Flush();
-            if (dbConnection != null && mSwitcher.TraceSQL && mProperties != IntPtr.Zero)
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(mProperties);
-#endif
+				Flush();
+				if (dbConnection != null && mSwitcher.TraceSQL && mProperties != IntPtr.Zero)
+					UnsafeNativeMethods.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(mProperties);
+#endif // !SAFE
+			}
 		}
 
 		#endregion

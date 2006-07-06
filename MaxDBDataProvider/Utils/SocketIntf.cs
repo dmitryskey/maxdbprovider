@@ -216,7 +216,7 @@ namespace MaxDB.Data.Utilities
         #endregion
     }
 
-#if NET20
+#if NET20 && !MONO
 
     internal class SslSocketClass : SocketClass, IMaxDBSocket
     {
@@ -279,7 +279,7 @@ namespace MaxDB.Data.Utilities
         }
     }
 
-#endif // NET20
+#endif // NET20 && !MONO
 
     #region "Join stream class reimplementation"
 

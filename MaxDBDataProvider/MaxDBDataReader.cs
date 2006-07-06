@@ -65,7 +65,7 @@ namespace MaxDB.Data
         private int iRowsInResultSet;                  // the number of rows in this result set, or -1 if not known
         private int iLargestKnownAbsPos;               // largest known absolute position to be inside.
         private int iModifiedKernelPos;                // contains 0 if the kernel pos is not modified or the current kernel position.
-        internal int iMaxRows;				            //how many rows fetch
+        internal int iMaxRows;				           //how many rows fetch
 
         internal MaxDBDataReader()
         {
@@ -472,11 +472,27 @@ namespace MaxDB.Data
         }
 
 #if NET20
+        public override int VisibleFieldCount
+#else
+        public int VisibleFieldCount
+#endif // NET20
+        {
+            // Return the count of the number of columns, which in this case is the size of the column metadata array.
+            get
+            {
+                return FieldCount;
+            }
+        }
+
+
+#if NET20
         public override string GetName(int i)
 #else
         public string GetName(int i)
 #endif // NET20
         {
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             return mFetchInfo.GetColumnInfo(i).ColumnName;
 #else
@@ -495,6 +511,8 @@ namespace MaxDB.Data
              * as used on the back end, for example 'smallint' or 'varchar'.
              * The sample returns the simple name of the .NET Framework type.
              */
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             return mFetchInfo.GetColumnInfo(i).ColumnTypeName;
 #else
@@ -509,6 +527,8 @@ namespace MaxDB.Data
         public Type GetFieldType(int i)
 #endif // NET 20
         {
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             return mFetchInfo.GetColumnInfo(i).ColumnDataType;
 #else
@@ -523,6 +543,8 @@ namespace MaxDB.Data
         public object GetValue(int i)
 #endif // NET 20
         {
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             DBTechTranslator transl = FindColumnInfo(i);
             object obj_value = transl.IsDBNull(CurrentRecord) ? DBNull.Value : transl.GetValue(this, CurrentRecord);
@@ -668,6 +690,9 @@ namespace MaxDB.Data
              * Force the cast to return the type. InvalidCastException
              * should be thrown if the data is not already of the correct type.
              */
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
+
 #if SAFE
             DBTechTranslator transl = FindColumnInfo(i);
             bool bool_value = transl.GetBoolean(CurrentRecord);
@@ -725,6 +750,8 @@ namespace MaxDB.Data
         public byte GetByte(int i)
 #endif // NET20
         {
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             DBTechTranslator transl = FindColumnInfo(i);
             byte byte_value = transl.GetByte(this, CurrentRecord);
@@ -749,6 +776,8 @@ namespace MaxDB.Data
         public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
 #endif // NET20
         {
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             DBTechTranslator transl = FindColumnInfo(i);
             long result = transl.GetBytes(this, CurrentRecord, fieldOffset, buffer, bufferoffset, length);
@@ -777,7 +806,9 @@ namespace MaxDB.Data
 #endif // NET20
         {
             // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
-            return GetString(i)[0];
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
+			return GetString(i)[0];
         }
 
 #if NET20
@@ -788,6 +819,8 @@ namespace MaxDB.Data
         {
             if (buffer == null)
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "buffer"));
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             DBTechTranslator transl = FindColumnInfo(i);
             long result = transl.GetChars(this, CurrentRecord, fieldoffset, buffer, bufferoffset, length);
@@ -837,6 +870,8 @@ namespace MaxDB.Data
 #endif // NET20
         {
             // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
             return new Guid(GetString(i));
         }
 
@@ -847,6 +882,8 @@ namespace MaxDB.Data
 #endif // NET20
         {
             // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             DBTechTranslator transl = FindColumnInfo(i);
             short short_value = transl.GetInt16(CurrentRecord);
@@ -891,6 +928,8 @@ namespace MaxDB.Data
 #endif
         {
             // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             DBTechTranslator transl = FindColumnInfo(i);
             int int_value = transl.GetInt32(CurrentRecord);
@@ -935,6 +974,8 @@ namespace MaxDB.Data
 #endif // NET20
         {
             // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             DBTechTranslator transl = FindColumnInfo(i);
             long long_value = transl.GetInt64(CurrentRecord);
@@ -979,6 +1020,8 @@ namespace MaxDB.Data
 #endif // NET20
         {
             // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             DBTechTranslator transl = FindColumnInfo(i);
             float float_value = transl.GetFloat(CurrentRecord);
@@ -1023,6 +1066,8 @@ namespace MaxDB.Data
 #endif // NET20
         {
             // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             DBTechTranslator transl = FindColumnInfo(i);
             double double_value = transl.GetDouble(CurrentRecord);
@@ -1067,6 +1112,8 @@ namespace MaxDB.Data
 #endif // NET20
         {
             // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             DBTechTranslator transl = FindColumnInfo(i);
             string str_value = transl.GetString(this, CurrentRecord);
@@ -1134,6 +1181,8 @@ namespace MaxDB.Data
 #endif
         {
             // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             DBTechTranslator transl = FindColumnInfo(i);
             decimal dec_value = transl.GetDecimal(CurrentRecord);
@@ -1178,6 +1227,8 @@ namespace MaxDB.Data
 #endif  // NET20
         {
             // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             DBTechTranslator transl = FindColumnInfo(i);
             DateTime dt_value = transl.GetDateTime(CurrentRecord);
@@ -1211,25 +1262,24 @@ namespace MaxDB.Data
 #endif // SAFE
         }
 
-        public TimeSpan GetTimeSpan(int index)
+        public TimeSpan GetTimeSpan(int i)
         {
-            /*
-             * Force the cast to return the type. InvalidCastException
-             * should be thrown if the data is not already of the correct type.
-             */
+            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(index);
+            DBTechTranslator transl = FindColumnInfo(i);
             TimeSpan ts_value = transl.GetTimeSpan(CurrentRecord);
 
             //>>> SQL TRACE
             if (dbConnection.mLogger.TraceSQL)
-                LogValue(index + 1, transl, "TIMESPAN", 0, 0, ts_value.ToString());
+                LogValue(i + 1, transl, "TIMESPAN", 0, 0, ts_value.ToString());
             //<<< SQL TRACE
 
             return ts_value;
 #else
 			int columnType;
-			byte[] data = GetValueBytes(index, out columnType);
+			byte[] data = GetValueBytes(i, out columnType);
 			if (data != null)
 			{
 				switch(columnType)
@@ -1264,6 +1314,8 @@ namespace MaxDB.Data
         public bool IsDBNull(int i)
 #endif // NET20
         {
+			if (i < 0 || i >= FieldCount)
+				throw new InvalidColumnException(i);
 #if SAFE
             return FindColumnInfo(i).IsDBNull(CurrentRecord);
 #else
@@ -1346,7 +1398,7 @@ namespace MaxDB.Data
             }
             catch(MaxDBException ex)
             {
-                if (ex.VendorCode == 100)
+                if (ex.ErrorCode == 100)
                 {
                     bEmpty = true;
                     mPositionState = PositionType.AFTER_LAST;
@@ -1392,7 +1444,7 @@ namespace MaxDB.Data
             }
             catch (MaxDBException ex)
             {
-                if (ex.VendorCode == 100)
+                if (ex.ErrorCode == 100)
                 {
                     // fine, we are at the end.
                     mCurrentChunk.IsLast = true;
@@ -1785,13 +1837,13 @@ namespace MaxDB.Data
 		}
 #endif // NET20
 
-#if NET20
+#if NET20 
         protected override void Dispose(bool disposing)
 #else
         private void Dispose(bool disposing)
-#endif // NET20
+#endif // NET20 
         {
-#if NET20
+#if NET20 
             base.Dispose(disposing);
 #endif // NET20
             if (disposing)

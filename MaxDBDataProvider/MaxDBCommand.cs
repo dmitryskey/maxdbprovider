@@ -264,7 +264,7 @@ namespace MaxDB.Data
                     }
                     catch (MaxDBException ex)
                     {
-                        if (ex.VendorCode == -8)
+                        if (ex.ErrorCode == -8)
                         {
                             ResetPutValues(streamVec);
                             ParseMassCmd(true);
@@ -487,7 +487,7 @@ namespace MaxDB.Data
 				}
 				catch(MaxDBException ex) 
 				{
-					if (ex.VendorCode == -8 && afterParseAgain > 0) 
+					if (ex.ErrorCode == -8 && afterParseAgain > 0) 
 					{
 						//>>> SQL TRACE
 						if (dbConnection.mLogger.TraceSQL)
@@ -1129,7 +1129,7 @@ namespace MaxDB.Data
 			}
 			catch (MaxDBException ex) 
 			{
-				if (ex.VendorCode == -4000) 
+				if (ex.ErrorCode == -4000) 
 					mCurrentDataReader = new MaxDBDataReader();
 				else 
 					throw;

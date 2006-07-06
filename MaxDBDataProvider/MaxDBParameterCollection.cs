@@ -387,6 +387,7 @@ namespace MaxDB.Data
         {
             this[index] = (MaxDBParameter)value;
         }
+
         protected override void SetParameter(string parameterName, DbParameter value)
         {
             this[parameterName] = (MaxDBParameter)value;

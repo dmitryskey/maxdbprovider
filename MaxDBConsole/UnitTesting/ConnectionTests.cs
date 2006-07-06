@@ -9,7 +9,7 @@ namespace MaxDB.UnitTesting
 	/// Summary description for ConnectionTests.
 	/// </summary>
 	[TestFixture()]
-	public class ConnectionTests
+	public class ConnectionTests : BaseTest
 	{
 		private string mconnStr;
 #if SAFE
@@ -18,12 +18,6 @@ namespace MaxDB.UnitTesting
         private string mconnStrBadLogin;
 		private string mconnStrBadPassword;
 		private string mconnStrBadDbName;
-        private NameValueCollection mAppSettings =
-#if NET20
-            System.Configuration.ConfigurationManager.AppSettings;
-#else
-            System.Configuration.ConfigurationSettings.AppSettings;
-#endif // NET20
 
         public ConnectionTests()
 		{

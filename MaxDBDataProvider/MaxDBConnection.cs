@@ -97,10 +97,10 @@ namespace MaxDB.Data
         private static byte[] byDefFeatureSet = { 1, 0, 2, 0, 3, 0, 4, 0, 5, 0 };
         private byte[] byKernelFeatures = new byte[byDefFeatureSet.Length];
 
-#if NET20
+#if NET20 && !MONO
         private string strSslHostName;
         private bool bEncrypt;
-#endif // NET20
+#endif // NET20 && !MONO
 
         #endregion
 #else
@@ -129,7 +129,7 @@ namespace MaxDB.Data
 		{
 			int IHashCodeProvider.GetHashCode(object obj)
 #endif // NET20
-			{
+            {
 				// the X31 hash formula is hash = (hash<<5) - hash + char(i) for i in 1 ... string length
 				// as it degenerates when the input are 0's, a little bit decoration is added
 				// to hash UTF8 data and UCS2 data equally. 
@@ -229,12 +229,12 @@ namespace MaxDB.Data
             strCache = mConnStrBuilder.Cache;
 #endif // SAFE
 
-#if NET20 && SAFE
+#if NET20 && SAFE && !MONO
             if (mConnStrBuilder.SslHost != null)
                 strSslHostName = mConnStrBuilder.SslHost;
 
             bEncrypt = mConnStrBuilder.Encrypt;
-#endif // NET && SAFE
+#endif // NET && SAFE && !MONO
         }
 
         public Encoding DatabaseEncoding
@@ -554,7 +554,7 @@ namespace MaxDB.Data
                 catch(MaxDBException ex)
                 {
                     isChallengeResponseSupported = false;
-                    if (ex.VendorCode == -5015)
+                    if (ex.ErrorCode == -5015)
                     {
                         try
                         {
@@ -570,10 +570,10 @@ namespace MaxDB.Data
                 }
             }
 
-#if NET20 && SAFE
+#if NET20 && SAFE && !MONO
             if (bEncrypt && !isChallengeResponseSupported)
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_CHALLENGERESPONSENOTSUPPORTED));
-#endif // NET20 && SAFE
+#endif // NET20 && SAFE && !MONO
 
             /*
             * build connect statement
@@ -995,7 +995,7 @@ namespace MaxDB.Data
 #endif // NET20
         {
 #if SAFE
-#if NET20
+#if NET20 && !MONO
             if (bEncrypt)
             {
                 if (mConnArgs.port == 0) mConnArgs.port = Ports.DefaultSecure;
@@ -1010,7 +1010,7 @@ namespace MaxDB.Data
 #else
             if (mConnArgs.port == 0) mConnArgs.port = Ports.Default;
 			mComm = new MaxDBComm(new SocketClass(mConnArgs.host, mConnArgs.port, iTimeout, true));
-#endif // NET20
+#endif // NET20 && !MONO
 
             mLogger = new MaxDBLogger();
             DoConnect();
