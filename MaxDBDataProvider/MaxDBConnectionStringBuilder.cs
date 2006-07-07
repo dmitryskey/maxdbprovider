@@ -244,8 +244,8 @@ namespace MaxDB.Data
                                 }
                                 mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Internal;
                                 break;
-                            case "SSL HOST":
-                                mKeyValuePairs[ConnectionStringParams.SSL_HOST] = param.Split('=')[1].Trim();
+                            case "SSL CERTIFICATE":
+                                mKeyValuePairs[ConnectionStringParams.SSL_CERTIFICATE] = param.Split('=')[1].Trim();
                                 break;
                         }
                 }
@@ -365,11 +365,11 @@ namespace MaxDB.Data
         {
             get
             {
-                return (string)mKeyValuePairs[ConnectionStringParams.SSL_HOST];
+                return (string)mKeyValuePairs[ConnectionStringParams.SSL_CERTIFICATE];
             }
             set
             {
-                mKeyValuePairs[ConnectionStringParams.SSL_HOST] = value;
+                mKeyValuePairs[ConnectionStringParams.SSL_CERTIFICATE] = value;
             }
         }
 
