@@ -7,7 +7,7 @@ using System.Data.Common;
 
 namespace MaxDB.Data
 {
-	class MaxDBClientFactory : DbProviderFactory
+	class MaxDBFactory : DbProviderFactory
 	{
         public override DbCommand CreateCommand()
         {

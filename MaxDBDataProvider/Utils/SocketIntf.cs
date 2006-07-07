@@ -237,9 +237,9 @@ namespace MaxDB.Data.Utilities
             {
                 mSslStream.AuthenticateAsClient(server);
             }
-            catch (AuthenticationException e)
+            catch (AuthenticationException ex)
             {
-                throw new MaxDBException(strCertificateError + ". " + e.Message);
+                throw new MaxDBException(strCertificateError + ". " + ex.Message);
             }
         }
 

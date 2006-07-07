@@ -843,7 +843,7 @@ namespace MaxDB.Data.MaxDBProtocol
             CACHE_SIZE = "CACHE SIZE",
             ENCRYPT = "ENCRYPT",
             MODE = "MODE",
-            SSL_HOST = "SSL HOST";
+            SSL_CERTIFICATE = "SSL CERTIFICATE";
     }
 
 	/// <summary>
