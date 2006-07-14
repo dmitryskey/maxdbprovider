@@ -440,7 +440,7 @@ namespace MaxDB.Data
 				if (mParseInfo.IsSelect) 
 					requestPacket.AddCursorPart(strCursorName);
 
-                FillInputParameters(dbParameters,ref objInputArgs);
+                FillInputParameters(dbParameters, ref objInputArgs);
 
 				if (mParseInfo.sInputCount > 0) 
 				{
@@ -558,7 +558,7 @@ namespace MaxDB.Data
             {
                 MaxDBParameter param = cmd_params[i];
 
-                if (!FindColInfo(i).IsInput)
+                if (!FindColumnInfo(i).IsInput)
                     continue;
 
                 //>>> SQL TRACE
@@ -631,7 +631,7 @@ namespace MaxDB.Data
                             sbOut.Append(mParseInfo.ParamInfo[i].PhysicalLength.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
                             if (param.objInputValue != DBNull.Value)
                             {
-                                sbOut.Append(((byte[])FindColInfo(i).TransDateTimeForInput((DateTime)param.objInputValue)).Length.ToString(
+                                sbOut.Append(((byte[])FindColumnInfo(i).TransDateTimeForInput((DateTime)param.objInputValue)).Length.ToString(
                                     CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
                                 sbOut.Append(((DateTime)param.objInputValue).ToString(CultureInfo.InvariantCulture));
                             }
@@ -644,13 +644,13 @@ namespace MaxDB.Data
                             {
                                 if (param.objInputValue is DateTime)
                                 {
-                                    sbOut.Append(((byte[])FindColInfo(i).TransDateTimeForInput((DateTime)param.objInputValue)).Length.ToString(
+                                    sbOut.Append(((byte[])FindColumnInfo(i).TransDateTimeForInput((DateTime)param.objInputValue)).Length.ToString(
                                         CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
                                     sbOut.Append(((DateTime)param.objInputValue).ToString(CultureInfo.InvariantCulture));
                                 }
                                 else
                                 {
-                                    sbOut.Append(((byte[])FindColInfo(i).TransTimeSpanForInput((TimeSpan)param.objInputValue)).Length.ToString(
+                                    sbOut.Append(((byte[])FindColumnInfo(i).TransTimeSpanForInput((TimeSpan)param.objInputValue)).Length.ToString(
                                         CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
                                     sbOut.Append(((TimeSpan)param.objInputValue).ToString());
                                 }
@@ -721,7 +721,7 @@ namespace MaxDB.Data
                     switch (param.dbType)
                     {
                         case MaxDBType.Boolean:
-                            inputArgs[i] = FindColInfo(i).TransBooleanForInput((bool)param.objInputValue);
+                            inputArgs[i] = FindColumnInfo(i).TransBooleanForInput((bool)param.objInputValue);
                             break;
                         case MaxDBType.CharA:
                         case MaxDBType.StrA:
@@ -742,40 +742,40 @@ namespace MaxDB.Data
                             else
                             {
                                 if (param.objInputValue.GetType() == typeof(char[]))
-                                    inputArgs[i] = FindColInfo(i).TransStringForInput(new string((char[])param.objInputValue));
+                                    inputArgs[i] = FindColumnInfo(i).TransStringForInput(new string((char[])param.objInputValue));
                                 else
-                                    inputArgs[i] = FindColInfo(i).TransStringForInput((string)param.objInputValue);
+                                    inputArgs[i] = FindColumnInfo(i).TransStringForInput((string)param.objInputValue);
                             }
                             break;
                         case MaxDBType.Date:
                         case MaxDBType.Timestamp:
-                            inputArgs[i] = FindColInfo(i).TransDateTimeForInput((DateTime)param.objInputValue);
+                            inputArgs[i] = FindColumnInfo(i).TransDateTimeForInput((DateTime)param.objInputValue);
                             break;
                         case MaxDBType.Time:
                             if (param.objInputValue is DateTime)
-                                inputArgs[i] = FindColInfo(i).TransDateTimeForInput((DateTime)param.objInputValue);
+                                inputArgs[i] = FindColumnInfo(i).TransDateTimeForInput((DateTime)param.objInputValue);
                             else
-                                inputArgs[i] = FindColInfo(i).TransTimeSpanForInput((TimeSpan)param.objInputValue);
+                                inputArgs[i] = FindColumnInfo(i).TransTimeSpanForInput((TimeSpan)param.objInputValue);
                             break;
                         case MaxDBType.Fixed:
                         case MaxDBType.Float:
                         case MaxDBType.VFloat:
                         case MaxDBType.Number:
                         case MaxDBType.NoNumber:
-                            inputArgs[i] = FindColInfo(i).TransDoubleForInput((double)param.objInputValue);
+                            inputArgs[i] = FindColumnInfo(i).TransDoubleForInput((double)param.objInputValue);
                             break;
                         case MaxDBType.Integer:
-                            inputArgs[i] = FindColInfo(i).TransInt64ForInput((int)param.objInputValue);
+                            inputArgs[i] = FindColumnInfo(i).TransInt64ForInput((int)param.objInputValue);
                             break;
                         case MaxDBType.SmallInt:
-                            inputArgs[i] = FindColInfo(i).TransInt16ForInput((short)param.objInputValue);
+                            inputArgs[i] = FindColumnInfo(i).TransInt16ForInput((short)param.objInputValue);
                             break;
                         case MaxDBType.CharB:
                         case MaxDBType.StrB:
                         case MaxDBType.VarCharB:
                         case MaxDBType.LongB:
                         default:
-                            inputArgs[i] = FindColInfo(i).TransBytesForInput((byte[])param.objInputValue);
+                            inputArgs[i] = FindColumnInfo(i).TransBytesForInput((byte[])param.objInputValue);
                             break;
                     }
                 }
@@ -802,10 +802,10 @@ namespace MaxDB.Data
                 for (int i = 0; i < mParseInfo.ParamInfo.Length; i++)
                 {
                     MaxDBParameter param = cmd_params[i];
-                    if (!FindColInfo(i).IsOutput)
+                    if (!FindColumnInfo(i).IsOutput)
                         continue;
 
-                    if (FindColInfo(i).IsDBNull(baReplyMemory))
+                    if (FindColumnInfo(i).IsDBNull(baReplyMemory))
                     {
                         param.objValue = DBNull.Value;
                         continue;
@@ -814,7 +814,7 @@ namespace MaxDB.Data
                     switch (param.dbType)
                     {
                         case MaxDBType.Boolean:
-                            param.objValue = FindColInfo(i).GetBoolean(baReplyMemory);
+                            param.objValue = FindColumnInfo(i).GetBoolean(baReplyMemory);
                             break;
                         case MaxDBType.CharA:
                         case MaxDBType.StrA:
@@ -828,34 +828,34 @@ namespace MaxDB.Data
                         case MaxDBType.StrUni:
                         case MaxDBType.VarCharUni:
                         case MaxDBType.LongUni:
-                            param.objValue = FindColInfo(i).GetString(this, baReplyMemory);
+                            param.objValue = FindColumnInfo(i).GetString(this, baReplyMemory);
                             break;
                         case MaxDBType.Date:
                         case MaxDBType.Time:
-                            param.objValue = FindColInfo(i).GetDateTime(baReplyMemory);
+                            param.objValue = FindColumnInfo(i).GetDateTime(baReplyMemory);
                             break;
                         case MaxDBType.Timestamp:
-                            param.objValue = FindColInfo(i).GetTimeSpan(baReplyMemory);
+                            param.objValue = FindColumnInfo(i).GetTimeSpan(baReplyMemory);
                             break;
                         case MaxDBType.Fixed:
                         case MaxDBType.Float:
                         case MaxDBType.VFloat:
                         case MaxDBType.Number:
                         case MaxDBType.NoNumber:
-                            param.objValue = FindColInfo(i).GetDouble(baReplyMemory);
+                            param.objValue = FindColumnInfo(i).GetDouble(baReplyMemory);
                             break;
                         case MaxDBType.Integer:
-                            param.objValue = FindColInfo(i).GetInt32(baReplyMemory);
+                            param.objValue = FindColumnInfo(i).GetInt32(baReplyMemory);
                             break;
                         case MaxDBType.SmallInt:
-                            param.objValue = FindColInfo(i).GetInt16(baReplyMemory);
+                            param.objValue = FindColumnInfo(i).GetInt16(baReplyMemory);
                             break;
                         case MaxDBType.CharB:
                         case MaxDBType.StrB:
                         case MaxDBType.VarCharB:
                         case MaxDBType.LongB:
                         default:
-                            param.objValue = FindColInfo(i).GetBytes(this, baReplyMemory);
+                            param.objValue = FindColumnInfo(i).GetBytes(this, baReplyMemory);
                             break;
                     }
 
@@ -921,7 +921,7 @@ namespace MaxDB.Data
                                 sbOut.Append(mParseInfo.ParamInfo[i].PhysicalLength.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
                                 if (param.objValue != null)
                                 {
-                                    sbOut.Append(FindColInfo(i).GetBytes(this, baReplyMemory).Length.ToString(
+                                    sbOut.Append(FindColumnInfo(i).GetBytes(this, baReplyMemory).Length.ToString(
                                         CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
                                     sbOut.Append(((DateTime)param.objValue).ToString(CultureInfo.InvariantCulture));
                                 }
@@ -932,7 +932,7 @@ namespace MaxDB.Data
                                 sbOut.Append(mParseInfo.ParamInfo[i].PhysicalLength.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
                                 if (param.objValue != null)
                                 {
-                                    sbOut.Append(FindColInfo(i).GetBytes(this, baReplyMemory).Length.ToString(
+                                    sbOut.Append(FindColumnInfo(i).GetBytes(this, baReplyMemory).Length.ToString(
                                         CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
                                     if (param.objValue is DateTime)
                                         sbOut.Append(((DateTime)param.objValue).ToString(CultureInfo.InvariantCulture));
@@ -1047,7 +1047,7 @@ namespace MaxDB.Data
 						}
 						break;
 					case PartKind.ResultTableName:
-						string cname = replyPacket.ReadAscii(replyPacket.PartDataPos, replyPacket.PartLength);
+						string cname = replyPacket.ReadString(replyPacket.PartDataPos, replyPacket.PartLength);
 						if (cname.Length > 0)
 							strCursorName = cname;
 						break;
@@ -1446,7 +1446,7 @@ namespace MaxDB.Data
 			}
 		}
 
-		private DBTechTranslator FindColInfo(int colIndex)
+		private DBTechTranslator FindColumnInfo(int colIndex)
 		{
 			try 
 			{

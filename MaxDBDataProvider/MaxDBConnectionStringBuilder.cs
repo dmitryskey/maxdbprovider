@@ -361,7 +361,7 @@ namespace MaxDB.Data
             }
         }
 
-        public string SslHost
+        public string SslCertificateName
         {
             get
             {

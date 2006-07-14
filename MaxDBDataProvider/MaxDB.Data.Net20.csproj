@@ -135,7 +135,6 @@
     <Compile Include="AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MaxDBClientFactory.cs" />
     <Compile Include="MaxDBCommand.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -153,6 +152,7 @@
     <Compile Include="MaxDBException.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="MaxDBFactory.cs" />
     <Compile Include="MaxDBMessages.cs">
       <SubType>Code</SubType>
     </Compile>

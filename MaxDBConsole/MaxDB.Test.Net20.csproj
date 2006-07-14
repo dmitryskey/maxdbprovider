@@ -160,6 +160,7 @@
     <Compile Include="UnitTesting\DataReaderTests.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="UnitTesting\LanguageTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MaxDBDataProvider\MaxDB.Data.Net20.csproj">

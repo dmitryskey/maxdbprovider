@@ -198,7 +198,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 		}
 
-		public MaxDBReplyPacket Execute(MaxDBRequestPacket userPacket, int len)
+		public byte[] Execute(MaxDBRequestPacket userPacket, int len)
 		{
 			MaxDBPacket rawPacket = new MaxDBPacket(userPacket.GetArrayData(), 0, userPacket.Swapped); 
 			rawPacket.FillHeader(RSQLTypes.USER_DATA_REQUEST, iSender);
@@ -232,7 +232,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				if (!mSocket.DataAvailable) System.Threading.Thread.Sleep(ts); //wait for end of data
 			};
 
-			return new MaxDBReplyPacket(packetBuf);
+			return packetBuf;
 		}
     }
 #endif // SAFE

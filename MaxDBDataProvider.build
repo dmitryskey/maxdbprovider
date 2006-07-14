@@ -72,7 +72,8 @@
 				<include name="MaxDBDataProvider/MaxDBMessages.resources"/>
 			</resources>
 			<references>
-				<include name="System.Data.dll"/>		
+				<include name="System.Data.dll"/>
+				<include name="Mono.Security.dll"/>		
 			</references>
 			<sources refid="Sources"/>
 		</csc>

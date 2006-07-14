@@ -56,14 +56,6 @@ namespace MaxDB.Data
         SapR3 = 6,
     }
 
-    /// <summary>
-    /// SQL Mode name
-    /// </summary>
-    internal struct SqlModeName
-    {
-        public static readonly string[] Value = { "NULL", "SESSION", "INTERNAL", "ANSI", "DB2", "ORACLE", "SAPR3" };
-    }
-
     public class MaxDBConnection :
 #if NET20
         DbConnection
@@ -81,7 +73,13 @@ namespace MaxDB.Data
         #region "Native implementation parameters"
 
         internal MaxDBComm mComm;
+#if NET20
+        private Stack<MaxDBRequestPacket> mPacketPool = new Stack<MaxDBRequestPacket>();
+        private Stack<MaxDBUnicodeRequestPacket> mUnicodePacketPool = new Stack<MaxDBUnicodeRequestPacket>();
+#else
         private Stack mPacketPool = new Stack();
+        private Stack mUnicodePacketPool = new Stack();
+#endif // NET20
         internal bool bAutoCommit;
         private GarbageParseId mGarbageParseids;
         private object objExec;
@@ -97,10 +95,10 @@ namespace MaxDB.Data
         private static byte[] byDefFeatureSet = { 1, 0, 2, 0, 3, 0, 4, 0, 5, 0 };
         private byte[] byKernelFeatures = new byte[byDefFeatureSet.Length];
 
-#if NET20 && !MONO
-        private string strSslHostName;
+#if NET20 || MONO
+        private string strSslCertificateName;
         private bool bEncrypt;
-#endif // NET20 && !MONO
+#endif // NET20
 
         #endregion
 #else
@@ -229,12 +227,12 @@ namespace MaxDB.Data
             strCache = mConnStrBuilder.Cache;
 #endif // SAFE
 
-#if NET20 && SAFE && !MONO
-            if (mConnStrBuilder.SslHost != null)
-                strSslHostName = mConnStrBuilder.SslHost;
+#if NET20 && SAFE
+            if (mConnStrBuilder.SslCertificateName != null)
+                strSslCertificateName = mConnStrBuilder.SslCertificateName;
 
             bEncrypt = mConnStrBuilder.Encrypt;
-#endif // NET && SAFE && !MONO
+#endif // NET && SAFE
         }
 
         public Encoding DatabaseEncoding
@@ -386,17 +384,40 @@ namespace MaxDB.Data
         {
             MaxDBRequestPacket packet;
 
-            if (mPacketPool.Count == 0)
-                packet = new MaxDBRequestPacket(new byte[HeaderOffset.END + mComm.MaxCmdSize], Consts.AppID, Consts.AppVersion);
+            if (DatabaseEncoding == Encoding.Unicode)
+            {
+                if (mUnicodePacketPool.Count == 0)
+                     packet = new MaxDBUnicodeRequestPacket(new byte[HeaderOffset.END + mComm.MaxCmdSize], Consts.AppID, Consts.AppVersion, iMode);
+                else
+                    packet =
+#if NET20
+                        mUnicodePacketPool.Pop();
+#else
+                        (MaxDBUnicodeRequestPacket)mUnicodePacketPool.Pop();
+#endif // NET20
+            }
             else
-                packet = (MaxDBRequestPacket)mPacketPool.Pop();
+            {
+                if (mPacketPool.Count == 0)
+                    packet = new MaxDBRequestPacket(new byte[HeaderOffset.END + mComm.MaxCmdSize], Consts.AppID, Consts.AppVersion, iMode);
+                else
+                    packet =
+#if NET20
+                        mPacketPool.Pop();
+#else
+                        (MaxDBRequestPacket)mPacketPool.Pop();
+#endif // NET20
+            }
 
             return packet;
         }
 
         internal void FreeRequestPacket(MaxDBRequestPacket requestPacket)
         {
-            mPacketPool.Push(requestPacket);
+            if (DatabaseEncoding == Encoding.Unicode)
+                mUnicodePacketPool.Push(requestPacket as MaxDBUnicodeRequestPacket);
+            else
+                mPacketPool.Push(requestPacket);
         }
 
         internal MaxDBReplyPacket Execute(MaxDBRequestPacket requestPacket, object execObj, int gcFlags)
@@ -434,18 +455,31 @@ namespace MaxDB.Data
                 //>>> PACKET TRACE
                 if (mLogger.TraceFull)
                 {
-                    mLogger.SqlTrace(dt, "<PACKET>");
-                    mLogger.SqlTrace(dt, requestPacket.DumpPacket());
+                    mLogger.SqlTrace(dt, "<PACKET>" + requestPacket.DumpPacket());
+
+                    int segm = requestPacket.FirstSegment();
+                    while (segm != -1)
+                    {
+                        mLogger.SqlTrace(dt, requestPacket.DumpSegment(dt));
+                        segm = requestPacket.NextSegment();
+                    }
+
+                    mLogger.SqlTrace(dt, "</PACKET>");
                 }
                 //<<< PACKET TRACE
 
                 objExec = execObj;
-                replyPacket = mComm.Execute(requestPacket, requestLen);
+                if (DatabaseEncoding == Encoding.Unicode)
+                    replyPacket = new MaxDBUnicodeReplyPacket(mComm.Execute(requestPacket, requestLen));
+                else
+                    replyPacket = new MaxDBReplyPacket(mComm.Execute(requestPacket, requestLen));
 
                 //>>> PACKET TRACE
                 if (mLogger.TraceFull)
                 {
                     dt = DateTime.Now;
+                    mLogger.SqlTrace(dt, "<PACKET>" + replyPacket.DumpPacket());
+
                     int segm = replyPacket.FirstSegment();
                     while (segm != -1)
                     {
@@ -539,6 +573,9 @@ namespace MaxDB.Data
 
             string connectCmd;
             byte[] crypted;
+            mUnicodePacketPool.Clear();
+            mPacketPool.Clear();
+            mEncoding = Encoding.ASCII;
             MaxDBRequestPacket requestPacket = GetRequestPacket();
             Auth auth = null;
             bool isChallengeResponseSupported = false;
@@ -570,10 +607,10 @@ namespace MaxDB.Data
                 }
             }
 
-#if NET20 && SAFE && !MONO
+#if (NET20 || MONO) && SAFE
             if (bEncrypt && !isChallengeResponseSupported)
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_CHALLENGERESPONSENOTSUPPORTED));
-#endif // NET20 && SAFE && !MONO
+#endif // (NET20 || MONO) && SAFE
 
             /*
             * build connect statement
@@ -611,7 +648,7 @@ namespace MaxDB.Data
                 requestPacket.NewPart(PartKind.Data);
                 requestPacket.AddData(crypted);
                 requestPacket.AddDataString(TermID);
-                requestPacket.PartArgs++;
+                requestPacket.PartArguments++;
             }
             else
             {
@@ -688,6 +725,7 @@ namespace MaxDB.Data
                 if (mParseCache != null)
                     mParseCache.Clear();
                 mPacketPool.Clear();
+                mUnicodePacketPool.Clear();
                 bInReconnect = true;
                 try
                 {
@@ -995,12 +1033,12 @@ namespace MaxDB.Data
 #endif // NET20
         {
 #if SAFE
-#if NET20 && !MONO
+#if NET20 || MONO
             if (bEncrypt)
             {
                 if (mConnArgs.port == 0) mConnArgs.port = Ports.DefaultSecure;
                 mComm = new MaxDBComm(new SslSocketClass(mConnArgs.host, mConnArgs.port, iTimeout, true,
-                    strSslHostName != null ? strSslHostName : mConnArgs.host));
+                    strSslCertificateName != null ? strSslCertificateName : mConnArgs.host));
             }
             else
             {
@@ -1010,12 +1048,12 @@ namespace MaxDB.Data
 #else
             if (mConnArgs.port == 0) mConnArgs.port = Ports.Default;
 			mComm = new MaxDBComm(new SocketClass(mConnArgs.host, mConnArgs.port, iTimeout, true));
-#endif // NET20 && !MONO
+#endif // NET20 || MONO
 
             mLogger = new MaxDBLogger();
             DoConnect();
 #else
-			OpenConnection();
+            OpenConnection();
 			mEncoding = UnsafeNativeMethods.SQLDBC_Connection_isUnicodeDatabase(mConnectionHandler) == 1 ? Encoding.Unicode : Encoding.ASCII;
 			iKernelVer = UnsafeNativeMethods.SQLDBC_Connection_getKernelVersion(mConnectionHandler);
 #endif // SAFE

@@ -91,7 +91,7 @@ namespace MaxDB.Data.Utilities
 				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "TIMESTAMP", "1");
 
 				strLogName = Path.GetTempPath() + "adonetlog.html";
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "FILENAME", "\"" + strLogName + "\"");
+ 				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "FILENAME", "\"" + strLogName + "\"");
                 if (mSwitcher.TraceFull)
 					UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "PACKET", "1");
 				UnsafeNativeMethods.SQLDBC_Environment_setTraceOptions(dbConnection.mEnviromentHandler, mProperties);
@@ -211,27 +211,27 @@ namespace MaxDB.Data.Utilities
 				Trace.Flush();
 #else
 
-				if (!File.Exists(strLogName))
-					return;
-				string tmpFile = Path.GetTempFileName();
-				File.Copy(strLogName, tmpFile, true);
-				StreamReader sr = new StreamReader(tmpFile);
-				string header = sr.ReadLine();
-				if (header != null)
-				{
-					string line;
-					do
-					{
-						line = sr.ReadLine();
-						if (line != null)
-							Trace.WriteLine(line);
-					}
-					while(line != null);
-				}
-				sr.Close();
-				File.Delete(tmpFile);
+                if (!File.Exists(strLogName))
+                    return;
+                string tmpFile = Path.GetTempFileName();
+                File.Copy(strLogName, tmpFile, true);
+                StreamReader sr = new StreamReader(tmpFile);
+                string header = sr.ReadLine();
+                if (header != null)
+                {
+                    string line;
+                    do
+                    {
+                        line = sr.ReadLine();
+                        if (line != null)
+                            Trace.WriteLine(line);
+                    }
+                    while (line != null);
+                }
+                sr.Close();
+                File.Delete(tmpFile);
 
-				Trace.Flush();
+                Trace.Flush();
 #endif // SAFE
             }
 		}
