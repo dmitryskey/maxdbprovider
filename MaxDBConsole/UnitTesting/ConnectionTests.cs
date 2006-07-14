@@ -51,7 +51,7 @@ namespace MaxDB.UnitTesting
 		}
 
 #if NET20 && !MONO
-		[Test] 
+		//[Test] 
 		public void TestConnectionSsl()
 		{
             TestConnectionByString(mconnStrSsl);

@@ -124,8 +124,7 @@ namespace MaxDB.Data
         }
 
         public MaxDBException(string message, string sqlState, Exception innerException)
-            :
-            base(message, innerException)
+            : base(message, innerException)
         {
             strSqlState = sqlState;
         }
@@ -384,6 +383,11 @@ namespace MaxDB.Data
 
         public MaxDBValueOverflowException(int colIndex)
             : base(MaxDBMessages.Extract(MaxDBError.VALUEOVERFLOW, colIndex.ToString(CultureInfo.InvariantCulture)))
+        {
+        }
+
+        public MaxDBValueOverflowException(string typeName, int colIndex)
+            : base(MaxDBMessages.Extract(MaxDBError.VALUEOVERFLOW, colIndex.ToString((CultureInfo.InvariantCulture))))
         {
         }
 

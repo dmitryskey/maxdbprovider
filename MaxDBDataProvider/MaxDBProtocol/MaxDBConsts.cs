@@ -232,6 +232,69 @@ namespace MaxDB.Data.MaxDBProtocol
 			ProcservFill5           =  58,
 			ProcservUpperBound      =  59,
 			LastCmdMessType         =  60;
+
+        public static readonly string[] Name = new string[] {   
+                "nil",
+                "cmd_lower_bound",
+                "dbs",
+                "parse",
+                "getparse",
+                "syntax",
+                "cfill1",
+                "cfill2",
+                "cfill3",
+                "cfill4",
+                "cfill5",
+                "cmd_upper_bound",
+                "no_cmd_lower_bound",
+                "execute",
+                "getexecute",
+                "putval",
+                "getval",
+                "load",
+                "unload",
+                "ncfill1",
+                "ncfill2",
+                "ncfill3",
+                "ncfill4",
+                "ncfill5",
+                "no_cmd_upper_bound",
+                "hello",
+                "util_lower_bound",
+                "utility",
+                "incopy",
+                "ufill1",
+                "outcopy",
+                "diag_outcopy",
+                "ufill3",
+                "ufill4",
+                "ufill5",
+                "ufill6",
+                "ufill7",
+                "util_upper_bound",
+                "specials_lower_bound",
+                "switch",
+                "switchlimit",
+                "buflength",
+                "minbuf",
+                "maxbuf",
+                "state_utility",
+                "sfill2",
+                "sfill3",
+                "sfill4",
+                "sfill5",
+                "specials_upper_bound",
+                "wait_for_event",
+                "procserv_lower_bound",
+                "procserv_call",
+                "procserv_reply",
+                "procserv_fill1",
+                "procserv_fill2",
+                "procserv_fill3",
+                "procserv_fill4",
+                "procserv_fill5",
+                "procserv_upper_bound"
+            };
 	}
 
 	//
@@ -608,7 +671,22 @@ namespace MaxDB.Data.MaxDBProtocol
 		public const byte 
 			NotSwapped	=	1,
 			Swapped		=	2;
+
+        public static readonly string[] SwapType = {"dummy", "normal", "full", "part"};
 	}
+
+    internal struct ProducerType
+    {
+        public static readonly string[] Name = { "nil", "user", "internal", "kernel", "installation" };
+    }
+
+    /// <summary>
+    /// SQL Mode name
+    /// </summary>
+    internal struct SqlModeName
+    {
+        public static readonly string[] Value = { "NULL", "SESSION", "INTERNAL", "ANSI", "DB2", "ORACLE", "SAPR3" };
+    }
 
 	internal struct SqlType
 	{
@@ -753,17 +831,6 @@ namespace MaxDB.Data.MaxDBProtocol
 		    SerialOffset    = 11, // int1
 		    // The size of tsp1_param_info 
 		    END			    = 12;
-	}
-
-	internal struct Vsp00Consts
-	{
-		public const int  KnlIdentifier  = 32;
-		public const byte DefinedBinary  = 0;
-		public const byte DefinedUnicode = 1;
-		public const byte DefinedAscii   = (byte) ' ';
-		public const byte UndefByte      = (byte) 0xff;
-		public const byte NormalSwap     = 1;
-		public const byte FullSwap       = 2;
 	}
 
 	internal struct StreamHandle 
@@ -925,10 +992,35 @@ namespace MaxDB.Data.MaxDBProtocol
 
 #if SAFE
 		// some constants
-		public const byte ASCIIClient              =      0;
-		public const byte UnicodeSwapClient        =     19;
-		public const byte UnicodeClient			   =     20;
-		public const byte RSQL_DOTNET              =     13;
+		public const byte ASCIIClient       =  0;
+		public const byte UnicodeSwapClient = 19;
+		public const byte UnicodeClient	    = 20;
+		public const byte RSQL_DOTNET       = 13;
+        public const byte DefinedAscii      = 32;
+        public const byte DefinedUnicode    = 1;
+
+        public static readonly string[] MessageCode = {
+            "ascii",
+            "ebcdic",
+            "codeneutral",
+            "unknown3",
+            "unknown4",
+            "unknown5",
+            "unknown6",
+            "unknown7",
+            "unknown8",
+            "unknown9",
+            "unknown10",
+            "unknown11",
+            "unknown12",
+            "unknown13",
+            "unknown14",
+            "unknown15",
+            "unknown16",
+            "unknown17",
+            "unknown18",
+            "unicode_swap",
+            "unicode"};
 
         private static readonly byte[] byZeroBytes = new byte[FillBufSize];
         public static byte[] ZeroBytes

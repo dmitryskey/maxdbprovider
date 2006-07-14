@@ -27,6 +27,9 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Authentication;
 #endif // NET20
+#if MONO
+using Mono.Security.Protocol.Tls;
+#endif
 
 namespace MaxDB.Data.Utilities
 {
@@ -137,7 +140,7 @@ namespace MaxDB.Data.Utilities
 			}
 		}
 
-#if NET20
+#if NET20 || MONO
         protected TcpClient Client
         {
             get 
@@ -157,9 +160,9 @@ namespace MaxDB.Data.Utilities
                 return iTimeout; 
             }
         }
-#endif // NET20
+#endif // NET20 || MONO
 
-		public virtual Stream Stream
+        public virtual Stream Stream
 		{
 			get
 			{
@@ -220,14 +223,14 @@ namespace MaxDB.Data.Utilities
 
     internal class SslSocketClass : SocketClass, IMaxDBSocket
     {
-        SslStream mSslStream;
+        private SslStream mSslStream;
         private string strCertificateError;
-        private string strServer;
+        private string strCertificateName;
 
-        public SslSocketClass(string host, int port, int timeout, bool check_socket, string server)
+        public SslSocketClass(string host, int port, int timeout, bool check_socket, string certificate)
             : base(host, port, timeout, check_socket)
         {
-            strServer = server;
+            strCertificateName = certificate;
             mSslStream = new SslStream(Client.GetStream(),
                 false,
                 new RemoteCertificateValidationCallback(ValidateServerCertificate),
@@ -235,7 +238,7 @@ namespace MaxDB.Data.Utilities
                 );
             try
             {
-                mSslStream.AuthenticateAsClient(server);
+                mSslStream.AuthenticateAsClient(certificate);
             }
             catch (AuthenticationException ex)
             {
@@ -267,7 +270,7 @@ namespace MaxDB.Data.Utilities
 
         public override IMaxDBSocket Clone()
         {
-            return new SslSocketClass(Host, Port, Timeout, false, strServer);
+            return new SslSocketClass(Host, Port, Timeout, false, strCertificateName);
         }
 
         public override void Close()
@@ -280,6 +283,51 @@ namespace MaxDB.Data.Utilities
     }
 
 #endif // NET20 && !MONO
+
+#if MONO
+
+    internal class SslSocketClass : SocketClass, IMaxDBSocket
+    {
+        private SslClientStream mSslStream;
+        private string strCertificateName;
+
+        public SslSocketClass(string host, int port, int timeout, bool check_socket, string certificate)
+            : base(host, port, timeout, check_socket)
+        {
+            strCertificateName = certificate;
+            try
+            {
+                mSslStream = new SslClientStream(Client.GetStream(), host, true);
+            }
+            catch(Exception ex)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SSL_CERTIFICATE, ex.Message, ex));
+            }
+        }
+
+        public override Stream Stream
+        {
+            get
+            {
+                return mSslStream;
+            }
+        }
+
+        public override IMaxDBSocket Clone()
+        {
+            return new SslSocketClass(Host, Port, Timeout, false, strCertificateName);
+        }
+
+        public override void Close()
+        {
+            mSslStream.Close();
+            mSslStream = null;
+            Client.Close();
+            Client = null;
+        }
+    }
+
+#endif // MONO
 
     #region "Join stream class reimplementation"
 

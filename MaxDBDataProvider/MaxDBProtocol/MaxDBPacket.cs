@@ -31,6 +31,14 @@ namespace MaxDB.Data.MaxDBProtocol
 	/// </summary>
 	internal class MaxDBPacket : ByteArray
 	{
+        protected int iSegmentOffset = -1;
+        protected int iCurrentSegment;
+        protected int iPartOffset;
+        protected int iCachedResultCount = int.MinValue;
+        protected int iCachedPartCount = int.MinValue;
+        protected int[] iPartIndices;
+        protected int iPartIndex = -1;
+
 		public MaxDBPacket(byte[] data) : base(data)
 		{
 		}
@@ -102,7 +110,289 @@ namespace MaxDB.Data.MaxDBProtocol
 				return value + (Consts.AlignValue - value % Consts.AlignValue);
 			else
 				return value;
-		}
+        }
+
+        #region "Segment operations"
+
+        protected int SegmentLength
+        {
+            get
+            {
+                return ReadInt32(iSegmentOffset + SegmentHeaderOffset.Len);
+            }
+        }
+
+        protected int SegmentCount
+        {
+            get
+            {
+                return ReadInt16(PacketHeaderOffset.NoOfSegm);
+            }
+        }
+
+        protected void ClearPartCache()
+        {
+            iCachedResultCount = int.MinValue;
+            iCachedPartCount = int.MinValue;
+
+            int pc = ReadInt16(iSegmentOffset + SegmentHeaderOffset.NoOfParts);
+            iPartIndices = new int[pc];
+            int partofs = 0;
+            for (int i = 0; i < pc; i++)
+            {
+                if (i == 0)
+                    partofs = iPartIndices[i] = iSegmentOffset + SegmentHeaderOffset.Part;
+                else
+                {
+                    int partlen = ReadInt32(partofs + PartHeaderOffset.BufLen);
+                    partofs = iPartIndices[i] = partofs + AlignSize(partlen + PartHeaderOffset.Data);
+                }
+            }
+        }
+
+        public int FirstSegment()
+        {
+            int result;
+
+            if (SegmentCount > 0)
+                result = PacketHeaderOffset.Segment;
+            else
+                result = -1;
+
+            iSegmentOffset = result;
+            iCurrentSegment = 1;
+            ClearPartCache();
+            return result;
+        }
+
+        public int NextSegment()
+        {
+            if (SegmentCount <= iCurrentSegment++)
+                return -1;
+            iSegmentOffset += SegmentLength;
+            ClearPartCache();
+            return iSegmentOffset;
+        }
+
+        public string DumpSegment(DateTime dt)
+        {
+            StringBuilder dump = new StringBuilder();
+
+            dump.Append("   ").Append(ReadByte(iSegmentOffset + SegmentHeaderOffset.SegmKind).ToString(CultureInfo.InvariantCulture));
+            dump.Append(" Segment ").Append(ReadInt16(iSegmentOffset + SegmentHeaderOffset.OwnIndex).ToString(CultureInfo.InvariantCulture));
+            dump.Append(" at ").Append(ReadInt32(iSegmentOffset + SegmentHeaderOffset.Offset).ToString(CultureInfo.InvariantCulture));
+            dump.Append("(").Append(ReadInt32(iSegmentOffset + SegmentHeaderOffset.Len).ToString(CultureInfo.InvariantCulture));
+            dump.Append(" of ").Append((ReadInt32(PacketHeaderOffset.VarPartSize) - iSegmentOffset).ToString(CultureInfo.InvariantCulture));
+            dump.Append(" bytes)\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
+
+            switch (ReadByte(iSegmentOffset + SegmentHeaderOffset.SegmKind))
+            {
+                case SegmKind.Cmd:
+                case SegmKind.Proccall:
+                    dump.Append("        messtype: ").Append(CmdMessType.Name[ReadByte(iSegmentOffset + SegmentHeaderOffset.MessType)]);
+                    dump.Append("  sqlmode: ").Append(SqlModeName.Value[ReadByte(iSegmentOffset + 
+                        SegmentHeaderOffset.SqlMode)].ToLower(CultureInfo.InvariantCulture));
+                    dump.Append("  producer: ").Append(ProducerType.Name[ReadByte(iSegmentOffset + SegmentHeaderOffset.Producer)]);
+
+                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture)).Append("        Options: ");
+                    dump.Append((ReadByte(iSegmentOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : ""));
+                    dump.Append((ReadByte(iSegmentOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : ""));
+                    dump.Append((ReadByte(iSegmentOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : ""));
+                    dump.Append((ReadByte(iSegmentOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : ""));
+                    dump.Append((ReadByte(iSegmentOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : ""));
+                    dump.Append((ReadByte(iSegmentOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : ""));
+                    break;
+                case SegmKind.Return:
+                case SegmKind.Procreply:
+                    dump.Append("        RC: ").Append(ReadInt16(iSegmentOffset +
+                        SegmentHeaderOffset.ReturnCode).ToString(CultureInfo.InvariantCulture));
+                    dump.Append("  ").Append(ReadAscii(iSegmentOffset + SegmentHeaderOffset.SqlState,
+                        SegmentHeaderOffset.ReturnCode - SegmentHeaderOffset.SqlState));
+                    dump.Append("  (Pos ").Append(ReadInt32(iSegmentOffset +
+                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
+                    dump.Append(") Function ").Append(ReadInt16(iSegmentOffset +
+                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
+                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
+                    break;
+                default:
+                    dump.Append("unknown segment kind");
+                    dump.Append("        messtype: ").Append(CmdMessType.Name[ReadByte(iSegmentOffset + SegmentHeaderOffset.MessType)]);
+                    dump.Append("  sqlmode: ").Append(SqlModeName.Value[ReadByte(iSegmentOffset + SegmentHeaderOffset.SqlMode)]);
+                    dump.Append("  producer: ").Append(ProducerType.Name[ReadByte(iSegmentOffset + SegmentHeaderOffset.Producer)]);
+
+                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture)).Append("        Options: ");
+                    dump.Append((ReadByte(iSegmentOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : ""));
+                    dump.Append((ReadByte(iSegmentOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : ""));
+                    dump.Append((ReadByte(iSegmentOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : ""));
+                    dump.Append((ReadByte(iSegmentOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : ""));
+                    dump.Append((ReadByte(iSegmentOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : ""));
+                    dump.Append((ReadByte(iSegmentOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : ""));
+
+                    dump.Append("        RC: ").Append(ReadInt16(iSegmentOffset +
+                        SegmentHeaderOffset.ReturnCode).ToString(CultureInfo.InvariantCulture));
+                    dump.Append("  ").Append(ReadAscii(iSegmentOffset + SegmentHeaderOffset.SqlState,
+                        SegmentHeaderOffset.ReturnCode - SegmentHeaderOffset.SqlState));
+                    dump.Append("  (Pos ").Append(ReadInt32(iSegmentOffset +
+                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
+                    dump.Append(") Function ").Append(ReadInt16(iSegmentOffset +
+                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
+                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
+                    break;
+            }
+
+            dump.Append("        ").Append(ReadInt16(iSegmentOffset +
+                SegmentHeaderOffset.NoOfParts).ToString(CultureInfo.InvariantCulture));
+            dump.Append(" parts:\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
+
+            ClearPartOffset();
+            for (int i = 0; i < PartCount; i++)
+            {
+                NextPart();
+                dump.Append(DumpPart(dt));
+            }
+
+            return dump.ToString();
+        }
+
+        #endregion
+
+        #region "Part operations"
+
+        public int PartLength
+        {
+            get
+            {
+                return ReadInt32(iPartOffset + PartHeaderOffset.BufLen);
+            }
+        }
+
+        public int PartSize
+        {
+            get
+            {
+                return ReadInt32(iPartOffset + PartHeaderOffset.BufSize);
+            }
+        }
+
+        public int PartPos
+        {
+            get
+            {
+                return iPartOffset;
+            }
+        }
+
+        public int PartDataPos
+        {
+            get
+            {
+                return iPartOffset + PartHeaderOffset.Data;
+            }
+        }
+
+        public int PartArgsCount
+        {
+            get
+            {
+                return ReadInt16(iPartOffset + PartHeaderOffset.ArgCount);
+            }
+        }
+
+        public int PartType
+        {
+            get
+            {
+                return ReadByte(iPartOffset + PartHeaderOffset.PartKind);
+            }
+        }
+
+        public int PartSegmentOffset
+        {
+            get
+            {
+                return ReadInt32(iPartOffset + PartHeaderOffset.SegmOffset);
+            }
+        }
+
+        public void ClearPartOffset()
+        {
+            iPartOffset = -1;
+            iPartIndex = -1;
+        }
+
+        public int PartCount
+        {
+            get
+            {
+                if (iCachedPartCount == int.MinValue)
+                    return iCachedPartCount = ReadInt16(iSegmentOffset + SegmentHeaderOffset.NoOfParts);
+                else
+                    return iCachedPartCount;
+            }
+        }
+
+        public int NextPart()
+        {
+            return iPartOffset = iPartIndices[++iPartIndex];
+        }
+
+        public string DumpPart(DateTime dt)
+        {
+            StringBuilder dump = new StringBuilder();
+
+            string partkindname = "Unknown Part " + PartType.ToString(CultureInfo.InvariantCulture);
+            if (PartType < PartKind.Name.Length)
+                partkindname = PartKind.Name[PartType] + " Part";
+
+            dump.Append("        ").Append(partkindname).Append(" ");
+            dump.Append(PartArgsCount.ToString(CultureInfo.InvariantCulture)).Append(" Arguments (");
+            dump.Append(PartLength.ToString(CultureInfo.InvariantCulture)).Append(" of ");
+            dump.Append(PartSize.ToString(CultureInfo.InvariantCulture)).Append(") (Segment at ");
+            dump.Append(PartSegmentOffset.ToString(CultureInfo.InvariantCulture)).Append(")\n").Append(dt.ToString(
+                Consts.TimeStampFormat, CultureInfo.InvariantCulture));
+
+            byte[] data = ReadBytes(PartDataPos, PartLength);
+
+            for (int i = 0; i <= data.Length / 0x10; i++)
+            {
+                dump.Append((i * 0x10).ToString("x", CultureInfo.InvariantCulture).PadLeft(8)).Append("  ");
+
+                int tailLen = Math.Min(0x10, 0x10 - ((i + 1) * 0x10 - data.Length));
+
+                for (int k = 0; k < tailLen; k++)
+                    dump.Append(data[i * 0x10 + k].ToString("x2", CultureInfo.InvariantCulture)).Append(" ");
+
+                dump.Append("  |".PadLeft((0x10 - tailLen + 1) * 3));
+                string dumpStr = Encoding.ASCII.GetString(data, i * 0x10, tailLen).PadRight(0x10);
+                foreach (char ch in dumpStr)
+                    if (!char.IsControl(ch))
+                        dump.Append(ch);
+                    else
+                        dump.Append("?");
+
+                dump.Append("|\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
+            }
+
+            return dump.ToString();
+        }
+
+        #endregion
+
+        public string DumpPacket()
+        {
+            StringBuilder dump = new StringBuilder();
+
+            dump.Append(Consts.MessageCode[ReadByte(PacketHeaderOffset.MessCode)]).Append(" ");
+            dump.Append(SwapMode.SwapType[ReadByte(PacketHeaderOffset.MessSwap)]).Append(" swap ");
+            dump.Append(ReadAscii(PacketHeaderOffset.Appl,
+                PacketHeaderOffset.VarPartSize - PacketHeaderOffset.Appl).ToString(CultureInfo.InvariantCulture)).Append("-");
+            dump.Append(ReadAscii(PacketHeaderOffset.ApplVersion,
+                PacketHeaderOffset.Appl - PacketHeaderOffset.ApplVersion).ToString(CultureInfo.InvariantCulture));
+            dump.Append(" (transfer len ").Append((ReadInt32(PacketHeaderOffset.VarPartLen) +
+                PacketHeaderOffset.Segment).ToString(CultureInfo.InvariantCulture)).Append(")");
+
+            return dump.ToString();
+        }
 	}
 
 	#endregion
@@ -262,7 +552,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	{
 		protected int iLength = PacketHeaderOffset.Segment;
 		protected short sSegments;
-		protected int iPartOffset = -1, iPartLength = -1, iSegmentOffset = -1, iSegmentLength = -1;
+		protected int iPartLength = -1, iSegmentLength = -1;
 		protected short sPartArguments = -1, sSegmentParts = -1;
 		private byte byCurrentSqlMode = (byte)SqlMode.SessionSqlMode;
 		private int iReplyReserve;
@@ -270,7 +560,8 @@ namespace MaxDB.Data.MaxDBProtocol
 		private const string strDropCmd = "Drop Parseid";
 		private const int iResultCountSize = 6;
 
-		protected MaxDBRequestPacket(byte[] data, byte clientEncoding, string appID, string appVersion) : base(data, HeaderOffset.END)
+        protected MaxDBRequestPacket(byte[] data, byte clientEncoding, string appID, string appVersion, SqlMode mode)
+            : base(data, HeaderOffset.END)
 		{
             if (data == null)
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
@@ -281,9 +572,11 @@ namespace MaxDB.Data.MaxDBProtocol
 			WriteAscii(appID, PacketHeaderOffset.Appl);
 			WriteInt32(data.Length - HeaderOffset.END - PacketHeaderOffset.Segment, PacketHeaderOffset.VarPartSize);
 			iLength = PacketHeaderOffset.Segment;
+            byCurrentSqlMode = (byte)mode;
 		}
 
-		public MaxDBRequestPacket(byte[] data, string appID, string appVersion) : this(data, Consts.ASCIIClient, appID, appVersion)
+        public MaxDBRequestPacket(byte[] data, string appID, string appVersion, SqlMode mode)
+            : this(data, Consts.ASCIIClient, appID, appVersion, mode)
 		{
 		}
 
@@ -303,7 +596,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 		}
 
-		public short PartArgs
+		public short PartArguments
 		{
 			get
 			{
@@ -370,7 +663,7 @@ namespace MaxDB.Data.MaxDBProtocol
             if (data == null)
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
 
-			WriteByte(0x20, DataPos);
+			WriteByte(Consts.DefinedAscii, DataPos);
 			WriteBytes(Encoding.ASCII.GetBytes(data), DataPos + 1, data.Length, Consts.BlankBytes);
 			iPartLength += data.Length + 1;
 		}
@@ -463,12 +756,17 @@ namespace MaxDB.Data.MaxDBProtocol
 			WriteInt16(sSegments, PacketHeaderOffset.NoOfSegm);
 		}
 
-		public void InitDbsCommand(bool autoCommit, string cmd) 
+		public virtual void InitDbsCommand(bool autoCommit, string cmd) 
 		{
-			InitDbsCommand(cmd, true, autoCommit);
+			InitDbsCommand(cmd, true, autoCommit, false);
 		}
 
-		public bool InitDbsCommand(string command, bool reset, bool autoCommit) 
+        public virtual bool InitDbsCommand(string command, bool reset, bool autoCommit)
+        {
+            return InitDbsCommand(command, reset, autoCommit, false);
+        }
+
+		public bool InitDbsCommand(string command, bool reset, bool autoCommit, bool unicode) 
 		{
             if (command == null)
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "command"));
@@ -481,8 +779,16 @@ namespace MaxDB.Data.MaxDBProtocol
 					return false;
 			}
 			InitDbs(reset, autoCommit);
-			WriteAscii(command, DataPos);
-			iPartLength += command.Length;
+            if (unicode)
+            {
+                WriteUnicode(command, DataPos);
+                iPartLength += command.Length * Consts.UnicodeWidth;
+            }
+            else
+            {
+                WriteAscii(command, DataPos);
+                iPartLength += command.Length;
+            }
 			sPartArguments = 1;
 			return true;
 		}
@@ -646,7 +952,7 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 NewPart(PartKind.Feature);
                 AddBytes(features);
-                PartArgs += (short)(features.Length / 2);
+                PartArguments += (short)(features.Length / 2);
                 ClosePart();
             }
 		}
@@ -741,66 +1047,67 @@ namespace MaxDB.Data.MaxDBProtocol
 		}
 
 		#endregion
-
-		public string DumpPacket()
-		{
-			StringBuilder dump = new StringBuilder();
-
-            dump.Append(ReadByte(PacketHeaderOffset.MessCode).ToString(CultureInfo.InvariantCulture)).Append(" ");
-            dump.Append(ReadByte(PacketHeaderOffset.MessSwap).ToString(CultureInfo.InvariantCulture)).Append(" swap ");
-			dump.Append(ReadAscii(PacketHeaderOffset.Appl,
-                PacketHeaderOffset.VarPartSize - PacketHeaderOffset.Appl).ToString(CultureInfo.InvariantCulture)).Append("-");
-			dump.Append(ReadAscii(PacketHeaderOffset.ApplVersion,
-                PacketHeaderOffset.Appl - PacketHeaderOffset.ApplVersion).ToString(CultureInfo.InvariantCulture));
-			dump.Append(" (transfer len ").Append((ReadInt32(PacketHeaderOffset.VarPartLen) +
-                PacketHeaderOffset.Segment).ToString(CultureInfo.InvariantCulture)).Append(")");
-	
-			return dump.ToString();
-		}
 	}
 
 	#endregion
 
-	#region "MaxDB Reply Packet"
+    #region "MaxDB Unicode Request Packet"
+    internal class MaxDBUnicodeRequestPacket : MaxDBRequestPacket
+    {
+        public MaxDBUnicodeRequestPacket(byte[] data, string appID, string appVersion, SqlMode mode) : 
+            base(data, Consts.IsLittleEndian ? Consts.UnicodeSwapClient : Consts.UnicodeClient, appID, appVersion, mode)
+		{
+		}
 
-	internal class MaxDBReplyPacket : MaxDBPacket
+        public override void AddDataString(string data)
+        {
+            if (data == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+
+            WriteByte(Consts.DefinedUnicode, DataPos);
+            if (Consts.IsLittleEndian)
+                WriteBytes(Encoding.Unicode.GetBytes(data), DataPos + 1, data.Length * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            else
+                WriteBytes(Encoding.BigEndianUnicode.GetBytes(data), DataPos + 1, data.Length * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            iPartLength += data.Length * Consts.UnicodeWidth + 1;
+        }
+
+        public override void AddString(string data)
+        {
+            if (data == null)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+
+            if (Consts.IsLittleEndian)
+                WriteBytes(Encoding.Unicode.GetBytes(data), DataPos, data.Length * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            else
+                WriteBytes(Encoding.BigEndianUnicode.GetBytes(data), DataPos, data.Length * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            iPartLength += data.Length * Consts.UnicodeWidth;
+        }
+
+        public override void InitDbsCommand(bool autoCommit, string cmd)
+        {
+            InitDbsCommand(cmd, true, autoCommit, true);
+        }
+
+        public override bool InitDbsCommand(string command, bool reset, bool autoCommit)
+        {
+            return InitDbsCommand(command, reset, autoCommit, true);
+        }
+    }
+    #endregion
+
+    #region "MaxDB Reply Packet"
+
+    internal class MaxDBReplyPacket : MaxDBPacket
 	{
-		private int iSegmOffset;
-		private int iPartOffset;
-		private int iCachedResultCount = int.MinValue;
-		private int iCachedPartCount = int.MinValue;
-		private int iCurrentSegment;
-		private int[] iPartIndices;
-		private int iPartIndex = -1;
-
 		public MaxDBReplyPacket(byte[] data) : base(data, 0, data[PacketHeaderOffset.MessSwap] == SwapMode.Swapped) 
 		{
-			iSegmOffset = PacketHeaderOffset.Segment;
+			iSegmentOffset = PacketHeaderOffset.Segment;
 			iCurrentSegment = 1;
 			ClearPartCache();
 		}
 
 		#region "Part Operations"
-
-		private void ClearPartCache()
-		{
-			iCachedResultCount = int.MinValue;
-			iCachedPartCount = int.MinValue;
-
-			int pc = ReadInt16(iSegmOffset + SegmentHeaderOffset.NoOfParts);
-			iPartIndices = new int[pc];
-			int partofs = 0;
-			for(int i = 0; i < pc; i++) 
-			{
-				if(i == 0) 
-					partofs = iPartIndices[i] = iSegmOffset + SegmentHeaderOffset.Part;
-				else 
-				{
-					int partlen = ReadInt32(partofs + PartHeaderOffset.BufLen);
-					partofs = iPartIndices[i] = partofs + AlignSize(partlen + PartHeaderOffset.Data);
-				}
-			}
-		}
 
 		public int FindPart(int requestedKind)
 		{
@@ -830,85 +1137,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 		}
 
-		public void ClearPartOffset()
-		{
-			iPartOffset = -1;
-			iPartIndex = -1;
-		}
-
-		public int PartCount
-		{
-			get
-			{
-				if (iCachedPartCount == int.MinValue)
-					return iCachedPartCount = ReadInt16(iSegmOffset + SegmentHeaderOffset.NoOfParts);
-				else 
-					return iCachedPartCount;
-			}
-		}
-
-		public int NextPart()
-		{
-			return iPartOffset = iPartIndices[++iPartIndex];
-		}
-
-		public int PartArgsCount 
-		{
-			get
-			{
-				return ReadInt16(iPartOffset + PartHeaderOffset.ArgCount);
-			}
-		}
-
-		public int PartType 
-		{
-			get
-			{
-				return ReadByte(iPartOffset + PartHeaderOffset.PartKind);
-			}
-		}
-
-		public int PartSegmentOffset
-		{
-			get
-			{
-				return ReadInt32(iPartOffset + PartHeaderOffset.SegmOffset);
-			}
-		}
-
-		public int PartLength
-		{
-			get
-			{
-				return ReadInt32(iPartOffset + PartHeaderOffset.BufLen);
-			}
-		}
-
-		public int PartSize
-		{
-			get
-			{
-				return ReadInt32(iPartOffset + PartHeaderOffset.BufSize);
-			}
-		}
-
-		public int PartPos 
-		{
-			get
-			{
-				return iPartOffset;
-			}
-		}
-
-		public int PartDataPos 
-		{
-			get
-			{
-				return iPartOffset + PartHeaderOffset.Data;
-			}
-		}
-
-		public DataPartVariable VarDataPart
+        public DataPartVariable VarDataPart
 		{
 			get
 			{
@@ -935,175 +1164,6 @@ namespace MaxDB.Data.MaxDBProtocol
 				result = (partAttributes & PartAttributes.LastPacket_Ext) != 0;
 				return result;
 			}
-		}
-
-		public string DumpPart(DateTime dt)
-		{
-			StringBuilder dump = new StringBuilder();
-
-            string partkindname = "Unknown Part " + PartType.ToString(CultureInfo.InvariantCulture);
-			if (PartType < PartKind.Name.Length)
-                partkindname = PartType.ToString(CultureInfo.InvariantCulture) + " Part";
-
-			dump.Append("        ").Append(partkindname).Append(" ");
-            dump.Append(PartArgsCount.ToString(CultureInfo.InvariantCulture)).Append(" Arguments (");
-            dump.Append(PartLength.ToString(CultureInfo.InvariantCulture)).Append(" of ");
-            dump.Append(PartSize.ToString(CultureInfo.InvariantCulture)).Append(") (Segment at ");
-            dump.Append(PartSegmentOffset.ToString(CultureInfo.InvariantCulture)).Append(")\n").Append(dt.ToString(
-                Consts.TimeStampFormat, CultureInfo.InvariantCulture));
-
-			byte[] data = ReadBytes(PartDataPos, PartLength);
- 
-			for(int i = 0; i <= data.Length / 0x10; i++)
-			{
-                dump.Append((i * 0x10).ToString("x", CultureInfo.InvariantCulture).PadLeft(8)).Append("  ");
-
-				int tailLen = Math.Min(0x10, 0x10 - ((i + 1) * 0x10 - data.Length));
-
-				for (int k = 0; k < tailLen; k++)
-                    dump.Append(data[i * 0x10 + k].ToString("x2", CultureInfo.InvariantCulture)).Append(" ");
-
-				dump.Append("  |".PadLeft((0x10 - tailLen + 1) * 3));
-				string dumpStr = Encoding.ASCII.GetString(data, i * 0x10, tailLen).PadRight(0x10);
-				foreach(char ch in dumpStr)
-					if (!char.IsControl(ch))
-						dump.Append(ch);
-					else
-						dump.Append("?");
-
-                dump.Append("|\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
-			}
-
-			return dump.ToString();
-		}
-
-		#endregion
-
-		#region "Segment Operations"
-
-		private int SegmLength 
-		{
-			get
-			{
-				return ReadInt32(iSegmOffset + SegmentHeaderOffset.Len);
-			}
-		}
-
-		public int SegmCount 
-		{
-			get
-			{
-				return ReadInt16(PacketHeaderOffset.NoOfSegm);
-			}
-		}
-
-		public int FirstSegment()
-		{
-			int result;
-
-			if (SegmCount > 0) 
-				result = PacketHeaderOffset.Segment;
-			else 
-				result = -1;
-
-			iSegmOffset = result;
-			iCurrentSegment = 1;
-			ClearPartCache();
-			return result;
-		}
-
-		public int NextSegment() 
-		{
-			if (SegmCount <= iCurrentSegment++)
-				return -1;
-			iSegmOffset += SegmLength;
-			ClearPartCache();
-			return iSegmOffset;
-		}
-
-		public string DumpSegment(DateTime dt)
-		{
-			StringBuilder dump = new StringBuilder();
-
-            dump.Append("   ").Append(ReadByte(iSegmOffset + SegmentHeaderOffset.SegmKind).ToString(CultureInfo.InvariantCulture));
-            dump.Append(" Segment ").Append(ReadInt16(iSegmOffset + SegmentHeaderOffset.OwnIndex).ToString(CultureInfo.InvariantCulture));
-            dump.Append(" at ").Append(ReadInt32(iSegmOffset + SegmentHeaderOffset.Offset).ToString(CultureInfo.InvariantCulture));
-            dump.Append("(").Append(ReadInt32(iSegmOffset + SegmentHeaderOffset.Len).ToString(CultureInfo.InvariantCulture));
-            dump.Append(" of ").Append((ReadInt32(PacketHeaderOffset.VarPartSize) - iSegmOffset).ToString(CultureInfo.InvariantCulture));
-            dump.Append(" bytes)\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
-
-			switch (ReadByte(iSegmOffset + SegmentHeaderOffset.SegmKind))
-			{
-				case SegmKind.Cmd: 
-				case SegmKind.Proccall:
-                    dump.Append("        messtype: ").Append(ReadByte(iSegmOffset + 
-                        SegmentHeaderOffset.MessType).ToString(CultureInfo.InvariantCulture));
-					dump.Append("  sqlmode: ").Append(ReadByte(iSegmOffset +
-                        SegmentHeaderOffset.SqlMode).ToString(CultureInfo.InvariantCulture));
-					dump.Append("  producer: ").Append(ReadByte(iSegmOffset +
-                        SegmentHeaderOffset.Producer).ToString(CultureInfo.InvariantCulture));
-
-                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture)).Append("        Options: ");
-					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : ""));
-					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : ""));
-					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : ""));
-					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : ""));
-					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : ""));
-					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : ""));
-					break;
-				case SegmKind.Return:
-				case SegmKind.Procreply:
-					dump.Append("        RC: ").Append(ReadInt16(iSegmOffset +
-                        SegmentHeaderOffset.ReturnCode).ToString(CultureInfo.InvariantCulture));
-					dump.Append("  ").Append(ReadAscii(iSegmOffset + SegmentHeaderOffset.SqlState, 
-						SegmentHeaderOffset.ReturnCode - SegmentHeaderOffset.SqlState));
-					dump.Append("  (Pos ").Append(ReadInt32(iSegmOffset +
-                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
-					dump.Append(") Function ").Append(ReadInt16(iSegmOffset +
-                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
-                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
-					break;
-				default:
-					dump.Append("unknown segment kind");
-					dump.Append("        messtype: ").Append(ReadByte(iSegmOffset +
-                        SegmentHeaderOffset.MessType).ToString(CultureInfo.InvariantCulture));
-					dump.Append("  sqlmode: ").Append(ReadByte(iSegmOffset +
-                        SegmentHeaderOffset.SqlMode).ToString(CultureInfo.InvariantCulture));
-					dump.Append("  producer: ").Append(ReadByte(iSegmOffset +
-                        SegmentHeaderOffset.Producer).ToString(CultureInfo.InvariantCulture));
-
-                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture)).Append("        Options: ");
-					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : ""));
-					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : ""));
-					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : ""));
-					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : ""));
-					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : ""));
-					dump.Append((ReadByte(iSegmOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : ""));
-
-					dump.Append("        RC: ").Append(ReadInt16(iSegmOffset +
-                        SegmentHeaderOffset.ReturnCode).ToString(CultureInfo.InvariantCulture));
-					dump.Append("  ").Append(ReadAscii(iSegmOffset + SegmentHeaderOffset.SqlState, 
-						SegmentHeaderOffset.ReturnCode- SegmentHeaderOffset.SqlState));
-					dump.Append("  (Pos ").Append(ReadInt32(iSegmOffset +
-                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
-					dump.Append(") Function ").Append(ReadInt16(iSegmOffset +
-                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
-                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
-					break;
-			}
-
-			dump.Append("        ").Append(ReadInt16(iSegmOffset +
-                SegmentHeaderOffset.NoOfParts).ToString(CultureInfo.InvariantCulture));
-            dump.Append(" parts:\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
-
-			ClearPartOffset();
-			for(int i = 0; i < PartCount; i++) 
-			{
-				NextPart();
-				dump.Append(DumpPart(dt));
-			}
-
-			return dump.ToString();
 		}
 
 		#endregion
@@ -1165,7 +1225,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		#region "Field and Column Operations"
 
-		public string[] ParseColumnNames() 
+		public virtual string[] ParseColumnNames() 
 		{
 			int columnCount = PartArgsCount;
 			string[] result = new string[columnCount];
@@ -1294,7 +1354,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return ReadInt16(iSegmOffset + SegmentHeaderOffset.ReturnCode); 
+				return ReadInt16(iSegmentOffset + SegmentHeaderOffset.ReturnCode); 
 			}
 		}
 
@@ -1302,11 +1362,11 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return ReadAscii(iSegmOffset + SegmentHeaderOffset.SqlState, 5);
+				return ReadAscii(iSegmentOffset + SegmentHeaderOffset.SqlState, 5);
 			}
 		}
 
-		public string ErrorMsg 
+		public virtual string ErrorMsg 
 		{
 			get
 			{
@@ -1380,7 +1440,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return ReadInt16(iSegmOffset + SegmentHeaderOffset.FunctionCode);
+				return ReadInt16(iSegmentOffset + SegmentHeaderOffset.FunctionCode);
 			}
 		}
 
@@ -1388,7 +1448,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return ReadInt32(iSegmOffset + SegmentHeaderOffset.ErrorPos);
+				return ReadInt32(iSegmentOffset + SegmentHeaderOffset.ErrorPos);
 			}
 		}
 
@@ -1468,7 +1528,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			return ReadBytes(pos + 1, len - 1);
 		}
 
-		public string ReadString(int offset, int len) 
+		public virtual string ReadString(int offset, int len) 
 		{
 			return ReadAscii(offset, len);
 		}
@@ -1490,6 +1550,121 @@ namespace MaxDB.Data.MaxDBProtocol
 	}
 
 	#endregion
+
+    #region "MaxDB Unicode Reply Packet"
+
+    internal class MaxDBUnicodeReplyPacket : MaxDBReplyPacket
+    {
+        public MaxDBUnicodeReplyPacket(byte[] data)
+            : base(data)
+        {
+        }
+
+        public override string ReadString(int offset, int len)
+        {
+            return ReadUnicode(offset, len);
+        }
+
+        public override string[] ParseColumnNames()
+        {
+            int columnCount = PartArgsCount;
+            string[] result = new string[columnCount];
+            int nameLen;
+            int pos = PartDataPos;
+
+            for (int i = 0; i < columnCount; ++i)
+            {
+                nameLen = ReadByte(pos);
+                result[i] = ReadUnicode(pos + 1, nameLen);
+                pos += nameLen + 1;
+            }
+            return result;
+        }
+
+        public override string ErrorMsg
+        {
+            get
+            {
+                try
+                {
+                    FindPart(PartKind.ErrorText);
+                    return ReadUnicode(PartDataPos, PartLength).Trim();
+                }
+                catch (PartNotFoundException)
+                {
+                    return MaxDBMessages.Extract(MaxDBError.ERROR);
+                }
+            }
+        }
+
+        protected override DBTechTranslator GetTranslator(int mode, int ioType, int dataType, int frac, int len,
+                  int ioLen, int bufpos, bool spaceoption, bool isDBProcedure, DBProcParameterInfo procParamInfo)
+        {
+            switch (dataType)
+            {
+                case DataType.CHA:
+                case DataType.CHE:
+                case DataType.VARCHARA:
+                case DataType.VARCHARE:
+                    if (spaceoption)
+                        return new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
+                    else
+                        return new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
+                case DataType.CHB:
+                    if (procParamInfo != null && procParamInfo.ElementType == DBProcParameterInfo.STRUCTURE)
+                        return new StructureTranslator(mode, ioType, dataType, len, ioLen, bufpos, false);
+                    else
+                        return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                case DataType.VARCHARB:
+                    return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                case DataType.BOOLEAN:
+                    return new BooleanTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                case DataType.TIME:
+                    return new UnicodeTimeTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
+                case DataType.DATE:
+                    return new UnicodeDateTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
+                case DataType.TIMESTAMP:
+                    return new UnicodeTimestampTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
+                case DataType.FIXED:
+                case DataType.FLOAT:
+                case DataType.VFLOAT:
+                case DataType.SMALLINT:
+                case DataType.INTEGER:
+                    return new NumericTranslator(mode, ioType, dataType, len, frac, ioLen, bufpos);
+                case DataType.STRA:
+                case DataType.STRE:
+                case DataType.LONGA:
+                case DataType.LONGE:
+                    if (isDBProcedure)
+                        return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    else
+                        return new UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                case DataType.STRB:
+                case DataType.LONGB:
+                    if (isDBProcedure)
+                        return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    else
+                        return new BinaryStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                case DataType.UNICODE:
+                case DataType.VARCHARUNI:
+                    if (spaceoption)
+                        return new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
+                    else
+                        return new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
+                case DataType.LONGUNI:
+                case DataType.STRUNI:
+                    if (isDBProcedure)
+                        return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    else
+                        return new UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                default:
+                    return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+            }
+        }
+
+    }
+
+    #endregion
 
 #endif // SAFE
 }

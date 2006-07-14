@@ -24,7 +24,14 @@ namespace MaxDB.Test
 			//
 			// TODO: Add code to start application here
 			//
-			PerfomanceTest();
+            string connStr = 
+#if NET20 && !MONO
+                    System.Configuration.ConfigurationManager.AppSettings["ConnectionString"];
+#else
+                    System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"];
+#endif // NET20 && !MONO
+
+            PerfomanceTest(connStr);
 			return;
 
 //			StreamWriter sw = new StreamWriter(ConfigurationSettings.AppSettings["LogFileName"]);
@@ -36,7 +43,7 @@ namespace MaxDB.Test
 //
 //            try
 //            {
-//                maxdbconn = new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
+//                maxdbconn = new MaxDBConnection(connStr);
 //                maxdbconn.Open();
 //
 //                trans = maxdbconn.BeginTransaction(IsolationLevel.ReadCommitted);
@@ -118,18 +125,13 @@ namespace MaxDB.Test
 //            return;
 		}
 
-        static void PerfomanceTest()
+        static void PerfomanceTest(string connStr)
         {
             MaxDBConnection maxdbconn = null;
 
             try
             {
-				maxdbconn = 
-#if NET20 && !MONO
-                    new MaxDBConnection(System.Configuration.ConfigurationManager.AppSettings["ConnectionString"]);
-#else
-                    new MaxDBConnection(System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"]);
-#endif // NET20 && !MONO
+				maxdbconn = new MaxDBConnection(connStr);
                 maxdbconn.SqlMode = SqlMode.Oracle;
 				maxdbconn.Open();
 
