@@ -205,11 +205,6 @@ namespace MaxDB.Data.MaxDBProtocol
 			throw this.CreateGetException("DateTime");
 		}
 
-		public virtual TimeSpan GetTimeSpan(ByteArray mem)
-		{
-			throw this.CreateGetException("TimeSpan");
-		}
-
 		public virtual double GetDouble(ByteArray mem)
 		{
 			throw CreateGetException("double");
@@ -1219,6 +1214,17 @@ namespace MaxDB.Data.MaxDBProtocol
 			return BigDecimal2Float(VDNNumber.Number2BigDecimal(mem.ReadBytes(iBufferPosition, iPhysicalLength - 1)));
 		}
 
+        public override decimal GetDecimal(ByteArray mem)
+        {
+            switch (CheckDefineByte(mem))
+            {
+                case DBTechTranslator.iNullDefineByte:
+                case DBTechTranslator.iSpecialNullValueDefineByte:
+                    return 0;
+            }
+            return BigDecimal2Decimal(VDNNumber.Number2BigDecimal(mem.ReadBytes(iBufferPosition, iPhysicalLength - 1)));
+        }
+
 		public override int GetInt32(ByteArray mem)
 		{
 			return (int)GetInt64(mem);
@@ -1427,23 +1433,18 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public override DateTime GetDateTime(ByteArray mem)
 		{
-			return DateTime.MinValue.AddTicks(GetTimeSpan(mem).Ticks);
-		}
+            if (!IsDBNull(mem))
+            {
+                byte[] raw = mem.ReadBytes(iBufferPosition, iPhysicalLength - 1);
 
-		public override TimeSpan GetTimeSpan(ByteArray mem)
-		{
-			if (!IsDBNull(mem)) 
-			{
-				byte[] raw = mem.ReadBytes(iBufferPosition, iPhysicalLength - 1);
+                int hour = ((int)raw[0] - '0') * 10 + ((int)raw[1] - '0');
+                int min = ((int)raw[3] - '0') * 10 + ((int)raw[4] - '0');
+                int sec = ((int)raw[6] - '0') * 10 + ((int)raw[7] - '0');
 
-				int hour = ((int)raw[0] - '0') * 10 + ((int)raw[1] - '0');
-				int min = ((int)raw[3] - '0') * 10 + ((int)raw[4] - '0');
-				int sec = ((int)raw[6] - '0') * 10 + ((int)raw[7] - '0');
-
-				return new TimeSpan(hour, min, sec);
-			}
-			else
-				return TimeSpan.MinValue;
+                return new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, hour, min, sec);
+            }
+            else
+                return DateTime.MinValue;
 		}
 
 		public override bool IsCaseSensitive
@@ -1479,7 +1480,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		protected override object TransSpecificForInput(object obj)
 		{
-			return (obj.GetType() == typeof(DateTime)) ? TransTimeForInput((DateTime)obj) : TransTimeForInput((TimeSpan)obj);
+			return (obj is DateTime) ? TransTimeForInput((DateTime)obj) : TransTimeForInput((TimeSpan)obj);
 		}
  
 		public override object TransStringForInput(string val)
@@ -1534,7 +1535,7 @@ namespace MaxDB.Data.MaxDBProtocol
             return (!IsDBNull(mem) ? mem.ReadUnicode(iBufferPosition, iPhysicalLength - 1) : null);
         }
 
-        public override TimeSpan GetTimeSpan(ByteArray mem)
+        public override DateTime GetDateTime(ByteArray mem)
         {
             if (!IsDBNull(mem))
             {
@@ -1546,10 +1547,10 @@ namespace MaxDB.Data.MaxDBProtocol
                 int min = ((int)raw[7 - offset] - '0') * 10 + ((int)raw[9 - offset] - '0');
                 int sec = ((int)raw[13 - offset] - '0') * 10 + ((int)raw[15 - offset] - '0');
 
-                return new TimeSpan(hour, min, sec);
+                return new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, hour, min, sec);
             }
             else
-                return TimeSpan.MinValue;
+                return DateTime.MinValue;
         }
 
         protected override void PutSpecific(DataPart dataPart, object data)
@@ -1611,11 +1612,6 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 			else
 				return DateTime.MinValue;
-		}
-
-		public override TimeSpan GetTimeSpan(ByteArray mem)
-		{
-			return GetDateTime(mem).TimeOfDay;
 		}
 
 		public override bool IsCaseSensitive
@@ -1794,11 +1790,6 @@ namespace MaxDB.Data.MaxDBProtocol
 		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
 			return (!IsDBNull(mem) ? mem.ReadAscii(iBufferPosition, iPhysicalLength - 1) : null);
-		}
-
-		public override TimeSpan GetTimeSpan(ByteArray mem)
-		{
-			return GetDateTime(mem).TimeOfDay;
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)

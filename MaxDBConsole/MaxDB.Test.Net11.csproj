@@ -182,7 +182,17 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "UnitTesting\DBProcedureTests.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
                     RelPath = "UnitTesting\LanguageTests.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "UnitTesting\StressTests.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />

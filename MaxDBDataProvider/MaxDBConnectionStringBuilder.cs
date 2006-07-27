@@ -377,7 +377,10 @@ namespace MaxDB.Data
         {
             get
             {
-                return (string)mKeyValuePairs[ConnectionStringParams.CACHE];
+                if (mKeyValuePairs[ConnectionStringParams.CACHE] != null)
+                    return (string)mKeyValuePairs[ConnectionStringParams.CACHE];
+                else
+                    return "all";
             }
             set
             {

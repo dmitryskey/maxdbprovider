@@ -1,4 +1,5 @@
-﻿// Copyright (C) 2004-2005 MySQL AB
+﻿// Copyright (C) 2005-2006 Dmitry S. Kataev
+// Copyright (C) 2004-2005 MySQL AB
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as published by
@@ -37,13 +38,16 @@ namespace MaxDB.UnitTesting
         public void FixtureSetup()
         {
 			try
-			{
-				Init("CREATE TABLE Test (name VARCHAR(255) UNICODE)");
+            {
+                Init("CREATE TABLE Test (name VARCHAR(255) UNICODE, fl FLOAT, db DOUBLE PRECISION, decim DECIMAL(5,2), d DATE, t TIME, dt TIMESTAMP)");
 			}
 			catch
 			{
-				if (mconn.DatabaseEncoding != Encoding.Unicode) 
+				if (mconn.DatabaseEncoding != Encoding.Unicode)
+				{
+					Close();
 					Assert.Ignore("Non-unicode database");
+				}
 
 				throw;
 			}
@@ -63,15 +67,15 @@ namespace MaxDB.UnitTesting
  
             ClearTestTable();
 
-            ExecuteNonQuery("INSERT INTO Test VALUES ('abcАБВ')"); // Russian
-            ExecuteNonQuery("INSERT INTO Test VALUES ('兣冘凥凷冋')"); // simplified Chinese
-            ExecuteNonQuery("INSERT INTO Test VALUES ('困巫忘否役')"); // traditional Chinese
-            ExecuteNonQuery("INSERT INTO Test VALUES ('ئابةتثجح')"); //Arabian
-            ExecuteNonQuery("INSERT INTO Test VALUES ('涯割晦叶角')"); // Japanese
-            ExecuteNonQuery("INSERT INTO Test VALUES ('ברחפע')"); // Hebrew
-            ExecuteNonQuery("INSERT INTO Test VALUES ('ψόβΩΞ')"); // Greek
-            ExecuteNonQuery("INSERT INTO Test VALUES ('þðüçöÝÞÐÜÇÖ')"); // Turkish
-            ExecuteNonQuery("INSERT INTO Test VALUES ('ฅๆษ')"); // Thai
+            ExecuteNonQuery("INSERT INTO Test (name) VALUES ('abcАБВ')"); // Russian
+            ExecuteNonQuery("INSERT INTO Test (name) VALUES ('兣冘凥凷冋')"); // simplified Chinese
+            ExecuteNonQuery("INSERT INTO Test (name) VALUES ('困巫忘否役')"); // traditional Chinese
+            ExecuteNonQuery("INSERT INTO Test (name) VALUES ('ئابةتثجح')"); //Arabian
+            ExecuteNonQuery("INSERT INTO Test (name) VALUES ('涯割晦叶角')"); // Japanese
+            ExecuteNonQuery("INSERT INTO Test (name) VALUES ('ברחפע')"); // Hebrew
+            ExecuteNonQuery("INSERT INTO Test (name) VALUES ('ψόβΩΞ')"); // Greek
+            ExecuteNonQuery("INSERT INTO Test (name) VALUES ('þðüçöÝÞÐÜÇÖ')"); // Turkish
+            ExecuteNonQuery("INSERT INTO Test (name) VALUES ('ฅๆษ')"); // Thai
 
             using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
             using (MaxDBDataReader reader = cmd.ExecuteReader())
@@ -116,7 +120,7 @@ namespace MaxDB.UnitTesting
 
             ClearTestTable();
 
-            using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES (:a)", mconn))
+            using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (name) VALUES (:a)", mconn))
             {
                 cmd.Parameters.Add(new MaxDBParameter(":a", MaxDBType.VarCharUni));
 
@@ -182,6 +186,52 @@ namespace MaxDB.UnitTesting
                 }
             }
         }
+
+        [Test]
+        public void TestFloatNumbers()
+        {
+            CultureInfo curCulture = Thread.CurrentThread.CurrentCulture;
+            CultureInfo curUICulture = Thread.CurrentThread.CurrentUICulture;
+            CultureInfo c = new CultureInfo("de-De");
+            Thread.CurrentThread.CurrentCulture = c;
+            Thread.CurrentThread.CurrentUICulture = c;
+
+            ClearTestTable();
+
+            using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (fl, db, decim) VALUES (:fl, :db, :decim)", mconn))
+            {
+                cmd.Parameters.Add(":fl", MaxDBType.Float);
+                cmd.Parameters.Add(":db", MaxDBType.Number);
+                cmd.Parameters.Add(":decim", MaxDBType.Number);
+                cmd.Parameters[0].Value = 2.3;
+                cmd.Parameters[1].Value = 4.6;
+                cmd.Parameters[2].Value = 23.82;
+                int count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                try
+                {
+                    cmd.CommandText = "SELECT fl, db, decim FROM Test";
+                    using (MaxDBDataReader reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        Assert.AreEqual(cmd.Parameters[0].Value, reader.GetFloat(0));
+                        Assert.AreEqual(cmd.Parameters[1].Value, reader.GetDouble(1));
+                        Assert.AreEqual(cmd.Parameters[2].Value, reader.GetDecimal(2));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Assert.Fail(ex.Message);
+                }
+                finally
+                {
+                    Thread.CurrentThread.CurrentCulture = curCulture;
+                    Thread.CurrentThread.CurrentUICulture = curUICulture;
+                }
+            }
+        }
+
     }
 }
 

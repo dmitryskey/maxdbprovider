@@ -675,7 +675,7 @@ namespace MaxDB.Data
             else
                 byDefFeatureSet.CopyTo(byKernelFeatures, 0);
 
-            if (strCache != null && strCache.Length > 0 && iCacheSize > 0)
+            if (strCache != null && strCache.Length > 0)
                 mParseCache = new ParseInfoCache(strCache, iCacheSize);
 
             //>>> SQL TRACE
@@ -753,7 +753,7 @@ namespace MaxDB.Data
             mGarbageParseids.ThrowIntoGarbageCan(pid);
         }
 
-        private void ExecSQLString(string cmd, int gcFlags)
+        private void ExecuteSqlString(string cmd, int gcFlags)
         {
             MaxDBRequestPacket requestPacket = GetRequestPacket();
             requestPacket.InitDbs(bAutoCommit);
@@ -782,7 +782,7 @@ namespace MaxDB.Data
             AssertOpen();
 
             // send commit
-            ExecSQLString("COMMIT WORK", GCMode.GC_ALLOWED);
+            ExecuteSqlString("COMMIT WORK", GCMode.GC_ALLOWED);
             bInTransaction = false;
         }
 
@@ -791,7 +791,7 @@ namespace MaxDB.Data
             AssertOpen();
 
             // send rollback
-            ExecSQLString("ROLLBACK WORK", GCMode.GC_ALLOWED);
+            ExecuteSqlString("ROLLBACK WORK", GCMode.GC_ALLOWED);
             bInTransaction = false;
         }
 
@@ -927,7 +927,7 @@ namespace MaxDB.Data
                     {
                         if (mGarbageParseids != null)
                             mGarbageParseids.EmptyCan();
-                        ExecSQLString("ROLLBACK WORK RELEASE", GCMode.GC_NONE);
+                        ExecuteSqlString("ROLLBACK WORK RELEASE", GCMode.GC_NONE);
                     }
                     catch (MaxDBException)
                     {

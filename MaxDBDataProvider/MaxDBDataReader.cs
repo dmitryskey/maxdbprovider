@@ -1262,40 +1262,6 @@ namespace MaxDB.Data
 #endif // SAFE
         }
 
-        public TimeSpan GetTimeSpan(int i)
-        {
-            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
-			if (i < 0 || i >= FieldCount)
-				throw new InvalidColumnException(i);
-#if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            TimeSpan ts_value = transl.GetTimeSpan(CurrentRecord);
-
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-                LogValue(i + 1, transl, "TIMESPAN", 0, 0, ts_value.ToString());
-            //<<< SQL TRACE
-
-            return ts_value;
-#else
-			int columnType;
-			byte[] data = GetValueBytes(i, out columnType);
-			if (data != null)
-			{
-				switch(columnType)
-				{
-					case DataType.TIME:
-						return ODBCConverter.GetTimeSpan(ODBCConverter.GetTime(data));
-					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET, 
-							DataType.StrValues[columnType], "TimeSpan"));
-				}
-			}
-			else
-				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
-#endif // SAFE
-        }
-
 #if !NET20
         public IDataReader GetData(int i)
         {
