@@ -58,6 +58,21 @@ namespace MaxDB.UnitTesting
 			mconn = new MaxDBConnection(mAppSettings["ConnectionString"]);
 			mconn.Open();
 			mconn.AutoCommit = true;
+
+			DropTestTable();
+
+			(new MaxDBCommand(DDLQuery, mconn)).ExecuteNonQuery();
+		}
+
+		protected void Close() 
+		{
+			DropTestTable();
+			((IDisposable)mconn).Dispose();
+			if (msw != null) msw.Close();
+		}
+
+		private void DropTestTable()
+		{
 			try
 			{
 				ExecuteNonQuery("EXISTS TABLE Test");
@@ -68,15 +83,6 @@ namespace MaxDB.UnitTesting
 				if (ex.ErrorCode != -4004)
 					throw;
 			}
-
-			(new MaxDBCommand(DDLQuery, mconn)).ExecuteNonQuery();
-		}
-
-		protected void Close() 
-		{
-			ExecuteNonQuery("DROP TABLE Test");
-			((IDisposable)mconn).Dispose();
-			if (msw != null) msw.Close();
 		}
 
 		protected void ClearTestTable()
@@ -89,5 +95,38 @@ namespace MaxDB.UnitTesting
 			using(MaxDBCommand cmd = new MaxDBCommand(cmdSql, mconn))
 				cmd.ExecuteNonQuery();
 		}
+
+        protected void DropDbProcedure(string proc)
+        {
+            try
+            {
+                ExecuteNonQuery("DROP DBPROC " + proc);
+            }
+            catch (MaxDBException ex)
+            {
+                if (ex.ErrorCode != -4016) Assert.Fail(ex.Message);
+            }
+        }
+
+        protected void DropDbFunction(string func)
+        {
+            try
+            {
+                ExecuteNonQuery("DROP FUNCTION " + func);
+            }
+            catch (MaxDBException ex)
+            {
+                if (ex.ErrorCode != -4023) Assert.Fail(ex.Message);
+            }
+        }
+
+        protected byte[] CreateBlob(int size)
+        {
+            byte[] buf = new byte[size];
+
+            Random r = new Random();
+            r.NextBytes(buf);
+            return buf;
+        }
 	}
 }

@@ -30,13 +30,6 @@ namespace MaxDB.UnitTesting
 	[TestFixture()]
 	public class DataAdapterTests : BaseTest
 	{
-		public DataAdapterTests()
-		{
-			//
-			// TODO: Add constructor logic here
-			//
-		}
-
 		[TestFixtureSetUp]
 		public void Init() 
 		{

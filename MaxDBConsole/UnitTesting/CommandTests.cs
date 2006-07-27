@@ -32,13 +32,6 @@ namespace MaxDB.UnitTesting
 	[TestFixture()]
 	public class CommandTests : BaseTest
 	{
-		public CommandTests()
-		{
-			//
-			// TODO: Add constructor logic here
-			//
-		}
-
 		[TestFixtureSetUp]
 		public void TestFixtureSetUp() 
 		{
@@ -51,7 +44,7 @@ namespace MaxDB.UnitTesting
 			Close();
 		}
 
-		[Test()]
+		[Test]
 		public void TestInsert()
 		{
 			try 
@@ -89,7 +82,7 @@ namespace MaxDB.UnitTesting
 			}
 		}
 
-		[Test()]
+		[Test]
 		public void TestUpdate()
 		{
 			try 
@@ -136,7 +129,7 @@ namespace MaxDB.UnitTesting
 			}
 		}
 
-		[Test()]
+		[Test]
 		public void TestDelete()
 		{
 			try 
@@ -355,14 +348,7 @@ namespace MaxDB.UnitTesting
                 }
             }
 
-            try
-            {
-                ExecuteNonQuery("DROP DBPROC InsertManyRows");
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.Message);
-            }
+            DropDbProcedure("InsertManyRows");
 		}
 	}
 }

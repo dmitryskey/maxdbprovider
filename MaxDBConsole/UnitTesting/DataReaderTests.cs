@@ -26,16 +26,9 @@ namespace MaxDB.UnitTesting
 	/// <summary>
 	/// Summary description for DataReaderTests.
 	/// </summary>
-	[TestFixture()]
+	[TestFixture]
 	public class DataReaderTests : BaseTest
 	{
-		public DataReaderTests()
-		{
-			//
-			// TODO: Add constructor logic here
-			//
-		}
-
 		[TestFixtureSetUp]
 		public void Init() 
 		{
@@ -51,7 +44,6 @@ namespace MaxDB.UnitTesting
 		[Test]
 		public void TestResultSet()
 		{
-			MaxDBDataReader reader = null;
 			try 
 			{
 				ClearTestTable();
@@ -71,22 +63,21 @@ namespace MaxDB.UnitTesting
                 using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test WHERE id >= 50", mconn))
                 {
                     // execute it one time
-                    using (reader = cmd.ExecuteReader())
+                    using (MaxDBDataReader reader = cmd.ExecuteReader())
                     {
                         Assert.IsNotNull(reader);
                         while (reader.Read()) ;
                         Assert.IsTrue(reader.HasRows);
                         Assert.AreEqual(7, reader.FieldCount);
-                        reader.Close();
+                    }
 
                         // execute it again
-                        reader = cmd.ExecuteReader();
+                    using (MaxDBDataReader reader = cmd.ExecuteReader())
+                    {
                         Assert.IsNotNull(reader);
                         while (reader.Read()) ;
                         Assert.IsTrue(reader.HasRows);
                         Assert.AreEqual(7, reader.FieldCount);
-                        reader.Close();
-                        reader = null;
                     }
                 }
 			}
@@ -94,13 +85,9 @@ namespace MaxDB.UnitTesting
 			{
 				Assert.Fail(ex.Message);
 			}
-			finally 
-			{
-				if (reader != null) reader.Close();
-			}
 		}
 
-		[Test()]
+		[Test]
 		public void TestNotReadingResultSet()
 		{
 			try
@@ -129,7 +116,6 @@ namespace MaxDB.UnitTesting
 		[Test]
 		public void TestSingleRowBehavior()
 		{
-			MaxDBDataReader reader = null;
 			try 
 			{
 				ClearTestTable();
@@ -141,8 +127,8 @@ namespace MaxDB.UnitTesting
                     ExecuteNonQuery("INSERT INTO Test(id,name) VALUES(3,'test3')");
 
                     cmd.CommandText = "SELECT * FROM Test";
-                    
-                    using(reader = cmd.ExecuteReader(CommandBehavior.SingleRow))
+
+                    using (MaxDBDataReader reader = cmd.ExecuteReader(CommandBehavior.SingleRow))
                     {
                         Assert.IsTrue(reader.Read(), "First read");
                         Assert.IsFalse(reader.Read(), "Second read");
@@ -151,7 +137,7 @@ namespace MaxDB.UnitTesting
 
                     cmd.CommandText = "SELECT * FROM test WHERE id = 1";
 
-                    using (reader = cmd.ExecuteReader(CommandBehavior.SingleRow))
+                    using (MaxDBDataReader reader = cmd.ExecuteReader(CommandBehavior.SingleRow))
                     {
                         Assert.IsTrue(reader.Read());
                         Assert.AreEqual("test1", reader.GetString(1));
@@ -161,7 +147,7 @@ namespace MaxDB.UnitTesting
 
                     cmd.CommandText = "SELECT * FROM test WHERE rowno <= 2";
 
-                    using (reader = cmd.ExecuteReader(CommandBehavior.SingleRow))
+                    using (MaxDBDataReader reader = cmd.ExecuteReader(CommandBehavior.SingleRow))
                     {
                         Assert.IsTrue(reader.Read());
                         Assert.AreEqual("test1", reader.GetString(1));
@@ -174,16 +160,11 @@ namespace MaxDB.UnitTesting
 			{
 				Assert.Fail(ex.Message);
 			}
-			finally 
-			{
-				if (reader != null) reader.Close();
-			}
 		}
 
-		[Test()]
+		[Test]
 		public void TestCloseConnectionBehavior() 
 		{
-			MaxDBDataReader reader = null;
 			try 
 			{
 				ClearTestTable();
@@ -194,7 +175,7 @@ namespace MaxDB.UnitTesting
 
                     cmd.CommandText = "SELECT * FROM Test";
 
-                    using (reader = cmd.ExecuteReader(CommandBehavior.CloseConnection))
+                    using (MaxDBDataReader reader = cmd.ExecuteReader(CommandBehavior.CloseConnection))
                     {
                         Assert.IsTrue(reader.Read());
                         reader.Close();
@@ -208,16 +189,11 @@ namespace MaxDB.UnitTesting
 			{
 				Assert.Fail(ex.Message);
 			}
-			finally 
-			{
-				if (reader != null) reader.Close();
-			}
 		}
 
 		[Test]
 		public void TestSchemaOnlyBehavior() 
 		{
-			MaxDBDataReader reader = null;
 			try 
 			{
 				ClearTestTable();
@@ -230,7 +206,7 @@ namespace MaxDB.UnitTesting
 
                     cmd.CommandText = "SELECT * FROM Test FOR UPDATE";
 
-                    using (reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))
+                    using (MaxDBDataReader reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))
                     {
                         DataTable table = reader.GetSchemaTable();
                         Assert.AreEqual(7, table.Rows.Count);
@@ -243,16 +219,11 @@ namespace MaxDB.UnitTesting
 			{
 				Assert.Fail(ex.Message);
 			}
-			finally 
-			{
-				if (reader != null) reader.Close();
-			}
 		}
 
-		[Test()]
+		[Test]
 		public void TestDBNulls() 
 		{
-			MaxDBDataReader reader = null;
 			try 
 			{
 				ClearTestTable();
@@ -268,7 +239,7 @@ namespace MaxDB.UnitTesting
 
                     cmd.CommandText = "SELECT * FROM Test";
 
-                    using (reader = cmd.ExecuteReader())
+                    using (MaxDBDataReader reader = cmd.ExecuteReader())
                     {
                         reader.Read();
                         Assert.AreEqual(1, reader.GetValue(0));
@@ -293,16 +264,11 @@ namespace MaxDB.UnitTesting
 			{
 				Assert.Fail( ex.Message );
 			}
-			finally 
-			{
-				if (reader != null) reader.Close();
-			}
 		}
 
 		[Test]
 		public void TestGetByte() 
 		{
-			MaxDBDataReader reader = null;
 			try 
 			{
 				ClearTestTable();
@@ -310,7 +276,7 @@ namespace MaxDB.UnitTesting
                 ExecuteNonQuery("INSERT INTO Test (id, name) VALUES (123, 'a')");
 
                 using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
-                    using (reader = cmd.ExecuteReader())
+                using (MaxDBDataReader reader = cmd.ExecuteReader())
                     {
                         reader.Read();
                         Assert.AreEqual(123, reader.GetByte(0));
@@ -321,21 +287,14 @@ namespace MaxDB.UnitTesting
 			{
 				Assert.Fail(ex.Message);
 			}
-			finally 
-			{
-				if (reader != null) reader.Close();
-			}
 		}
 
-		[Test()]
+		[Test]
 		public void TestGetBytes()
 		{
-			int len = 50000;
-			byte[] bytes = new byte[len];
-			for (int i = 0; i < len; i++)
-				bytes[i] = (byte)(i % 0xFF);
+			const int len = 50000;
+            byte[] bytes = CreateBlob(len);
 			
-			MaxDBDataReader reader = null;
 			try 
 			{
 				ClearTestTable();
@@ -343,13 +302,13 @@ namespace MaxDB.UnitTesting
                 using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name, b1) VALUES(1, :t, :b1)", mconn))
                 {
                     cmd.Parameters.Add(":t", "Test");
-                    cmd.Parameters.Add(":b1", MaxDBType.LongB).Value = bytes;
+                    cmd.Parameters.Add(":b1", bytes);
                     cmd.ExecuteNonQuery();
 
                     cmd.CommandText = "SELECT * FROM Test";
 
                     //  now check with sequential access
-                    using (reader = cmd.ExecuteReader())
+                    using (MaxDBDataReader reader = cmd.ExecuteReader())
                     {
                         Assert.IsTrue(reader.Read());
                         int mylen = len;
@@ -372,16 +331,11 @@ namespace MaxDB.UnitTesting
 			{
 				Assert.Fail(ex.Message);
 			}
-			finally 
-			{
-				if (reader != null) reader.Close();
-			}
 		}
 
 		[Test]
 		public void TestGetChar() 
 		{
-			MaxDBDataReader reader = null;
 			try 
 			{
 				ClearTestTable();
@@ -389,7 +343,7 @@ namespace MaxDB.UnitTesting
                 ExecuteNonQuery("INSERT INTO Test (id, name) VALUES (1, 'a')");
 
 				using(MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
-                    using (reader = cmd.ExecuteReader())
+                using (MaxDBDataReader reader = cmd.ExecuteReader())
                     {
                         reader.Read();
                         Assert.AreEqual('a', reader.GetChar(1));
@@ -399,13 +353,9 @@ namespace MaxDB.UnitTesting
 			{
 				Assert.Fail(ex.Message);
 			}
-			finally 
-			{
-				if (reader != null) reader.Close();
-			}
 		}
 
-		[Test()]
+		[Test]
 		public void TestGetChars()
 		{
 			int len = 50000;
@@ -417,7 +367,6 @@ namespace MaxDB.UnitTesting
 
 			System.Text.Encoding.ASCII.GetChars(bytes, 0, len, chars, 0);
 			
-			MaxDBDataReader reader = null;
 			try 
 			{
 				ClearTestTable();
@@ -431,7 +380,7 @@ namespace MaxDB.UnitTesting
                     cmd.CommandText = "SELECT * FROM Test";
 
                     // now check with sequential access
-                    using (reader = cmd.ExecuteReader())
+                    using (MaxDBDataReader reader = cmd.ExecuteReader())
                     {
                         Assert.IsTrue(reader.Read());
                         int mylen = len;
@@ -455,16 +404,11 @@ namespace MaxDB.UnitTesting
 			{
 				Assert.Fail(ex.Message);
 			}
-			finally 
-			{
-				if (reader != null) reader.Close();
-			}
 		}
 
 		[Test]
 		public void TestTextFields() 
 		{
-			MaxDBDataReader reader = null;
 			try 
 			{
 				ClearTestTable();
@@ -472,7 +416,7 @@ namespace MaxDB.UnitTesting
                 ExecuteNonQuery("INSERT INTO Test (id, name) VALUES (1, 'Text value')");
 
                 using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
-                    using (reader = cmd.ExecuteReader())
+                using (MaxDBDataReader reader = cmd.ExecuteReader())
                     {
                         reader.Read();
                         Assert.AreEqual("Text value", reader["name"].ToString());
@@ -481,10 +425,6 @@ namespace MaxDB.UnitTesting
 			catch (Exception ex) 
 			{
 				Assert.Fail(ex.Message);
-			}
-			finally 
-			{
-				if (reader != null) reader.Close();
 			}
 		}
 
@@ -522,30 +462,21 @@ namespace MaxDB.UnitTesting
 			{
 				Assert.Fail(ex.Message);
 			}
-			finally 
-			{
-				if (reader != null) reader.Close();
-			}
 		}
 
 		[Test]
 		[ExpectedException(typeof(MaxDBException))]
 		public void TestReadingBeforeRead() 
 		{
-			MaxDBDataReader reader = null;
 			try 
 			{
 				using(MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
-				    using (reader = cmd.ExecuteReader())
+                using (MaxDBDataReader reader = cmd.ExecuteReader())
 				        reader.GetInt32(0);
 			}
 			catch (Exception) 
 			{
 				throw;
-			}
-			finally 
-			{
-				if (reader != null) reader.Close();
 			}
 		}
 	}

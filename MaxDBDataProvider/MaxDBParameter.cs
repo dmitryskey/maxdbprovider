@@ -106,9 +106,11 @@ namespace MaxDB.Data
             switch (type)
             {
                 case TypeCode.Empty:
-                case TypeCode.Object:
                 case TypeCode.DBNull:
                     throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INVALID_DATATYPE));
+
+                case TypeCode.Object:
+                    return MaxDBType.LongB;
 
                 case TypeCode.Char:
                     return MaxDBType.CharB;
@@ -324,15 +326,15 @@ namespace MaxDB.Data
                         case MaxDBType.VFloat:
                         case MaxDBType.Number:
                         case MaxDBType.NoNumber:
-                            objInputValue = double.Parse(value.ToString(), CultureInfo.InvariantCulture);
+                            objInputValue = double.Parse(value.ToString(), CultureInfo.CurrentCulture);
                             break;
 
                         case MaxDBType.Integer:
-                            objInputValue = int.Parse(value.ToString(), CultureInfo.InvariantCulture);
+                            objInputValue = int.Parse(value.ToString(), CultureInfo.CurrentCulture);
                             break;
 
                         case MaxDBType.SmallInt:
-                            objInputValue = short.Parse(value.ToString(), CultureInfo.InvariantCulture);
+                            objInputValue = short.Parse(value.ToString(), CultureInfo.CurrentCulture);
                             break;
 
                         default:

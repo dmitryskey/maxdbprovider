@@ -237,7 +237,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		private bool[] bKindFilter;
 		private CacheInfo[] ciStats;
 
-		public ParseInfoCache(string cache, int cacheSize) : base((cacheSize > 0)? cacheSize : iDefaultSize)
+		public ParseInfoCache(string cache, int cacheSize) : base(cacheSize > 0 ? cacheSize : iDefaultSize)
 		{
             string kindDecl = cache;
 
@@ -282,7 +282,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		/**
 		 *
 		 */
-		public void AddParseinfo(MaxDBParseInfo parseinfo)
+		public void AddParseInfo(MaxDBParseInfo parseinfo)
 		{
 			int functionCode = MapFunctionCode(parseinfo.FuncCode);
 			if (bKindFilter[functionCode]) 

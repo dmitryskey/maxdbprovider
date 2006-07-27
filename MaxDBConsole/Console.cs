@@ -6,6 +6,7 @@ using System.Data.Odbc;
 using System.Diagnostics;
 using System.Configuration;
 using System.ComponentModel;
+using System.Threading;
 using MaxDB.Data;
 
 namespace MaxDB.Test
@@ -31,7 +32,9 @@ namespace MaxDB.Test
                     System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"];
 #endif // NET20 && !MONO
 
-            PerfomanceTest(connStr);
+            Thread thread1 = new Thread(new ThreadStart(PerfomanceTest));
+            thread1.Start();
+                        
 			return;
 
 //			StreamWriter sw = new StreamWriter(ConfigurationSettings.AppSettings["LogFileName"]);
@@ -125,45 +128,20 @@ namespace MaxDB.Test
 //            return;
 		}
 
-        static void PerfomanceTest(string connStr)
+        static void PerfomanceTest()
         {
-            MaxDBConnection maxdbconn = null;
+            MaxDB.UnitTesting.StressTests test = new MaxDB.UnitTesting.StressTests();
 
-            try
-            {
-				maxdbconn = new MaxDBConnection(connStr);
-                maxdbconn.SqlMode = SqlMode.Oracle;
-				maxdbconn.Open();
+            test.Init();
 
-                DateTime start_time = DateTime.Now;
+            DateTime start_time = DateTime.Now;
 
-                for(int i=0;i<1000;i++)
-                {
-                    using(MaxDBCommand cmd = new MaxDBCommand("SELECT NAME FROM HOTEL WHERE zip LIKE ? FOR UPDATE", maxdbconn))
-                    {
-                        cmd.Parameters.Add("?", MaxDBType.VarCharUni).Value = "2%";
+            test.TestSequence();
 
-                        MaxDBDataReader reader = cmd.ExecuteReader();
+            Console.WriteLine(DateTime.Now - start_time);
 
-                        while(reader.Read())
-                            Console.Out.WriteLine(reader.GetString(0));
-						reader.Close();
-                    }
-                }
+            test.TestFixtureTearDown();
 
-                Console.WriteLine(DateTime.Now - start_time);
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            finally
-            {
-                if (maxdbconn != null)
-                    maxdbconn.Close();
-            }
-
-            return;
         }
 
 	}

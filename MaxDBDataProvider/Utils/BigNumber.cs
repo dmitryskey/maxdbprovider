@@ -1437,14 +1437,19 @@ namespace MaxDB.Data.Utilities
 			return (long)val.setScale(0).unscaledValue;
 		}
 
+        public static explicit operator float(BigDecimal val)
+        {
+            return float.Parse(val.ToString(), CultureInfo.InvariantCulture);
+        }
+
 		public static explicit operator double(BigDecimal val)
 		{
-			return double.Parse(val.ToString(), CultureInfo.InvariantCulture);
+            return double.Parse(val.ToString(), CultureInfo.InvariantCulture);
 		}
 
 		public static explicit operator decimal(BigDecimal val)
 		{
-			return decimal.Parse(val.ToString(), CultureInfo.InvariantCulture);
+            return decimal.Parse(val.ToString(), CultureInfo.InvariantCulture);
 		}
 
 		public static implicit operator BigDecimal(long val)

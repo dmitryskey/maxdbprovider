@@ -239,11 +239,6 @@ namespace MaxDB.Data.Utilities
 			return new DateTime(ts_val.year, ts_val.month, ts_val.day, ts_val.hour, ts_val.minute, ts_val.second).AddTicks(
 				(ts_val.fraction / 1000) * (TimeSpan.TicksPerMillisecond / 1000));
 		}
-
-		public static TimeSpan GetTimeSpan(OdbcTime tmval)
-		{
-			return new TimeSpan(tmval.hour, tmval.minute, tmval.second);
-		}
 	}
 
 	#endregion
