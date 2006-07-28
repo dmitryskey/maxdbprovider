@@ -32,8 +32,8 @@ namespace MaxDB.Test
                     System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"];
 #endif // NET20 && !MONO
 
-            Thread thread1 = new Thread(new ThreadStart(PerfomanceTest));
-            thread1.Start();
+            //SslTest();
+            PerfomanceTest();
                         
 			return;
 
@@ -130,19 +130,54 @@ namespace MaxDB.Test
 
         static void PerfomanceTest()
         {
-            MaxDB.UnitTesting.StressTests test = new MaxDB.UnitTesting.StressTests();
+            try
+            {
+                MaxDB.UnitTesting.StressTests test = new MaxDB.UnitTesting.StressTests();
 
-            test.Init();
+                test.SetUp();
 
-            DateTime start_time = DateTime.Now;
+                DateTime start = DateTime.Now;
 
-            test.TestSequence();
+                test.TestSequence();
 
-            Console.WriteLine(DateTime.Now - start_time);
+                Console.WriteLine(DateTime.Now.Subtract(start));
 
-            test.TestFixtureTearDown();
-
+                test.TearDown();
+            }
+            catch (Exception ex)
+            {
+                Console.Out.WriteLine(ex.Message);
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                    Console.Out.WriteLine(ex.Message);
+                }
+            }
         }
 
+        static void SslTest()
+        {
+            try
+            {
+#if NET20 || MONO
+                MaxDB.UnitTesting.ConnectionTests test = new MaxDB.UnitTesting.ConnectionTests();
+
+                test.SetUp();
+
+                test.TestConnectionSsl();
+
+                Console.WriteLine("Ssl connection test passed");
+#endif
+            }
+            catch (Exception ex)
+            {
+                Console.Out.WriteLine(ex.Message);
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                    Console.Out.WriteLine(ex.Message);
+                }
+            }
+        }
 	}
 }

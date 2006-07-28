@@ -47,21 +47,28 @@ namespace MaxDB.UnitTesting
 
 		protected void Init(string DDLQuery)
 		{
-			if (mAppSettings["LogFileName"] != null)
-			{
-				msw = new StreamWriter(mAppSettings["LogFileName"]);
+            try
+            {
+                if (mAppSettings["LogFileName"] != null)
+                {
+                    msw = new StreamWriter(mAppSettings["LogFileName"]);
 
-				Trace.Listeners.Clear();
-				Trace.Listeners.Add(new TextWriterTraceListener(msw));
-			}
+                    Trace.Listeners.Clear();
+                    Trace.Listeners.Add(new TextWriterTraceListener(msw));
+                }
 
-			mconn = new MaxDBConnection(mAppSettings["ConnectionString"]);
-			mconn.Open();
-			mconn.AutoCommit = true;
+                mconn = new MaxDBConnection(mAppSettings["ConnectionString"]);
+                mconn.Open();
+                mconn.AutoCommit = true;
 
-			DropTestTable();
+                DropTestTable();
 
-			(new MaxDBCommand(DDLQuery, mconn)).ExecuteNonQuery();
+                (new MaxDBCommand(DDLQuery, mconn)).ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
 		}
 
 		protected void Close() 

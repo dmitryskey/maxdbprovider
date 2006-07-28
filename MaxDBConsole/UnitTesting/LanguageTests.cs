@@ -35,7 +35,7 @@ namespace MaxDB.UnitTesting
     public class LanguageTests : BaseTest
     {
         [TestFixtureSetUp]
-        public void FixtureSetup()
+        public void SetUp()
         {
 			try
             {
@@ -54,7 +54,7 @@ namespace MaxDB.UnitTesting
         }
 
         [TestFixtureTearDown]
-        public void FixtureTeardown()
+        public void TearDown()
         {
             Close();
         }

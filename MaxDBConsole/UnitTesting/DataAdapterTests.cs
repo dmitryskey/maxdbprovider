@@ -31,13 +31,13 @@ namespace MaxDB.UnitTesting
 	public class DataAdapterTests : BaseTest
 	{
 		[TestFixtureSetUp]
-		public void Init() 
+        public void SetUp() 
 		{
             Init("CREATE TABLE Test (id INT NOT NULL DEFAULT SERIAL, id2 INT NOT NULL UNIQUE, name VARCHAR(100), dt DATE, tm TIME, ts TIMESTAMP, OriginalId INT, PRIMARY KEY(id, id2))");
         }
 
 		[TestFixtureTearDown]
-		public void TestFixtureTearDown()
+		public void TearDown()
 		{
 			Close();
 		}

@@ -146,13 +146,25 @@ namespace MaxDB.Data.MaxDBProtocol
 			if (actLen < 0 || actLen > 500 * 1024)
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.REPLY_GARBLED));
 
-			while(mSocket.DataAvailable)
+            int bytesRead;
+
+            while (len < actLen)
 			{
-				if (len < actLen)
-					len += mSocket.Stream.Read(replyPacket.GetArrayData(), len, actLen - len);
-				else
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CHUNKOVERFLOW, actLen, len, replyBuffer.Length));
+                bytesRead = mSocket.Stream.Read(replyPacket.GetArrayData(), len, actLen - len);
+
+                if (bytesRead <= 0)
+                    break;
+
+                len += bytesRead;
+
+                if (!mSocket.DataAvailable) System.Threading.Thread.Sleep(ts); //wait for end of data
 			};
+
+            if (len < actLen)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.REPLY_GARBLED));
+
+            if (len > actLen)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CHUNKOVERFLOW, actLen, len, replyBuffer.Length));
 
 			iSender = replyPacket.PacketSender;
 
@@ -220,17 +232,23 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			byte[] packetBuf = new byte[header.MaxSendLength - HeaderOffset.END];
 			int replyLen = HeaderOffset.END;
+            int bytesRead;
 			
-			while(mSocket.DataAvailable)
+            while (replyLen < header.ActSendLength)
 			{
-				if (replyLen < header.ActSendLength)
-					replyLen += mSocket.Stream.Read(packetBuf, replyLen - HeaderOffset.END, header.ActSendLength - replyLen);
-				else
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CHUNKOVERFLOW, 
-						header.ActSendLength, replyLen, packetBuf.Length + HeaderOffset.END));
-
+                bytesRead = mSocket.Stream.Read(packetBuf, replyLen - HeaderOffset.END, header.ActSendLength - replyLen);
+                if (bytesRead <= 0)
+                    break;
+                replyLen += bytesRead;
 				if (!mSocket.DataAvailable) System.Threading.Thread.Sleep(ts); //wait for end of data
 			};
+
+            if (replyLen < header.ActSendLength)
+                throw new MaxDBCommunicationException(RTEReturnCodes.SQLRECEIVE_LINE_DOWN);
+
+            if (replyLen > header.ActSendLength)
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CHUNKOVERFLOW,
+                    header.ActSendLength, replyLen, packetBuf.Length + HeaderOffset.END));
 
 			return packetBuf;
 		}
