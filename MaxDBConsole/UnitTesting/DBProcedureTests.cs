@@ -33,13 +33,13 @@ namespace MaxDB.UnitTesting
     public class DBProcedureTests : BaseTest
     {
         [TestFixtureSetUp]
-        public void TestFixtureSetUp()
+        public void SetUp()
         {
             Init("CREATE TABLE Test (id int NOT NULL, name VARCHAR(100))");
         }
 
         [TestFixtureTearDown]
-        public void TestFixtureTearDown()
+        public void TearDown()
         {
             Close();
         }

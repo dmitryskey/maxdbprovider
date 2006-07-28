@@ -5,8 +5,8 @@
 	<property name="nunit-Net-2.0" value="D:\Program Files\NUnit-Net-2.0 2.2.7" />
 	<property name="nunit-Mono" value="/usr/lib/nunit" />
 
-	<property name="MaxDB-7.5" value="win2000" />
-	<property name="MaxDB-7.6" value="r55s" />
+	<property name="MaxDB-7.5" value="gunichevvm" />
+	<property name="MaxDB-7.6" value="sheep" />
 	<property name="UnicodeDB" value="uhoteldb" />
 	<property name="AsciiDB" value="hoteldb" />
 

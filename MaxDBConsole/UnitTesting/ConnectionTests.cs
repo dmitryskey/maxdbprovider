@@ -45,7 +45,7 @@ namespace MaxDB.UnitTesting
 		private string mconnStrBadDbName;
 
 		[TestFixtureSetUp]
-		public void Init() 
+		public void SetUp() 
 		{
 			mconnStr = mAppSettings["ConnectionString"];
 #if SAFE

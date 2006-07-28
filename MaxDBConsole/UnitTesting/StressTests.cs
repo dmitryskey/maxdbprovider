@@ -33,13 +33,13 @@ namespace MaxDB.UnitTesting
     public class StressTests : BaseTest
     {
         [TestFixtureSetUp]
-        public void Init()
+        public void SetUp()
         {
             Init("CREATE TABLE Test (id INT NOT NULL, name varchar(100), blob1 LONG BYTE, text1 LONG ASCII, PRIMARY KEY(id))");
         }
 
         [TestFixtureTearDown]
-        public void TestFixtureTearDown()
+        public void TearDown()
         {
             Close();
         }
