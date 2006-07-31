@@ -232,7 +232,7 @@ namespace MaxDB.Data
 					if (whereStmt.Length > 0)
 						whereStmt.Append(" AND ");
 
-                    whereStmt.Append(columnName + "= " + GetParameterPlaceholder(i));
+                    whereStmt.Append(columnName + " = " + GetParameterPlaceholder(i));
 
 					cmd.Parameters.Add(CreateParameter(i, DataRowVersion.Original));
 				}
@@ -326,7 +326,7 @@ namespace MaxDB.Data
 					if (setStmt.Length > 0)
 						setStmt.Append(", ");
 
-                    setStmt.Append(columnName + "= " + GetParameterPlaceholder(i));
+                    setStmt.Append(columnName + " = " + GetParameterPlaceholder(i));
 					setParams.Add(CreateParameter(i, DataRowVersion.Current));
 				}
 			}

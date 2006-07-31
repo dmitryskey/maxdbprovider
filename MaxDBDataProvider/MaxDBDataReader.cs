@@ -72,12 +72,12 @@ namespace MaxDB.Data
             bEmpty = true;
         }
 
-        internal MaxDBDataReader(MaxDBCommand cmd)
-        {
-            bEmpty = true;
-            dbConnection = cmd.Connection;
-            cmdCommand = cmd;
-        }
+		internal MaxDBDataReader(MaxDBCommand cmd)
+		{
+			bEmpty = true;
+			dbConnection = cmd.Connection;
+			cmdCommand = cmd;
+		}
 
         internal MaxDBDataReader(MaxDBConnection connection, FetchInfo fetchInfo, MaxDBCommand cmd, int maxRows, MaxDBReplyPacket reply)
         {
@@ -89,7 +89,7 @@ namespace MaxDB.Data
             iMaxRows = maxRows;
 
             cmdCommand = cmd;
-            strUpdatedTableName = cmd.mParseInfo.strUpdatedTableName;
+            strUpdatedTableName = cmd.mParseInfo.UpdatedTableName;
 
             InitializeFields();
             lstOpenStreams = new 
@@ -440,12 +440,13 @@ namespace MaxDB.Data
                     row["BaseSchemaName"] = user;
                     row["BaseTableName"] = table;
 
-                    foreach (DataRow columnRow in dtMetaData.Select("COLUMNNAME = '" + row["ColumnName"] + "'"))
-                    {
-                        row["IsKeyColumn"] = (!columnRow.IsNull(1) && columnRow[1].ToString() == "KEY");
-                        row["IsAutoIncrement"] = (!columnRow.IsNull(2) && columnRow[2].ToString().StartsWith("DEFAULT SERIAL"));
-                        row["IsUnique"] = (!columnRow.IsNull(3) && columnRow[3].ToString() == "UNIQUE");
-                    }
+					foreach (DataRow columnRow in dtMetaData.Rows)
+						if (!columnRow.IsNull(0) && string.Compare(columnRow[0].ToString().Trim(), row["ColumnName"].ToString().Trim(), true, CultureInfo.InvariantCulture) == 0)
+						{
+							row["IsKeyColumn"] = (!columnRow.IsNull(1) && columnRow[1].ToString() == "KEY");
+							row["IsAutoIncrement"] = (!columnRow.IsNull(2) && columnRow[2].ToString().StartsWith("DEFAULT SERIAL"));
+							row["IsUnique"] = (!columnRow.IsNull(3) && columnRow[3].ToString() == "UNIQUE");
+						}
                 }
 
                 schema.Rows.Add(row);

@@ -287,7 +287,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			int functionCode = MapFunctionCode(parseinfo.FuncCode);
 			if (bKindFilter[functionCode]) 
 			{
-				this[parseinfo.strSqlCmd] = parseinfo;
+				this[parseinfo.SqlCommand] = parseinfo;
 				parseinfo.IsCached = true;
 				if (bKeepStats) 
 					ciStats[functionCode].AddMiss();
