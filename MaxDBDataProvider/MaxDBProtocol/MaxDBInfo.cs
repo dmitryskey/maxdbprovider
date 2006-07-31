@@ -36,7 +36,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	internal class MaxDBParseInfo 
 	{
 		internal MaxDBConnection dbConnection;
-		internal string strSqlCmd;
+		private string strSqlCmd;
 		private byte[] byParseId;
 		private byte[] byMassParseId;
 		internal DBTechTranslator[] mParamInfos;
@@ -63,7 +63,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		private const int iApplCodeByte = 10;
 
 		// tablename used for updateable resultsets
-		internal string strUpdatedTableName;
+		private string strUpdatedTableName;
 
 		public MaxDBParseInfo(MaxDBConnection connection, string sqlCmd, int functionCode)
 		{
@@ -143,6 +143,30 @@ namespace MaxDB.Data.MaxDBProtocol
 			set
 			{
 				bCached = value;
+			}
+		}
+
+		public string UpdatedTableName
+		{
+			get 
+			{ 
+				return strUpdatedTableName; 
+			}
+			set 
+			{ 
+				strUpdatedTableName = value; 
+			}
+		}
+
+		public string SqlCommand
+		{
+			get 
+			{ 
+				return strSqlCmd; 
+			}
+			set 
+			{ 
+				strSqlCmd = value; 
 			}
 		}
 

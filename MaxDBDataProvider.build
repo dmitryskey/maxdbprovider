@@ -199,7 +199,6 @@
 		<property name="unsafe" value="true"/>
 		<call target="fxcop"/>
 	</target>
-
                  
 	<!-- testing targets -->
 	<target name="test-net">

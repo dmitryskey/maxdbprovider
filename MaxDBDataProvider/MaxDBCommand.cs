@@ -183,7 +183,7 @@ namespace MaxDB.Data
                 if (dbConnection.mLogger.TraceSQL)
                 {
                     dbConnection.mLogger.SqlTrace(dt, "PARSE ID: 0x" + Consts.ToHexString(mParseInfo.ParseID));
-                    dbConnection.mLogger.SqlTrace(dt, "SQL COMMAND: " + mParseInfo.strSqlCmd);
+                    dbConnection.mLogger.SqlTrace(dt, "SQL COMMAND: " + mParseInfo.SqlCommand);
                 }
                 //<<< SQL TRACE
 
@@ -378,7 +378,7 @@ namespace MaxDB.Data
 		private void Reparse()
 		{
 			object[] tmpArgs = objInputArgs;
-			DoParse(mParseInfo.strSqlCmd, true);
+			mParseInfo = DoParse(mParseInfo.SqlCommand, true);
 			objInputArgs = tmpArgs;
 		}
 
@@ -429,7 +429,7 @@ namespace MaxDB.Data
 				if (dbConnection.mLogger.TraceSQL)
 				{
 					dbConnection.mLogger.SqlTrace(dt, "PARSE ID: 0x" + Consts.ToHexString(mParseInfo.ParseID));
-					dbConnection.mLogger.SqlTrace(dt, "SQL COMMAND: " +mParseInfo.strSqlCmd);
+					dbConnection.mLogger.SqlTrace(dt, "SQL COMMAND: " +mParseInfo.SqlCommand);
 				}
 				//<<< SQL TRACE
 				
@@ -470,7 +470,7 @@ namespace MaxDB.Data
 					dataPart.Close();
 				}
 				// add a decribe order if command rturns a resultset
-				if (mParseInfo.IsSelect && mParseInfo.ColumnInfo == null	&& mParseInfo.FuncCode != FunctionCode.DBProcWithResultSetExecute)
+				if (mParseInfo.IsSelect && mParseInfo.ColumnInfo == null && mParseInfo.FuncCode != FunctionCode.DBProcWithResultSetExecute)
 				{
 					requestPacket.InitDbsCommand("DESCRIBE ", false, false);
 					requestPacket.AddParseIdPart(mParseInfo.ParseID);
@@ -1107,34 +1107,34 @@ namespace MaxDB.Data
 						mParseInfo.SetMetaData(infos, columnNames);
 				}
 				
-				if (dataPartFound)
-					CreateDataReader(infos, columnNames, rowNotFound, behavior, replyPacket);
-				else
-					CreateDataReader(infos, columnNames, rowNotFound, behavior, null);
+				mCurrentDataReader = CreateDataReader(infos, columnNames, rowNotFound, behavior, dataPartFound ? replyPacket : null);
 			} 
 			
 			return isQuery;
 		}
 
-		private void CreateDataReader(DBTechTranslator[] infos, string[] columnNames, 
+		private MaxDBDataReader CreateDataReader(DBTechTranslator[] infos, string[] columnNames,
 			bool rowNotFound, CommandBehavior behavior, MaxDBReplyPacket reply)
 		{
+			MaxDBDataReader reader;
+
 			try 
 			{
-				FetchInfo fetchInfo = new FetchInfo(dbConnection, strCursorName, infos, columnNames);
-				mCurrentDataReader = new MaxDBDataReader(dbConnection, fetchInfo, this, 
-					((behavior & CommandBehavior.SingleRow) != 0) ? 1 : 0, reply);
+				reader = new MaxDBDataReader(dbConnection, new FetchInfo(dbConnection, strCursorName, infos, columnNames), 
+					this, ((behavior & CommandBehavior.SingleRow) != 0) ? 1 : 0, reply);
 			}
 			catch (MaxDBException ex) 
 			{
-				if (ex.ErrorCode == -4000) 
-					mCurrentDataReader = new MaxDBDataReader();
+				if (ex.ErrorCode == -4000)
+					reader = new MaxDBDataReader();
 				else 
 					throw;
 			}
 
-			if (rowNotFound) 
-				mCurrentDataReader.Empty = true;
+			if (rowNotFound)
+				reader.Empty = true;
+
+			return reader;
 		}
  
 		// Parses the SQL command, or looks the parsed command up in the cache.
@@ -1165,7 +1165,7 @@ namespace MaxDB.Data
 			{
 				result = cache.FindParseInfo(sql);
 				//>>> SQL TRACE
-				if (dbConnection.mLogger.TraceSQL)
+				if (dbConnection.mLogger.TraceSQL && result != null)
 					dbConnection.mLogger.SqlTrace(DateTime.Now, "CACHED PARSE ID: 0x" + Consts.ToHexString(result.ParseID));
 				//<<< SQL TRACE
 			}
@@ -1222,15 +1222,15 @@ namespace MaxDB.Data
 						case PartKind.ResultTableName:
 							result.IsSelect = true;
 							int cursorLength = replyPacket.PartLength;
-                            if (cursorLength > 0)
-                            {
-                                strCursorName = replyPacket.ReadString(replyPacket.PartDataPos, cursorLength).TrimEnd('\0');
-                                if (strCursorName.Length == 0)
-                                    result.IsSelect = false;
-                            }
+							if (cursorLength > 0)
+							{
+								strCursorName = replyPacket.ReadString(replyPacket.PartDataPos, cursorLength).TrimEnd('\0');
+								if (strCursorName.Length == 0)
+									result.IsSelect = false;
+							}
 							break;
 						case PartKind.TableName:
-							result.strUpdatedTableName = replyPacket.ReadString(replyPacket.PartDataPos, replyPacket.PartLength);
+							result.UpdatedTableName = replyPacket.ReadString(replyPacket.PartDataPos, replyPacket.PartLength);
 							break;
 						case PartKind.ColumnNames:
 							columnNames = replyPacket.ParseColumnNames();
@@ -1258,7 +1258,7 @@ namespace MaxDB.Data
         internal void ParseMassCmd (bool parsegain)
         {
             MaxDBRequestPacket requestPacket = dbConnection.GetRequestPacket();
-            requestPacket.InitParseCommand (mParseInfo.strSqlCmd, true, parsegain);
+            requestPacket.InitParseCommand (mParseInfo.SqlCommand, true, parsegain);
             requestPacket.SetMassCommand();
             MaxDBReplyPacket replyPacket = dbConnection.Execute(requestPacket, this, GCMode.GC_ALLOWED);
             if (replyPacket.ExistsPart(PartKind.ParseId))

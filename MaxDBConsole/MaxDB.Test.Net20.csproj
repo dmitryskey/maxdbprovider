@@ -148,6 +148,7 @@
     <Compile Include="UnitTesting\BaseTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="UnitTesting\CommandBuilderTests.cs" />
     <Compile Include="UnitTesting\CommandTests.cs">
       <SubType>Code</SubType>
     </Compile>
