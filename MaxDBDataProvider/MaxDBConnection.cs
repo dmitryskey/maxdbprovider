@@ -95,16 +95,13 @@ namespace MaxDB.Data
         private static byte[] byDefFeatureSet = { 1, 0, 2, 0, 3, 0, 4, 0, 5, 0 };
         private byte[] byKernelFeatures = new byte[byDefFeatureSet.Length];
 
-#if NET20 || MONO
         private string strSslCertificateName;
         private bool bEncrypt;
-#endif // NET20
 
         #endregion
 #else
         #region "SQLDBC Wrapper parameters"
 
-        private IntPtr mRuntimeHandler = IntPtr.Zero;
         internal IntPtr mEnviromentHandler = IntPtr.Zero;
         private IntPtr mConnectionPropertiesHandler = IntPtr.Zero;
 		internal IntPtr mConnectionHandler = IntPtr.Zero;
@@ -172,10 +169,31 @@ namespace MaxDB.Data
         // Always have a default constructor.
         public MaxDBConnection()
         {
+#if !SAFE
+			byte[] errorText = new byte[256];
+			IntPtr mRuntimeHandler = GetRuntimeHandler(ref errorText);
+
+			if (mRuntimeHandler == IntPtr.Zero)
+				throw new MaxDBException(Encoding.ASCII.GetString(errorText));
+
+			mEnviromentHandler = UnsafeNativeMethods.SQLDBC_Environment_new_SQLDBC_Environment(mRuntimeHandler);
+#endif //!SAFE
         }
 
+#if !SAFE
+		private unsafe IntPtr GetRuntimeHandler(ref byte[] errorText)
+		{
+			IntPtr mRuntimeHandler = IntPtr.Zero;
+
+			fixed (byte* errorPtr = errorText)
+				mRuntimeHandler = UnsafeNativeMethods.ClientRuntime_GetClientRuntime(errorPtr, errorText.Length);
+
+			return mRuntimeHandler;
+		}
+#endif // !SAFE
+
         // Have a constructor that takes a connection string.
-        public MaxDBConnection(string connectionString)
+        public MaxDBConnection(string connectionString) : this()
         {
             strConnection = connectionString;
             mConnStrBuilder = new MaxDBConnectionStringBuilder(connectionString);
@@ -225,14 +243,12 @@ namespace MaxDB.Data
 
 #if SAFE
             strCache = mConnStrBuilder.Cache;
-#endif // SAFE
 
-#if NET20 && SAFE
             if (mConnStrBuilder.SslCertificateName != null)
                 strSslCertificateName = mConnStrBuilder.SslCertificateName;
 
             bEncrypt = mConnStrBuilder.Encrypt;
-#endif // NET && SAFE
+#endif // SAFE
         }
 
         public Encoding DatabaseEncoding
@@ -809,16 +825,6 @@ namespace MaxDB.Data
 
 		private unsafe void OpenConnection()
 		{
-			byte[] errorText = new byte[256];
-			
-			fixed(byte* errorPtr = errorText)
-				mRuntimeHandler = UnsafeNativeMethods.ClientRuntime_GetClientRuntime(errorPtr, errorText.Length);
-
-            if (mRuntimeHandler == IntPtr.Zero)
-				throw new MaxDBException(Encoding.ASCII.GetString(errorText));
-
-			mEnviromentHandler = UnsafeNativeMethods.SQLDBC_Environment_new_SQLDBC_Environment(mRuntimeHandler);
-
 			mConnectionHandler = UnsafeNativeMethods.SQLDBC_Environment_createConnection(mEnviromentHandler);
 
 			mConnectionPropertiesHandler = UnsafeNativeMethods.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
@@ -944,6 +950,9 @@ namespace MaxDB.Data
 				mConnectionPropertiesHandler = IntPtr.Zero;
 
 				UnsafeNativeMethods.SQLDBC_Connection_close(mConnectionHandler);
+
+				UnsafeNativeMethods.SQLDBC_Environment_releaseConnection(mEnviromentHandler, mConnectionHandler);
+				mConnectionHandler = IntPtr.Zero;
 #endif // SAFE
             }
         }
@@ -1034,7 +1043,6 @@ namespace MaxDB.Data
 #endif // NET20
         {
 #if SAFE
-#if NET20 || MONO
             if (bEncrypt)
             {
                 if (mConnArgs.port == 0) mConnArgs.port = Ports.DefaultSecure;
@@ -1046,10 +1054,6 @@ namespace MaxDB.Data
                 if (mConnArgs.port == 0) mConnArgs.port = Ports.Default;
                 mComm = new MaxDBComm(new SocketClass(mConnArgs.host, mConnArgs.port, iTimeout, true));
             }
-#else
-            if (mConnArgs.port == 0) mConnArgs.port = Ports.Default;
-			mComm = new MaxDBComm(new SocketClass(mConnArgs.host, mConnArgs.port, iTimeout, true));
-#endif // NET20 || MONO
 
             mLogger = new MaxDBLogger();
             DoConnect();
@@ -1104,16 +1108,14 @@ namespace MaxDB.Data
             {
                 if (State == ConnectionState.Open)
                     Close();
+
+#if !SAFE
+				UnsafeNativeMethods.SQLDBC_Environment_delete_SQLDBC_Environment(mEnviromentHandler);
+				mEnviromentHandler = IntPtr.Zero;
+#endif // !SAFE
                 
                 if (mLogger != null)
                     ((IDisposable)mLogger).Dispose();
-
-#if !SAFE
-                UnsafeNativeMethods.SQLDBC_Environment_releaseConnection(mEnviromentHandler, mConnectionHandler);
-                mConnectionHandler = IntPtr.Zero;
-                UnsafeNativeMethods.SQLDBC_Environment_delete_SQLDBC_Environment(mEnviromentHandler);
-                mEnviromentHandler = IntPtr.Zero;
-#endif // !SAFE
             }
         }
 

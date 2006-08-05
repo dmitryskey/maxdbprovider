@@ -2332,10 +2332,16 @@ namespace MaxDB.Data
 
 		private void RefreshStmtHandler()
 		{
-			if (mStmt != IntPtr.Zero)
-				UnsafeNativeMethods.SQLDBC_Connection_releasePreparedStatement(dbConnection.mConnectionHandler, mStmt);
+			ReleaseStmtHandler();
 			if (dbConnection != null)
 				mStmt = UnsafeNativeMethods.SQLDBC_Connection_createPreparedStatement(dbConnection.mConnectionHandler);
+		}
+
+		internal void ReleaseStmtHandler()
+		{
+			if (mStmt != IntPtr.Zero)
+				UnsafeNativeMethods.SQLDBC_Connection_releasePreparedStatement(dbConnection.mConnectionHandler, mStmt);
+			mStmt = IntPtr.Zero;
 		}
 
 		#endregion
@@ -2784,8 +2790,7 @@ namespace MaxDB.Data
 				    dbConnection = null;
 			    }
 #else
-                if (mStmt != IntPtr.Zero)
-                    UnsafeNativeMethods.SQLDBC_Connection_releasePreparedStatement(dbConnection.mConnectionHandler, mStmt);
+				ReleaseStmtHandler();               
 #endif // SAFE
             }
         }
