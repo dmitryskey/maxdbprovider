@@ -27,7 +27,7 @@ namespace MaxDB.Data
 {
     public class MaxDBConnectionStringBuilder :
 #if NET20
- DbConnectionStringBuilder
+		DbConnectionStringBuilder
 #else
         IDictionary, ICollection
 #endif

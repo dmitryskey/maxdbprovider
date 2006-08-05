@@ -30,24 +30,24 @@ using MaxDB.Data.Utilities;
 
 namespace MaxDB.Data
 {
-    public sealed class MaxDBDataReader : 
+	public sealed class MaxDBDataReader :
 #if NET20
-        DbDataReader
+ DbDataReader
 #else
         IDataReader, IDataRecord, IEnumerable, IDisposable
 #endif // NET20
-        
+
 #if SAFE
         , ISqlParameterController
 #endif // SAFE
-    {
-        // The DataReader should always be open when returned to the user.
-        private bool bOpened = true;
-        internal bool bCloseConn;		        //close connection after data reader closing
-        internal bool bSchemaOnly;	            //return column information only
-        private MaxDBConnection dbConnection;	//connection handle
-        private MaxDBCommand cmdCommand;		//command handle
-        private string strUpdatedTableName;		// tablename used for updateable resultsets 
+	{
+		// The DataReader should always be open when returned to the user.
+		private bool bOpened = true;
+		internal bool bCloseConn;		        //close connection after data reader closing
+		internal bool bSchemaOnly;	            //return column information only
+		private MaxDBConnection dbConnection;	//connection handle
+		private MaxDBCommand cmdCommand;		//command handle
+		private string strUpdatedTableName;		// tablename used for updateable resultsets 
 
 #if SAFE
 
@@ -184,102 +184,105 @@ namespace MaxDB.Data
 			dbConnection = cmd.Connection;
 			cmdCommand = cmd;
 		}
-		
+
 		internal MaxDBDataReader(IntPtr resultset, MaxDBConnection conn, MaxDBCommand cmd, bool closeConn, bool schemaOnly)
 		{
 			mResultset = resultset;
 			dbConnection = conn;
 			cmdCommand = cmd;
-			
+
 			bCloseConn = closeConn;
 			bSchemaOnly = schemaOnly;
 			strUpdatedTableName = cmd.UpdTableName;
 		}
 #endif // SAFE
 
-        /// <summary>
-        /// Always return a value of zero since nesting is not supported.
-        /// </summary>
+		/// <summary>
+		/// Always return a value of zero since nesting is not supported.
+		/// </summary>
 #if NET20
-        public override int Depth
+		public override int Depth
 #else
         public int Depth
 #endif // NET20
-        {
-            get
-            {
-                return 0;
-            }
-        }
+		{
+			get
+			{
+				return 0;
+			}
+		}
 
 #if NET20
-        public override bool IsClosed
+		public override bool IsClosed
 #else
         public bool IsClosed
 #endif // NET20
-        {
-            //Keep track of the reader state - some methods should be disallowed if the reader is closed.
-            get
-            {
-                return !bOpened;
-            }
-        }
+		{
+			//Keep track of the reader state - some methods should be disallowed if the reader is closed.
+			get
+			{
+				return !bOpened;
+			}
+		}
 
 #if NET20
-        public override int RecordsAffected
+		public override int RecordsAffected
 #else
         public int RecordsAffected
 #endif // NET20
-        {
-            get
-            {
-                return cmdCommand.iRowsAffected;
-            }
-        }
+		{
+			get
+			{
+				return cmdCommand.iRowsAffected;
+			}
+		}
 
 #if NET20
-        public override void Close()
+		public override void Close()
 #else
         public void Close()
 #endif // NET20
-        {
-            if (bOpened)
-            {
-                bOpened = false;
+		{
+			if (bOpened)
+			{
+				bOpened = false;
 #if SAFE
                 mCurrentChunk = null;
                 mFetchInfo = null;
 #else
-			if (mResultset != IntPtr.Zero)
-			{
-				UnsafeNativeMethods.SQLDBC_ResultSet_close(mResultset);
-				mResultset = IntPtr.Zero;
-			}
+				if (mResultset != IntPtr.Zero)
+				{
+					UnsafeNativeMethods.SQLDBC_ResultSet_close(mResultset);
+					mResultset = IntPtr.Zero;
+				}
 #endif // SAFE
-                if (bCloseConn && dbConnection != null)
-                {
-                    dbConnection.Close();
-                    dbConnection.mLogger.Flush();
-                    dbConnection = null;
-                }
-            }
-        }
+				if (bCloseConn && dbConnection != null)
+				{
+#if !SAFE
+					cmdCommand.ReleaseStmtHandler();
+#endif // !SAFE
+					dbConnection.Close();
+					dbConnection.mLogger.Flush();
+					dbConnection = null;
+				}
+			}
+		}
 
 #if NET20
-        public override bool NextResult()
+		public override bool NextResult()
 #else
         public bool NextResult()
 #endif // NET20
-        {
-            return false;
-        }
+		{
+			return false;
+		}
 
 #if NET20
-        public override bool Read()
+		public override bool Read()
 #else
         public bool Read()
 #endif // NET20
-        {
+		{
 #if SAFE
             AssertNotClosed();
             // if we have nothing, there is nothing to do.
@@ -342,62 +345,62 @@ namespace MaxDB.Data
 					return false;
 			}
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override DataTable GetSchemaTable()
+		public override DataTable GetSchemaTable()
 #else
         public DataTable GetSchemaTable()
 #endif // NET20
-        {
-            DataTable schema = new DataTable("SchemaTable");
-            schema.Locale = CultureInfo.InvariantCulture;
-            DataTable dtMetaData = new DataTable();
-            dtMetaData.Locale = CultureInfo.InvariantCulture;
-            string user = null, table = null;
+		{
+			DataTable schema = new DataTable("SchemaTable");
+			schema.Locale = CultureInfo.InvariantCulture;
+			DataTable dtMetaData = new DataTable();
+			dtMetaData.Locale = CultureInfo.InvariantCulture;
+			string user = null, table = null;
 
-            DataColumn dcID = new DataColumn("id", typeof(int));
-            dcID.AutoIncrement = true;
-            dcID.AutoIncrementSeed = 1;
-            schema.Columns.Add(dcID);
+			DataColumn dcID = new DataColumn("id", typeof(int));
+			dcID.AutoIncrement = true;
+			dcID.AutoIncrementSeed = 1;
+			schema.Columns.Add(dcID);
 
-            schema.Columns.Add(new DataColumn("ColumnName", typeof(string)));
-            schema.Columns.Add(new DataColumn("ColumnOrdinal", typeof(int)));
-            schema.Columns.Add(new DataColumn("ColumnSize", typeof(int)));
-            schema.Columns.Add(new DataColumn("NumericPrecision", typeof(int)));
-            schema.Columns.Add(new DataColumn("NumericScale", typeof(int)));
-            schema.Columns.Add(new DataColumn("DataType", typeof(Type)));
-            schema.Columns.Add(new DataColumn("ProviderType", typeof(MaxDBType)));
-            schema.Columns.Add(new DataColumn("IsLong", typeof(bool)));
-            schema.Columns.Add(new DataColumn("AllowDBNull", typeof(bool)));
-            schema.Columns.Add(new DataColumn("IsReadOnly", typeof(bool)));
-            schema.Columns.Add(new DataColumn("IsUnique", typeof(bool)));
-            schema.Columns.Add(new DataColumn("IsKeyColumn", typeof(bool)));
-            schema.Columns.Add(new DataColumn("IsAutoIncrement", typeof(bool)));
-            schema.Columns.Add(new DataColumn("BaseSchemaName", typeof(string)));
-            schema.Columns.Add(new DataColumn("BaseTableName", typeof(string)));
+			schema.Columns.Add(new DataColumn("ColumnName", typeof(string)));
+			schema.Columns.Add(new DataColumn("ColumnOrdinal", typeof(int)));
+			schema.Columns.Add(new DataColumn("ColumnSize", typeof(int)));
+			schema.Columns.Add(new DataColumn("NumericPrecision", typeof(int)));
+			schema.Columns.Add(new DataColumn("NumericScale", typeof(int)));
+			schema.Columns.Add(new DataColumn("DataType", typeof(Type)));
+			schema.Columns.Add(new DataColumn("ProviderType", typeof(MaxDBType)));
+			schema.Columns.Add(new DataColumn("IsLong", typeof(bool)));
+			schema.Columns.Add(new DataColumn("AllowDBNull", typeof(bool)));
+			schema.Columns.Add(new DataColumn("IsReadOnly", typeof(bool)));
+			schema.Columns.Add(new DataColumn("IsUnique", typeof(bool)));
+			schema.Columns.Add(new DataColumn("IsKeyColumn", typeof(bool)));
+			schema.Columns.Add(new DataColumn("IsAutoIncrement", typeof(bool)));
+			schema.Columns.Add(new DataColumn("BaseSchemaName", typeof(string)));
+			schema.Columns.Add(new DataColumn("BaseTableName", typeof(string)));
 
-            DataRow row;
-            if (strUpdatedTableName != null)
-            {
-                string[] schemaName = strUpdatedTableName.Split('.');
-                if (schemaName.Length > 1)
-                {
-                    user = schemaName[0].Replace("\"", string.Empty);
-                    table = schemaName[1].Replace("\"", string.Empty);
+			DataRow row;
+			if (strUpdatedTableName != null)
+			{
+				string[] schemaName = strUpdatedTableName.Split('.');
+				if (schemaName.Length > 1)
+				{
+					user = schemaName[0].Replace("\"", string.Empty);
+					table = schemaName[1].Replace("\"", string.Empty);
 
-                    MaxDBCommand cmdColumns = new MaxDBCommand(
-                                    "SELECT A.COLUMNNAME, A.MODE, A.DEFAULT, B.TYPE FROM DOMAIN.COLUMNS A " +
-                                    "LEFT OUTER JOIN DOMAIN.INDEXCOLUMNS B " +
-                                    "ON A.OWNER = B.OWNER AND A.TABLENAME = B.TABLENAME AND A.COLUMNNAME = B.COLUMNNAME " +
-                                    "WHERE A.OWNER = ? AND A.TABLENAME = ?", dbConnection);
-                    cmdColumns.Parameters.Add("OWNER", MaxDBType.VarCharA).Value = user;
-                    cmdColumns.Parameters.Add("TABLENAME", MaxDBType.VarCharA).Value = table;
-                    MaxDBDataAdapter da = new MaxDBDataAdapter();
-                    da.SelectCommand = cmdColumns;
-                    da.Fill(dtMetaData);
-                }
-            }
+					MaxDBCommand cmdColumns = new MaxDBCommand(
+									"SELECT A.COLUMNNAME, A.MODE, A.DEFAULT, B.TYPE FROM DOMAIN.COLUMNS A " +
+									"LEFT OUTER JOIN DOMAIN.INDEXCOLUMNS B " +
+									"ON A.OWNER = B.OWNER AND A.TABLENAME = B.TABLENAME AND A.COLUMNNAME = B.COLUMNNAME " +
+									"WHERE A.OWNER = ? AND A.TABLENAME = ?", dbConnection);
+					cmdColumns.Parameters.Add("OWNER", MaxDBType.VarCharA).Value = user;
+					cmdColumns.Parameters.Add("TABLENAME", MaxDBType.VarCharA).Value = table;
+					MaxDBDataAdapter da = new MaxDBDataAdapter();
+					da.SelectCommand = cmdColumns;
+					da.Fill(dtMetaData);
+				}
+			}
 
 #if SAFE
             for (int cnt = 0; cnt < FieldCount; cnt++)
@@ -427,7 +430,7 @@ namespace MaxDB.Data
 				row["NumericPrecision"] = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getPrecision(meta, (short)(cnt + 1));
 				row["NumericScale"] = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getScale(meta, (short)(cnt + 1));
 				row["DataType"] = GetFieldType(cnt);
-				row["ProviderType"] =  GeneralColumnInfo.GetMaxDBType(
+				row["ProviderType"] = GeneralColumnInfo.GetMaxDBType(
 					UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(cnt + 1)));
 				row["IsLong"] = GeneralColumnInfo.IsLong(
 					UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(cnt + 1)));
@@ -435,10 +438,10 @@ namespace MaxDB.Data
 				row["IsReadOnly"] = (UnsafeNativeMethods.SQLDBC_ResultSetMetaData_isWritable(meta, (short)(cnt + 1)) == 0);
 #endif // SAFE
 
-                if (user != null && table != null)
-                {
-                    row["BaseSchemaName"] = user;
-                    row["BaseTableName"] = table;
+				if (user != null && table != null)
+				{
+					row["BaseSchemaName"] = user;
+					row["BaseTableName"] = table;
 
 					foreach (DataRow columnRow in dtMetaData.Rows)
 						if (!columnRow.IsNull(0) && string.Compare(columnRow[0].ToString().Trim(), row["ColumnName"].ToString().Trim(), true, CultureInfo.InvariantCulture) == 0)
@@ -447,51 +450,51 @@ namespace MaxDB.Data
 							row["IsAutoIncrement"] = (!columnRow.IsNull(2) && columnRow[2].ToString().StartsWith("DEFAULT SERIAL"));
 							row["IsUnique"] = (!columnRow.IsNull(3) && columnRow[3].ToString() == "UNIQUE");
 						}
-                }
+				}
 
-                schema.Rows.Add(row);
-            }
+				schema.Rows.Add(row);
+			}
 
-            return schema;
-        }
+			return schema;
+		}
 
 #if NET20
-        public override int FieldCount
+		public override int FieldCount
 #else
         public int FieldCount
 #endif // NET20
-        {
-            // Return the count of the number of columns, which in this case is the size of the column metadata array.
-            get
-            {
+		{
+			// Return the count of the number of columns, which in this case is the size of the column metadata array.
+			get
+			{
 #if SAFE
                 return mFetchInfo.NumberOfColumns;
 #else
-				return UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnCount(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset)); 
+				return UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnCount(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset));
 #endif // SAFE
-            }
-        }
+			}
+		}
 
 #if NET20
-        public override int VisibleFieldCount
+		public override int VisibleFieldCount
 #else
         public int VisibleFieldCount
 #endif // NET20
-        {
-            // Return the count of the number of columns, which in this case is the size of the column metadata array.
-            get
-            {
-                return FieldCount;
-            }
-        }
+		{
+			// Return the count of the number of columns, which in this case is the size of the column metadata array.
+			get
+			{
+				return FieldCount;
+			}
+		}
 
 
 #if NET20
-        public override string GetName(int i)
+		public override string GetName(int i)
 #else
         public string GetName(int i)
 #endif // NET20
-        {
+		{
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -499,19 +502,19 @@ namespace MaxDB.Data
 #else
 			return Encoding.Unicode.GetString(GetNameBytes((short)(i + 1))).TrimEnd('\0');
 #endif
-        }
+		}
 
 #if NET20
-        public override string GetDataTypeName(int i)
+		public override string GetDataTypeName(int i)
 #else
         public string GetDataTypeName(int i)
 #endif // NET20
-        {
-            /*
-             * Usually this would return the name of the type
-             * as used on the back end, for example 'smallint' or 'varchar'.
-             * The sample returns the simple name of the .NET Framework type.
-             */
+		{
+			/*
+			 * Usually this would return the name of the type
+			 * as used on the back end, for example 'smallint' or 'varchar'.
+			 * The sample returns the simple name of the .NET Framework type.
+			 */
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -520,14 +523,14 @@ namespace MaxDB.Data
 			return GeneralColumnInfo.GetTypeName(
 				UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1)));
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override Type GetFieldType(int i)
+		public override Type GetFieldType(int i)
 #else
         public Type GetFieldType(int i)
 #endif // NET 20
-        {
+		{
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -536,14 +539,14 @@ namespace MaxDB.Data
 			return GeneralColumnInfo.GetType(
 				UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1)));
 #endif
-        }
+		}
 
 #if NET20
-        public override object GetValue(int i)
+		public override object GetValue(int i)
 #else
         public object GetValue(int i)
 #endif // NET 20
-        {
+		{
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -568,7 +571,7 @@ namespace MaxDB.Data
 			byte[] data = GetValueBytes(i, out columnType);
 			if (data != null)
 			{
-				switch(columnType)
+				switch (columnType)
 				{
 					case DataType.BOOLEAN:
 						return (data[0] == 1);
@@ -606,64 +609,64 @@ namespace MaxDB.Data
 				}
 			}
 			else
-				return DBNull.Value; 
+				return DBNull.Value;
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override int GetValues(object[] values)
+		public override int GetValues(object[] values)
 #else
         public int GetValues(object[] values)
 #endif // NET20
-        {
-            if (values == null)
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+		{
+			if (values == null)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
 
-            for (int i = 0; i < Math.Min(FieldCount, values.Length); i++)
-                values[i] = GetValue(i);
-            return Math.Min(FieldCount, values.Length);
-        }
+			for (int i = 0; i < Math.Min(FieldCount, values.Length); i++)
+				values[i] = GetValue(i);
+			return Math.Min(FieldCount, values.Length);
+		}
 
 #if NET20
-        public override int GetOrdinal(string name)
+		public override int GetOrdinal(string name)
 #else
         public int GetOrdinal(string name)
 #endif // NET20
-        {
-            if (name == null)
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAME_NOTFOUND, name));
+		{
+			if (name == null)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAME_NOTFOUND, name));
 
-            // Throw an exception if the ordinal cannot be found.
-            for (short cnt = 0; cnt <= FieldCount - 1; cnt++)
-                if (string.Compare(GetName(cnt).Trim(), name.Trim(), true, CultureInfo.InvariantCulture) == 0)
-                    return cnt;
-            throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAME_NOTFOUND, name));
-        }
+			// Throw an exception if the ordinal cannot be found.
+			for (short cnt = 0; cnt <= FieldCount - 1; cnt++)
+				if (string.Compare(GetName(cnt).Trim(), name.Trim(), true, CultureInfo.InvariantCulture) == 0)
+					return cnt;
+			throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAME_NOTFOUND, name));
+		}
 
 #if NET20
-        public override object this[int i]
+		public override object this[int i]
 #else
         public object this[int i]
 #endif // NET20
-        {
-            get
-            {
-                return GetValue(i);
-            }
-        }
+		{
+			get
+			{
+				return GetValue(i);
+			}
+		}
 
 #if NET20
-        public override object this[string name]
+		public override object this[string name]
 #else
         public object this[string name]
 #endif // NET20
-        {
-            // Look up the ordinal and return the value at that position.
-            get
-            {
-                return GetValue(GetOrdinal(name));
-            }
-        }
+		{
+			// Look up the ordinal and return the value at that position.
+			get
+			{
+				return GetValue(GetOrdinal(name));
+			}
+		}
 
 #if SAFE
         private void LogValue(int i, DBTechTranslator transl, string type, int size, int minusLen, string value)
@@ -682,15 +685,15 @@ namespace MaxDB.Data
 #endif  // SAFE
 
 #if NET20
-        public override bool GetBoolean(int i)
+		public override bool GetBoolean(int i)
 #else
         public bool GetBoolean(int i)
 #endif // NET20
-        {
-            /*
-             * Force the cast to return the type. InvalidCastException
-             * should be thrown if the data is not already of the correct type.
-             */
+		{
+			/*
+			 * Force the cast to return the type. InvalidCastException
+			 * should be thrown if the data is not already of the correct type.
+			 */
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 
@@ -709,10 +712,10 @@ namespace MaxDB.Data
 			byte[] data = GetValueBytes(i, out columnType);
 			if (data != null)
 			{
-				switch(columnType)
+				switch (columnType)
 				{
 					case DataType.BOOLEAN:
-					case DataType.STRB:	
+					case DataType.STRB:
 					case DataType.VARCHARB:
 					case DataType.CHB:
 						return (data[0] == 1);
@@ -736,21 +739,21 @@ namespace MaxDB.Data
 					case DataType.CHA:
 						return bool.Parse(Encoding.ASCII.GetString(data));
 					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET, 
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
 							DataType.StrValues[columnType], "Boolean"));
 				}
 			}
 			else
 				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override byte GetByte(int i)
+		public override byte GetByte(int i)
 #else
         public byte GetByte(int i)
 #endif // NET20
-        {
+		{
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -769,14 +772,14 @@ namespace MaxDB.Data
 			GetValueBytes(i, columnType, 0, buffer, 0, 1);
 			return buffer[0];
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
+		public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
 #else
         public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
 #endif // NET20
-        {
+		{
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -798,28 +801,28 @@ namespace MaxDB.Data
 			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
 			return GetValueBytes(i, columnType, fieldOffset, buffer, bufferoffset, length);
 #endif
-        }
+		}
 
 #if NET20
-        public override char GetChar(int i)
+		public override char GetChar(int i)
 #else
         public char GetChar(int i)
 #endif // NET20
-        {
-            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+		{
+			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 			return GetString(i)[0];
-        }
+		}
 
 #if NET20
-        public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
+		public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
 #else
         public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
 #endif // NET20
-        {
-            if (buffer == null)
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "buffer"));
+		{
+			if (buffer == null)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "buffer"));
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -840,7 +843,7 @@ namespace MaxDB.Data
 #else
 			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
 			int elemSize;
-			switch(columnType)
+			switch (columnType)
 			{
 				case DataType.LONGUNI:
 				case DataType.STRUNI:
@@ -853,36 +856,36 @@ namespace MaxDB.Data
 					break;
 			}
 
-			byte[] byte_buffer = new byte[buffer.Length * elemSize]; 
+			byte[] byte_buffer = new byte[buffer.Length * elemSize];
 			long result_length = GetValueBytes(i, columnType, fieldoffset * elemSize, byte_buffer, bufferoffset * elemSize, length * elemSize);
 			if (elemSize == Consts.UnicodeWidth)
 				Encoding.Unicode.GetChars(byte_buffer, 0, byte_buffer.Length, buffer, 0);
 			else
 				Encoding.ASCII.GetChars(byte_buffer, 0, byte_buffer.Length, buffer, 0);
-					
+
 			return result_length / elemSize;
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override Guid GetGuid(int i)
+		public override Guid GetGuid(int i)
 #else
         public Guid GetGuid(int i)
 #endif // NET20
-        {
-            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+		{
+			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
-            return new Guid(GetString(i));
-        }
+			return new Guid(GetString(i));
+		}
 
 #if NET20
-        public override short GetInt16(int i)
+		public override short GetInt16(int i)
 #else
         public short GetInt16(int i)
 #endif // NET20
-        {
-            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+		{
+			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -900,7 +903,7 @@ namespace MaxDB.Data
 			byte[] data = GetValueBytes(i, out columnType);
 			if (data != null)
 			{
-				switch(columnType)
+				switch (columnType)
 				{
 					case DataType.BOOLEAN:
 						return data[0];
@@ -913,22 +916,22 @@ namespace MaxDB.Data
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0);
 					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET, 
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
 							DataType.StrValues[columnType], "Int16"));
 				}
 			}
 			else
 				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override int GetInt32(int i)
+		public override int GetInt32(int i)
 #else
         public int GetInt32(int i)
 #endif
-        {
-            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+		{
+			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -946,7 +949,7 @@ namespace MaxDB.Data
 			byte[] data = GetValueBytes(i, out columnType);
 			if (data != null)
 			{
-				switch(columnType)
+				switch (columnType)
 				{
 					case DataType.BOOLEAN:
 						return data[0];
@@ -959,22 +962,22 @@ namespace MaxDB.Data
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0);
 					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET, 
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
 							DataType.StrValues[columnType], "Int32"));
 				}
 			}
 			else
 				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override long GetInt64(int i)
+		public override long GetInt64(int i)
 #else
         public long GetInt64(int i)
 #endif // NET20
-        {
-            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+		{
+			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -992,7 +995,7 @@ namespace MaxDB.Data
 			byte[] data = GetValueBytes(i, out columnType);
 			if (data != null)
 			{
-				switch(columnType)
+				switch (columnType)
 				{
 					case DataType.BOOLEAN:
 						return data[0];
@@ -1005,22 +1008,22 @@ namespace MaxDB.Data
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0);
 					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET, 
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
 							DataType.StrValues[columnType], "Int64"));
 				}
 			}
 			else
 				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override float GetFloat(int i)
+		public override float GetFloat(int i)
 #else
         public float GetFloat(int i)
 #endif // NET20
-        {
-            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+		{
+			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -1038,7 +1041,7 @@ namespace MaxDB.Data
 			byte[] data = GetValueBytes(i, out columnType);
 			if (data != null)
 			{
-				switch(columnType)
+				switch (columnType)
 				{
 					case DataType.BOOLEAN:
 						return data[0];
@@ -1051,22 +1054,22 @@ namespace MaxDB.Data
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0);
 					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET, 
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
 							DataType.StrValues[columnType], "Float"));
 				}
 			}
 			else
 				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override double GetDouble(int i)
+		public override double GetDouble(int i)
 #else
         public double GetDouble(int i)
 #endif // NET20
-        {
-            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+		{
+			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -1084,7 +1087,7 @@ namespace MaxDB.Data
 			byte[] data = GetValueBytes(i, out columnType);
 			if (data != null)
 			{
-				switch(columnType)
+				switch (columnType)
 				{
 					case DataType.BOOLEAN:
 						return data[0];
@@ -1097,22 +1100,22 @@ namespace MaxDB.Data
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0);
 					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET, 
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
 							DataType.StrValues[columnType], "Double"));
 				}
 			}
 			else
 				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override string GetString(int i)
+		public override string GetString(int i)
 #else
         public string GetString(int i)
 #endif // NET20
-        {
-            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+		{
+			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -1134,7 +1137,7 @@ namespace MaxDB.Data
 			byte[] data = GetValueBytes(i, out columnType);
 			if (data != null)
 			{
-				switch(columnType)
+				switch (columnType)
 				{
 					case DataType.BOOLEAN:
 						return (data[0] == 1).ToString();
@@ -1147,11 +1150,11 @@ namespace MaxDB.Data
 					case DataType.FIXED:
 					case DataType.FLOAT:
 					case DataType.VFLOAT:
-                        return BitConverter.ToDouble(data, 0).ToString(CultureInfo.InvariantCulture);
+						return BitConverter.ToDouble(data, 0).ToString(CultureInfo.InvariantCulture);
 					case DataType.INTEGER:
-                        return BitConverter.ToInt32(data, 0).ToString(CultureInfo.InvariantCulture);
+						return BitConverter.ToInt32(data, 0).ToString(CultureInfo.InvariantCulture);
 					case DataType.SMALLINT:
-                        return BitConverter.ToInt16(data, 0).ToString(CultureInfo.InvariantCulture);
+						return BitConverter.ToInt16(data, 0).ToString(CultureInfo.InvariantCulture);
 					case DataType.STRUNI:
 					case DataType.VARCHARUNI:
 					case DataType.UNICODE:
@@ -1173,15 +1176,15 @@ namespace MaxDB.Data
 			else
 				return null;
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override decimal GetDecimal(int i)
+		public override decimal GetDecimal(int i)
 #else
         public decimal GetDecimal(int i)
 #endif
-        {
-            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+		{
+			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -1199,7 +1202,7 @@ namespace MaxDB.Data
 			byte[] data = GetValueBytes(i, out columnType);
 			if (data != null)
 			{
-				switch(columnType)
+				switch (columnType)
 				{
 					case DataType.BOOLEAN:
 						return data[0];
@@ -1212,22 +1215,22 @@ namespace MaxDB.Data
 					case DataType.SMALLINT:
 						return BitConverter.ToInt16(data, 0);
 					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET, 
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
 							DataType.StrValues[columnType], "Decimal"));
 				}
 			}
 			else
 				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override DateTime GetDateTime(int i)
+		public override DateTime GetDateTime(int i)
 #else
         public DateTime GetDateTime(int i)
 #endif  // NET20
-        {
-            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+		{
+			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -1245,7 +1248,7 @@ namespace MaxDB.Data
 			byte[] data = GetValueBytes(i, out columnType);
 			if (data != null)
 			{
-				switch(columnType)
+				switch (columnType)
 				{
 					case DataType.DATE:
 						return ODBCConverter.GetDateTime(ODBCConverter.GetDate(data));
@@ -1254,14 +1257,14 @@ namespace MaxDB.Data
 					case DataType.TIMESTAMP:
 						return ODBCConverter.GetDateTime(ODBCConverter.GetTimeStamp(data));
 					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET, 
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
 							DataType.StrValues[columnType], "DateTime"));
 				}
 			}
 			else
 				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
-        }
+		}
 
 #if !NET20
         public IDataReader GetData(int i)
@@ -1276,11 +1279,11 @@ namespace MaxDB.Data
 #endif // !NET20
 
 #if NET20
-        public override bool IsDBNull(int i)
+		public override bool IsDBNull(int i)
 #else
         public bool IsDBNull(int i)
 #endif // NET20
-        {
+		{
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
@@ -1288,16 +1291,16 @@ namespace MaxDB.Data
 #else
 			return (GetValue(i) == DBNull.Value);
 #endif // SAFE
-        }
+		}
 
 #if NET20
-        public override bool HasRows
+		public override bool HasRows
 #else
         public bool HasRows
 #endif // NET20
-        {
-            get
-            {
+		{
+			get
+			{
 #if SAFE
                 return iRowsInResultSet > 0;
 #else
@@ -1306,10 +1309,10 @@ namespace MaxDB.Data
 				else
 					return false;
 #endif // SAFE
-            }
-        }
+			}
+		}
 #if SAFE
-        #region "Methods to support native protocol"
+		#region "Methods to support native protocol"
 
         MaxDBConnection ISqlParameterController.Connection
         {
@@ -1462,10 +1465,10 @@ namespace MaxDB.Data
             return info;
         }
 
-        #endregion
+		#endregion
 #else
-        #region "Unsafe methods"
-		
+		#region "Unsafe methods"
+
 		private unsafe byte[] GetNameBytes(short pos)
 		{
 			byte[] columnName = new byte[sizeof(char)];
@@ -1473,8 +1476,8 @@ namespace MaxDB.Data
 
 			SQLDBC_Retcode rc;
 
-			fixed(byte *namePtr = columnName)
-				rc = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnName(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), pos, 
+			fixed (byte* namePtr = columnName)
+				rc = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnName(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), pos,
 					namePtr, SQLDBC_StringEncodingType.UCS2Swapped, len, &len);
 			if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLUMNNAME_BUFFER));
@@ -1482,12 +1485,12 @@ namespace MaxDB.Data
 			len += sizeof(char);
 			columnName = new byte[len];
 
-			fixed(byte *namePtr = columnName)
-				rc = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnName(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), pos, 
+			fixed (byte* namePtr = columnName)
+				rc = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnName(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), pos,
 					namePtr, SQLDBC_StringEncodingType.UCS2Swapped, len, &len);
 
-				if (rc != SQLDBC_Retcode.SQLDBC_OK)
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INVALID_COLUMNNAME));
+			if (rc != SQLDBC_Retcode.SQLDBC_OK)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INVALID_COLUMNNAME));
 
 
 			return columnName;
@@ -1502,32 +1505,32 @@ namespace MaxDB.Data
 			if (m_ValArrays[i] != null)
 				return (byte[])m_ValArrays[i];
 
-			switch(columnType)
+			switch (columnType)
 			{
 				case DataType.BOOLEAN:
 					byte byte_val;
 					valLength = sizeof(byte);
 
-                    if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT1, &byte_val,
-                         &valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
-                        MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-                            UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+					if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT1, &byte_val,
+						 &valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
+						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
 					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
 						m_ValArrays[i] = null;
 					else
 					{
-						byte[] result = new byte[]{byte_val};
+						byte[] result = new byte[] { byte_val };
 						m_ValArrays[i] = result;
 					}
 					return (byte[])m_ValArrays[i];
 				case DataType.DATE:
 					byte[] dt_val = new byte[sizeof(OdbcDate)];
 					valLength = dt_val.Length;
-					fixed(byte *dt_ptr = dt_val)
-						if(UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, dt_ptr, 
-						    &valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK) 
-						    MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED), 
-							    UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+					fixed (byte* dt_ptr = dt_val)
+						if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, dt_ptr,
+							&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
+							MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+								UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
 					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
 						m_ValArrays[i] = null;
 					else
@@ -1536,9 +1539,9 @@ namespace MaxDB.Data
 				case DataType.TIME:
 					byte[] tm_val = new byte[sizeof(OdbcTime)];
 					valLength = tm_val.Length;
-					fixed(byte* tm_ptr = tm_val)
-						if(UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, tm_ptr, 
-							&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+					fixed (byte* tm_ptr = tm_val)
+						if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, tm_ptr,
+							&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
 							MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
 								UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
 					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
@@ -1549,9 +1552,9 @@ namespace MaxDB.Data
 				case DataType.TIMESTAMP:
 					byte[] ts_val = new byte[sizeof(OdbcTimeStamp)];
 					valLength = ts_val.Length;
-					fixed(byte *ts_ptr = ts_val)
-						if(UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, ts_ptr, 
-							&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+					fixed (byte* ts_ptr = ts_val)
+						if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, ts_ptr,
+							&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
 							MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
 								UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
 					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
@@ -1564,8 +1567,8 @@ namespace MaxDB.Data
 				case DataType.VFLOAT:
 					double double_val;
 					valLength = sizeof(double);
-					if(UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_DOUBLE, &double_val, 
-						&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+					if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_DOUBLE, &double_val,
+						&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
 						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
 							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
 					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
@@ -1576,8 +1579,8 @@ namespace MaxDB.Data
 				case DataType.INTEGER:
 					int int_val;
 					valLength = sizeof(int);
-					if(UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, &int_val, 
-						&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+					if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, &int_val,
+						&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
 						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
 							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
 					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
@@ -1588,8 +1591,8 @@ namespace MaxDB.Data
 				case DataType.SMALLINT:
 					short short_val;
 					valLength = sizeof(short);
-					if(UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT2, &short_val, 
-						&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK) 
+					if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT2, &short_val,
+						&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
 						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
 							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
 					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
@@ -1603,35 +1606,35 @@ namespace MaxDB.Data
 					byte[] strValue = new byte[sizeof(char)];
 					valLength = 0;
 
-					fixed(byte *valuePtr = strValue)
-						rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, 
-							Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2, 
+					fixed (byte* valuePtr = strValue)
+						rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1,
+							Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2,
 							valuePtr, &valLength, valLength, 0);
 
-						if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
-						{
-							m_ValArrays[i] = null;
-							return null;
-						}
+					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
+					{
+						m_ValArrays[i] = null;
+						return null;
+					}
 
-						if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
-							throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NODATA_FOUND));
+					if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
+						throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NODATA_FOUND));
 
-						if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-							MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-								UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+					if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
 
 					strValue = new byte[valLength];
 
 					if (valLength > 0)
-						fixed(byte *valuePtr = strValue)
-							rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, 
-								Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2, 
+						fixed (byte* valuePtr = strValue)
+							rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1,
+								Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2,
 								valuePtr, &valLength, valLength, SQLDBC_BOOL.SQLDBC_FALSE);
 
-							if (rc != SQLDBC_Retcode.SQLDBC_OK)
-								MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-									UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+					if (rc != SQLDBC_Retcode.SQLDBC_OK)
+						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
 
 					m_ValArrays[i] = strValue;
 					return strValue;
@@ -1641,8 +1644,8 @@ namespace MaxDB.Data
 					byte[] asciiValue = new byte[sizeof(byte)];
 					valLength = 0;
 
-					fixed(byte *valuePtr = asciiValue)
-						rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, 
+					fixed (byte* valuePtr = asciiValue)
+						rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1,
 							SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, valuePtr, &valLength, valLength, 0);
 
 					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
@@ -1654,16 +1657,16 @@ namespace MaxDB.Data
 					if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
 						throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NODATA_FOUND));
 
-				    if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+					if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
 						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
 							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
 
 					asciiValue = new byte[valLength];
 
 					if (valLength > 0)
-						fixed(byte *valuePtr = asciiValue)
+						fixed (byte* valuePtr = asciiValue)
 						{
-							rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, 
+							rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1,
 								SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, valuePtr, &valLength, valLength, SQLDBC_BOOL.SQLDBC_FALSE);
 
 							if (rc != SQLDBC_Retcode.SQLDBC_OK)
@@ -1679,8 +1682,8 @@ namespace MaxDB.Data
 					byte[] binValue = new byte[1];
 					valLength = 0;
 
-					fixed(byte *valuePtr = binValue)
-						rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY, 
+					fixed (byte* valuePtr = binValue)
+						rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY,
 							valuePtr, &valLength, valLength, 0);
 
 					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
@@ -1699,13 +1702,13 @@ namespace MaxDB.Data
 					binValue = new byte[valLength];
 
 					if (valLength > 0)
-						fixed(byte *valuePtr = binValue)
-							rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY, 
+						fixed (byte* valuePtr = binValue)
+							rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY,
 								valuePtr, &valLength, valLength, 0);
 
-						if (rc != SQLDBC_Retcode.SQLDBC_OK)
-							MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-								UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+					if (rc != SQLDBC_Retcode.SQLDBC_OK)
+						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
 
 					m_ValArrays[i] = binValue;
 					return binValue;
@@ -1718,7 +1721,7 @@ namespace MaxDB.Data
 		{
 			SQLDBC_Retcode rc;
 			SQLDBC_HostType hostType;
-			switch(columnType)
+			switch (columnType)
 			{
 				case DataType.STRA:
 				case DataType.LONGA:
@@ -1744,11 +1747,11 @@ namespace MaxDB.Data
 
 			byte[] readBuffer = new byte[length + (addNullTerminator ? 1 : 0)];
 
-			fixed(byte *valuePtr = readBuffer)
+			fixed (byte* valuePtr = readBuffer)
 			{
 				int ref_length = 0;
-				rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, hostType, 
-					valuePtr, &ref_length, length + (addNullTerminator ? 1 : 0), 
+				rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, hostType,
+					valuePtr, &ref_length, length + (addNullTerminator ? 1 : 0),
 					addNullTerminator ? SQLDBC_BOOL.SQLDBC_TRUE : SQLDBC_BOOL.SQLDBC_FALSE);
 
 				if (ref_length == UnsafeNativeMethods.SQLDBC_NULL_DATA)
@@ -1761,40 +1764,40 @@ namespace MaxDB.Data
 					MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
 						UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
 
-					switch(columnType)
-					{
-						case DataType.STRA:
-						case DataType.LONGA:
-						case DataType.STRUNI:
-						case DataType.LONGUNI:
-							length = Array.IndexOf(readBuffer, (byte)0); // we ignore ref_length parameter and looking for zero terminator
-							break; //since ref_length contains wrong value. Thus CLOB can't contain nulls
-						case DataType.STRB:
-						case DataType.LONGB:
-							if (ref_length < length)
-								length = ref_length;
-							break;
-					}
-					
-					Array.Copy(readBuffer, 0, buffer, bufferIndex, length);
+				switch (columnType)
+				{
+					case DataType.STRA:
+					case DataType.LONGA:
+					case DataType.STRUNI:
+					case DataType.LONGUNI:
+						length = Array.IndexOf(readBuffer, (byte)0); // we ignore ref_length parameter and looking for zero terminator
+						break; //since ref_length contains wrong value. Thus CLOB can't contain nulls
+					case DataType.STRB:
+					case DataType.LONGB:
+						if (ref_length < length)
+							length = ref_length;
+						break;
 				}
+
+				Array.Copy(readBuffer, 0, buffer, bufferIndex, length);
+			}
 
 			return length;
 		}
 
-        #endregion
+		#endregion
 #endif // SAFE
 
 #if NET20
-        public override IEnumerator GetEnumerator()
+		public override IEnumerator GetEnumerator()
 #else
 		public IEnumerator GetEnumerator()
 #endif // NET20
-        {
-            return new DbEnumerator(this);
-        }
+		{
+			return new DbEnumerator(this);
+		}
 
-        #region IDisposable Members
+		#region IDisposable Members
 
 #if !NET20
         public void Dispose()
@@ -1804,20 +1807,20 @@ namespace MaxDB.Data
 		}
 #endif // NET20
 
-#if NET20 
-        protected override void Dispose(bool disposing)
+#if NET20
+		protected override void Dispose(bool disposing)
 #else
         private void Dispose(bool disposing)
-#endif // NET20 
-        {
-#if NET20 
-            base.Dispose(disposing);
 #endif // NET20
-            if (disposing)
-                Close();
-        }
+		{
+#if NET20
+			base.Dispose(disposing);
+#endif // NET20
+			if (disposing)
+				Close();
+		}
 
-        #endregion
-    }
+		#endregion
+	}
 }
 

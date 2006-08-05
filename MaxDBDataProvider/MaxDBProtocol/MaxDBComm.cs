@@ -62,6 +62,15 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			try
 			{
+				//for (int i = 0; i < 2; i++)
+				//{
+				//    byte[] array = System.Text.Encoding.ASCII.GetBytes("GET / HTTP/1.0\r\nAccept: */*\r\nUser-Agent: Mentalis.org SecureSocket\r\nHost: 192.168.22.220\r\n\r\n");
+				//    mSocket.Stream.Write(array, 0, array.Length);
+				//    byte[] answer = new byte[1024];
+				//    mSocket.Stream.Read(answer, 0, 1024);
+				//    string sss = System.Text.Encoding.ASCII.GetString(answer);
+				//}
+				
 				ConnectPacketData connData = new ConnectPacketData();
 				connData.DBName = dbname;
 				connData.Port = port;
