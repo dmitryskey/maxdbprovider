@@ -178,27 +178,23 @@ namespace MaxDB.Data.Utilities
 			return;
 		}
 
+#if SAFE
 		public byte ReadByte(int offset)
         {
-#if SAFE
+
 			offset += iOffset;
-#endif // SAFE
             return byData[offset];
 		}
 
 		public void WriteByte(byte value, int offset)
         {
-#if SAFE
 			offset += iOffset;
-#endif // SAFE
             byData[offset] = value;
 		}
 
 		public ushort ReadUInt16(int offset)
         {
-#if SAFE
 			offset += iOffset;
-#endif // SAFE
             if (BitConverter.IsLittleEndian == bSwapMode)
 				return BitConverter.ToUInt16(byData, offset);
 			else
@@ -210,18 +206,16 @@ namespace MaxDB.Data.Utilities
 			}
 		}
 
-#if SAFE
+
 		public void WriteUInt16(ushort value, int offset)
 		{
 			WriteValue(value, offset, 2);
 		}
-#endif // SAFE
 
 		public short ReadInt16(int offset)
         {
-#if SAFE
+
 			offset += iOffset;
-#endif // SAFE
             if (BitConverter.IsLittleEndian == bSwapMode)
 				return BitConverter.ToInt16(byData, offset);
 			else
@@ -235,9 +229,7 @@ namespace MaxDB.Data.Utilities
 
 		public uint ReadUInt32(int offset)
         {
-#if SAFE
 			offset += iOffset;
-#endif // SAFE
             if (BitConverter.IsLittleEndian == bSwapMode)
 				return BitConverter.ToUInt32(byData, offset);
 			else
@@ -249,18 +241,16 @@ namespace MaxDB.Data.Utilities
 			}
 		}
 
-#if SAFE
 		public void WriteUInt32(uint value, int offset)
 		{
 			WriteValue(value, offset, 4);
 		}
-#endif // SAFE
 
 		public int ReadInt32(int offset)
         {
-#if SAFE
+
 			offset += iOffset;
-#endif // SAFE
+
             if (BitConverter.IsLittleEndian == bSwapMode)
 				return BitConverter.ToInt32(byData, offset);
 			else
@@ -272,7 +262,6 @@ namespace MaxDB.Data.Utilities
 			WriteValue(value, offset, 4);
         }
 
-#if SAFE
 		public ulong ReadUInt64(int offset)
 		{
 			if (BitConverter.IsLittleEndian == bSwapMode)
@@ -299,15 +288,15 @@ namespace MaxDB.Data.Utilities
 		{
 			WriteValue(value, offset, 8);
 		}
-#endif // SAFE
 
-        public string ReadAscii(int offset, int len)
+		public string ReadAscii(int offset, int len)
         {
-#if SAFE
+
 			offset += iOffset;
-#endif // SAFE
             return Encoding.ASCII.GetString(byData, offset, len);
 		}
+
+#endif // SAFE
 
 		public void WriteAscii(string value, int offset)
 		{
@@ -356,11 +345,11 @@ namespace MaxDB.Data.Utilities
         }
 #endif // !SAFE
 
+#if SAFE
 		private void WriteValue(long value, int offset, int bytes)
         {
-#if SAFE
 			offset += iOffset;
-#endif // SAFE
+
             for (int i = 0; i < bytes; i++)
 			{
 				if (bSwapMode)
@@ -370,5 +359,6 @@ namespace MaxDB.Data.Utilities
 				value >>= 8;
 			}
 		}
+#endif // SAFE
 	}
 }

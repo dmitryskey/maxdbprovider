@@ -179,17 +179,17 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public virtual bool GetBoolean(ByteArray mem)
 		{
-			throw CreateGetException("bool");
+			throw CreateGetException(typeof(bool).ToString());
 		}
 
 		public virtual byte GetByte(ISqlParameterController controller, ByteArray mem)
 		{
-			throw CreateGetException("byte");
+			throw CreateGetException(typeof(byte).ToString());
 		}
 
 		public virtual byte[] GetBytes(ISqlParameterController controller, ByteArray mem)
 		{
-			throw CreateGetException("byte[]");
+			throw CreateGetException(typeof(byte[]).ToString());
 		}
 
 		public virtual long GetBytes(ISqlParameterController controller, ByteArray mem, long fldOffset, byte[] buffer, int bufferoffset, int length)
@@ -202,52 +202,52 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public virtual DateTime GetDateTime(ByteArray mem)
 		{
-			throw this.CreateGetException("DateTime");
+			throw this.CreateGetException(typeof(DateTime).ToString());
 		}
 
 		public virtual double GetDouble(ByteArray mem)
 		{
-			throw CreateGetException("double");
+			throw CreateGetException(typeof(double).ToString());
 		}
 
 		public virtual float GetFloat(ByteArray mem)
 		{
-			throw CreateGetException("float");
+			throw CreateGetException(typeof(float).ToString());
 		}
 
 		public virtual BigDecimal GetBigDecimal(ByteArray mem)
 		{
-			throw CreateGetException("decimal");
+			throw CreateGetException(typeof(decimal).ToString());
 		}
 
 		public virtual decimal GetDecimal(ByteArray mem)
 		{
-			throw CreateGetException("decimal");
+			throw CreateGetException(typeof(decimal).ToString());
 		}
 
 		public virtual short GetInt16(ByteArray mem)
 		{
-			throw CreateGetException("Int16");
+			throw CreateGetException(typeof(Int16).ToString());
 		}
 
 		public virtual int GetInt32(ByteArray mem)
 		{
-			throw CreateGetException("Int32");
+			throw CreateGetException(typeof(Int32).ToString());
 		}
 
 		public virtual long GetInt64(ByteArray mem)
 		{
-			throw CreateGetException("Int64");
+			throw CreateGetException(typeof(Int64).ToString());
 		}
 
 		public virtual object GetValue(ISqlParameterController controller, ByteArray mem)
 		{
-			throw CreateGetException("object");
+			throw CreateGetException(typeof(object).ToString());
 		}
 
 		public virtual object[] GetValues(ByteArray mem)
 		{
-			throw CreateGetException("object[]");
+			throw CreateGetException(typeof(object[]).ToString());
 		}
 
 		public virtual string GetString(ISqlParameterController controller, ByteArray mem)
@@ -1386,7 +1386,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				case DBTechTranslator.iNullDefineByte:
 					return null;
 				case DBTechTranslator.iSpecialNullValueDefineByte:
-					return ("NaN");
+					return double.NaN.ToString(CultureInfo.InvariantCulture);
 			}
 			return VDNNumber.Number2String(mem.ReadBytes(iBufferPosition, iPhysicalLength - 1),
 				(byDataType != DataType.FLOAT && byDataType != DataType.VFLOAT), iLogicalLength, frac);

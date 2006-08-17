@@ -24,6 +24,7 @@ using System.Runtime.Serialization;
 using System.Security.Permissions;
 using System.Globalization;
 using System.Data.Common;
+using System.Runtime.InteropServices;
 
 namespace MaxDB.Data
 {
@@ -225,10 +226,11 @@ namespace MaxDB.Data
 			ThrowException(message, errorHandler, null);
 		}
 
+		[SecurityPermissionAttribute(SecurityAction.Demand, SerializationFormatter = true)]
 		public static void ThrowException(string message, IntPtr errorHandler, Exception innerException)
 		{
-			throw new MaxDBException(message + ": " + UnsafeNativeMethods.SQLDBC_ErrorHndl_getErrorText(errorHandler), 
-				UnsafeNativeMethods.SQLDBC_ErrorHndl_getSQLState(errorHandler), UnsafeNativeMethods.SQLDBC_ErrorHndl_getErrorCode(errorHandler),
+			throw new MaxDBException(message + ": " + Marshal.PtrToStringAnsi(UnsafeNativeMethods.SQLDBC_ErrorHndl_getErrorText(errorHandler)), 
+				Marshal.PtrToStringAnsi(UnsafeNativeMethods.SQLDBC_ErrorHndl_getSQLState(errorHandler)), UnsafeNativeMethods.SQLDBC_ErrorHndl_getErrorCode(errorHandler),
 				innerException);
 		}
 #endif
@@ -386,10 +388,12 @@ namespace MaxDB.Data
         {
         }
 
-        public MaxDBValueOverflowException(string typeName, int colIndex)
-            : base(MaxDBMessages.Extract(MaxDBError.VALUEOVERFLOW, colIndex.ToString((CultureInfo.InvariantCulture))))
-        {
-        }
+#if SAFE
+		public MaxDBValueOverflowException(string type, int colIndex)
+			: base(MaxDBMessages.Extract(MaxDBError.VALUEOVERFLOW, type + " " + colIndex.ToString(CultureInfo.InvariantCulture)))
+		{
+		}
+#endif // SAFE
 
         protected MaxDBValueOverflowException(SerializationInfo info, StreamingContext context)
             : base(info, context)

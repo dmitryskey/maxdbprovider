@@ -27,6 +27,8 @@ using System.Collections.Generic;
 #endif // NET20
 using MaxDB.Data.MaxDBProtocol;
 using MaxDB.Data.Utilities;
+using System.Security.Permissions;
+using System.Runtime.InteropServices;
 
 namespace MaxDB.Data
 {
@@ -34,11 +36,11 @@ namespace MaxDB.Data
 #if NET20
  DbDataReader
 #else
-        IDataReader, IDataRecord, IEnumerable, IDisposable
+		IDataReader, IDataRecord, IEnumerable, IDisposable
 #endif // NET20
 
 #if SAFE
-        , ISqlParameterController
+		, ISqlParameterController
 #endif // SAFE
 	{
 		// The DataReader should always be open when returned to the user.
@@ -51,26 +53,26 @@ namespace MaxDB.Data
 
 #if SAFE
 
-        private FetchInfo mFetchInfo;			        // The fetch details.
-        private FetchChunk mCurrentChunk;			    // The data of the last fetch operation.
-        private PositionType mPositionState;		    //the status of the position
-        private PositionType mPositionStateOfChunk;     // The status of the current chunk.
-        private bool bEmpty;                           // is this result set totally empty
-        // a vector of all streams that went outside.
+		private FetchInfo mFetchInfo;			        // The fetch details.
+		private FetchChunk mCurrentChunk;			    // The data of the last fetch operation.
+		private PositionType mPositionState;		    //the status of the position
+		private PositionType mPositionStateOfChunk;     // The status of the current chunk.
+		private bool bEmpty;                           // is this result set totally empty
+		// a vector of all streams that went outside.
 #if NET20
         private List<Stream> lstOpenStreams;
 #else
-        private ArrayList lstOpenStreams;                
+		private ArrayList lstOpenStreams;                
 #endif // NET20
-        private int iRowsInResultSet;                  // the number of rows in this result set, or -1 if not known
-        private int iLargestKnownAbsPos;               // largest known absolute position to be inside.
-        private int iModifiedKernelPos;                // contains 0 if the kernel pos is not modified or the current kernel position.
-        internal int iMaxRows;				           //how many rows fetch
+		private int iRowsInResultSet;                  // the number of rows in this result set, or -1 if not known
+		private int iLargestKnownAbsPos;               // largest known absolute position to be inside.
+		private int iModifiedKernelPos;                // contains 0 if the kernel pos is not modified or the current kernel position.
+		internal int iMaxRows;				           //how many rows fetch
 
-        internal MaxDBDataReader()
-        {
-            bEmpty = true;
-        }
+		internal MaxDBDataReader()
+		{
+			bEmpty = true;
+		}
 
 		internal MaxDBDataReader(MaxDBCommand cmd)
 		{
@@ -79,105 +81,105 @@ namespace MaxDB.Data
 			cmdCommand = cmd;
 		}
 
-        internal MaxDBDataReader(MaxDBConnection connection, FetchInfo fetchInfo, MaxDBCommand cmd, int maxRows, MaxDBReplyPacket reply)
-        {
-            dbConnection = connection;
-            mFetchInfo = fetchInfo;
+		internal MaxDBDataReader(MaxDBConnection connection, FetchInfo fetchInfo, MaxDBCommand cmd, int maxRows, MaxDBReplyPacket reply)
+		{
+			dbConnection = connection;
+			mFetchInfo = fetchInfo;
 
-            bOpened = true;
+			bOpened = true;
 
-            iMaxRows = maxRows;
+			iMaxRows = maxRows;
 
-            cmdCommand = cmd;
-            strUpdatedTableName = cmd.mParseInfo.UpdatedTableName;
+			cmdCommand = cmd;
+			strUpdatedTableName = cmd.mParseInfo.UpdatedTableName;
 
-            InitializeFields();
-            lstOpenStreams = new 
+			InitializeFields();
+			lstOpenStreams = new 
 #if NET20
                 List<Stream>(5);
 #else
-                ArrayList(5);
+				ArrayList(5);
 #endif // NET20
-            if (reply != null)
-            {
-                SetCurrentChunk(new FetchChunk(dbConnection,
-                    FetchType.FIRST,		// fetch first is forward
-                    1,						// absolute start position
-                    reply,					// reply packet
-                    fetchInfo.RecordSize,	// the size for data part navigation condition in that case
-                    maxRows,				// how many rows to fetch
-                    iRowsInResultSet
-                    ));
-                mPositionState = PositionType.BEFORE_FIRST;
-            }
-        }
+			if (reply != null)
+			{
+				SetCurrentChunk(new FetchChunk(dbConnection,
+					FetchType.FIRST,		// fetch first is forward
+					1,						// absolute start position
+					reply,					// reply packet
+					fetchInfo.RecordSize,	// the size for data part navigation condition in that case
+					maxRows,				// how many rows to fetch
+					iRowsInResultSet
+					));
+				mPositionState = PositionType.BEFORE_FIRST;
+			}
+		}
 
-        private void InitializeFields()
-        {
-            mCurrentChunk = null;
-            mPositionState = PositionType.BEFORE_FIRST;
-            mPositionStateOfChunk = PositionType.NOT_AVAILABLE;
-            bEmpty = false;
-            iLargestKnownAbsPos = 1;
-            iRowsInResultSet = -1;
-            iModifiedKernelPos = 0;
-        }
+		private void InitializeFields()
+		{
+			mCurrentChunk = null;
+			mPositionState = PositionType.BEFORE_FIRST;
+			mPositionStateOfChunk = PositionType.NOT_AVAILABLE;
+			bEmpty = false;
+			iLargestKnownAbsPos = 1;
+			iRowsInResultSet = -1;
+			iModifiedKernelPos = 0;
+		}
 
-        private void SetCurrentChunk(FetchChunk newChunk)
-        {
-            mPositionState = mPositionStateOfChunk = PositionType.INSIDE;
-            mCurrentChunk = newChunk;
-            iModifiedKernelPos = 0; // clear this out, until someone will de
-            UpdateRowStatistics();
-        }
+		private void SetCurrentChunk(FetchChunk newChunk)
+		{
+			mPositionState = mPositionStateOfChunk = PositionType.INSIDE;
+			mCurrentChunk = newChunk;
+			iModifiedKernelPos = 0; // clear this out, until someone will de
+			UpdateRowStatistics();
+		}
 
-        private void UpdateRowStatistics()
-        {
-            if (!RowsInResultSetKnown)
-            {
-                // If this is the one and only chunk, yes then we
-                // have only the records in this chunk.
-                if (mCurrentChunk.IsLast && mCurrentChunk.IsFirst)
-                {
-                    iRowsInResultSet = mCurrentChunk.Size;
-                    mCurrentChunk.RowsInResultSet = iRowsInResultSet;
-                }
-                // otherwise, we may have navigated through it from start ...
-                else if (mCurrentChunk.IsLast && mCurrentChunk.IsForward)
-                {
-                    iRowsInResultSet = mCurrentChunk.End;
-                    mCurrentChunk.RowsInResultSet = iRowsInResultSet;
-                }
-                // ... or from end
-                else if (mCurrentChunk.IsFirst && !mCurrentChunk.IsForward)
-                {
-                    iRowsInResultSet = -mCurrentChunk.Start;
-                    mCurrentChunk.RowsInResultSet = iRowsInResultSet;
-                }
-                else if (mCurrentChunk.IsForward)
-                    iLargestKnownAbsPos = Math.Max(iLargestKnownAbsPos, mCurrentChunk.End);
-            }
-        }
+		private void UpdateRowStatistics()
+		{
+			if (!RowsInResultSetKnown)
+			{
+				// If this is the one and only chunk, yes then we
+				// have only the records in this chunk.
+				if (mCurrentChunk.IsLast && mCurrentChunk.IsFirst)
+				{
+					iRowsInResultSet = mCurrentChunk.Size;
+					mCurrentChunk.RowsInResultSet = iRowsInResultSet;
+				}
+					// otherwise, we may have navigated through it from start ...
+				else if (mCurrentChunk.IsLast && mCurrentChunk.IsForward)
+				{
+					iRowsInResultSet = mCurrentChunk.End;
+					mCurrentChunk.RowsInResultSet = iRowsInResultSet;
+				}
+					// ... or from end
+				else if (mCurrentChunk.IsFirst && !mCurrentChunk.IsForward)
+				{
+					iRowsInResultSet = -mCurrentChunk.Start;
+					mCurrentChunk.RowsInResultSet = iRowsInResultSet;
+				}
+				else if (mCurrentChunk.IsForward)
+					iLargestKnownAbsPos = Math.Max(iLargestKnownAbsPos, mCurrentChunk.End);
+			}
+		}
 
-        private bool RowsInResultSetKnown
-        {
-            get
-            {
-                return iRowsInResultSet != -1;
-            }
-        }
+		private bool RowsInResultSetKnown
+		{
+			get
+			{
+				return iRowsInResultSet != -1;
+			}
+		}
 
-        internal bool Empty
-        {
-            set
-            {
-                bEmpty = value;
-            }
-        }
+		internal bool Empty
+		{
+			set
+			{
+				bEmpty = value;
+			}
+		}
 
 #else
 		private IntPtr mResultset = IntPtr.Zero;
-		private Hashtable m_ValArrays = new Hashtable();
+		private Hashtable mValueArrays = new Hashtable();
 
 		internal MaxDBDataReader(MaxDBCommand cmd)
 		{
@@ -203,7 +205,7 @@ namespace MaxDB.Data
 #if NET20
 		public override int Depth
 #else
-        public int Depth
+		public int Depth
 #endif // NET20
 		{
 			get
@@ -215,7 +217,7 @@ namespace MaxDB.Data
 #if NET20
 		public override bool IsClosed
 #else
-        public bool IsClosed
+		public bool IsClosed
 #endif // NET20
 		{
 			//Keep track of the reader state - some methods should be disallowed if the reader is closed.
@@ -228,7 +230,7 @@ namespace MaxDB.Data
 #if NET20
 		public override int RecordsAffected
 #else
-        public int RecordsAffected
+		public int RecordsAffected
 #endif // NET20
 		{
 			get
@@ -240,15 +242,15 @@ namespace MaxDB.Data
 #if NET20
 		public override void Close()
 #else
-        public void Close()
+		public void Close()
 #endif // NET20
 		{
 			if (bOpened)
 			{
 				bOpened = false;
 #if SAFE
-                mCurrentChunk = null;
-                mFetchInfo = null;
+				mCurrentChunk = null;
+				mFetchInfo = null;
 #else
 				if (mResultset != IntPtr.Zero)
 				{
@@ -271,7 +273,7 @@ namespace MaxDB.Data
 #if NET20
 		public override bool NextResult()
 #else
-        public bool NextResult()
+		public bool NextResult()
 #endif // NET20
 		{
 			return false;
@@ -280,54 +282,54 @@ namespace MaxDB.Data
 #if NET20
 		public override bool Read()
 #else
-        public bool Read()
+		public bool Read()
 #endif // NET20
 		{
 #if SAFE
-            AssertNotClosed();
-            // if we have nothing, there is nothing to do.
-            if (bEmpty || bSchemaOnly)
-            {
-                mPositionState = PositionType.AFTER_LAST;
-                return false;
-            }
+			AssertNotClosed();
+			// if we have nothing, there is nothing to do.
+			if (bEmpty || bSchemaOnly)
+			{
+				mPositionState = PositionType.AFTER_LAST;
+				return false;
+			}
 
-            bool result = false;
+			bool result = false;
 
-            // at first we have to close all input streams
-            CloseOpenStreams();
+			// at first we have to close all input streams
+			CloseOpenStreams();
 
-            // if we are outside, ...
-            if (mPositionState == PositionType.BEFORE_FIRST)
-            {
-                // ... check whether we still have it
-                if (mPositionStateOfChunk == PositionType.INSIDE && mCurrentChunk.ContainsRow(1))
-                {
-                    mCurrentChunk.setRow(1);
-                    mPositionState = PositionType.INSIDE;
-                    result = true;
-                }
-                else
-                    result = FetchFirst();
-            }
-            else if (mPositionState == PositionType.INSIDE)
-            {
-                if (mCurrentChunk.Move(1))
-                    result = true;
-                else
-                {
-                    if (mCurrentChunk.IsLast)
-                    {
-                        mPositionState = PositionType.AFTER_LAST;
-                        return false;
-                    }
-                    result = FetchNextChunk();
-                }
-            }
+			// if we are outside, ...
+			if (mPositionState == PositionType.BEFORE_FIRST)
+			{
+				// ... check whether we still have it
+				if (mPositionStateOfChunk == PositionType.INSIDE && mCurrentChunk.ContainsRow(1))
+				{
+					mCurrentChunk.setRow(1);
+					mPositionState = PositionType.INSIDE;
+					result = true;
+				}
+				else
+					result = FetchFirst();
+			}
+			else if (mPositionState == PositionType.INSIDE)
+			{
+				if (mCurrentChunk.Move(1))
+					result = true;
+				else
+				{
+					if (mCurrentChunk.IsLast)
+					{
+						mPositionState = PositionType.AFTER_LAST;
+						return false;
+					}
+					result = FetchNextChunk();
+				}
+			}
 
-            return result;
+			return result;
 #else
-			m_ValArrays.Clear();
+			mValueArrays.Clear();
 			if (bSchemaOnly)
 				return false;
 
@@ -350,13 +352,17 @@ namespace MaxDB.Data
 #if NET20
 		public override DataTable GetSchemaTable()
 #else
-        public DataTable GetSchemaTable()
+		public DataTable GetSchemaTable()
 #endif // NET20
 		{
 			DataTable schema = new DataTable("SchemaTable");
 			schema.Locale = CultureInfo.InvariantCulture;
 			DataTable dtMetaData = new DataTable();
 			dtMetaData.Locale = CultureInfo.InvariantCulture;
+			dtMetaData.Columns.Add(new DataColumn("COLUMNNAME", typeof(string)));
+			dtMetaData.Columns.Add(new DataColumn("MODE", typeof(string)));
+			dtMetaData.Columns.Add(new DataColumn("DEFAULT", typeof(string)));
+			dtMetaData.Columns.Add(new DataColumn("TYPE", typeof(string)));
 			string user = null, table = null;
 
 			DataColumn dcID = new DataColumn("id", typeof(int));
@@ -389,35 +395,48 @@ namespace MaxDB.Data
 					user = schemaName[0].Replace("\"", string.Empty);
 					table = schemaName[1].Replace("\"", string.Empty);
 
-					MaxDBCommand cmdColumns = new MaxDBCommand(
-									"SELECT A.COLUMNNAME, A.MODE, A.DEFAULT, B.TYPE FROM DOMAIN.COLUMNS A " +
-									"LEFT OUTER JOIN DOMAIN.INDEXCOLUMNS B " +
-									"ON A.OWNER = B.OWNER AND A.TABLENAME = B.TABLENAME AND A.COLUMNNAME = B.COLUMNNAME " +
-									"WHERE A.OWNER = ? AND A.TABLENAME = ?", dbConnection);
-					cmdColumns.Parameters.Add("OWNER", MaxDBType.VarCharA).Value = user;
-					cmdColumns.Parameters.Add("TABLENAME", MaxDBType.VarCharA).Value = table;
-					MaxDBDataAdapter da = new MaxDBDataAdapter();
-					da.SelectCommand = cmdColumns;
-					da.Fill(dtMetaData);
+					SqlMode oldMode = dbConnection.SqlMode;
+					dbConnection.SqlMode = SqlMode.Internal;
+
+					try
+					{
+						using (MaxDBCommand cmdColumns = new MaxDBCommand(
+								   "SELECT A.COLUMNNAME, A.MODE, A.DEFAULT, B.TYPE FROM DOMAIN.COLUMNS A " +
+								   "LEFT OUTER JOIN DOMAIN.INDEXCOLUMNS B " +
+								   "ON A.OWNER = B.OWNER AND A.TABLENAME = B.TABLENAME AND A.COLUMNNAME = B.COLUMNNAME " +
+								   "WHERE A.OWNER = ? AND A.TABLENAME = ?", dbConnection))
+						{
+							cmdColumns.Parameters.Add("OWNER", MaxDBType.VarCharA).Value = user;
+							cmdColumns.Parameters.Add("TABLENAME", MaxDBType.VarCharA).Value = table;
+							using (MaxDBDataReader reader = cmdColumns.ExecuteReader())
+								while (reader.Read())
+									dtMetaData.Rows.Add(new object[]{
+																		reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3)});
+						}
+					}
+					finally
+					{
+						dbConnection.SqlMode = oldMode;
+					}
 				}
 			}
 
 #if SAFE
-            for (int cnt = 0; cnt < FieldCount; cnt++)
-            {
-                DBTechTranslator info = mFetchInfo.GetColumnInfo(cnt);
-                row = schema.NewRow();
+			for (int cnt = 0; cnt < FieldCount; cnt++)
+			{
+				DBTechTranslator info = mFetchInfo.GetColumnInfo(cnt);
+				row = schema.NewRow();
 
-                row["ColumnName"] = info.ColumnName;
-                row["ColumnOrdinal"] = cnt + 1;
-                row["ColumnSize"] = info.PhysicalLength;
-                row["NumericPrecision"] = info.Precision;
-                row["NumericScale"] = info.Scale;
-                row["DataType"] = info.ColumnDataType;
-                row["ProviderType"] = info.ColumnProviderType;
-                row["IsLong"] = info.IsLongKind;
-                row["AllowDBNull"] = info.IsNullable;
-                row["IsReadOnly"] = true;
+				row["ColumnName"] = info.ColumnName;
+				row["ColumnOrdinal"] = cnt + 1;
+				row["ColumnSize"] = info.PhysicalLength;
+				row["NumericPrecision"] = info.Precision;
+				row["NumericScale"] = info.Scale;
+				row["DataType"] = info.ColumnDataType;
+				row["ProviderType"] = info.ColumnProviderType;
+				row["IsLong"] = info.IsLongKind;
+				row["AllowDBNull"] = info.IsNullable;
+				row["IsReadOnly"] = true;
 #else
 			IntPtr meta = UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset);
 
@@ -461,14 +480,14 @@ namespace MaxDB.Data
 #if NET20
 		public override int FieldCount
 #else
-        public int FieldCount
+		public int FieldCount
 #endif // NET20
 		{
 			// Return the count of the number of columns, which in this case is the size of the column metadata array.
 			get
 			{
 #if SAFE
-                return mFetchInfo.NumberOfColumns;
+				return mFetchInfo.NumberOfColumns;
 #else
 				return UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnCount(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset));
 #endif // SAFE
@@ -478,7 +497,7 @@ namespace MaxDB.Data
 #if NET20
 		public override int VisibleFieldCount
 #else
-        public int VisibleFieldCount
+		public int VisibleFieldCount
 #endif // NET20
 		{
 			// Return the count of the number of columns, which in this case is the size of the column metadata array.
@@ -492,13 +511,13 @@ namespace MaxDB.Data
 #if NET20
 		public override string GetName(int i)
 #else
-        public string GetName(int i)
+		public string GetName(int i)
 #endif // NET20
 		{
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            return mFetchInfo.GetColumnInfo(i).ColumnName;
+			return mFetchInfo.GetColumnInfo(i).ColumnName;
 #else
 			return Encoding.Unicode.GetString(GetNameBytes((short)(i + 1))).TrimEnd('\0');
 #endif
@@ -507,7 +526,7 @@ namespace MaxDB.Data
 #if NET20
 		public override string GetDataTypeName(int i)
 #else
-        public string GetDataTypeName(int i)
+		public string GetDataTypeName(int i)
 #endif // NET20
 		{
 			/*
@@ -518,7 +537,7 @@ namespace MaxDB.Data
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            return mFetchInfo.GetColumnInfo(i).ColumnTypeName;
+			return mFetchInfo.GetColumnInfo(i).ColumnTypeName;
 #else
 			return GeneralColumnInfo.GetTypeName(
 				UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1)));
@@ -528,13 +547,13 @@ namespace MaxDB.Data
 #if NET20
 		public override Type GetFieldType(int i)
 #else
-        public Type GetFieldType(int i)
+		public Type GetFieldType(int i)
 #endif // NET 20
 		{
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            return mFetchInfo.GetColumnInfo(i).ColumnDataType;
+			return mFetchInfo.GetColumnInfo(i).ColumnDataType;
 #else
 			return GeneralColumnInfo.GetType(
 				UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1)));
@@ -544,79 +563,132 @@ namespace MaxDB.Data
 #if NET20
 		public override object GetValue(int i)
 #else
-        public object GetValue(int i)
+		public object GetValue(int i)
 #endif // NET 20
 		{
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            object obj_value = transl.IsDBNull(CurrentRecord) ? DBNull.Value : transl.GetValue(this, CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			object obj_value = transl.IsDBNull(CurrentRecord) ? DBNull.Value : transl.GetValue(this, CurrentRecord);
 
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-                if (obj_value != DBNull.Value)
-                {
-                    string str_value = obj_value.ToString();
-                    LogValue(i + 1, transl, "OBJECT", 0, 1,
-                        (str_value.Length <= MaxDBLogger.DataSize ? str_value : str_value.Substring(0, MaxDBLogger.DataSize) + "..."));
-                }
-                else
-                    LogValue(i + 1, transl, "OBJECT", 0, 1, "NULL");
-            //<<< SQL TRACE
-
-            return obj_value;
-#else
-			int columnType;
-			byte[] data = GetValueBytes(i, out columnType);
-			if (data != null)
-			{
-				switch (columnType)
+			//>>> SQL TRACE
+			if (dbConnection.mLogger.TraceSQL)
+				if (obj_value != DBNull.Value)
 				{
-					case DataType.BOOLEAN:
-						return (data[0] == 1);
-					case DataType.DATE:
-						return ODBCConverter.GetDateTime(ODBCConverter.GetDate(data));
-					case DataType.TIME:
-						return ODBCConverter.GetDateTime(ODBCConverter.GetTime(data));
-					case DataType.TIMESTAMP:
-						return ODBCConverter.GetDateTime(ODBCConverter.GetTimeStamp(data));
-					case DataType.FIXED:
-					case DataType.FLOAT:
-					case DataType.VFLOAT:
-						return BitConverter.ToDouble(data, 0);
-					case DataType.INTEGER:
-						return BitConverter.ToInt32(data, 0);
-					case DataType.SMALLINT:
-						return BitConverter.ToInt16(data, 0);
-					case DataType.STRUNI:
-					case DataType.VARCHARUNI:
-					case DataType.UNICODE:
-						if (Consts.IsLittleEndian)
-							return Encoding.Unicode.GetString(data);
-						else
-							return Encoding.BigEndianUnicode.GetString(data);
-					case DataType.STRA:
-					case DataType.VARCHARA:
-					case DataType.CHA:
-						return Encoding.ASCII.GetString(data);
-					case DataType.STRB:
-					case DataType.VARCHARB:
-					case DataType.CHB:
-						return data;
-					default:
-						return DBNull.Value;
+					string str_value = obj_value.ToString();
+					LogValue(i + 1, transl, "OBJECT", 0, 1,
+						(str_value.Length <= MaxDBLogger.DataSize ? str_value : str_value.Substring(0, MaxDBLogger.DataSize) + "..."));
 				}
+				else
+					LogValue(i + 1, transl, "OBJECT", 0, 1, "NULL");
+			//<<< SQL TRACE
+
+			return obj_value;
+#else
+			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
+
+			if (mValueArrays[i] != null)
+				return mValueArrays[i];
+
+			bool isNull;
+
+			switch (columnType)
+			{
+				case DataType.BOOLEAN:
+					bool result = GetBooleanValue(i, out isNull);
+					if (isNull)
+						mValueArrays[i] = DBNull.Value;
+					else
+						mValueArrays[i] = result;
+					break;
+				case DataType.DATE:
+					OdbcDate dt = GetDateValue(i, out isNull);
+					if (isNull)
+						mValueArrays[i] = DBNull.Value;
+					else
+						mValueArrays[i] = ODBCConverter.GetDateTime(dt);
+					break;
+				case DataType.TIME:
+					OdbcTime tm = GetTimeValue(i, out isNull);
+					if (isNull)
+						mValueArrays[i] = DBNull.Value;
+					else
+						mValueArrays[i] = ODBCConverter.GetDateTime(tm);
+					break;
+				case DataType.TIMESTAMP:
+					OdbcTimeStamp ts = GetTimeStampValue(i, out isNull);
+					if (isNull)
+						mValueArrays[i] = DBNull.Value;
+					else
+						mValueArrays[i] = ODBCConverter.GetDateTime(ts);
+					break;
+				case DataType.FIXED:
+				case DataType.FLOAT:
+				case DataType.VFLOAT:
+					double dbl = GetDoubleValue(i, out isNull);
+					if (isNull)
+						mValueArrays[i] = DBNull.Value;
+					else
+						mValueArrays[i] = dbl;
+					break;
+				case DataType.INTEGER:
+					int integer = GetIntegerValue(i, out isNull);
+					if (isNull)
+						mValueArrays[i] = DBNull.Value;
+					else
+						mValueArrays[i] = integer;
+					break;
+				case DataType.SMALLINT:
+					short sh = GetShortValue(i, out isNull);
+					if (isNull)
+						mValueArrays[i] = DBNull.Value;
+					else
+						mValueArrays[i] = sh;
+					break;
+				case DataType.STRUNI:
+				case DataType.VARCHARUNI:
+				case DataType.UNICODE:
+					byte[] unicodeData = GetUnicodeBytes(i);
+					if (unicodeData == null)
+						mValueArrays[i] = DBNull.Value;
+					else
+						if (Consts.IsLittleEndian)
+							mValueArrays[i] = Encoding.Unicode.GetString(unicodeData);
+						else
+							mValueArrays[i] = Encoding.BigEndianUnicode.GetString(unicodeData);
+					break;
+				case DataType.STRA:
+				case DataType.VARCHARA:
+				case DataType.CHA:
+					byte[] asciiData = GetAsciiBytes(i);
+					if (asciiData == null)
+						mValueArrays[i] = DBNull.Value;
+					else
+						mValueArrays[i] = Encoding.ASCII.GetString(asciiData);
+					break;
+				case DataType.STRB:
+				case DataType.VARCHARB:
+				case DataType.CHB:
+					byte[] data = GetBinary(i);
+					if (data == null)
+						mValueArrays[i] = DBNull.Value;
+					else
+						mValueArrays[i] = data;
+					break;
+				default:
+					throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
+						DataType.StrValues[columnType]));
 			}
-			else
-				return DBNull.Value;
+
+			return mValueArrays[i];
 #endif // SAFE
 		}
 
 #if NET20
 		public override int GetValues(object[] values)
 #else
-        public int GetValues(object[] values)
+		public int GetValues(object[] values)
 #endif // NET20
 		{
 			if (values == null)
@@ -630,7 +702,7 @@ namespace MaxDB.Data
 #if NET20
 		public override int GetOrdinal(string name)
 #else
-        public int GetOrdinal(string name)
+		public int GetOrdinal(string name)
 #endif // NET20
 		{
 			if (name == null)
@@ -646,7 +718,7 @@ namespace MaxDB.Data
 #if NET20
 		public override object this[int i]
 #else
-        public object this[int i]
+		public object this[int i]
 #endif // NET20
 		{
 			get
@@ -658,7 +730,7 @@ namespace MaxDB.Data
 #if NET20
 		public override object this[string name]
 #else
-        public object this[string name]
+		public object this[string name]
 #endif // NET20
 		{
 			// Look up the ordinal and return the value at that position.
@@ -669,25 +741,25 @@ namespace MaxDB.Data
 		}
 
 #if SAFE
-        private void LogValue(int i, DBTechTranslator transl, string type, int size, int minusLen, string value)
-        {
-            DateTime dt = DateTime.Now;
-            dbConnection.mLogger.SqlTrace(dt, "GET " + type + " VALUE:");
-            dbConnection.mLogger.SqlTraceDataHeader(dt);
-            StringBuilder sb = new StringBuilder();
-            sb.Append(i.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.NumSize));
-            sb.Append(transl.ColumnTypeName.PadRight(MaxDBLogger.TypeSize));
-            sb.Append((transl.PhysicalLength - minusLen).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
-            sb.Append(size.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
-            sb.Append(value);
-            dbConnection.mLogger.SqlTrace(dt, sb.ToString());
-        }
+		private void LogValue(int i, DBTechTranslator transl, string type, int size, int minusLen, string value)
+		{
+			DateTime dt = DateTime.Now;
+			dbConnection.mLogger.SqlTrace(dt, "GET " + type + " VALUE:");
+			dbConnection.mLogger.SqlTraceDataHeader(dt);
+			StringBuilder sb = new StringBuilder();
+			sb.Append(i.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.NumSize));
+			sb.Append(transl.ColumnTypeName.PadRight(MaxDBLogger.TypeSize));
+			sb.Append((transl.PhysicalLength - minusLen).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
+			sb.Append(size.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
+			sb.Append(value);
+			dbConnection.mLogger.SqlTrace(dt, sb.ToString());
+		}
 #endif  // SAFE
 
 #if NET20
 		public override bool GetBoolean(int i)
 #else
-        public bool GetBoolean(int i)
+		public bool GetBoolean(int i)
 #endif // NET20
 		{
 			/*
@@ -698,115 +770,201 @@ namespace MaxDB.Data
 				throw new InvalidColumnException(i);
 
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            bool bool_value = transl.GetBoolean(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			bool bool_value = transl.GetBoolean(CurrentRecord);
 
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-                LogValue(i + 1, transl, "BOOLEAN", 1, 0, bool_value.ToString());
-            //<<< SQL TRACE
+			//>>> SQL TRACE
+			if (dbConnection.mLogger.TraceSQL)
+				LogValue(i + 1, transl, "BOOLEAN", 1, 0, bool_value.ToString());
+			//<<< SQL TRACE
 
-            return bool_value;
+			return bool_value;
 #else
-			int columnType;
-			byte[] data = GetValueBytes(i, out columnType);
-			if (data != null)
+			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(
+				UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
+
+			if (mValueArrays[i] != null)
+				return (bool)mValueArrays[i];
+
+			bool isNull;
+			bool result;
+			switch (columnType)
 			{
-				switch (columnType)
-				{
-					case DataType.BOOLEAN:
-					case DataType.STRB:
-					case DataType.VARCHARB:
-					case DataType.CHB:
-						return (data[0] == 1);
-					case DataType.FIXED:
-					case DataType.FLOAT:
-					case DataType.VFLOAT:
-						return (BitConverter.ToDouble(data, 0) == 1);
-					case DataType.INTEGER:
-						return (BitConverter.ToInt32(data, 0) == 1);
-					case DataType.SMALLINT:
-						return (BitConverter.ToInt16(data, 0) == 1);
-					case DataType.STRUNI:
-					case DataType.VARCHARUNI:
-					case DataType.UNICODE:
-						if (Consts.IsLittleEndian)
-							return bool.Parse(Encoding.Unicode.GetString(data));
-						else
-							return bool.Parse(Encoding.BigEndianUnicode.GetString(data));
-					case DataType.STRA:
-					case DataType.VARCHARA:
-					case DataType.CHA:
-						return bool.Parse(Encoding.ASCII.GetString(data));
-					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
-							DataType.StrValues[columnType], "Boolean"));
-				}
+				case DataType.BOOLEAN:
+					result = GetBooleanValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.FIXED:
+				case DataType.FLOAT:
+				case DataType.VFLOAT:
+					result = (GetDoubleValue(i, out isNull) == 1);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.INTEGER:
+					result = (GetIntegerValue(i, out isNull) == 1);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.SMALLINT:
+					result = (GetShortValue(i, out isNull) == 1);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRUNI:
+				case DataType.VARCHARUNI:
+				case DataType.UNICODE:
+					byte[] unicodeData = GetUnicodeBytes(i);
+					if (unicodeData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					if (Consts.IsLittleEndian)
+						result = bool.Parse(Encoding.Unicode.GetString(unicodeData));
+					else
+						result = bool.Parse(Encoding.BigEndianUnicode.GetString(unicodeData));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRA:
+				case DataType.VARCHARA:
+				case DataType.CHA:
+					byte[] asciiData = GetAsciiBytes(i);
+					if (asciiData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = bool.Parse(Encoding.ASCII.GetString(asciiData));
+					mValueArrays[i] = result;
+					return result;
+				default:
+					throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
+						DataType.StrValues[columnType], typeof(bool).ToString()));
 			}
-			else
-				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+
 #endif // SAFE
 		}
 
 #if NET20
 		public override byte GetByte(int i)
 #else
-        public byte GetByte(int i)
+		public byte GetByte(int i)
 #endif // NET20
 		{
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            byte byte_value = transl.GetByte(this, CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			byte byte_value = transl.GetByte(this, CurrentRecord);
 
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-                LogValue(i + 1, transl, "BYTE", 1, 0, byte_value.ToString(CultureInfo.InvariantCulture));
-            //<<< SQL TRACE
+			//>>> SQL TRACE
+			if (dbConnection.mLogger.TraceSQL)
+				LogValue(i + 1, transl, "BYTE", 1, 0, byte_value.ToString(CultureInfo.InvariantCulture));
+			//<<< SQL TRACE
 
-            return byte_value;
+			return byte_value;
 #else
-			byte[] buffer = new byte[1];
-			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
-			GetValueBytes(i, columnType, 0, buffer, 0, 1);
-			return buffer[0];
+			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(
+				UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
+
+			if (mValueArrays[i] != null)
+				return (byte)mValueArrays[i];
+
+			bool isNull;
+			byte result;
+
+			switch (columnType)
+			{
+				case DataType.BOOLEAN:
+					result = GetBooleanValue(i, out isNull) ? (byte)1 : (byte)0;
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.FIXED:
+				case DataType.FLOAT:
+				case DataType.VFLOAT:
+					result = (byte)GetDoubleValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.INTEGER:
+					result = (byte)GetIntegerValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.SMALLINT:
+					result = (byte)GetShortValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRUNI:
+				case DataType.VARCHARUNI:
+				case DataType.UNICODE:
+					byte[] unicodeData = GetUnicodeBytes(i);
+					if (unicodeData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = unicodeData[0];
+					return unicodeData[0];
+				case DataType.STRA:
+				case DataType.VARCHARA:
+				case DataType.CHA:
+					byte[] asciiData = GetAsciiBytes(i);
+					if (asciiData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = asciiData[0];
+					return asciiData[0];
+				case DataType.STRB:
+				case DataType.VARCHARB:
+				case DataType.CHB:
+					byte[] data = GetBinary(i);
+					if (data == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = data[0];
+					return data[0];
+				default:
+					throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
+						DataType.StrValues[columnType], typeof(byte).ToString()));
+			}
 #endif // SAFE
 		}
 
 #if NET20
 		public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
 #else
-        public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
+		public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
 #endif // NET20
 		{
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            long result = transl.GetBytes(this, CurrentRecord, fieldOffset, buffer, bufferoffset, length);
+			DBTechTranslator transl = FindColumnInfo(i);
+			long result = transl.GetBytes(this, CurrentRecord, fieldOffset, buffer, bufferoffset, length);
 
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-            {
-                byte[] logs = new byte[Math.Min(MaxDBLogger.DataSize / 2, length)];
-                Array.Copy(buffer, bufferoffset, logs, 0, logs.Length);
+			//>>> SQL TRACE
+			if (dbConnection.mLogger.TraceSQL)
+			{
+				byte[] logs = new byte[Math.Min(MaxDBLogger.DataSize / 2, length)];
+				Array.Copy(buffer, bufferoffset, logs, 0, logs.Length);
 
-                LogValue(i + 1, transl, "BYTES", logs.Length, 0, Consts.ToHexString(logs) + (logs.Length < length ? "..." : ""));
-            }
-            //<<< SQL TRACE
+				LogValue(i + 1, transl, "BYTES", logs.Length, 0, Consts.ToHexString(logs) + (logs.Length < length ? "..." : ""));
+			}
+			//<<< SQL TRACE
 
-            return result;
+			return result;
 #else
 			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
-			return GetValueBytes(i, columnType, fieldOffset, buffer, bufferoffset, length);
+			return GetValueBytes(i, columnType, buffer, bufferoffset, length);
 #endif
 		}
 
 #if NET20
 		public override char GetChar(int i)
 #else
-        public char GetChar(int i)
+		public char GetChar(int i)
 #endif // NET20
 		{
 			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
@@ -818,7 +976,7 @@ namespace MaxDB.Data
 #if NET20
 		public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
 #else
-        public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
+		public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
 #endif // NET20
 		{
 			if (buffer == null)
@@ -826,20 +984,20 @@ namespace MaxDB.Data
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            long result = transl.GetChars(this, CurrentRecord, fieldoffset, buffer, bufferoffset, length);
+			DBTechTranslator transl = FindColumnInfo(i);
+			long result = transl.GetChars(this, CurrentRecord, fieldoffset, buffer, bufferoffset, length);
 
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-            {
-                char[] logs = new char[Math.Min(MaxDBLogger.DataSize, length)];
-                Array.Copy(buffer, bufferoffset, logs, 0, logs.Length);
+			//>>> SQL TRACE
+			if (dbConnection.mLogger.TraceSQL)
+			{
+				char[] logs = new char[Math.Min(MaxDBLogger.DataSize, length)];
+				Array.Copy(buffer, bufferoffset, logs, 0, logs.Length);
 
-                LogValue(i + 1, transl, "CHARS", logs.Length, 0, new string(logs) + (logs.Length < length ? "..." : ""));
-            }
-            //<<< SQL TRACE
+				LogValue(i + 1, transl, "CHARS", logs.Length, 0, new string(logs) + (logs.Length < length ? "..." : ""));
+			}
+			//<<< SQL TRACE
 
-            return result;
+			return result;
 #else
 			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
 			int elemSize;
@@ -857,7 +1015,7 @@ namespace MaxDB.Data
 			}
 
 			byte[] byte_buffer = new byte[buffer.Length * elemSize];
-			long result_length = GetValueBytes(i, columnType, fieldoffset * elemSize, byte_buffer, bufferoffset * elemSize, length * elemSize);
+			long result_length = GetValueBytes(i, columnType, byte_buffer, bufferoffset * elemSize, length * elemSize);
 			if (elemSize == Consts.UnicodeWidth)
 				Encoding.Unicode.GetChars(byte_buffer, 0, byte_buffer.Length, buffer, 0);
 			else
@@ -870,7 +1028,7 @@ namespace MaxDB.Data
 #if NET20
 		public override Guid GetGuid(int i)
 #else
-        public Guid GetGuid(int i)
+		public Guid GetGuid(int i)
 #endif // NET20
 		{
 			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
@@ -882,412 +1040,719 @@ namespace MaxDB.Data
 #if NET20
 		public override short GetInt16(int i)
 #else
-        public short GetInt16(int i)
+		public short GetInt16(int i)
 #endif // NET20
 		{
 			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            short short_value = transl.GetInt16(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			short short_value = transl.GetInt16(CurrentRecord);
 
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-                LogValue(i + 1, transl, "INT16", 2, 0, short_value.ToString(CultureInfo.InvariantCulture));
-            //<<< SQL TRACE
+			//>>> SQL TRACE
+			if (dbConnection.mLogger.TraceSQL)
+				LogValue(i + 1, transl, "INT16", 2, 0, short_value.ToString(CultureInfo.InvariantCulture));
+			//<<< SQL TRACE
 
-            return short_value;
+			return short_value;
 #else
-			int columnType;
-			byte[] data = GetValueBytes(i, out columnType);
-			if (data != null)
+			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(
+				UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
+
+			if (mValueArrays[i] != null)
+				return (short)mValueArrays[i];
+
+			bool isNull;
+			short result;
+
+			switch (columnType)
 			{
-				switch (columnType)
-				{
-					case DataType.BOOLEAN:
-						return data[0];
-					case DataType.FIXED:
-					case DataType.FLOAT:
-					case DataType.VFLOAT:
-						return (short)BitConverter.ToDouble(data, 0);
-					case DataType.INTEGER:
-						return (short)BitConverter.ToInt32(data, 0);
-					case DataType.SMALLINT:
-						return BitConverter.ToInt16(data, 0);
-					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
-							DataType.StrValues[columnType], "Int16"));
-				}
+				case DataType.BOOLEAN:
+					result = GetBooleanValue(i, out isNull) ? (short)1 : (short)0;
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.FIXED:
+				case DataType.FLOAT:
+				case DataType.VFLOAT:
+					result = (short)GetDoubleValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.INTEGER:
+					result = (short)GetIntegerValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.SMALLINT:
+					result = GetShortValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRUNI:
+				case DataType.VARCHARUNI:
+				case DataType.UNICODE:
+					byte[] unicodeData = GetUnicodeBytes(i);
+					if (unicodeData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					if (Consts.IsLittleEndian)
+						result = short.Parse(Encoding.Unicode.GetString(unicodeData), CultureInfo.InvariantCulture);
+					else
+						result = short.Parse(Encoding.BigEndianUnicode.GetString(unicodeData), CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRA:
+				case DataType.VARCHARA:
+				case DataType.CHA:
+					byte[] asciiData = GetAsciiBytes(i);
+					if (asciiData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = short.Parse(Encoding.ASCII.GetString(asciiData), CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				default:
+					throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
+						DataType.StrValues[columnType], typeof(Int16).ToString()));
 			}
-			else
-				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
 		}
 
 #if NET20
 		public override int GetInt32(int i)
 #else
-        public int GetInt32(int i)
+		public int GetInt32(int i)
 #endif
 		{
 			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            int int_value = transl.GetInt32(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			int int_value = transl.GetInt32(CurrentRecord);
 
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-                LogValue(i + 1, transl, "INT32", 4, 0, int_value.ToString(CultureInfo.InvariantCulture));
-            //<<< SQL TRACE
+			//>>> SQL TRACE
+			if (dbConnection.mLogger.TraceSQL)
+				LogValue(i + 1, transl, "INT32", 4, 0, int_value.ToString(CultureInfo.InvariantCulture));
+			//<<< SQL TRACE
 
-            return int_value;
+			return int_value;
 #else
-			int columnType;
-			byte[] data = GetValueBytes(i, out columnType);
-			if (data != null)
+			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(
+				UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
+
+			if (mValueArrays[i] != null)
+				return (int)mValueArrays[i];
+
+			bool isNull;
+			int result;
+
+			switch (columnType)
 			{
-				switch (columnType)
-				{
-					case DataType.BOOLEAN:
-						return data[0];
-					case DataType.FIXED:
-					case DataType.FLOAT:
-					case DataType.VFLOAT:
-						return (int)BitConverter.ToDouble(data, 0);
-					case DataType.INTEGER:
-						return BitConverter.ToInt32(data, 0);
-					case DataType.SMALLINT:
-						return BitConverter.ToInt16(data, 0);
-					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
-							DataType.StrValues[columnType], "Int32"));
-				}
+				case DataType.BOOLEAN:
+					result = GetBooleanValue(i, out isNull) ? 1 : 0;
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.FIXED:
+				case DataType.FLOAT:
+				case DataType.VFLOAT:
+					result = (int)GetDoubleValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.INTEGER:
+					result = GetIntegerValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.SMALLINT:
+					result = GetShortValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRUNI:
+				case DataType.VARCHARUNI:
+				case DataType.UNICODE:
+					byte[] unicodeData = GetUnicodeBytes(i);
+					if (unicodeData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					if (Consts.IsLittleEndian)
+						result = int.Parse(Encoding.Unicode.GetString(unicodeData), CultureInfo.InvariantCulture);
+					else
+						result = int.Parse(Encoding.BigEndianUnicode.GetString(unicodeData), CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRA:
+				case DataType.VARCHARA:
+				case DataType.CHA:
+					byte[] asciiData = GetAsciiBytes(i);
+					if (asciiData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = int.Parse(Encoding.ASCII.GetString(asciiData), CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				default:
+					throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
+						DataType.StrValues[columnType], typeof(Int32).ToString()));
 			}
-			else
-				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
 		}
 
 #if NET20
 		public override long GetInt64(int i)
 #else
-        public long GetInt64(int i)
+		public long GetInt64(int i)
 #endif // NET20
 		{
 			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            long long_value = transl.GetInt64(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			long long_value = transl.GetInt64(CurrentRecord);
 
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-                LogValue(i + 1, transl, "INT64", 8, 0, long_value.ToString(CultureInfo.InvariantCulture));
-            //<<< SQL TRACE
+			//>>> SQL TRACE
+			if (dbConnection.mLogger.TraceSQL)
+				LogValue(i + 1, transl, "INT64", 8, 0, long_value.ToString(CultureInfo.InvariantCulture));
+			//<<< SQL TRACE
 
-            return long_value;
+			return long_value;
 #else
-			int columnType;
-			byte[] data = GetValueBytes(i, out columnType);
-			if (data != null)
+			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(
+				UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
+
+			if (mValueArrays[i] != null)
+				return (long)mValueArrays[i];
+
+			bool isNull;
+			long result;
+
+			switch (columnType)
 			{
-				switch (columnType)
-				{
-					case DataType.BOOLEAN:
-						return data[0];
-					case DataType.FIXED:
-					case DataType.FLOAT:
-					case DataType.VFLOAT:
-						return (long)BitConverter.ToDouble(data, 0);
-					case DataType.INTEGER:
-						return BitConverter.ToInt32(data, 0);
-					case DataType.SMALLINT:
-						return BitConverter.ToInt16(data, 0);
-					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
-							DataType.StrValues[columnType], "Int64"));
-				}
+				case DataType.BOOLEAN:
+					result = GetBooleanValue(i, out isNull) ? 1 : 0;
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.FIXED:
+				case DataType.FLOAT:
+				case DataType.VFLOAT:
+					result = (long)GetDoubleValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.INTEGER:
+					result = GetIntegerValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					return result;
+				case DataType.SMALLINT:
+					result = GetShortValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRUNI:
+				case DataType.VARCHARUNI:
+				case DataType.UNICODE:
+					byte[] unicodeData = GetUnicodeBytes(i);
+					if (unicodeData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					if (Consts.IsLittleEndian)
+						result = long.Parse(Encoding.Unicode.GetString(unicodeData), CultureInfo.InvariantCulture);
+					else
+						result = long.Parse(Encoding.BigEndianUnicode.GetString(unicodeData), CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRA:
+				case DataType.VARCHARA:
+				case DataType.CHA:
+					byte[] asciiData = GetAsciiBytes(i);
+					if (asciiData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = long.Parse(Encoding.ASCII.GetString(asciiData), CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				default:
+					throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
+						DataType.StrValues[columnType], typeof(Int64).ToString()));
 			}
-			else
-				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
 		}
 
 #if NET20
 		public override float GetFloat(int i)
 #else
-        public float GetFloat(int i)
+		public float GetFloat(int i)
 #endif // NET20
 		{
 			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            float float_value = transl.GetFloat(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			float float_value = transl.GetFloat(CurrentRecord);
 
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-                LogValue(i + 1, transl, "FLOAT", 4, 0, float_value.ToString(CultureInfo.InvariantCulture));
-            //<<< SQL TRACE
+			//>>> SQL TRACE
+			if (dbConnection.mLogger.TraceSQL)
+				LogValue(i + 1, transl, "FLOAT", 4, 0, float_value.ToString(CultureInfo.InvariantCulture));
+			//<<< SQL TRACE
 
-            return float_value;
+			return float_value;
 #else
-			int columnType;
-			byte[] data = GetValueBytes(i, out columnType);
-			if (data != null)
+			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(
+				UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
+
+			if (mValueArrays[i] != null)
+				return (float)mValueArrays[i];
+
+			bool isNull;
+			float result;
+
+			switch (columnType)
 			{
-				switch (columnType)
-				{
-					case DataType.BOOLEAN:
-						return data[0];
-					case DataType.FIXED:
-					case DataType.FLOAT:
-					case DataType.VFLOAT:
-						return (float)BitConverter.ToDouble(data, 0);
-					case DataType.INTEGER:
-						return BitConverter.ToInt32(data, 0);
-					case DataType.SMALLINT:
-						return BitConverter.ToInt16(data, 0);
-					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
-							DataType.StrValues[columnType], "Float"));
-				}
+				case DataType.BOOLEAN:
+					result = GetBooleanValue(i, out isNull) ? 1 : 0;
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.FIXED:
+				case DataType.FLOAT:
+				case DataType.VFLOAT:
+					result = (float)GetDoubleValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.INTEGER:
+					result = GetIntegerValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.SMALLINT:
+					result = GetShortValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRUNI:
+				case DataType.VARCHARUNI:
+				case DataType.UNICODE:
+					byte[] unicodeData = GetUnicodeBytes(i);
+					if (unicodeData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					if (Consts.IsLittleEndian)
+						result = float.Parse(Encoding.Unicode.GetString(unicodeData), CultureInfo.InvariantCulture);
+					else
+						result = float.Parse(Encoding.BigEndianUnicode.GetString(unicodeData), CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRA:
+				case DataType.VARCHARA:
+				case DataType.CHA:
+					byte[] asciiData = GetAsciiBytes(i);
+					if (asciiData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = float.Parse(Encoding.ASCII.GetString(asciiData), CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				default:
+					throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
+						DataType.StrValues[columnType], typeof(Int32).ToString()));
 			}
-			else
-				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
 		}
 
 #if NET20
 		public override double GetDouble(int i)
 #else
-        public double GetDouble(int i)
+		public double GetDouble(int i)
 #endif // NET20
 		{
 			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            double double_value = transl.GetDouble(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			double double_value = transl.GetDouble(CurrentRecord);
 
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-                LogValue(i + 1, transl, "DOUBLE", 8, 0, double_value.ToString(CultureInfo.InvariantCulture));
-            //<<< SQL TRACE
+			//>>> SQL TRACE
+			if (dbConnection.mLogger.TraceSQL)
+				LogValue(i + 1, transl, "DOUBLE", 8, 0, double_value.ToString(CultureInfo.InvariantCulture));
+			//<<< SQL TRACE
 
-            return double_value;
+			return double_value;
 #else
-			int columnType;
-			byte[] data = GetValueBytes(i, out columnType);
-			if (data != null)
+			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(
+				UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
+
+			if (mValueArrays[i] != null)
+				return (double)mValueArrays[i];
+
+			bool isNull;
+			double result;
+
+			switch (columnType)
 			{
-				switch (columnType)
-				{
-					case DataType.BOOLEAN:
-						return data[0];
-					case DataType.FIXED:
-					case DataType.FLOAT:
-					case DataType.VFLOAT:
-						return BitConverter.ToDouble(data, 0);
-					case DataType.INTEGER:
-						return BitConverter.ToInt32(data, 0);
-					case DataType.SMALLINT:
-						return BitConverter.ToInt16(data, 0);
-					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
-							DataType.StrValues[columnType], "Double"));
-				}
+				case DataType.BOOLEAN:
+					result = GetBooleanValue(i, out isNull) ? 1 : 0;
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.FIXED:
+				case DataType.FLOAT:
+				case DataType.VFLOAT:
+					result = GetDoubleValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.INTEGER:
+					result = GetIntegerValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.SMALLINT:
+					result = GetShortValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRUNI:
+				case DataType.VARCHARUNI:
+				case DataType.UNICODE:
+					byte[] unicodeData = GetUnicodeBytes(i);
+					if (unicodeData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					if (Consts.IsLittleEndian)
+						result = double.Parse(Encoding.Unicode.GetString(unicodeData), CultureInfo.InvariantCulture);
+					else
+						result = double.Parse(Encoding.BigEndianUnicode.GetString(unicodeData), CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRA:
+				case DataType.VARCHARA:
+				case DataType.CHA:
+					byte[] asciiData = GetAsciiBytes(i);
+					if (asciiData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = double.Parse(Encoding.ASCII.GetString(asciiData), CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				default:
+					throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
+						DataType.StrValues[columnType], typeof(double).ToString()));
 			}
-			else
-				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
 		}
 
 #if NET20
 		public override string GetString(int i)
 #else
-        public string GetString(int i)
+		public string GetString(int i)
 #endif // NET20
 		{
 			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            string str_value = transl.GetString(this, CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			string str_value = transl.GetString(this, CurrentRecord);
 
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-                if (str_value != null)
-                    LogValue(i + 1, transl, "STRING", str_value.Length, 1,
-                    (str_value.Length <= MaxDBLogger.DataSize ? str_value : str_value.Substring(0, MaxDBLogger.DataSize) + "..."));
-                else
-                    LogValue(i + 1, transl, "STRING", 0, 1, "NULL");
-            //<<< SQL TRACE
+			//>>> SQL TRACE
+			if (dbConnection.mLogger.TraceSQL)
+				if (str_value != null)
+					LogValue(i + 1, transl, "STRING", str_value.Length, 1,
+						(str_value.Length <= MaxDBLogger.DataSize ? str_value : str_value.Substring(0, MaxDBLogger.DataSize) + "..."));
+				else
+					LogValue(i + 1, transl, "STRING", 0, 1, "NULL");
+			//<<< SQL TRACE
 
-            return str_value;
+			return str_value;
 #else
-			int columnType;
-			byte[] data = GetValueBytes(i, out columnType);
-			if (data != null)
+			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(
+				UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
+
+			if (mValueArrays[i] != null)
+				if (mValueArrays[i] == DBNull.Value)
+					return null;
+				else
+					return (string)mValueArrays[i];
+
+			bool isNull;
+			string result;
+
+			switch (columnType)
 			{
-				switch (columnType)
-				{
-					case DataType.BOOLEAN:
-						return (data[0] == 1).ToString();
-					case DataType.DATE:
-						return ODBCConverter.GetDateTime(ODBCConverter.GetDate(data)).ToShortDateString();
-					case DataType.TIME:
-						return ODBCConverter.GetDateTime(ODBCConverter.GetTime(data)).ToShortTimeString();
-					case DataType.TIMESTAMP:
-						return ODBCConverter.GetDateTime(ODBCConverter.GetTimeStamp(data)).ToString();
-					case DataType.FIXED:
-					case DataType.FLOAT:
-					case DataType.VFLOAT:
-						return BitConverter.ToDouble(data, 0).ToString(CultureInfo.InvariantCulture);
-					case DataType.INTEGER:
-						return BitConverter.ToInt32(data, 0).ToString(CultureInfo.InvariantCulture);
-					case DataType.SMALLINT:
-						return BitConverter.ToInt16(data, 0).ToString(CultureInfo.InvariantCulture);
-					case DataType.STRUNI:
-					case DataType.VARCHARUNI:
-					case DataType.UNICODE:
+				case DataType.BOOLEAN:
+					result = GetBooleanValue(i, out isNull).ToString();
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.DATE:
+					OdbcDate dt = GetDateValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = ODBCConverter.GetDateTime(dt).ToShortDateString();
+					mValueArrays[i] = result;
+					return result;
+				case DataType.TIME:
+					OdbcTime tm = GetTimeValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = ODBCConverter.GetDateTime(tm).ToShortTimeString();
+					mValueArrays[i] = result;
+					return result;
+				case DataType.TIMESTAMP:
+					OdbcTimeStamp ts = GetTimeStampValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = ODBCConverter.GetDateTime(ts).ToString(CultureInfo.CurrentCulture);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.FIXED:
+				case DataType.FLOAT:
+				case DataType.VFLOAT:
+					double dbl = GetDoubleValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = dbl.ToString(CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.INTEGER:
+					int integer = GetIntegerValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = integer.ToString(CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.SMALLINT:
+					short sh = GetShortValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = sh.ToString(CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRUNI:
+				case DataType.VARCHARUNI:
+				case DataType.UNICODE:
+					byte[] unicodeData = GetUnicodeBytes(i);
+					if (unicodeData == null)
+						result = null;
+					else
 						if (Consts.IsLittleEndian)
-							return Encoding.Unicode.GetString(data);
+							result = Encoding.Unicode.GetString(unicodeData);
 						else
-							return Encoding.BigEndianUnicode.GetString(data);
-					case DataType.STRA:
-					case DataType.STRB:
-					case DataType.VARCHARA:
-					case DataType.VARCHARB:
-					case DataType.CHA:
-					case DataType.CHB:
-						return Encoding.ASCII.GetString(data);
-					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.UNKNOWN_DATATYPE));
-				}
+							result = Encoding.BigEndianUnicode.GetString(unicodeData);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRA:
+				case DataType.VARCHARA:
+				case DataType.CHA:
+					byte[] asciiData = GetAsciiBytes(i);
+					if (asciiData == null)
+						result = null;
+					else
+						result = Encoding.ASCII.GetString(asciiData);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRB:
+				case DataType.VARCHARB:
+				case DataType.CHB:
+					byte[] data = GetBinary(i);
+					if (data == null)
+						result = null;
+					else
+						result = Consts.ToHexString(data);
+					mValueArrays[i] = result;
+					return result;
+				default:
+					throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.UNKNOWN_DATATYPE));
 			}
-			else
-				return null;
 #endif // SAFE
 		}
 
 #if NET20
 		public override decimal GetDecimal(int i)
 #else
-        public decimal GetDecimal(int i)
+		public decimal GetDecimal(int i)
 #endif
 		{
 			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            decimal dec_value = transl.GetDecimal(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			decimal dec_value = transl.GetDecimal(CurrentRecord);
 
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-                LogValue(i + 1, transl, "DECIMAL", 8, 0, dec_value.ToString(CultureInfo.InvariantCulture));
-            //<<< SQL TRACE
+			//>>> SQL TRACE
+			if (dbConnection.mLogger.TraceSQL)
+				LogValue(i + 1, transl, "DECIMAL", 8, 0, dec_value.ToString(CultureInfo.InvariantCulture));
+			//<<< SQL TRACE
 
-            return dec_value;
+			return dec_value;
 #else
-			int columnType;
-			byte[] data = GetValueBytes(i, out columnType);
-			if (data != null)
+			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(
+				UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
+
+			if (mValueArrays[i] != null)
+				return (decimal)mValueArrays[i];
+
+			bool isNull;
+			decimal result;
+
+			switch (columnType)
 			{
-				switch (columnType)
-				{
-					case DataType.BOOLEAN:
-						return data[0];
-					case DataType.FIXED:
-					case DataType.FLOAT:
-					case DataType.VFLOAT:
-						return (decimal)BitConverter.ToDouble(data, 0);
-					case DataType.INTEGER:
-						return BitConverter.ToInt32(data, 0);
-					case DataType.SMALLINT:
-						return BitConverter.ToInt16(data, 0);
-					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
-							DataType.StrValues[columnType], "Decimal"));
-				}
+				case DataType.BOOLEAN:
+					result = GetBooleanValue(i, out isNull) ? 1 : 0;
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.FIXED:
+				case DataType.FLOAT:
+				case DataType.VFLOAT:
+					result = (decimal)GetDoubleValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.INTEGER:
+					result = GetIntegerValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					mValueArrays[i] = result;
+					return result;
+				case DataType.SMALLINT:
+					result = GetShortValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					return result;
+				case DataType.STRUNI:
+				case DataType.VARCHARUNI:
+				case DataType.UNICODE:
+					byte[] unicodeData = GetUnicodeBytes(i);
+					if (unicodeData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					if (Consts.IsLittleEndian)
+						result = decimal.Parse(Encoding.Unicode.GetString(unicodeData), CultureInfo.InvariantCulture);
+					else
+						result = decimal.Parse(Encoding.BigEndianUnicode.GetString(unicodeData), CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.STRA:
+				case DataType.VARCHARA:
+				case DataType.CHA:
+					byte[] asciiData = GetAsciiBytes(i);
+					if (asciiData == null)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = decimal.Parse(Encoding.ASCII.GetString(asciiData), CultureInfo.InvariantCulture);
+					mValueArrays[i] = result;
+					return result;
+				default:
+					throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
+						DataType.StrValues[columnType], typeof(decimal).ToString()));
 			}
-			else
-				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
 		}
 
 #if NET20
 		public override DateTime GetDateTime(int i)
 #else
-        public DateTime GetDateTime(int i)
+		public DateTime GetDateTime(int i)
 #endif  // NET20
 		{
 			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            DBTechTranslator transl = FindColumnInfo(i);
-            DateTime dt_value = transl.GetDateTime(CurrentRecord);
+			DBTechTranslator transl = FindColumnInfo(i);
+			DateTime dt_value = transl.GetDateTime(CurrentRecord);
 
-            //>>> SQL TRACE
-            if (dbConnection.mLogger.TraceSQL)
-                LogValue(i + 1, transl, "DATETIME", 0, 0, dt_value.ToString(CultureInfo.InvariantCulture));
-            //<<< SQL TRACE
+			//>>> SQL TRACE
+			if (dbConnection.mLogger.TraceSQL)
+				LogValue(i + 1, transl, "DATETIME", 0, 0, dt_value.ToString(CultureInfo.InvariantCulture));
+			//<<< SQL TRACE
 
-            return dt_value;
+			return dt_value;
 #else
-			int columnType;
-			byte[] data = GetValueBytes(i, out columnType);
-			if (data != null)
+			int columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(
+				UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
+
+			if (mValueArrays[i] != null)
+				return (DateTime)mValueArrays[i];
+
+			bool isNull;
+			DateTime result;
+
+			switch (columnType)
 			{
-				switch (columnType)
-				{
-					case DataType.DATE:
-						return ODBCConverter.GetDateTime(ODBCConverter.GetDate(data));
-					case DataType.TIME:
-						return ODBCConverter.GetDateTime(ODBCConverter.GetTime(data));
-					case DataType.TIMESTAMP:
-						return ODBCConverter.GetDateTime(ODBCConverter.GetTimeStamp(data));
-					default:
-						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
-							DataType.StrValues[columnType], "DateTime"));
-				}
+				case DataType.DATE:
+					OdbcDate dt = GetDateValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = ODBCConverter.GetDateTime(dt);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.TIME:
+					OdbcTime tm = GetTimeValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = ODBCConverter.GetDateTime(tm);
+					mValueArrays[i] = result;
+					return result;
+				case DataType.TIMESTAMP:
+					OdbcTimeStamp ts = GetTimeStampValue(i, out isNull);
+					if (isNull)
+						throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
+					result = ODBCConverter.GetDateTime(ts);
+					mValueArrays[i] = result;
+					return result;
+				default:
+					throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSQLNET,
+						DataType.StrValues[columnType], typeof(DateTime).ToString()));
 			}
-			else
-				throw new InvalidCastException(MaxDBMessages.Extract(MaxDBError.COLUMNVALUE_NULL));
 #endif // SAFE
 		}
 
 #if !NET20
-        public IDataReader GetData(int i)
-        {
-            /*
-             * The sample code does not support this method. Normally,
-             * this would be used to expose nested tables and
-             * other hierarchical data.
-             */
-            throw new NotSupportedException();
-        }
+		public IDataReader GetData(int i)
+		{
+			/*
+			 * The sample code does not support this method. Normally,
+			 * this would be used to expose nested tables and
+			 * other hierarchical data.
+			 */
+			throw new NotSupportedException();
+		}
 #endif // !NET20
 
 #if NET20
 		public override bool IsDBNull(int i)
 #else
-        public bool IsDBNull(int i)
+		public bool IsDBNull(int i)
 #endif // NET20
 		{
 			if (i < 0 || i >= FieldCount)
 				throw new InvalidColumnException(i);
 #if SAFE
-            return FindColumnInfo(i).IsDBNull(CurrentRecord);
+			return FindColumnInfo(i).IsDBNull(CurrentRecord);
 #else
 			return (GetValue(i) == DBNull.Value);
 #endif // SAFE
@@ -1296,13 +1761,13 @@ namespace MaxDB.Data
 #if NET20
 		public override bool HasRows
 #else
-        public bool HasRows
+		public bool HasRows
 #endif // NET20
 		{
 			get
 			{
 #if SAFE
-                return iRowsInResultSet > 0;
+				return iRowsInResultSet > 0;
 #else
 				if (mResultset != IntPtr.Zero)
 					return UnsafeNativeMethods.SQLDBC_ResultSet_getResultCount(mResultset) > 0;
@@ -1314,156 +1779,156 @@ namespace MaxDB.Data
 #if SAFE
 		#region "Methods to support native protocol"
 
-        MaxDBConnection ISqlParameterController.Connection
-        {
-            get
-            {
-                return dbConnection;
-            }
-        }
+		MaxDBConnection ISqlParameterController.Connection
+		{
+			get
+			{
+				return dbConnection;
+			}
+		}
 
-        ByteArray ISqlParameterController.ReplyData
-        {
-            get
-            {
-                return (mCurrentChunk != null) ? mCurrentChunk.ReplyData : null;
-            }
-        }
+		ByteArray ISqlParameterController.ReplyData
+		{
+			get
+			{
+				return (mCurrentChunk != null) ? mCurrentChunk.ReplyData : null;
+			}
+		}
 
-        private void AssertNotClosed()
-        {
-            if (!bOpened)
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.OBJECTISCLOSED));
-        }
+		private void AssertNotClosed()
+		{
+			if (!bOpened)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.OBJECTISCLOSED));
+		}
 
-        private void CloseOpenStreams()
-        {
-            foreach(Stream stream in lstOpenStreams)
-            {
-                try
-                {
-                    stream.Close();
-                }
-                catch (IOException)
-                {
-                    // ignore
-                }
-            }
-            lstOpenStreams.Clear();
-        }
+		private void CloseOpenStreams()
+		{
+			foreach(Stream stream in lstOpenStreams)
+			{
+				try
+				{
+					stream.Close();
+				}
+				catch (IOException)
+				{
+					// ignore
+				}
+			}
+			lstOpenStreams.Clear();
+		}
 
-        /*
-            Executes a FETCH FIRST, and stores the result internally.
-            @return true if the cursor is positioned correctly.
-        */
-        private bool FetchFirst()
-        {
-            MaxDBReplyPacket reply;
+		/*
+			Executes a FETCH FIRST, and stores the result internally.
+			@return true if the cursor is positioned correctly.
+		*/
+		private bool FetchFirst()
+		{
+			MaxDBReplyPacket reply;
 
-            //int usedFetchSize = this.fetchSize;
+			//int usedFetchSize = this.fetchSize;
 
-            try
-            {
-                reply = mFetchInfo.ExecFetchNext();
-            }
-            catch(MaxDBException ex)
-            {
-                if (ex.ErrorCode == 100)
-                {
-                    bEmpty = true;
-                    mPositionState = PositionType.AFTER_LAST;
-                    mCurrentChunk = null;
-                }
-                else
-                    throw;
-                return false;
-            }
-            SetCurrentChunk(new FetchChunk(dbConnection,
-                FetchType.FIRST,		// fetch first is forward
-                1,						// absolute start position
-                reply,					// reply packet
-                mFetchInfo.RecordSize,	// the size for data part navigation
-                iMaxRows,				// how many rows to fetch
-                iRowsInResultSet));
-            return true;
-        }
+			try
+			{
+				reply = mFetchInfo.ExecFetchNext();
+			}
+			catch(MaxDBException ex)
+			{
+				if (ex.ErrorCode == 100)
+				{
+					bEmpty = true;
+					mPositionState = PositionType.AFTER_LAST;
+					mCurrentChunk = null;
+				}
+				else
+					throw;
+				return false;
+			}
+			SetCurrentChunk(new FetchChunk(dbConnection,
+				FetchType.FIRST,		// fetch first is forward
+				1,						// absolute start position
+				reply,					// reply packet
+				mFetchInfo.RecordSize,	// the size for data part navigation
+				iMaxRows,				// how many rows to fetch
+				iRowsInResultSet));
+			return true;
+		}
 
-        // Fetch the next chunk, moving forward over the result set.
-        private bool FetchNextChunk()
-        {
-            MaxDBReplyPacket reply;
+		// Fetch the next chunk, moving forward over the result set.
+		private bool FetchNextChunk()
+		{
+			MaxDBReplyPacket reply;
 
-            //int usedFetchSize = this.fetchSize;
-            int usedOffset = 1;
+			//int usedFetchSize = this.fetchSize;
+			int usedOffset = 1;
 
-            if (mCurrentChunk.IsForward)
-                if (iModifiedKernelPos != 0)
-                    usedOffset += mCurrentChunk.End - iModifiedKernelPos;
-                else
-                {
-                    // if an update destroyed the cursor position, we have to honor this ...
-                    if (iModifiedKernelPos == 0)
-                        usedOffset += mCurrentChunk.End - mCurrentChunk.KernelPos;
-                    else
-                        usedOffset += mCurrentChunk.End - iModifiedKernelPos;
-                }
+			if (mCurrentChunk.IsForward)
+				if (iModifiedKernelPos != 0)
+					usedOffset += mCurrentChunk.End - iModifiedKernelPos;
+				else
+				{
+					// if an update destroyed the cursor position, we have to honor this ...
+					if (iModifiedKernelPos == 0)
+						usedOffset += mCurrentChunk.End - mCurrentChunk.KernelPos;
+					else
+						usedOffset += mCurrentChunk.End - iModifiedKernelPos;
+				}
 
-            try
-            {
-                reply = mFetchInfo.ExecFetchNext();
-            }
-            catch (MaxDBException ex)
-            {
-                if (ex.ErrorCode == 100)
-                {
-                    // fine, we are at the end.
-                    mCurrentChunk.IsLast = true;
-                    UpdateRowStatistics();
-                    // but invalidate it, as it is thrown away by the kernel
-                    mCurrentChunk = null;
-                    mPositionStateOfChunk = PositionType.NOT_AVAILABLE;
-                    mPositionState = PositionType.AFTER_LAST;
-                    return false;
-                }
-                throw;
-            }
-            SetCurrentChunk(new FetchChunk(dbConnection,
-                FetchType.RELATIVE_UP,
-                mCurrentChunk.End + 1,
-                reply,
-                mFetchInfo.RecordSize,
-                iMaxRows,
-                iRowsInResultSet));
-            return true;
-        }
+			try
+			{
+				reply = mFetchInfo.ExecFetchNext();
+			}
+			catch (MaxDBException ex)
+			{
+				if (ex.ErrorCode == 100)
+				{
+					// fine, we are at the end.
+					mCurrentChunk.IsLast = true;
+					UpdateRowStatistics();
+					// but invalidate it, as it is thrown away by the kernel
+					mCurrentChunk = null;
+					mPositionStateOfChunk = PositionType.NOT_AVAILABLE;
+					mPositionState = PositionType.AFTER_LAST;
+					return false;
+				}
+				throw;
+			}
+			SetCurrentChunk(new FetchChunk(dbConnection,
+				FetchType.RELATIVE_UP,
+				mCurrentChunk.End + 1,
+				reply,
+				mFetchInfo.RecordSize,
+				iMaxRows,
+				iRowsInResultSet));
+			return true;
+		}
 
-        private ByteArray CurrentRecord
-        {
-            get
-            {
-                if (mPositionState == PositionType.BEFORE_FIRST)
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSET_BEFOREFIRST));
-                if (mPositionState == PositionType.AFTER_LAST)
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSET_AFTERLAST));
-                return mCurrentChunk.CurrentRecord;
-            }
-        }
+		private ByteArray CurrentRecord
+		{
+			get
+			{
+				if (mPositionState == PositionType.BEFORE_FIRST)
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSET_BEFOREFIRST));
+				if (mPositionState == PositionType.AFTER_LAST)
+					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSET_AFTERLAST));
+				return mCurrentChunk.CurrentRecord;
+			}
+		}
 
-        private DBTechTranslator FindColumnInfo(int colIndex)
-        {
-            AssertNotClosed();
-            DBTechTranslator info;
+		private DBTechTranslator FindColumnInfo(int colIndex)
+		{
+			AssertNotClosed();
+			DBTechTranslator info;
 
-            try
-            {
-                info = mFetchInfo.GetColumnInfo(colIndex);
-            }
-            catch (IndexOutOfRangeException)
-            {
-                throw new InvalidColumnException(colIndex);
-            }
-            return info;
-        }
+			try
+			{
+				info = mFetchInfo.GetColumnInfo(colIndex);
+			}
+			catch (IndexOutOfRangeException)
+			{
+				throw new InvalidColumnException(colIndex);
+			}
+			return info;
+		}
 
 		#endregion
 #else
@@ -1496,228 +1961,262 @@ namespace MaxDB.Data
 			return columnName;
 		}
 
-		private unsafe byte[] GetValueBytes(int i, out int columnType)
+		private unsafe bool GetBooleanValue(int i, out bool isNull)
 		{
-			int valLength;
-			SQLDBC_Retcode rc;
-			columnType = UnsafeNativeMethods.SQLDBC_ResultSetMetaData_getColumnType(UnsafeNativeMethods.SQLDBC_ResultSet_getResultSetMetaData(mResultset), (short)(i + 1));
+			isNull = false;
 
-			if (m_ValArrays[i] != null)
-				return (byte[])m_ValArrays[i];
+			byte byte_val;
+			int valLength = sizeof(byte);
 
-			switch (columnType)
+			if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT1, &byte_val,
+				&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
+				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+					UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+			isNull = (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA);
+
+			if (isNull)
+				return false;
+
+			return (byte_val == 1);
+		}
+
+		[SecurityPermissionAttribute(SecurityAction.Demand, SerializationFormatter = true)]
+		private unsafe OdbcDate GetDateValue(int i, out bool isNull)
+		{
+			isNull = false;
+
+			byte[] dt_val = new byte[sizeof(OdbcDate)];
+			int valLength = dt_val.Length;
+			fixed (byte* dt_ptr = dt_val)
 			{
-				case DataType.BOOLEAN:
-					byte byte_val;
-					valLength = sizeof(byte);
+				if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, dt_ptr,
+					&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
+					MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+						UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+				isNull = (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA);
+				if (isNull)
+					return new OdbcDate();
 
-					if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT1, &byte_val,
-						 &valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
-						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
-					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
-						m_ValArrays[i] = null;
-					else
-					{
-						byte[] result = new byte[] { byte_val };
-						m_ValArrays[i] = result;
-					}
-					return (byte[])m_ValArrays[i];
-				case DataType.DATE:
-					byte[] dt_val = new byte[sizeof(OdbcDate)];
-					valLength = dt_val.Length;
-					fixed (byte* dt_ptr = dt_val)
-						if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE, dt_ptr,
-							&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
-							MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-								UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
-					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
-						m_ValArrays[i] = null;
-					else
-						m_ValArrays[i] = dt_val;
-					return (byte[])m_ValArrays[i];
-				case DataType.TIME:
-					byte[] tm_val = new byte[sizeof(OdbcTime)];
-					valLength = tm_val.Length;
-					fixed (byte* tm_ptr = tm_val)
-						if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, tm_ptr,
-							&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
-							MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-								UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
-					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
-						m_ValArrays[i] = null;
-					else
-						m_ValArrays[i] = tm_val;
-					return (byte[])m_ValArrays[i];
-				case DataType.TIMESTAMP:
-					byte[] ts_val = new byte[sizeof(OdbcTimeStamp)];
-					valLength = ts_val.Length;
-					fixed (byte* ts_ptr = ts_val)
-						if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, ts_ptr,
-							&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
-							MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-								UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
-					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
-						m_ValArrays[i] = null;
-					else
-						m_ValArrays[i] = ts_val;
-					return (byte[])m_ValArrays[i];
-				case DataType.FIXED:
-				case DataType.FLOAT:
-				case DataType.VFLOAT:
-					double double_val;
-					valLength = sizeof(double);
-					if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_DOUBLE, &double_val,
-						&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
-						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
-					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
-						m_ValArrays[i] = null;
-					else
-						m_ValArrays[i] = BitConverter.GetBytes(double_val);
-					return (byte[])m_ValArrays[i];
-				case DataType.INTEGER:
-					int int_val;
-					valLength = sizeof(int);
-					if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, &int_val,
-						&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
-						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
-					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
-						m_ValArrays[i] = null;
-					else
-						m_ValArrays[i] = BitConverter.GetBytes(int_val);
-					return (byte[])m_ValArrays[i];
-				case DataType.SMALLINT:
-					short short_val;
-					valLength = sizeof(short);
-					if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT2, &short_val,
-						&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
-						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
-					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
-						m_ValArrays[i] = null;
-					else
-						m_ValArrays[i] = BitConverter.GetBytes(short_val);
-					return (byte[])m_ValArrays[i];
-				case DataType.STRUNI:
-				case DataType.VARCHARUNI:
-				case DataType.UNICODE:
-					byte[] strValue = new byte[sizeof(char)];
-					valLength = 0;
-
-					fixed (byte* valuePtr = strValue)
-						rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1,
-							Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2,
-							valuePtr, &valLength, valLength, 0);
-
-					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
-					{
-						m_ValArrays[i] = null;
-						return null;
-					}
-
-					if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
-						throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NODATA_FOUND));
-
-					if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
-
-					strValue = new byte[valLength];
-
-					if (valLength > 0)
-						fixed (byte* valuePtr = strValue)
-							rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1,
-								Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2,
-								valuePtr, &valLength, valLength, SQLDBC_BOOL.SQLDBC_FALSE);
-
-					if (rc != SQLDBC_Retcode.SQLDBC_OK)
-						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
-
-					m_ValArrays[i] = strValue;
-					return strValue;
-				case DataType.STRA:
-				case DataType.VARCHARA:
-				case DataType.CHA:
-					byte[] asciiValue = new byte[sizeof(byte)];
-					valLength = 0;
-
-					fixed (byte* valuePtr = asciiValue)
-						rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1,
-							SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, valuePtr, &valLength, valLength, 0);
-
-					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
-					{
-						m_ValArrays[i] = null;
-						return null;
-					}
-
-					if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
-						throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NODATA_FOUND));
-
-					if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
-
-					asciiValue = new byte[valLength];
-
-					if (valLength > 0)
-						fixed (byte* valuePtr = asciiValue)
-						{
-							rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1,
-								SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, valuePtr, &valLength, valLength, SQLDBC_BOOL.SQLDBC_FALSE);
-
-							if (rc != SQLDBC_Retcode.SQLDBC_OK)
-								MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-									UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
-						}
-
-					m_ValArrays[i] = asciiValue;
-					return asciiValue;
-				case DataType.STRB:
-				case DataType.VARCHARB:
-				case DataType.CHB:
-					byte[] binValue = new byte[1];
-					valLength = 0;
-
-					fixed (byte* valuePtr = binValue)
-						rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY,
-							valuePtr, &valLength, valLength, 0);
-
-					if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
-					{
-						m_ValArrays[i] = null;
-						return null;
-					}
-
-					if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
-						throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NODATA_FOUND));
-
-					if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
-
-					binValue = new byte[valLength];
-
-					if (valLength > 0)
-						fixed (byte* valuePtr = binValue)
-							rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY,
-								valuePtr, &valLength, valLength, 0);
-
-					if (rc != SQLDBC_Retcode.SQLDBC_OK)
-						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
-							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
-
-					m_ValArrays[i] = binValue;
-					return binValue;
-				default:
-					return null;
+				return (OdbcDate)Marshal.PtrToStructure(new IntPtr(dt_ptr), typeof(OdbcDate));
 			}
 		}
 
-		private unsafe long GetValueBytes(int i, int columnType, long dataIndex, byte[] buffer, int bufferIndex, int length)
+		[SecurityPermissionAttribute(SecurityAction.Demand, SerializationFormatter = true)]
+		private unsafe OdbcTime GetTimeValue(int i, out bool isNull)
+		{
+			isNull = false;
+
+			byte[] tm_val = new byte[sizeof(OdbcTime)];
+			int valLength = tm_val.Length;
+			fixed (byte* tm_ptr = tm_val)
+			{
+				if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME, tm_ptr,
+					&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
+					MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+						UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+				isNull = (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA);
+				if (isNull)
+					return new OdbcTime();
+
+				return (OdbcTime)Marshal.PtrToStructure(new IntPtr(tm_ptr), typeof(OdbcTime));
+			}
+		}
+
+		[SecurityPermissionAttribute(SecurityAction.Demand, SerializationFormatter = true)]
+		private unsafe OdbcTimeStamp GetTimeStampValue(int i, out bool isNull)
+		{
+			isNull = false;
+
+			byte[] ts_val = new byte[sizeof(OdbcTimeStamp)];
+			int valLength = ts_val.Length;
+			fixed (byte* ts_ptr = ts_val)
+			{
+				if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP, ts_ptr,
+					&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
+					MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+						UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+				isNull = (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA);
+
+				if (isNull)
+					return new OdbcTimeStamp();
+
+				return (OdbcTimeStamp)Marshal.PtrToStructure(new IntPtr(ts_ptr), typeof(OdbcTimeStamp));
+			}
+		}
+
+		private unsafe double GetDoubleValue(int i, out bool isNull)
+		{
+			isNull = false;
+
+			double double_val;
+			int valLength = sizeof(double);
+			if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_DOUBLE, &double_val,
+				&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
+				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+					UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+			isNull = (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA);
+
+			if (isNull)
+				return 0;
+
+			return double_val;
+		}
+
+		private unsafe int GetIntegerValue(int i, out bool isNull)
+		{
+			isNull = false;
+
+			int int_val;
+			int valLength = sizeof(int);
+			if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4, &int_val,
+				&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
+				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+					UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+			isNull = (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA);
+
+			if (isNull)
+				return 0;
+
+			return int_val;
+		}
+
+		private unsafe short GetShortValue(int i, out bool isNull)
+		{
+			isNull = false;
+			if (mValueArrays[i] != null)
+				return (short)mValueArrays[i];
+
+			short short_val;
+			int valLength = sizeof(short);
+			if (UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_INT2, &short_val,
+				&valLength, valLength, 0) != SQLDBC_Retcode.SQLDBC_OK)
+				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+					UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+			isNull = (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA);
+
+			if (isNull)
+				return 0;
+
+			mValueArrays[i] = short_val;
+			return short_val;
+		}
+
+		private unsafe byte[] GetUnicodeBytes(int i)
+		{
+			byte[] strValue = new byte[sizeof(char)];
+			int valLength = 0;
+			SQLDBC_Retcode rc;
+
+			fixed (byte* valuePtr = strValue)
+				rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1,
+					Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2,
+					valuePtr, &valLength, valLength, 0);
+
+			if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
+			{
+				mValueArrays[i] = null;
+				return null;
+			}
+
+			if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NODATA_FOUND));
+
+			if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+					UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+
+			strValue = new byte[valLength];
+
+			if (valLength > 0)
+				fixed (byte* valuePtr = strValue)
+					rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1,
+						Consts.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2,
+						valuePtr, &valLength, valLength, SQLDBC_BOOL.SQLDBC_FALSE);
+
+			if (rc != SQLDBC_Retcode.SQLDBC_OK)
+				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+					UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+
+			return strValue;
+		}
+
+		private unsafe byte[] GetAsciiBytes(int i)
+		{
+			byte[] asciiValue = new byte[sizeof(byte)];
+			int valLength = 0;
+			SQLDBC_Retcode rc;
+
+			fixed (byte* valuePtr = asciiValue)
+				rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1,
+					SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, valuePtr, &valLength, valLength, 0);
+
+			if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
+			{
+				mValueArrays[i] = null;
+				return null;
+			}
+
+			if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NODATA_FOUND));
+
+			if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+					UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+
+			asciiValue = new byte[valLength];
+
+			if (valLength > 0)
+				fixed (byte* valuePtr = asciiValue)
+				{
+					rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1,
+						SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII, valuePtr, &valLength, valLength, SQLDBC_BOOL.SQLDBC_FALSE);
+
+					if (rc != SQLDBC_Retcode.SQLDBC_OK)
+						MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+							UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+				}
+
+			return asciiValue;
+		}
+
+		private unsafe byte[] GetBinary(int i)
+		{
+			byte[] binValue = new byte[sizeof(byte)];
+			int valLength = 0;
+			SQLDBC_Retcode rc;
+
+			fixed (byte* valuePtr = binValue)
+				rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY,
+					valuePtr, &valLength, valLength, 0);
+
+			if (valLength == UnsafeNativeMethods.SQLDBC_NULL_DATA)
+			{
+				mValueArrays[i] = null;
+				return null;
+			}
+
+			if (rc == SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NODATA_FOUND));
+
+			if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
+				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+					UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+
+			binValue = new byte[valLength];
+
+			if (valLength > 0)
+				fixed (byte* valuePtr = binValue)
+					rc = UnsafeNativeMethods.SQLDBC_ResultSet_getObject(mResultset, i + 1, SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY,
+						valuePtr, &valLength, valLength, 0);
+
+			if (rc != SQLDBC_Retcode.SQLDBC_OK)
+				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.GETOBJECT_FAILED),
+					UnsafeNativeMethods.SQLDBC_ResultSet_getError(mResultset));
+
+			return binValue;
+		}
+
+		private unsafe long GetValueBytes(int i, int columnType, byte[] buffer, int bufferIndex, int length)
 		{
 			SQLDBC_Retcode rc;
 			SQLDBC_HostType hostType;
@@ -1736,9 +2235,7 @@ namespace MaxDB.Data
 					hostType = SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY;
 					break;
 				default:
-					byte[] byte_buffer = GetValueBytes(i, out columnType);
-					Array.Copy(byte_buffer, dataIndex, buffer, bufferIndex, Math.Min(length, byte_buffer.Length - dataIndex));
-					return length;
+					return -1;
 			}
 
 			length = buffer.Length - bufferIndex;
@@ -1800,17 +2297,17 @@ namespace MaxDB.Data
 		#region IDisposable Members
 
 #if !NET20
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
 		}
 #endif // NET20
 
 #if NET20
 		protected override void Dispose(bool disposing)
 #else
-        private void Dispose(bool disposing)
+		private void Dispose(bool disposing)
 #endif // NET20
 		{
 #if NET20

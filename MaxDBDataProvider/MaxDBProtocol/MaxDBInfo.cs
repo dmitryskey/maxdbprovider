@@ -164,10 +164,6 @@ namespace MaxDB.Data.MaxDBProtocol
 			{ 
 				return strSqlCmd; 
 			}
-			set 
-			{ 
-				strSqlCmd = value; 
-			}
 		}
 
 		void DescribeProcedureCall()
@@ -889,11 +885,11 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	internal class FetchInfo
 	{
-		private MaxDBConnection     dbConnection;            // current connection
-		private string              strCursorName;            // cursor
+		private MaxDBConnection     dbConnection;           // current connection
+		private string              strCursorName;          // cursor
 		private DBTechTranslator[]  mColumnInfo;            // short info of all columns
 		private int                 iRecordSize;            // physical row size
-		private string				strFetchParamString;		 // cache for fetch parameters
+		private string				strFetchParamString;	// cache for fetch parameters
 
 		public FetchInfo(MaxDBConnection connection, string cursorName, DBTechTranslator[] infos, string[] columnNames)
 		{
@@ -943,33 +939,44 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		private void Describe()
 		{
-			MaxDBConnection c = dbConnection;
 			DBTechTranslator[] infos = null;
 			string[] columnNames = null;
+			MaxDBRequestPacket request = dbConnection.GetRequestPacket();
+			byte currentSQLMode = request.SwitchSqlMode((byte)SqlMode.Internal);
 
-			MaxDBRequestPacket request = c.GetRequestPacket();
-			request.InitDbsCommand(false, "DESCRIBE \"" + strCursorName + "\"");
-
-			//>>> SQL TRACE
-			dbConnection.mLogger.SqlTrace(DateTime.Now, "::DESCRIBE CURSOR " + strCursorName);
-			//<<< SQL TRACE
-
-			MaxDBReplyPacket reply = c.Execute(request, this, GCMode.GC_ALLOWED);
-			reply.ClearPartOffset();
-			for(int i = 0; i < reply.PartCount; i++) 
+			try
 			{
-				reply.NextPart();
+				request.InitDbsCommand(false, "DESCRIBE \"" + strCursorName + "\"");
 
-				int partType = reply.PartType;
+				//>>> SQL TRACE
+				dbConnection.mLogger.SqlTrace(DateTime.Now, "::DESCRIBE CURSOR " + strCursorName);
+				//<<< SQL TRACE
 
-				if(partType == PartKind.ColumnNames) 
-					columnNames=reply.ParseColumnNames();
-				else if(partType == PartKind.ShortInfo) 
-					infos = reply.ParseShortFields(dbConnection.bSpaceOption, false, null, false);
-				else if(partType == PartKind.VardataShortInfo) 
-					infos = reply.ParseShortFields(dbConnection.bSpaceOption, false, null, true);
+				MaxDBReplyPacket reply = dbConnection.Execute(request, this, GCMode.GC_ALLOWED);
+				reply.ClearPartOffset();
+				for (int i = 0; i < reply.PartCount; i++)
+				{
+					reply.NextPart();
+
+					int partType = reply.PartType;
+
+					if (partType == PartKind.ColumnNames)
+						columnNames = reply.ParseColumnNames();
+					else if (partType == PartKind.ShortInfo)
+						infos = reply.ParseShortFields(dbConnection.bSpaceOption, false, null, false);
+					else if (partType == PartKind.VardataShortInfo)
+						infos = reply.ParseShortFields(dbConnection.bSpaceOption, false, null, true);
+				}
+				SetMetaData(infos, columnNames);
 			}
-			SetMetaData(infos, columnNames);
+			catch
+			{
+				throw;
+			}
+			finally
+			{
+				request.SwitchSqlMode(currentSQLMode);
+			}
 		}
 
 		public MaxDBReplyPacket ExecFetchNext()
@@ -1171,12 +1178,12 @@ namespace MaxDB.Data.MaxDBProtocol
 				case DataType.LONGA:
 				case DataType.LONGE:
 				case DataType.STRUNI:
-					return typeof(TextReader);
+					return typeof(string);
 				case DataType.STRB:
 				case DataType.LONGB:
 				case DataType.LONGDB:
 				case DataType.LONGUNI:
-					return typeof(BinaryReader);
+					return typeof(byte[]);
 				case DataType.BOOLEAN:
 					return typeof(bool);
 				case DataType.UNICODE:

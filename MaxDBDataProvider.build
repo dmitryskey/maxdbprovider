@@ -48,7 +48,7 @@
 	</target>
 
 	<!-- builds the client on all supported Mono Frameworks -->
-	<target name="mono" depends="mono-1.0-safe mono-1.0-unsafe mono-2.0-safe mono-2.0-unsafe">
+	<target name="mono" depends="mono-1.0-safe mono-1.0-unsafe">
 		<!--
 		<call target="Docs"/>
 		-->
@@ -171,7 +171,7 @@
 	</target>
 
 	<!-- FxCop targets -->
-	<target name="allfxcops" depends="fxcop-net-1.1-safe, fxcop-net-1.1-unsafe, fxcop-net-2.0-safe, fxcop-net-2.0-unsafe">
+	<target name="fxcop-all" depends="fxcop-net-1.1-safe, fxcop-net-1.1-unsafe, fxcop-net-2.0-safe, fxcop-net-2.0-unsafe">
 	</target>
 
 	<!-- target FxCop .Net 1.1 Safe-->
@@ -214,8 +214,8 @@
 
 	<target name="test-mono">
 		<property name="test-target" value="tests-mono"/>
-		<call target="test-7.6"/>
-		<call target="test-7.5"/>
+		<call target="test-7.6-mono"/>
+		<call target="test-7.5-mono"/>
 	</target>
 
 	<target name="test-7.6-net">
@@ -312,8 +312,10 @@
 	<target name="tests-mono">
                 <call target="test-mono-1.0-safe"/>
 		<call target="test-mono-1.0-unsafe"/>
+<!--
 		<call target="test-mono-2.0-safe"/>
 		<call target="test-mono-2.0-unsafe"/>
+-->
 	</target>
 	
 	<target name="test-net-1.1-safe" depends="net-1.1-safe">
@@ -377,18 +379,20 @@
 		<property name="nunit-exe" value="${nunit-lib}/nunit-console.exe"/>
 
 		<if test="${unsafe=='true'}">
-			<property name="testfile" value="bin/${framework}/unsafe/${buildType}/MaxDB.Test.exe"/>
+			<property name="workdir" value="bin/${framework}/unsafe/${buildType}"/>
 			<property name="outfile" value="nunit-${framework}-unsafe-${buildType}-${config}.xml"/>
 		</if>
 
 		<if test="${unsafe=='false'}">
-			<property name="testfile" value="bin/${framework}/safe/${buildType}/MaxDB.Test.exe"/>
+			<property name="workdir" value="bin/${framework}/safe/${buildType}"/>
 			<property name="outfile" value="nunit-${framework}-safe-${buildType}-${config}.xml"/>
 		</if>
 
-		<copy file="MaxDBConsole/Configs/${config}.config" tofile="${testfile}.config" overwrite="true"/>
+		<property name="testfile" value="MaxDB.Test.exe"/>
 
-		<exec program="${nunit-exe}" commandline="/nologo /xml=results/${outfile} ${testfile}" failonerror="false"/>
+		<copy file="MaxDBConsole/Configs/${config}.config" tofile="${workdir}/${testfile}.config" overwrite="true"/>
+
+		<exec program="${nunit-exe}" commandline="/nologo /xml=../../../../results/${outfile} ${testfile}" failonerror="false" workingdir="${workdir}"/>
 	</target>
 
 	<!-- Run fxcop on the current build -->	
