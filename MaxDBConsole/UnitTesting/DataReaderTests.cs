@@ -44,42 +44,42 @@ namespace MaxDB.UnitTesting
 		[Test]
 		public void TestResultSet()
 		{
-			try 
+			try
 			{
 				ClearTestTable();
 
-                using (MaxDBCommand cmd = new MaxDBCommand(string.Empty, mconn))
-                {
-                    // insert 100 records
-                    cmd.CommandText = "INSERT INTO Test (id, name) VALUES (:id, 'test')";
-                    cmd.Parameters.Add(new MaxDBParameter(":id", 1));
-                    for (int i = 1; i <= 100; i++)
-                    {
-                        cmd.Parameters[0].Value = i;
-                        cmd.ExecuteNonQuery();
-                    }
-                }
+				using (MaxDBCommand cmd = new MaxDBCommand(string.Empty, mconn))
+				{
+					// insert 100 records
+					cmd.CommandText = "INSERT INTO Test (id, name) VALUES (:id, 'test')";
+					cmd.Parameters.Add(new MaxDBParameter(":id", 1));
+					for (int i = 1; i <= 100; i++)
+					{
+						cmd.Parameters[0].Value = i;
+						cmd.ExecuteNonQuery();
+					}
+				}
 
-                using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test WHERE id >= 50", mconn))
-                {
-                    // execute it one time
-                    using (MaxDBDataReader reader = cmd.ExecuteReader())
-                    {
-                        Assert.IsNotNull(reader);
-                        while (reader.Read()) ;
-                        Assert.IsTrue(reader.HasRows);
-                        Assert.AreEqual(7, reader.FieldCount);
-                    }
+				using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test WHERE id >= 50", mconn))
+				{
+					// execute it one time
+					using (MaxDBDataReader reader = cmd.ExecuteReader())
+					{
+						Assert.IsNotNull(reader);
+						while (reader.Read()) ;
+						Assert.IsTrue(reader.HasRows);
+						Assert.AreEqual(7, reader.FieldCount);
+					}
 
-                        // execute it again
-                    using (MaxDBDataReader reader = cmd.ExecuteReader())
-                    {
-                        Assert.IsNotNull(reader);
-                        while (reader.Read()) ;
-                        Assert.IsTrue(reader.HasRows);
-                        Assert.AreEqual(7, reader.FieldCount);
-                    }
-                }
+					// execute it again
+					using (MaxDBDataReader reader = cmd.ExecuteReader())
+					{
+						Assert.IsNotNull(reader);
+						while (reader.Read()) ;
+						Assert.IsTrue(reader.HasRows);
+						Assert.AreEqual(7, reader.FieldCount);
+					}
+				}
 			}
 			catch (Exception ex)
 			{
@@ -414,12 +414,15 @@ namespace MaxDB.UnitTesting
 				ClearTestTable();
 				
                 ExecuteNonQuery("INSERT INTO Test (id, name) VALUES (1, 'Text value')");
+				ExecuteNonQuery("INSERT INTO Test (id, name) VALUES (2, '123.456')");
 
                 using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
-                using (MaxDBDataReader reader = cmd.ExecuteReader())
+					using (MaxDBDataReader reader = cmd.ExecuteReader())
                     {
                         reader.Read();
                         Assert.AreEqual("Text value", reader["name"].ToString());
+						reader.Read();
+						Assert.AreEqual(123.456, reader.GetDouble(1));
                     }
 			}
 			catch (Exception ex) 

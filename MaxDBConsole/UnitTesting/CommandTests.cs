@@ -33,13 +33,13 @@ namespace MaxDB.UnitTesting
 	public class CommandTests : BaseTest
 	{
 		[TestFixtureSetUp]
-		public void TestFixtureSetUp() 
+		public void SetUp() 
 		{
 			Init("CREATE TABLE Test (id int NOT NULL, name VARCHAR(100))");
 		}
 
 		[TestFixtureTearDown]
-		public void TestFixtureTearDown()
+		public void TearDown()
 		{
 			Close();
 		}
@@ -159,7 +159,6 @@ namespace MaxDB.UnitTesting
 		[Test]
 		public void TestInsertNullParameter()
 		{
-			MaxDBDataReader reader = null;
 			try 
 			{
 				ClearTestTable();
@@ -172,53 +171,69 @@ namespace MaxDB.UnitTesting
 
 					cmd.CommandText = "SELECT * FROM test";
 
-					using(reader = cmd.ExecuteReader())
+					using (MaxDBDataReader reader = cmd.ExecuteReader())
 					{
 						Assert.IsTrue(reader.Read());
 						Assert.AreEqual(DBNull.Value, reader[1]);
 					}
-					reader = null;
 				}
 			}
 			catch(Exception ex)
 			{
 				Assert.Fail(ex.Message);
 			}
-			finally 
-			{
-				if (reader != null) reader.Close();
-			}
 		}
 
 		[Test]
 		public void TestInsertUsingReader()
 		{
-			MaxDBDataReader reader = null;
-			try 
+			try
 			{
 				ClearTestTable();
 
-				using(MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES(1, 'Test')", mconn))
+				using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES(1, 'Test')", mconn))
 				{
 					cmd.ExecuteNonQuery();
 
 					cmd.CommandText = "SELECT * FROM Test";
-					using(reader = cmd.ExecuteReader())
+					using (MaxDBDataReader reader = cmd.ExecuteReader())
 					{
 						Assert.IsTrue(reader.Read());
 						Assert.IsFalse(reader.Read());
 						Assert.IsFalse(reader.NextResult());
 					}
-					reader = null;
 				}
 			}
 			catch (Exception ex)
 			{
 				Assert.Fail(ex.Message);
 			}
-			finally 
+		}
+
+		[Test]
+		public void TestOracleMode()
+		{
+			SqlMode oldMode = mconn.SqlMode;
+			try
 			{
-				if (reader != null) reader.Close();
+				mconn.SqlMode = SqlMode.Oracle;
+				using (MaxDBCommand cmd = new MaxDBCommand("SELECT sysdate FROM DUAL", mconn))
+					Assert.IsTrue(DateTime.Now.Subtract(DateTime.Parse(cmd.ExecuteScalar().ToString())).TotalSeconds < 10, "Oracle returned bad time");
+
+				using (MaxDBCommand cmd = new MaxDBCommand("SELECT sysdate FROM DUAL FOR UPDATE", mconn))
+				{
+					MaxDBDataReader reader = cmd.ExecuteReader();
+					DataTable schema = reader.GetSchemaTable();
+					reader.Close();
+				}
+			}
+			catch (Exception ex)
+			{
+				Assert.Fail(ex.Message);
+			}
+			finally
+			{
+				mconn.SqlMode = oldMode;
 			}
 		}
 

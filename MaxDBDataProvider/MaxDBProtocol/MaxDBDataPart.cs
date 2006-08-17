@@ -283,11 +283,10 @@ namespace MaxDB.Data.MaxDBProtocol
             if (putValue == null)
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "putValue"));
 
-
 			// not exact, but enough to prevent an overflow - adding this
 			// part to the packet may at most eat up 8 bytes more, if
 			// the size is weird.
-            int maxDataSize = (baOrigData.Length - iExtent - 8) / Consts.UnicodeWidth;
+            int maxDataSize = (baOrigData.Length - baOrigData.Offset - iExtent - 8) / Consts.UnicodeWidth;
 			if (maxDataSize <= 1)
 			{
 				descriptionMark.WriteByte(LongDesc.NoData, LongDesc.ValMode);
@@ -302,10 +301,10 @@ namespace MaxDB.Data.MaxDBProtocol
 			{
 				while (!streamExhausted && maxDataSize > 0)
 				{
-					charsRead = reader.Read(readBuf, 0, Math.Min(maxDataSize, 4096));
+					charsRead = reader.Read(readBuf, 0, Math.Min(maxDataSize, readBuf.Length));
 					if (charsRead > 0)
 					{
-						baOrigData.WriteUnicode(new string(readBuf), iExtent);
+						baOrigData.WriteUnicode(new string(readBuf, 0, charsRead), iExtent);
 						iExtent += charsRead * Consts.UnicodeWidth;
 						maxDataSize -= charsRead;
 					}

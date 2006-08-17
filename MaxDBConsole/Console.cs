@@ -32,6 +32,11 @@ namespace MaxDB.Test
                     System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"];
 #endif // NET20 && !MONO
 
+			//MaxDBConnection maxdbconn = new MaxDBConnection(connStr);
+			//maxdbconn.Open();
+			//DataTable dt = maxdbconn.GetSchema("SystemInfo");//, new string[] { "DBA", "MESSAGES" });
+			//maxdbconn.Close();
+
             //SslTest();
             PerfomanceTest();
                         

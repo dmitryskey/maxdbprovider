@@ -1044,7 +1044,13 @@ namespace MaxDB.Data.MaxDBProtocol
 		public const string CursorPrefix = "ADONET_CURSOR_";
 		public const string TimeStampFormat = "yyyy-MM-dd hh:mm:ss.ffffff";
 
-        public static string ToHexString(byte[] array, int offset, int length)
+		public static string ToHexString(byte[] array, int offset)
+		{
+			return ToHexString(array, offset, array.Length);
+		}
+#endif // SAFE
+
+		public static string ToHexString(byte[] array, int offset, int length)
 		{
 			if (array != null)
 			{
@@ -1058,15 +1064,9 @@ namespace MaxDB.Data.MaxDBProtocol
 				return "NULL";
 		}
 
-		public static string ToHexString(byte[] array, int offset)
-		{
-			return ToHexString(array, offset, array.Length);
-		}
-
 		public static string ToHexString(byte[] array)
 		{
 			return ToHexString(array, 0, array.Length);
 		}
-#endif // SAFE
     }
 }

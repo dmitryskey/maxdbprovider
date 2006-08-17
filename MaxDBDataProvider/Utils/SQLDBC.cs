@@ -149,80 +149,6 @@ namespace MaxDB.Data.Utilities
         {
         }
 
-		public static unsafe byte[] GetBytes(OdbcDate dt)
-		{
-			byte[] result = new byte[sizeof(OdbcDate)];
-
-			Array.Copy(BitConverter.GetBytes(dt.year), 0, result, 0, sizeof(short));
-			Array.Copy(BitConverter.GetBytes(dt.month), 0, result, sizeof(short), sizeof(ushort));
-			Array.Copy(BitConverter.GetBytes(dt.day), 0, result, sizeof(short) + sizeof(ushort), sizeof(ushort));
-
-			return result;
-		}
-
-		public static unsafe byte[] GetBytes(OdbcTime tm)
-		{
-			byte[] result = new byte[sizeof(OdbcTime)];
-
-			Array.Copy(BitConverter.GetBytes(tm.hour), 0, result, 0, sizeof(ushort));
-			Array.Copy(BitConverter.GetBytes(tm.minute), 0, result, sizeof(ushort), sizeof(ushort));
-			Array.Copy(BitConverter.GetBytes(tm.second), 0, result, 2 * sizeof(ushort), sizeof(ushort));
-
-			return result;
-		}
-
-		public static unsafe byte[] GetBytes(OdbcTimeStamp ts)
-		{
-			byte[] result = new byte[sizeof(OdbcTimeStamp)];
-
-			Array.Copy(BitConverter.GetBytes(ts.year), 0, result, 0, sizeof(short));
-			Array.Copy(BitConverter.GetBytes(ts.month), 0, result, sizeof(short), sizeof(ushort));
-			Array.Copy(BitConverter.GetBytes(ts.day), 0, result, sizeof(short) + sizeof(ushort), sizeof(ushort));
-			Array.Copy(BitConverter.GetBytes(ts.hour), 0, result, sizeof(short) + 2*sizeof(ushort), sizeof(ushort));
-			Array.Copy(BitConverter.GetBytes(ts.minute), 0, result, sizeof(short) + 3*sizeof(ushort), sizeof(ushort));
-			Array.Copy(BitConverter.GetBytes(ts.second), 0, result, sizeof(short) + 4*sizeof(ushort), sizeof(ushort));
-			Array.Copy(BitConverter.GetBytes(ts.fraction), 0, result, sizeof(short) + 5*sizeof(ushort), sizeof(uint));
-
-			return result;
-		}
-
-		public static unsafe OdbcDate GetDate(byte[] data)
-		{
-			OdbcDate dt_val;
-			
-			dt_val.year = BitConverter.ToInt16(data, 0);
-			dt_val.month = BitConverter.ToUInt16(data, sizeof(short));
-			dt_val.day = BitConverter.ToUInt16(data, sizeof(short) + sizeof(ushort));
-
-			return dt_val;
-		}
-
-		public static unsafe OdbcTime GetTime(byte[] data)
-		{
-			OdbcTime tmval;
-
-			tmval.hour = BitConverter.ToUInt16(data, 0);
-			tmval.minute = BitConverter.ToUInt16(data, sizeof(ushort));
-			tmval.second = BitConverter.ToUInt16(data, 2 * sizeof(ushort));
-
-			return tmval;
-		}
-
-		public static unsafe OdbcTimeStamp GetTimeStamp(byte[] data)
-		{
-			OdbcTimeStamp ts_val;
-
-			ts_val.year = BitConverter.ToInt16(data, 0);
-			ts_val.month = BitConverter.ToUInt16(data, sizeof(short));
-			ts_val.day = BitConverter.ToUInt16(data, sizeof(short) + sizeof(ushort));
-			ts_val.hour = BitConverter.ToUInt16(data, sizeof(short) + 2 * sizeof(ushort));
-			ts_val.minute = BitConverter.ToUInt16(data, sizeof(short) + 3 * sizeof(ushort));
-			ts_val.second = BitConverter.ToUInt16(data, sizeof(short) + 4 * sizeof(ushort));
-			ts_val.fraction = BitConverter.ToUInt32(data, sizeof(short) + 5 * sizeof(ushort));
-
-			return ts_val;
-		}
-
 		public static DateTime GetDateTime(OdbcDate dt_val)
 		{
 			return new DateTime(dt_val.year, dt_val.month, dt_val.day);
@@ -269,10 +195,10 @@ namespace MaxDB.Data.Utilities
 		public extern static int SQLDBC_ErrorHndl_getErrorCode(IntPtr herror);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static string SQLDBC_ErrorHndl_getSQLState(IntPtr herror);
+		public extern static IntPtr SQLDBC_ErrorHndl_getSQLState(IntPtr herror);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static string SQLDBC_ErrorHndl_getErrorText(IntPtr herror);
+		public extern static IntPtr SQLDBC_ErrorHndl_getErrorText(IntPtr herror);
 		
 		#endregion
 
@@ -301,7 +227,8 @@ namespace MaxDB.Data.Utilities
 		public extern static IntPtr SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
 
 		[DllImport("libSQLDBC_C")]
-		public extern static void SQLDBC_ConnectProperties_setProperty(IntPtr conn_prop, string key, string defaultvalue);
+		public extern static void SQLDBC_ConnectProperties_setProperty(IntPtr conn_prop,
+			[MarshalAs(UnmanagedType.LPStr)]string key, [MarshalAs(UnmanagedType.LPStr)]string defaultvalue);
 
 		[DllImport("libSQLDBC_C")]
 		public extern static void SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(IntPtr prop); 
@@ -341,7 +268,9 @@ namespace MaxDB.Data.Utilities
 		public extern static SQLDBC_Retcode SQLDBC_Connection_rollback(IntPtr conn);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_Connection_connectASCII(IntPtr conn, string host, string dbname, string username, string password, IntPtr conn_prop);
+		public extern static SQLDBC_Retcode SQLDBC_Connection_connectASCII(IntPtr conn,
+			[MarshalAs(UnmanagedType.LPStr)]string host, [MarshalAs(UnmanagedType.LPStr)]string dbname,
+			[MarshalAs(UnmanagedType.LPStr)]string username, [MarshalAs(UnmanagedType.LPStr)]string password, IntPtr conn_prop);
 
 		[DllImport("libSQLDBC_C")]
 		public extern static SQLDBC_Retcode SQLDBC_Connection_close(IntPtr conn);
@@ -383,10 +312,11 @@ namespace MaxDB.Data.Utilities
 		public extern static IntPtr SQLDBC_PreparedStatement_getError(IntPtr stmt);
 
 		[DllImport("libSQLDBC_C")]
-		public unsafe extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareNTS(IntPtr stmt, byte* query, SQLDBC_StringEncodingType encoding);
+		public unsafe extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareNTS(IntPtr stmt,
+			[MarshalAs(UnmanagedType.LPWStr)]string query, SQLDBC_StringEncodingType encoding);
 
 		[DllImport("libSQLDBC_C")]
-		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareASCII(IntPtr stmt, string query);
+		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_prepareASCII(IntPtr stmt, [MarshalAs(UnmanagedType.LPStr)]string query);
 
 		[DllImport("libSQLDBC_C")]
 		public unsafe extern static SQLDBC_Retcode SQLDBC_PreparedStatement_bindParameterAddr(IntPtr stmt, short index, SQLDBC_HostType type, void* addr,  
@@ -404,8 +334,8 @@ namespace MaxDB.Data.Utilities
 		[DllImport("libSQLDBC_C")]
 		public extern static int SQLDBC_PreparedStatement_getRowsAffected(IntPtr stmt);
 
-        [DllImport("libSQLDBC_C")]
-        public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_setBatchSize(IntPtr stmt, uint size);
+		[DllImport("libSQLDBC_C")]
+		public extern static SQLDBC_Retcode SQLDBC_PreparedStatement_setBatchSize(IntPtr stmt, uint size);
 		
 		#endregion
 

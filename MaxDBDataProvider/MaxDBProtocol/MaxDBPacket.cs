@@ -560,7 +560,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		private const string strDropCmd = "Drop Parseid";
 		private const int iResultCountSize = 6;
 
-        protected MaxDBRequestPacket(byte[] data, byte clientEncoding, string appID, string appVersion, SqlMode mode)
+        protected MaxDBRequestPacket(byte[] data, byte clientEncoding, string appID, string appVersion)
             : base(data, HeaderOffset.END)
 		{
             if (data == null)
@@ -572,11 +572,10 @@ namespace MaxDB.Data.MaxDBProtocol
 			WriteAscii(appID, PacketHeaderOffset.Appl);
 			WriteInt32(data.Length - HeaderOffset.END - PacketHeaderOffset.Segment, PacketHeaderOffset.VarPartSize);
 			iLength = PacketHeaderOffset.Segment;
-            byCurrentSqlMode = (byte)mode;
 		}
 
-        public MaxDBRequestPacket(byte[] data, string appID, string appVersion, SqlMode mode)
-            : this(data, Consts.ASCIIClient, appID, appVersion, mode)
+        public MaxDBRequestPacket(byte[] data, string appID, string appVersion)
+            : this(data, Consts.ASCIIClient, appID, appVersion)
 		{
 		}
 
@@ -633,10 +632,9 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public byte SwitchSqlMode(byte newMode) 
 		{
-			byte result = byCurrentSqlMode;
-
+			byte oldMode = byCurrentSqlMode;
 			byCurrentSqlMode = newMode;
-			return result;
+			return oldMode;
 		}
 
 		public void AddData(byte[] data) 
@@ -1054,8 +1052,8 @@ namespace MaxDB.Data.MaxDBProtocol
     #region "MaxDB Unicode Request Packet"
     internal class MaxDBUnicodeRequestPacket : MaxDBRequestPacket
     {
-        public MaxDBUnicodeRequestPacket(byte[] data, string appID, string appVersion, SqlMode mode) : 
-            base(data, Consts.IsLittleEndian ? Consts.UnicodeSwapClient : Consts.UnicodeClient, appID, appVersion, mode)
+        public MaxDBUnicodeRequestPacket(byte[] data, string appID, string appVersion) : 
+            base(data, Consts.IsLittleEndian ? Consts.UnicodeSwapClient : Consts.UnicodeClient, appID, appVersion)
 		{
 		}
 
