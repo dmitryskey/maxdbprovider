@@ -327,7 +327,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				sql = "SELECT PARAM_NO, "
 					+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
 					+ "UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER=USER AND "
-					+ "DBPROCEDURE=? ORDER BY PARAM_NO, ASCII_OFFSET";
+					+ "DBPROCEDURE = :DBPROCEDURE ORDER BY PARAM_NO, ASCII_OFFSET";
 				cmd = new MaxDBCommand(sql, dbConnection);
 				cmd.Parameters.Add("DBPROCEDURE", procedureName);
 			} 
@@ -335,8 +335,8 @@ namespace MaxDB.Data.MaxDBProtocol
 			{
 				sql = "SELECT PARAM_NO, "
 					+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
-					+ "UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER=? AND "
-					+ "DBPROCEDURE = ? ORDER BY PARAM_NO, ASCII_OFFSET";
+					+ "UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER = :OWNER AND "
+					+ "DBPROCEDURE = :DBPROCEDURE ORDER BY PARAM_NO, ASCII_OFFSET";
 				cmd = new MaxDBCommand(sql, dbConnection);
 				cmd.Parameters.Add("OWNER", ownerName);
 				cmd.Parameters.Add("DBPROCEDURE", procedureName);
@@ -425,7 +425,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return iSessionId == dbConnection.iSessionID;
+				return iSessionId == dbConnection.mComm.iSessionID;
 			}
 		}
 
@@ -446,15 +446,18 @@ namespace MaxDB.Data.MaxDBProtocol
 		[MethodImpl(MethodImplOptions.Synchronized)]
 		public void DropParseIDs() 
 		{
-			if (byParseId != null && dbConnection != null) 
+			if (dbConnection != null && dbConnection.mComm != null)
 			{
-				dbConnection.DropParseID(byParseId);
-				byParseId = null;
-			}
-			if (byMassParseId != null && dbConnection != null) 
-			{
-				dbConnection.DropParseID(byMassParseId);
-				byMassParseId = null;
+				if (byParseId != null)
+				{
+					dbConnection.mComm.DropParseID(byParseId);
+					byParseId = null;
+				}
+				if (byMassParseId != null)
+				{
+					dbConnection.mComm.DropParseID(byMassParseId);
+					byMassParseId = null;
+				}
 			}
 		}
 
@@ -941,7 +944,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			DBTechTranslator[] infos = null;
 			string[] columnNames = null;
-			MaxDBRequestPacket request = dbConnection.GetRequestPacket();
+			MaxDBRequestPacket request = dbConnection.mComm.GetRequestPacket();
 			byte currentSQLMode = request.SwitchSqlMode((byte)SqlMode.Internal);
 
 			try
@@ -952,7 +955,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				dbConnection.mLogger.SqlTrace(DateTime.Now, "::DESCRIBE CURSOR " + strCursorName);
 				//<<< SQL TRACE
 
-				MaxDBReplyPacket reply = dbConnection.Execute(request, this, GCMode.GC_ALLOWED);
+				MaxDBReplyPacket reply = dbConnection.mComm.Execute(dbConnection.mConnArgs, request, this, GCMode.GC_ALLOWED);
 				reply.ClearPartOffset();
 				for (int i = 0; i < reply.PartCount; i++)
 				{
@@ -963,9 +966,9 @@ namespace MaxDB.Data.MaxDBProtocol
 					if (partType == PartKind.ColumnNames)
 						columnNames = reply.ParseColumnNames();
 					else if (partType == PartKind.ShortInfo)
-						infos = reply.ParseShortFields(dbConnection.bSpaceOption, false, null, false);
+						infos = reply.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, false);
 					else if (partType == PartKind.VardataShortInfo)
-						infos = reply.ParseShortFields(dbConnection.bSpaceOption, false, null, true);
+						infos = reply.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, true);
 				}
 				SetMetaData(infos, columnNames);
 			}
@@ -1000,7 +1003,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			dbConnection.mLogger.SqlTrace(dt, "SQL COMMAND: " + cmd);
 			//<<< SQL TRACE
 			
-			MaxDBRequestPacket request = dbConnection.GetRequestPacket();
+			MaxDBRequestPacket request = dbConnection.mComm.GetRequestPacket();
             byte currentSQLMode = request.SwitchSqlMode((byte)SqlMode.Internal);
 			request.InitDbsCommand(dbConnection.AutoCommit, cmd);
 
@@ -1009,7 +1012,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			try 
 			{
-				return dbConnection.Execute(request, this, GCMode.GC_DELAYED);
+				return dbConnection.mComm.Execute(dbConnection.mConnArgs, request, this, GCMode.GC_DELAYED);
 			} 
 			finally 
 			{

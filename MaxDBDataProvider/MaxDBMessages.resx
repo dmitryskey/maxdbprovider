@@ -441,4 +441,8 @@
   <data name="hash_change_key" xml:space="preserve">
     <value>Cannot change key during hash operation</value>
   </data>
+  <data name="pool_not_found" xml:space="preserve">
+    <value>Unable to find original pool for the connection '{0}'</value>
+    <comment>{0} - connection string</comment>
+  </data>
 </root>

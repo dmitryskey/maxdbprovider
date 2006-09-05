@@ -51,6 +51,11 @@ namespace MaxDB.Data
 			dbType = type;
 		}
 
+		public MaxDBParameter(string parameterName, MaxDBType type, string sourceColumn) : this(parameterName, type)
+		{
+			strSourceColumn = sourceColumn;
+		}
+
 		public MaxDBParameter(string parameterName, object value)
 		{
 			if (value == null)

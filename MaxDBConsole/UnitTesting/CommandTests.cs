@@ -103,11 +103,11 @@ namespace MaxDB.UnitTesting
 					// make sure we get the right value back out
 					cmd.CommandText = "SELECT name FROM Test WHERE id = 10";
 					string name = (string)cmd.ExecuteScalar();
-					Assert.AreEqual("Test3", name);
+					Assert.AreEqual("Test3", name, "Update result for id = 10");
 			
 					cmd.CommandText = "SELECT name FROM Test WHERE id = 11";
 					name = (string)cmd.ExecuteScalar();
-					Assert.AreEqual("Test3", name);
+					Assert.AreEqual("Test3", name, "Update result for id = 11");
 
 					// now do the update with parameters
 					cmd.CommandText = "UPDATE Test SET name = :name WHERE id = :id";
@@ -120,7 +120,7 @@ namespace MaxDB.UnitTesting
 					cmd.Parameters.Clear();
 					cmd.CommandText = "SELECT name FROM Test WHERE id = 11";
 					name = (string)cmd.ExecuteScalar();
-					Assert.AreEqual("Test5", name);
+					Assert.AreEqual("Test5", name, "Update with Parameters result");
 				}
 			}
 			catch (Exception ex)
@@ -146,8 +146,7 @@ namespace MaxDB.UnitTesting
 			
 					// find out how many rows we have now
 					cmd.CommandText = "SELECT COUNT(*) FROM Test";
-					object after_cnt = cmd.ExecuteScalar();
-					Assert.AreEqual(0, after_cnt);
+					Assert.AreEqual(0, cmd.ExecuteScalar(), "Delete all count");
 				}
 			}
 			catch (Exception ex)
@@ -173,8 +172,8 @@ namespace MaxDB.UnitTesting
 
 					using (MaxDBDataReader reader = cmd.ExecuteReader())
 					{
-						Assert.IsTrue(reader.Read());
-						Assert.AreEqual(DBNull.Value, reader[1]);
+						Assert.IsTrue(reader.Read(), "Read first row");
+						Assert.AreEqual(DBNull.Value, reader[1], "Check whether column is NULL or not");
 					}
 				}
 			}
@@ -198,9 +197,9 @@ namespace MaxDB.UnitTesting
 					cmd.CommandText = "SELECT * FROM Test";
 					using (MaxDBDataReader reader = cmd.ExecuteReader())
 					{
-						Assert.IsTrue(reader.Read());
-						Assert.IsFalse(reader.Read());
-						Assert.IsFalse(reader.NextResult());
+						Assert.IsTrue(reader.Read(), "Read first row");
+						Assert.IsFalse(reader.Read(), "Only one row in the result set");
+						Assert.IsFalse(reader.NextResult(), "No next result");
 					}
 				}
 			}
@@ -256,7 +255,7 @@ namespace MaxDB.UnitTesting
                             trans.Commit();
                         }
 
-                        Assert.AreEqual(1, cnt_cmd.ExecuteScalar());
+                        Assert.AreEqual(1, cnt_cmd.ExecuteScalar(), "Insert count after commit");
 
                         trans = mconn.BeginTransaction();
 
@@ -267,7 +266,7 @@ namespace MaxDB.UnitTesting
                         }
                     }
 
-                    Assert.AreEqual(1, cnt_cmd.ExecuteScalar());
+					Assert.AreEqual(1, cnt_cmd.ExecuteScalar(), "Insert count after rollback");
                 }
 			}
 			catch (Exception ex)

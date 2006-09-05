@@ -70,7 +70,7 @@ namespace MaxDB.UnitTesting
 			ExecuteNonQuery("INSERT INTO Test (name) VALUES ('abcАБВ')"); // Russian
 			ExecuteNonQuery("INSERT INTO Test (name) VALUES ('兣冘凥凷冋')"); // simplified Chinese
 			ExecuteNonQuery("INSERT INTO Test (name) VALUES ('困巫忘否役')"); // traditional Chinese
-			ExecuteNonQuery("INSERT INTO Test (name) VALUES ('ئابةتثجح')"); //Arabian
+			ExecuteNonQuery("INSERT INTO Test (name) VALUES ('ئابةتثجح')"); // Arabian
 			ExecuteNonQuery("INSERT INTO Test (name) VALUES ('涯割晦叶角')"); // Japanese
 			ExecuteNonQuery("INSERT INTO Test (name) VALUES ('ברחפע')"); // Hebrew
 			ExecuteNonQuery("INSERT INTO Test (name) VALUES ('ψόβΩΞ')"); // Greek
@@ -83,23 +83,23 @@ namespace MaxDB.UnitTesting
 				try
 				{
 					reader.Read();
-					Assert.AreEqual("abcАБВ", reader.GetString(0));
+					Assert.AreEqual("abcАБВ", reader.GetString(0), "wrong Russian string");
 					reader.Read();
-					Assert.AreEqual("兣冘凥凷冋", reader.GetString(0));
+					Assert.AreEqual("兣冘凥凷冋", reader.GetString(0), "wrong simplified Chinese string");
 					reader.Read();
-					Assert.AreEqual("困巫忘否役", reader.GetString(0));
+					Assert.AreEqual("困巫忘否役", reader.GetString(0), "wrong traditional Chinese string");
 					reader.Read();
-					Assert.AreEqual("ئابةتثجح", reader.GetString(0));
+					Assert.AreEqual("ئابةتثجح", reader.GetString(0), "wrong Arabian string");
 					reader.Read();
-					Assert.AreEqual("涯割晦叶角", reader.GetString(0));
+					Assert.AreEqual("涯割晦叶角", reader.GetString(0), "wrong Japanese string");
 					reader.Read();
-					Assert.AreEqual("ברחפע", reader.GetString(0));
+					Assert.AreEqual("ברחפע", reader.GetString(0), "wrong Hebrew string");
 					reader.Read();
-					Assert.AreEqual("ψόβΩΞ", reader.GetString(0));
+					Assert.AreEqual("ψόβΩΞ", reader.GetString(0), "wrong Greek string");
 					reader.Read();
-					Assert.AreEqual("þðüçöÝÞÐÜÇÖ", reader.GetString(0));
+					Assert.AreEqual("þðüçöÝÞÐÜÇÖ", reader.GetString(0), "wrong Turkish string");
 					reader.Read();
-					Assert.AreEqual("ฅๆษ", reader.GetString(0));
+					Assert.AreEqual("ฅๆษ", reader.GetString(0), "wrong Thai string");
 				}
 				catch (Exception ex)
 				{
@@ -158,23 +158,23 @@ namespace MaxDB.UnitTesting
 				try
 				{
 					reader.Read();
-					Assert.AreEqual("abcАБВ", reader.GetString(0));
+					Assert.AreEqual("abcАБВ", reader.GetString(0), "wrong Russian string");
 					reader.Read();
-					Assert.AreEqual("兣冘凥凷冋", reader.GetString(0));
+					Assert.AreEqual("兣冘凥凷冋", reader.GetString(0), "wrong simplified Chinese string");
 					reader.Read();
-					Assert.AreEqual("困巫忘否役", reader.GetString(0));
+					Assert.AreEqual("困巫忘否役", reader.GetString(0), "wrong traditional Chinese string");
 					reader.Read();
-					Assert.AreEqual("ئابةتثجح", reader.GetString(0));
+					Assert.AreEqual("ئابةتثجح", reader.GetString(0), "wrong Arabian string");
 					reader.Read();
-					Assert.AreEqual("涯割晦叶角", reader.GetString(0));
+					Assert.AreEqual("涯割晦叶角", reader.GetString(0), "wrong Japanese string");
 					reader.Read();
-					Assert.AreEqual("ברחפע", reader.GetString(0));
+					Assert.AreEqual("ברחפע", reader.GetString(0), "wrong Hebrew string");
 					reader.Read();
-					Assert.AreEqual("ψόβΩΞ", reader.GetString(0));
+					Assert.AreEqual("ψόβΩΞ", reader.GetString(0), "wrong Greek string");
 					reader.Read();
-					Assert.AreEqual("þðüçöÝÞÐÜÇÖ", reader.GetString(0));
+					Assert.AreEqual("þðüçöÝÞÐÜÇÖ", reader.GetString(0), "wrong Turkish string");
 					reader.Read();
-					Assert.AreEqual("ฅๆษ", reader.GetString(0));
+					Assert.AreEqual("ฅๆษ", reader.GetString(0), "wrong Thai string");
 				}
 				catch (Exception ex)
 				{
@@ -215,9 +215,9 @@ namespace MaxDB.UnitTesting
 					using (MaxDBDataReader reader = cmd.ExecuteReader())
 					{
 						reader.Read();
-						Assert.AreEqual(cmd.Parameters[0].Value, reader.GetFloat(0));
-						Assert.AreEqual(cmd.Parameters[1].Value, reader.GetDouble(1));
-						Assert.AreEqual(cmd.Parameters[2].Value, reader.GetDecimal(2));
+						Assert.AreEqual(cmd.Parameters[0].Value, reader.GetFloat(0), "wrong float value");
+						Assert.AreEqual(cmd.Parameters[1].Value, reader.GetDouble(1), "wrong double value");
+						Assert.AreEqual(cmd.Parameters[2].Value, reader.GetDecimal(2), "wrong decimal value");
 					}
 				}
 				catch (Exception ex)

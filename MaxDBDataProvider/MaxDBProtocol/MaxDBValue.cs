@@ -444,7 +444,7 @@ namespace MaxDB.Data.MaxDBProtocol
 					return false;
 				}
             
-				MaxDBRequestPacket requestPacket = dbConnection.GetRequestPacket();
+				MaxDBRequestPacket requestPacket = dbConnection.mComm.GetRequestPacket();
 				MaxDBReplyPacket replyPacket;
 				DataPart longpart = requestPacket.InitGetValue(dbConnection.AutoCommit);
 				longpart.WriteByte(0, 0);
@@ -455,7 +455,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				longpart.Close();
 				try 
 				{
-					replyPacket = dbConnection.Execute(requestPacket, this, GCMode.GC_DELAYED);
+					replyPacket = dbConnection.mComm.Execute(dbConnection.mConnArgs, requestPacket, this, GCMode.GC_DELAYED);
 				}
 				catch(MaxDBException ex) 
 				{

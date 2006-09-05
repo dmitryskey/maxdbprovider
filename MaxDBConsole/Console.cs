@@ -32,13 +32,49 @@ namespace MaxDB.Test
                     System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"];
 #endif // NET20 && !MONO
 
-			//MaxDBConnection maxdbconn = new MaxDBConnection(connStr);
-			//maxdbconn.Open();
-			//DataTable dt = maxdbconn.GetSchema("SystemInfo");//, new string[] { "DBA", "MESSAGES" });
-			//maxdbconn.Close();
+			MaxDBConnection maxdbconn = new MaxDBConnection(connStr);
+			maxdbconn.Open();
+
+			using (MaxDBCommand cmd = new MaxDBCommand("CREATE TABLE Test (id int NOT NULL, name VARCHAR(100))", maxdbconn))
+			{
+				cmd.ExecuteNonQuery();
+
+				cmd.CommandText = "INSERT INTO Test (id, name) VALUES(1, 'name 1')";
+				cmd.ExecuteNonQuery();
+
+				cmd.CommandText = "SELECT * FROM Test";
+
+				using (MaxDBDataReader reader = cmd.ExecuteReader())
+				{
+					reader.Read();
+					Console.WriteLine(reader.GetString(1));
+				}
+
+				cmd.CommandText = "DROP TABLE Test";
+				cmd.ExecuteNonQuery();
+
+				cmd.CommandText = "CREATE TABLE Test (id int NOT NULL, name1 VARCHAR(100))";
+				cmd.ExecuteNonQuery();
+
+				cmd.CommandText = "INSERT INTO Test (id, name1) VALUES(1, 'name 1')";
+				cmd.ExecuteNonQuery();
+
+				cmd.CommandText = "SELECT * FROM Test";
+
+				using (MaxDBDataReader reader = cmd.ExecuteReader())
+				{
+					reader.Read();
+					Console.WriteLine(reader.GetString(1));
+				}
+
+				cmd.CommandText = "DROP TABLE Test";
+				cmd.ExecuteNonQuery();
+			}
+
+			maxdbconn.Close();
 
             //SslTest();
-            PerfomanceTest();
+            //PerfomanceTest();
                         
 			return;
 

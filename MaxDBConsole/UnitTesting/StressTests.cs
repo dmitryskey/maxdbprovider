@@ -26,6 +26,8 @@ using System.Text;
 using MaxDB.UnitTesting;
 using NUnit.Framework;
 using MaxDB.Data;
+using System.Security.Cryptography;
+using System.Data;
 
 namespace MaxDB.UnitTesting
 {
@@ -54,66 +56,80 @@ namespace MaxDB.UnitTesting
 
             ClearTestTable();
 
-            using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES (:id, NULL, :blob, NULL)", mconn))
-            {
-                cmd.Parameters.Add(new MaxDBParameter(":id", 1));
-                cmd.Parameters.Add(new MaxDBParameter(":blob", dataIn));
-                try
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                catch (Exception ex)
-                {
-                    Assert.Fail(ex.Message);
-                }
+			using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES (:id, NULL, :blob, NULL)", mconn))
+			{
+				cmd.Parameters.Add(new MaxDBParameter(":id", 1));
+				cmd.Parameters.Add(new MaxDBParameter(":blob", dataIn));
+				try
+				{
+					cmd.ExecuteNonQuery();
+				}
+				catch (Exception ex)
+				{
+					Assert.Fail(ex.Message);
+				}
 
-                cmd.Parameters[0].Value = 2;
-                cmd.Parameters[1].Value = dataIn2;
-                cmd.ExecuteNonQuery();
+				cmd.Parameters[0].Value = 2;
+				cmd.Parameters[1].Value = dataIn2;
+				cmd.ExecuteNonQuery();
 
-                cmd.CommandText = "SELECT * FROM Test";
-                try
-                {
-                    using (MaxDBDataReader reader = cmd.ExecuteReader())
-                    {
-                        reader.Read();
-                        byte[] dataOut = new byte[len];
-                        long count = reader.GetBytes(2, 0, dataOut, 0, len);
-                        Assert.AreEqual(len, count);
-                        Assert.AreEqual(dataIn, dataOut);
+				SHA1 sha = new SHA1CryptoServiceProvider();
 
-                        reader.Read();
-                        count = reader.GetBytes(2, 0, dataOut, 0, len);
-                        Assert.AreEqual(len, count);
-                        Assert.AreEqual(dataIn2, dataOut);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Assert.Fail(ex.Message);
-                }
-            }
+				cmd.CommandText = "SELECT blob1 FROM Test";
+
+				try
+				{
+					using (MaxDBDataReader reader = cmd.ExecuteReader())
+					{
+						reader.Read();
+						byte[] dataOut = new byte[len];
+						long count = reader.GetBytes(0, 0, dataOut, 0, len);
+						Assert.AreEqual(len, count);
+						Assert.AreEqual(sha.ComputeHash(dataIn), sha.ComputeHash(dataOut));
+
+						reader.Read();
+						count = reader.GetBytes(0, 0, dataOut, 0, len);
+						Assert.AreEqual(len, count);
+						Assert.AreEqual(sha.ComputeHash(dataIn2), sha.ComputeHash(dataOut));
+					}
+				}
+				catch (Exception ex)
+				{
+					Assert.Fail(ex.Message);
+				}
+			}
         }
 
         [Test]
         public void TestSequence()
         {
             const int count = 8000;
+			int[] id2_values = new int[count];
+			int[] id_values = new int[count];
 
             ClearTestTable();
 
-            using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name) VALUES (:id, 'test')", mconn))
+			using (MaxDBDataAdapter da = new MaxDBDataAdapter())
+			{
+				da.InsertCommand = new MaxDBCommand("INSERT INTO Test (id, name) VALUES (:id, 'test')", mconn);
+				da.InsertCommand.Parameters.Add(new MaxDBParameter(":id", MaxDBType.Integer, "id"));
+
+				DataTable dt = new DataTable();
+				dt.Columns.Add(new DataColumn("id", typeof(int)));
+
+				for (int i = 1; i <= count; i++)
+				{
+					DataRow row = dt.NewRow();
+					row["id"] = i;
+					dt.Rows.Add(row);
+				}
+
+				da.Update(dt);
+			}
+
+            using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
             {
-                cmd.Parameters.Add(new MaxDBParameter(":id", 1));
-
-                for (int i = 1; i <= count; i++)
-                {
-                    cmd.Parameters[0].Value = i;
-                    cmd.ExecuteNonQuery();
-                }
-
                 int i2 = 0;
-                cmd.CommandText = "SELECT * FROM Test";
 
                 try
                 {
@@ -121,11 +137,13 @@ namespace MaxDB.UnitTesting
                     {
                         while (reader.Read())
                         {
-                            Assert.AreEqual(i2 + 1, reader.GetInt32(0), "Sequence out of order");
+							id_values[i2] = i2 + 1;
+							id2_values[i2] = reader.GetInt32(0);
                             i2++;
                         }
 
                         Assert.AreEqual(count, i2);
+						Assert.AreEqual(id_values, id2_values, "Sequence out of order");
                     }
                 }
                 catch (Exception ex)

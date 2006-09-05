@@ -38,7 +38,7 @@ namespace MaxDB.UnitTesting
                     Assert.AreEqual(1, ds.Tables.Count, "At least one table should be filled");
 
 					Assert.AreEqual("INSERT INTO Test(id2, name, tm) VALUES(:id2, :name, :tm)".ToUpper(),
-						cb.GetInsertCommand().CommandText.ToUpper()); // serial column is skipped
+						cb.GetInsertCommand().CommandText.ToUpper(), "GetInsertCommand method returns wrong SQL"); // serial column is skipped
                 }
             }
             catch (Exception ex)
@@ -62,13 +62,13 @@ namespace MaxDB.UnitTesting
 
                     MaxDBParameterCollection collect =  cb.GetInsertCommand().Parameters;
 
-                    Assert.AreEqual(3, collect.Count);  // serial column is skipped
-					Assert.AreEqual("id2".ToUpper(), collect[0].ParameterName.ToUpper());
-					Assert.AreEqual(DbType.Int32, collect[0].DbType);
-					Assert.AreEqual("name".ToUpper(), collect[1].ParameterName.ToUpper());
-					Assert.AreEqual(DbType.AnsiString, collect[1].DbType);
-					Assert.AreEqual("tm".ToUpper(), collect[2].ParameterName.ToUpper());
-					Assert.AreEqual(DbType.Time, collect[2].DbType);
+                    Assert.AreEqual(3, collect.Count, "GetInsertCommand method returns command with wrong number of parameters");  // serial column is skipped
+					Assert.AreEqual("id2".ToUpper(), collect[0].ParameterName.ToUpper(), "First parameter");
+					Assert.AreEqual(DbType.Int32, collect[0].DbType, "Wrong type of the first parameter");
+					Assert.AreEqual("name".ToUpper(), collect[1].ParameterName.ToUpper(), "Second parameter");
+					Assert.AreEqual(DbType.AnsiString, collect[1].DbType, "Wrong type of the second parameter");
+					Assert.AreEqual("tm".ToUpper(), collect[2].ParameterName.ToUpper(), "Third parameter");
+					Assert.AreEqual(DbType.Time, collect[2].DbType, "Wrong type of the third parameter");
                 }
             }
             catch (Exception ex)
@@ -91,7 +91,7 @@ namespace MaxDB.UnitTesting
                     Assert.AreEqual(1, ds.Tables.Count, "At least one table should be filled");
 
 					Assert.AreEqual("UPDATE Test SET name = :name, tm = :tm WHERE id = :id AND id2 = :id2".ToUpper(),
-						cb.GetUpdateCommand().CommandText.ToUpper());
+						cb.GetUpdateCommand().CommandText.ToUpper(), "GetUpdateCommand method returns wrong SQL");
                 }
             }
             catch (Exception ex)
@@ -114,7 +114,7 @@ namespace MaxDB.UnitTesting
                     Assert.AreEqual(1, ds.Tables.Count, "At least one table should be filled");
 
 					Assert.AreEqual("DELETE FROM Test WHERE id = :id AND id2 = :id2".ToUpper(),
-						cb.GetDeleteCommand().CommandText.ToUpper());
+						cb.GetDeleteCommand().CommandText.ToUpper(), "GetDeleteCommand method returns wrong SQL");
                 }
             }
             catch (Exception ex)

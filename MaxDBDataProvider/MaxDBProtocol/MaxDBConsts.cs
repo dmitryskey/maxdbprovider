@@ -910,7 +910,11 @@ namespace MaxDB.Data.MaxDBProtocol
             CACHE_SIZE = "CACHE SIZE",
             ENCRYPT = "ENCRYPT",
             MODE = "MODE",
-            SSL_CERTIFICATE = "SSL CERTIFICATE";
+            SSL_CERTIFICATE = "SSL CERTIFICATE",
+			POOLING = "POOLING",
+			CONNECTION_LIFETIME = "CONNECTION LIFETIME",
+			MIN_POOL_SIZE = "MIN POOL SIZE",
+			MAX_POOL_SIZE = "MAX POOL SIZE";
     }
 
 	/// <summary>

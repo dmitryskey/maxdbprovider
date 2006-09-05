@@ -228,6 +228,10 @@ namespace MaxDB.Data.Utilities
 
 		[DllImport("libSQLDBC_C")]
 		public extern static void SQLDBC_ConnectProperties_setProperty(IntPtr conn_prop,
+			[MarshalAs(UnmanagedType.LPStr)]string key, [MarshalAs(UnmanagedType.LPStr)]string value);
+
+		[DllImport("libSQLDBC_C")]
+		public extern static IntPtr SQLDBC_ConnectProperties_getProperty(IntPtr conn_prop,
 			[MarshalAs(UnmanagedType.LPStr)]string key, [MarshalAs(UnmanagedType.LPStr)]string defaultvalue);
 
 		[DllImport("libSQLDBC_C")]

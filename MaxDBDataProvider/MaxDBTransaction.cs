@@ -49,10 +49,10 @@ namespace MaxDB.Data
 			dbConnection.mLogger.SqlTrace(DateTime.Now, "::COMMIT");
 			//<<< SQL TRACE
 #if SAFE
-			dbConnection.Commit();
+			dbConnection.mComm.Commit(dbConnection.mConnArgs);
 #else
-			if(UnsafeNativeMethods.SQLDBC_Connection_commit(dbConnection.mConnectionHandler) != SQLDBC_Retcode.SQLDBC_OK) 
-				MaxDBException.ThrowException("COMMIT", UnsafeNativeMethods.SQLDBC_Connection_getError(dbConnection.mConnectionHandler));
+			if (UnsafeNativeMethods.SQLDBC_Connection_commit(dbConnection.mComm.mConnectionHandler) != SQLDBC_Retcode.SQLDBC_OK)
+				MaxDBException.ThrowException("COMMIT", UnsafeNativeMethods.SQLDBC_Connection_getError(dbConnection.mComm.mConnectionHandler));
 #endif // SAFE
         }
 
@@ -89,9 +89,9 @@ namespace MaxDB.Data
 			get 
 			{
 #if SAFE
-				return dbConnection.mIsolationLevel;
+				return dbConnection.mComm.mIsolationLevel;
 #else
-				switch (UnsafeNativeMethods.SQLDBC_Connection_getTransactionIsolation(dbConnection.mConnectionHandler))
+				switch (UnsafeNativeMethods.SQLDBC_Connection_getTransactionIsolation(dbConnection.mComm.mConnectionHandler))
 				{
 					case 0:
 						return IsolationLevel.ReadUncommitted;
@@ -120,10 +120,10 @@ namespace MaxDB.Data
 			dbConnection.mLogger.SqlTrace(DateTime.Now, "::ROLLBACK");
 			//<<< SQL TRACE
 #if SAFE
-			dbConnection.Rollback();
+			dbConnection.mComm.Rollback(dbConnection.mConnArgs);
 #else
-			if(UnsafeNativeMethods.SQLDBC_Connection_rollback(dbConnection.mConnectionHandler) != SQLDBC_Retcode.SQLDBC_OK) 
-				throw new MaxDBException("ROLLBACK" + UnsafeNativeMethods.SQLDBC_Connection_getError(dbConnection.mConnectionHandler));
+			if (UnsafeNativeMethods.SQLDBC_Connection_rollback(dbConnection.mComm.mConnectionHandler) != SQLDBC_Retcode.SQLDBC_OK)
+				throw new MaxDBException("ROLLBACK" + UnsafeNativeMethods.SQLDBC_Connection_getError(dbConnection.mComm.mConnectionHandler));
 #endif // SAFE
         }
 

@@ -271,6 +271,7 @@ namespace MaxDB.Data
             BIGINT_RADIX_OVERFLOW = "bigint_radix_overflow",
 
             HASH_CHANGE_KEY = "hash_change_key",
+			POOL_NOT_FOUND = "pool_not_found",
 
             // the rest
             ERROR = "error",

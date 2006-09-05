@@ -143,6 +143,8 @@
     <Compile Include="MaxDBConnection.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="MaxDBConnectionPool.cs">
+    </Compile>
     <Compile Include="MaxDBConnectionStringBuilder.cs" />
     <Compile Include="MaxDBDataAdapter.cs">
     </Compile>
