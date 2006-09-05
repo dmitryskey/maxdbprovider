@@ -149,6 +149,11 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "MaxDBConnectionPool.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
                     RelPath = "MaxDBConnectionStringBuilder.cs"
                     SubType = "Code"
                     BuildAction = "Compile"

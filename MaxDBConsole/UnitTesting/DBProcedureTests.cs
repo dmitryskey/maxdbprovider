@@ -31,7 +31,7 @@ namespace MaxDB.UnitTesting
 {
     [TestFixture()]
     public class DBProcedureTests : BaseTest
-    {
+	{
         [TestFixtureSetUp]
         public void SetUp()
         {
@@ -69,10 +69,10 @@ namespace MaxDB.UnitTesting
 
                     using (MaxDBDataReader reader = cmd.ExecuteReader())
                     {
-                        Assert.IsTrue(reader.Read());
-                        Assert.AreEqual(p.Value, reader.GetDecimal(0));
-                        Assert.AreEqual((double)p.Value * 1000, reader.GetDecimal(1));
-                        Assert.IsFalse(reader.Read());
+                        Assert.IsTrue(reader.Read(), "data reader shouldn't be empty");
+                        Assert.AreEqual(p.Value, reader.GetDecimal(0), "wrong decimal value of the first column");
+						Assert.AreEqual((double)p.Value * 1000, reader.GetDecimal(1), "wrong decimal value of the second column");
+                        Assert.IsFalse(reader.Read(), "data reader should contain single row");
                     }
                 }
 
@@ -91,7 +91,9 @@ namespace MaxDB.UnitTesting
             {
                 DropDbProcedure("spTest");
 
-                ExecuteNonQuery("CREATE DBPROC spTest(IN val INTEGER) AS INSERT INTO SCOTT.Test VALUES(:val, 'Test');");
+				MaxDBConnectionStringBuilder builder = new MaxDBConnectionStringBuilder(mconn.ConnectionString);
+
+				ExecuteNonQuery("CREATE DBPROC spTest(IN val INTEGER) AS INSERT INTO " + builder.UserId + ".Test VALUES(:val, 'Test');");
 
                 ClearTestTable();
                 //setup testing data
@@ -106,10 +108,10 @@ namespace MaxDB.UnitTesting
 
                     using (MaxDBDataReader reader = cmd.ExecuteReader())
                     {
-                        Assert.IsTrue(reader.Read());
-                        Assert.AreEqual(2, reader.GetInt32(0));
-                        Assert.AreEqual("Test", reader.GetString(1));
-                        Assert.IsFalse(reader.Read());
+						Assert.IsTrue(reader.Read(), "data reader shouldn't be empty");
+						Assert.AreEqual(2, reader.GetInt32(0), "wrong integer value of the first column");
+						Assert.AreEqual("Test", reader.GetString(1), "wrong integer value of the second column");
+						Assert.IsFalse(reader.Read(), "data reader should contain single row");
                     }
                 }
 
@@ -147,10 +149,10 @@ namespace MaxDB.UnitTesting
 
                     cmd.ExecuteNonQuery();
 
-                    Assert.AreEqual("42", cmd.Parameters[0].Value.ToString().Trim());
-                    Assert.AreEqual(33, cmd.Parameters[1].Value);
-                    Assert.AreEqual(new DateTime(2004, 6, 5, 7, 58, 9), cmd.Parameters[2].Value);
-                    Assert.AreEqual(1.2, cmd.Parameters[3].Value);
+                    Assert.AreEqual("42", cmd.Parameters[0].Value.ToString().Trim(), "wrong value of the first parameter");
+					Assert.AreEqual(33, cmd.Parameters[1].Value, "wrong value of the second parameter");
+					Assert.AreEqual(new DateTime(2004, 6, 5, 7, 58, 9), cmd.Parameters[2].Value, "wrong value of the third parameter");
+					Assert.AreEqual(1.2, cmd.Parameters[3].Value, "wrong value of the fourth parameter");
                 }
 
                 DropDbProcedure("spTest");
@@ -182,9 +184,9 @@ namespace MaxDB.UnitTesting
                     cmd.Parameters[1].Direction = ParameterDirection.InputOutput;
                     cmd.Parameters[2].Direction = ParameterDirection.Output;
                     cmd.ExecuteNonQuery();
-                    Assert.AreEqual("beginningending", cmd.Parameters[0].Value.ToString().Trim());
-                    Assert.AreEqual(66, cmd.Parameters[1].Value);
-                    Assert.AreEqual(99, cmd.Parameters[2].Value);
+					Assert.AreEqual("beginningending", cmd.Parameters[0].Value.ToString().Trim(), "wrong value of the first parameter");
+					Assert.AreEqual(66, cmd.Parameters[1].Value, "wrong value of the second parameter");
+					Assert.AreEqual(99, cmd.Parameters[2].Value, "wrong value of the third parameter");
                 }
             }
             catch (Exception ex)
@@ -206,7 +208,7 @@ namespace MaxDB.UnitTesting
                 using (MaxDBCommand cmd = new MaxDBCommand("SELECT fnTest(:valuein) FROM DUAL", mconn))
                 {
                     cmd.Parameters.Add(":valuein", "Test");
-                    Assert.AreEqual(cmd.Parameters[0].Value, cmd.ExecuteScalar().ToString().Trim());
+                    Assert.AreEqual(cmd.Parameters[0].Value, cmd.ExecuteScalar().ToString().Trim(), "wrong function result");
                 }
 
                 DropDbFunction("fnTest");

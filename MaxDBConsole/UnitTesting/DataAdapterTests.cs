@@ -64,20 +64,20 @@ namespace MaxDB.UnitTesting
 					DataSet ds = new DataSet();
 					da.Fill(ds, "Test");
 
-					Assert.AreEqual(1, ds.Tables.Count);
-					Assert.AreEqual(3, ds.Tables[0].Rows.Count);
+					Assert.AreEqual(1, ds.Tables.Count, "At least one table should be filled");
+					Assert.AreEqual(3, ds.Tables[0].Rows.Count, "At least three rows should be inserted");
 
-					Assert.AreEqual(1, ds.Tables[0].Rows[0]["id"]);
-					Assert.AreEqual(2, ds.Tables[0].Rows[1]["id"]);
-					Assert.AreEqual(3, ds.Tables[0].Rows[2]["id"]);
+					Assert.AreEqual(1, ds.Tables[0].Rows[0]["id"], "id field of the first row");
+					Assert.AreEqual(2, ds.Tables[0].Rows[1]["id"], "id field of the second row");
+					Assert.AreEqual(3, ds.Tables[0].Rows[2]["id"], "id field of the third row");
 
-					Assert.AreEqual(1, ds.Tables[0].Rows[0]["id2"]);
-					Assert.AreEqual(2, ds.Tables[0].Rows[1]["id2"]);
-					Assert.AreEqual(3, ds.Tables[0].Rows[2]["id2"]);
+					Assert.AreEqual(1, ds.Tables[0].Rows[0]["id2"], "id2 field of the first row");
+					Assert.AreEqual(2, ds.Tables[0].Rows[1]["id2"], "id2 field of the second row");
+					Assert.AreEqual(3, ds.Tables[0].Rows[2]["id2"], "id2 field of the third row");
 
-					Assert.AreEqual("Name 1", ds.Tables[0].Rows[0]["name"].ToString());
-					Assert.AreEqual(DBNull.Value, ds.Tables[0].Rows[1]["name"]);
-					Assert.AreEqual(String.Empty, ds.Tables[0].Rows[2]["name"].ToString());
+					Assert.AreEqual("Name 1", ds.Tables[0].Rows[0]["name"].ToString(), "name field of the first row");
+					Assert.AreEqual(DBNull.Value, ds.Tables[0].Rows[1]["name"], "name field of the second row");
+					Assert.AreEqual(String.Empty, ds.Tables[0].Rows[2]["name"].ToString(), "name field of the third row");
 				}
 			}
 			catch (Exception ex)
@@ -114,8 +114,8 @@ namespace MaxDB.UnitTesting
 						dr["id"] = cmd.ExecuteScalar();
 
 					// make sure our refresh of auto increment values worked
-					Assert.AreEqual(1, count);
-					Assert.IsFalse(dt.Rows[dt.Rows.Count - 1]["id"] == DBNull.Value);
+					Assert.AreEqual(1, count, "At least one row should be inserted");
+					Assert.AreNotEqual(dt.Rows[dt.Rows.Count - 1]["id"], DBNull.Value, "id field shouldn't be NULL");
 
 					dt.Rows[0]["id2"] = 2;
 					dt.Rows[0]["name"] = "TestName2";
@@ -126,24 +126,24 @@ namespace MaxDB.UnitTesting
 						day1.TimeOfDay.Hours, day1.TimeOfDay.Minutes, day1.TimeOfDay.Seconds);
 					count = da.Update(dt);
 
-					Assert.AreEqual(DBNull.Value, dt.Rows[0]["ts"]);
-					Assert.AreEqual(2, dt.Rows[0]["id2"]);
+					Assert.AreEqual(DBNull.Value, dt.Rows[0]["ts"], "ts field should be NULL");
+					Assert.AreEqual(2, dt.Rows[0]["id2"], "id2 field");
 
 					dt.Rows.Clear();
 					da.Fill(dt);
 
 					DateTime dateTime = (DateTime)dt.Rows[0]["dt"];
-					Assert.AreEqual(day1.Date, dateTime);
-					Assert.AreEqual(day1.TimeOfDay, ((DateTime)dt.Rows[0]["tm"]).TimeOfDay);
+					Assert.AreEqual(day1.Date, dateTime, "dt field");
+					Assert.AreEqual(day1.TimeOfDay, ((DateTime)dt.Rows[0]["tm"]).TimeOfDay, "tm field");
 
 					dt.Rows[0].Delete();
 					count = da.Update(dt);
 
-					Assert.AreEqual(1, count);
+					Assert.AreEqual(1, count, "Table should contain at least one row");
 
 					dt.Rows.Clear();
 					da.Fill(dt);
-					Assert.AreEqual(0, dt.Rows.Count);
+					Assert.AreEqual(0, dt.Rows.Count, "Table should be empty");
 				}
 			}
 			catch (Exception ex)
@@ -178,8 +178,8 @@ namespace MaxDB.UnitTesting
 					dt.Rows.Add(row);
 					da.Update(dt);
 
-					Assert.AreEqual(1, dt.Rows.Count);
-					Assert.AreEqual(2, dt.Rows[0]["OriginalId"]);
+					Assert.AreEqual(1, dt.Rows.Count, "Table should contain at least one row");
+					Assert.AreEqual(2, dt.Rows[0]["OriginalId"], "OriginalId field");
 				}
 			}
 			catch (Exception ex)
@@ -199,7 +199,7 @@ namespace MaxDB.UnitTesting
 				{
 					const int rowCount = 1000;
 					ClearTestTable();
-					using (MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT * FROM test FOR UPDATE", mconn))
+					using (MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT * FROM Test FOR UPDATE", mconn))
 					{
 						MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da);
 						cb.GetType(); //add this command since mcs compiler supposes that cb is never used
@@ -227,7 +227,7 @@ namespace MaxDB.UnitTesting
 
 						dt.Clear();
 						da.Fill(dt);
-						Assert.AreEqual(rowCount, dt.Rows.Count);
+						Assert.AreEqual(rowCount, dt.Rows.Count, "Table row count");
 
 						for (int i = 0; i < rowCount; i++)
 							dt.Rows[i]["name"] = "Name " + i.ToString();
@@ -249,10 +249,10 @@ namespace MaxDB.UnitTesting
 						dt.Clear();
 						da.Fill(dt);
 
-						Assert.AreEqual(rowCount + 1, dt.Rows.Count);
+						Assert.AreEqual(rowCount + 1, dt.Rows.Count, "Table row count + 1");
 
 						for (int i = 0; i < rowCount + 1; i++)
-							Assert.AreEqual(dt.Rows[i]["name"].ToString(), "Name " + i.ToString());
+							Assert.AreEqual(dt.Rows[i]["name"].ToString(), "Name " + i.ToString(), "Table row #" + (i + 1).ToString());
 
 						trans.Commit();
 					}

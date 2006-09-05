@@ -110,7 +110,7 @@ namespace MaxDB.Data.Utilities
  				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "FILENAME", "\"" + strLogName + "\"");
                 if (mSwitcher.TraceFull)
 					UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "PACKET", "1");
-				UnsafeNativeMethods.SQLDBC_Environment_setTraceOptions(dbConnection.mEnviromentHandler, mProperties);
+				UnsafeNativeMethods.SQLDBC_Environment_setTraceOptions(dbConnection.mComm.mEnviromentHandler, mProperties);
 			}
 		}
 #endif

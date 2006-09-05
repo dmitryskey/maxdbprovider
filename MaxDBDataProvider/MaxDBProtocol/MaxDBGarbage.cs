@@ -47,10 +47,10 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 		}
 
-		public void EmptyCan(MaxDBConnection connection) 
+		public void EmptyCan(MaxDBComm communication, ConnectArgs connArgs) 
 		{
-            if (connection == null)
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "connection"));
+			if (communication == null)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "communication"));
 
 			if(bCurrentEmptyRun)
 				return;
@@ -62,10 +62,10 @@ namespace MaxDB.Data.MaxDBProtocol
 			{
 				try 
 				{
-					requestPacket = connection.GetRequestPacket();
+					requestPacket = communication.GetRequestPacket();
 					requestPacket.Init(short.MaxValue);
 					EmptyCan(requestPacket);
-					connection.Execute(requestPacket, this, GCMode.GC_NONE);
+					communication.Execute(connArgs, requestPacket, this, GCMode.GC_NONE);
 				} 
 				catch(MaxDBException)  
 				{ 

@@ -58,53 +58,19 @@ namespace MaxDB.Data
 
 	public class MaxDBConnection :
 #if NET20
- DbConnection
+		DbConnection
 #else
         IDbConnection, IDisposable
 #endif // NET20
-
 	{
-		private MaxDBConnectionStringBuilder mConnStrBuilder;
+		internal MaxDBConnectionStringBuilder mConnStrBuilder;
 		private string strConnection;
 
-		private ConnectArgs mConnArgs;
-
-#if SAFE
-		#region "Native implementation parameters"
-
+		internal ConnectArgs mConnArgs;
 		internal MaxDBComm mComm;
-#if NET20
-		private Stack<MaxDBRequestPacket> mPacketPool = new Stack<MaxDBRequestPacket>();
-		private Stack<MaxDBUnicodeRequestPacket> mUnicodePacketPool = new Stack<MaxDBUnicodeRequestPacket>();
-#else
-        private Stack mPacketPool = new Stack();
-        private Stack mUnicodePacketPool = new Stack();
-#endif // NET20
-		internal bool bAutoCommit;
-		private GarbageParseId mGarbageParseids;
-		private object objExec;
-		private static string strSyncObj = string.Empty;
-		private int bNonRecyclingExecutions;
-		private bool bInTransaction;
-		private bool bInReconnect;
-		private string strCache;
-		private int iCursorId;
-		internal ParseInfoCache mParseCache;
 
-		internal int iSessionID = -1;
-		private static byte[] byDefFeatureSet = { 1, 0, 2, 0, 3, 0, 4, 0, 5, 0 };
-		private byte[] byKernelFeatures = new byte[byDefFeatureSet.Length];
-
-		private string strSslCertificateName;
-		private bool bEncrypt;
-
-		#endregion
-#else
+#if !SAFE
 		#region "SQLDBC Wrapper parameters"
-
-        internal IntPtr mEnviromentHandler = IntPtr.Zero;
-        private IntPtr mConnectionPropertiesHandler = IntPtr.Zero;
-		internal IntPtr mConnectionHandler = IntPtr.Zero;
 
 		//we cache table names extracted from SELECT ... FOR UPDATE statement
 		//SQLDBC library does not store it in its command cache!!!
@@ -155,42 +121,15 @@ namespace MaxDB.Data
             );
 
 		#endregion
-#endif // SAFE
+#endif // !SAFE
 
 		internal MaxDBLogger mLogger;
-		internal IsolationLevel mIsolationLevel = IsolationLevel.Unspecified;
-		internal bool bSpaceOption;
-		private int iTimeout;
-		private Encoding mEncoding = Encoding.ASCII;
-		private SqlMode iMode = SqlMode.Internal;
-		private int iKernelVer; // Version without patch level, e.g. 70402 or 70600.
-		private int iCacheSize, iCacheLimit;
 
 		// Always have a default constructor.
 		public MaxDBConnection()
 		{
-#if !SAFE
-			byte[] errorText = new byte[256];
-			IntPtr mRuntimeHandler = GetRuntimeHandler(ref errorText);
-
-			if (mRuntimeHandler == IntPtr.Zero)
-				throw new MaxDBException(Encoding.ASCII.GetString(errorText));
-
-			mEnviromentHandler = UnsafeNativeMethods.SQLDBC_Environment_new_SQLDBC_Environment(mRuntimeHandler);
-#endif //!SAFE
+			mLogger = new MaxDBLogger();
 		}
-
-#if !SAFE
-		private unsafe IntPtr GetRuntimeHandler(ref byte[] errorText)
-		{
-			IntPtr mRuntimeHandler = IntPtr.Zero;
-
-			fixed (byte* errorPtr = errorText)
-				mRuntimeHandler = UnsafeNativeMethods.ClientRuntime_GetClientRuntime(errorPtr, errorText.Length);
-
-			return mRuntimeHandler;
-		}
-#endif // !SAFE
 
 		// Have a constructor that takes a connection string.
 		public MaxDBConnection(string connectionString)
@@ -227,36 +166,19 @@ namespace MaxDB.Data
 			}
 
 			mConnArgs.dbname = mConnStrBuilder.InitialCatalog;
-
 			mConnArgs.username = mConnStrBuilder.UserId;
-
 			mConnArgs.password = mConnStrBuilder.Password;
-
-			iTimeout = mConnStrBuilder.Timeout;
-
-			iMode = mConnStrBuilder.Mode;
-
-			bSpaceOption = mConnStrBuilder.SpaceOption;
-
-			iCacheSize = mConnStrBuilder.CacheSize;
-
-			iCacheLimit = mConnStrBuilder.CacheLimit;
-
-#if SAFE
-			strCache = mConnStrBuilder.Cache;
-
-			if (mConnStrBuilder.SslCertificateName != null)
-				strSslCertificateName = mConnStrBuilder.SslCertificateName;
-
-			bEncrypt = mConnStrBuilder.Encrypt;
-#endif // SAFE
 		}
 
 		public Encoding DatabaseEncoding
 		{
 			get
 			{
-				return mEncoding;
+#if SAFE
+				return mComm.mEncoding;
+#else
+				return UnsafeNativeMethods.SQLDBC_Connection_isUnicodeDatabase(mComm.mConnectionHandler) == 1 ? Encoding.Unicode : Encoding.ASCII;
+#endif // SAFE
 			}
 		}
 
@@ -264,11 +186,13 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				return iMode;
+				return mConnStrBuilder.Mode;
 			}
 			set
 			{
-				iMode = value;
+				mConnStrBuilder.Mode = value;
+				if (mComm != null)
+					mComm.mConnStrBuilder.Mode = value;
 			}
 		}
 
@@ -276,18 +200,18 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (State != ConnectionState.Open)
+				if (mComm == null || State != ConnectionState.Open)
 					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_NOTOPENED));
 
 #if SAFE
-				return bAutoCommit;
+				return mComm.bAutoCommit;
 #else
-				return UnsafeNativeMethods.SQLDBC_Connection_getAutoCommit(mConnectionHandler) == SQLDBC_BOOL.SQLDBC_TRUE;
+				return UnsafeNativeMethods.SQLDBC_Connection_getAutoCommit(mComm.mConnectionHandler) == SQLDBC_BOOL.SQLDBC_TRUE;
 #endif // SAFE
 			}
 			set
 			{
-				if (State != ConnectionState.Open)
+				if (mComm == null || State != ConnectionState.Open)
 					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_NOTOPENED));
 
 				//>>> SQL TRACE
@@ -296,9 +220,9 @@ namespace MaxDB.Data
 				//<<< SQL TRACE				
 
 #if SAFE
-				bAutoCommit = value;
+				mComm.bAutoCommit = value;
 #else
-				UnsafeNativeMethods.SQLDBC_Connection_setAutoCommit(mConnectionHandler, value ? SQLDBC_BOOL.SQLDBC_TRUE : SQLDBC_BOOL.SQLDBC_FALSE);
+				UnsafeNativeMethods.SQLDBC_Connection_setAutoCommit(mComm.mConnectionHandler, value ? SQLDBC_BOOL.SQLDBC_TRUE : SQLDBC_BOOL.SQLDBC_FALSE);
 #endif // SAFE
 			}
 		}
@@ -311,16 +235,22 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				int correction_level = iKernelVer % 100;
-				int minor_release = ((iKernelVer - correction_level) % 10000) / 100;
-				int mayor_release = (iKernelVer - minor_release * 100 - correction_level) / 10000;
+				int version =
+#if SAFE
+					mComm.iKernelVersion;
+#else
+					UnsafeNativeMethods.SQLDBC_Connection_getKernelVersion(mComm.mConnectionHandler);
+#endif // SAFE
+				int correction_level = version % 100;
+				int minor_release = ((version - correction_level) % 10000) / 100;
+				int mayor_release = (version - minor_release * 100 - correction_level) / 10000;
 				return mayor_release.ToString(CultureInfo.InvariantCulture) + "." +
 					minor_release.ToString(CultureInfo.InvariantCulture) + "." +
 					correction_level.ToString("d2", CultureInfo.InvariantCulture);
 			}
 		}
 
-		private static int MapIsolationLevel(IsolationLevel level)
+		public static int MapIsolationLevel(IsolationLevel level)
 		{
 			switch (level)
 			{
@@ -340,30 +270,31 @@ namespace MaxDB.Data
 		private void SetIsolationLevel(IsolationLevel level)
 		{
 #if SAFE
-			if (mIsolationLevel != level)
+			if (mComm.mIsolationLevel != level)
 			{
 				AssertOpen();
 				string cmd = "SET ISOLATION LEVEL " + MapIsolationLevel(level).ToString(CultureInfo.InvariantCulture);
-				MaxDBRequestPacket requestPacket = GetRequestPacket();
+				MaxDBRequestPacket requestPacket = mComm.GetRequestPacket();
 				byte oldMode = requestPacket.SwitchSqlMode((byte)SqlMode.Internal);
-				requestPacket.InitDbsCommand(bAutoCommit, cmd);
+				requestPacket.InitDbsCommand(mComm.bAutoCommit, cmd);
 				try
 				{
-					Execute(requestPacket, this, GCMode.GC_ALLOWED);
+					mComm.Execute(mConnArgs, requestPacket, this, GCMode.GC_ALLOWED);
 				}
 				catch (MaxDBTimeoutException)
 				{
 					requestPacket.SwitchSqlMode(oldMode);
 				}
 
-				mIsolationLevel = level;
+				mComm.mIsolationLevel = level;
 			}
 #else
-			mIsolationLevel = level;
+			mComm.mIsolationLevel = level;
 
-			if(UnsafeNativeMethods.SQLDBC_Connection_setTransactionIsolation(mConnectionHandler, MapIsolationLevel(level)) != SQLDBC_Retcode.SQLDBC_OK) 
-				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.CONNECTION_ISOLATIONLEVEL), 
-					UnsafeNativeMethods.SQLDBC_Connection_getError(mConnectionHandler));
+			if (UnsafeNativeMethods.SQLDBC_Connection_setTransactionIsolation(mComm.mConnectionHandler, MapIsolationLevel(level)) 
+				!= SQLDBC_Retcode.SQLDBC_OK) 
+				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.CONNECTION_ISOLATIONLEVEL),
+					UnsafeNativeMethods.SQLDBC_Connection_getError(mComm.mConnectionHandler));
 #endif // SAFE
 		}
 
@@ -376,486 +307,6 @@ namespace MaxDB.Data
 #if SAFE
 		#region "Methods to support native protocol"
 
-		private string TermID
-		{
-			get
-			{
-				return ("ado.net@" + this.GetHashCode().ToString("x", CultureInfo.InvariantCulture)).PadRight(18);
-			}
-		}
-
-		private bool InitiateChallengeResponse(MaxDBRequestPacket requestPacket, string user, Auth auth)
-		{
-			if (requestPacket.InitChallengeResponse(user, auth.ClientChallenge))
-			{
-				MaxDBReplyPacket replyPacket = Execute(requestPacket, this, GCMode.GC_DELAYED);
-				auth.ParseServerChallenge(replyPacket.VarDataPart);
-				return true;
-			}
-			else
-				return false;
-		}
-
-		[MethodImpl(MethodImplOptions.Synchronized)]
-		internal MaxDBRequestPacket GetRequestPacket()
-		{
-			MaxDBRequestPacket packet;
-
-			if (DatabaseEncoding == Encoding.Unicode)
-			{
-				if (mUnicodePacketPool.Count == 0)
-					packet = new MaxDBUnicodeRequestPacket(new byte[HeaderOffset.END + mComm.MaxCmdSize], Consts.AppID, Consts.AppVersion);
-				else
-					packet =
-#if NET20
- mUnicodePacketPool.Pop();
-#else
-                        (MaxDBUnicodeRequestPacket)mUnicodePacketPool.Pop();
-#endif // NET20
-			}
-			else
-			{
-				if (mPacketPool.Count == 0)
-					packet = new MaxDBRequestPacket(new byte[HeaderOffset.END + mComm.MaxCmdSize], Consts.AppID, Consts.AppVersion);
-				else
-					packet =
-#if NET20
- mPacketPool.Pop();
-#else
-                        (MaxDBRequestPacket)mPacketPool.Pop();
-#endif // NET20
-			}
-
-			packet.SwitchSqlMode((byte)iMode);
-			return packet;
-		}
-
-		internal void FreeRequestPacket(MaxDBRequestPacket requestPacket)
-		{
-			if (DatabaseEncoding == Encoding.Unicode)
-				mUnicodePacketPool.Push(requestPacket as MaxDBUnicodeRequestPacket);
-			else
-				mPacketPool.Push(requestPacket);
-		}
-
-		internal MaxDBReplyPacket Execute(MaxDBRequestPacket requestPacket, object execObj, int gcFlags)
-		{
-			return Execute(requestPacket, false, false, execObj, gcFlags);
-		}
-
-		[MethodImpl(MethodImplOptions.Synchronized)]
-		internal MaxDBReplyPacket Execute(MaxDBRequestPacket requestPacket, bool ignoreErrors, bool isParse, object execObj, int gcFlags)
-		{
-			int requestLen;
-			MaxDBReplyPacket replyPacket = null;
-			int localWeakReturnCode = 0;
-
-			if (State != ConnectionState.Open)
-				if (gcFlags == GCMode.GC_ALLOWED)
-				{
-					if (mGarbageParseids != null && mGarbageParseids.IsPending)
-						mGarbageParseids.EmptyCan(requestPacket);
-				}
-				else
-				{
-					if (mGarbageParseids != null && mGarbageParseids.IsPending)
-						bNonRecyclingExecutions++;
-				}
-
-			requestPacket.Close();
-
-			requestLen = requestPacket.PacketLength;
-
-			try
-			{
-				DateTime dt = DateTime.Now;
-
-				//>>> PACKET TRACE
-				if (mLogger.TraceFull)
-				{
-					mLogger.SqlTrace(dt, "<PACKET>" + requestPacket.DumpPacket());
-
-					int segm = requestPacket.FirstSegment();
-					while (segm != -1)
-					{
-						mLogger.SqlTrace(dt, requestPacket.DumpSegment(dt));
-						segm = requestPacket.NextSegment();
-					}
-
-					mLogger.SqlTrace(dt, "</PACKET>");
-				}
-				//<<< PACKET TRACE
-
-				objExec = execObj;
-				if (DatabaseEncoding == Encoding.Unicode)
-					replyPacket = new MaxDBUnicodeReplyPacket(mComm.Execute(requestPacket, requestLen));
-				else
-					replyPacket = new MaxDBReplyPacket(mComm.Execute(requestPacket, requestLen));
-
-				//>>> PACKET TRACE
-				if (mLogger.TraceFull)
-				{
-					dt = DateTime.Now;
-					mLogger.SqlTrace(dt, "<PACKET>" + replyPacket.DumpPacket());
-
-					int segm = replyPacket.FirstSegment();
-					while (segm != -1)
-					{
-						mLogger.SqlTrace(dt, replyPacket.DumpSegment(dt));
-						segm = replyPacket.NextSegment();
-					}
-					mLogger.SqlTrace(dt, "</PACKET>");
-				}
-				//<<< PACKET TRACE
-
-				// get return code
-				localWeakReturnCode = replyPacket.WeakReturnCode;
-
-				if (localWeakReturnCode != -8)
-					FreeRequestPacket(requestPacket);
-
-				if (!bAutoCommit && !isParse)
-					bInTransaction = true;
-
-				// if it is not completely forbidden, we will send the drop
-				if (gcFlags != GCMode.GC_NONE)
-				{
-					if (bNonRecyclingExecutions > 20 && localWeakReturnCode == 0)
-					{
-						bNonRecyclingExecutions = 0;
-						if (mGarbageParseids != null && mGarbageParseids.IsPending)
-							mGarbageParseids.EmptyCan(this);
-						bNonRecyclingExecutions = 0;
-					}
-				}
-			}
-			catch (MaxDBException)
-			{
-				// if a reconnect is forbidden or we are in the process of a
-				// reconnect or we are in a (now rolled back) transaction
-				if (bInReconnect || bInTransaction)
-					throw;
-				else
-				{
-					TryReconnect();
-					bInTransaction = false;
-				}
-			}
-			finally
-			{
-				objExec = null;
-			}
-			if (!ignoreErrors && localWeakReturnCode != 0)
-				throw replyPacket.CreateException();
-			return replyPacket;
-		}
-
-		private static string StripString(string str)
-		{
-			if (!(str.StartsWith("\"") && str.EndsWith("\"")))
-				return str.ToUpper(CultureInfo.InvariantCulture);
-			else
-				return str.Substring(1, str.Length - 2);
-		}
-
-		private void DoConnect()
-		{
-			string username = mConnArgs.username;
-			if (username == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NOUSER));
-
-			username = StripString(username);
-
-			string password = mConnArgs.password;
-			if (password == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NOPASSWORD));
-
-			password = StripString(password);
-
-			byte[] passwordBytes = Encoding.ASCII.GetBytes(password);
-
-			DateTime currentDt = DateTime.Now;
-
-			//>>> SQL TRACE
-			if (mLogger.TraceSQL)
-			{
-				mLogger.SqlTrace(currentDt, "::CONNECT");
-				mLogger.SqlTrace(currentDt, "SERVERNODE: '" + mConnArgs.host + (mConnArgs.port > 0 ? ":" +
-					mConnArgs.port.ToString(CultureInfo.InvariantCulture) : string.Empty) + "'");
-				mLogger.SqlTrace(currentDt, "SERVERDB  : '" + mConnArgs.dbname + "'");
-				mLogger.SqlTrace(currentDt, "USER  : '" + mConnArgs.username + "'");
-			}
-			//<<< SQL TRACE
-
-			mComm.Connect(mConnArgs.dbname, mConnArgs.port);
-
-			string connectCmd;
-			byte[] crypted;
-			mUnicodePacketPool.Clear();
-			mPacketPool.Clear();
-			mEncoding = Encoding.ASCII;
-			MaxDBRequestPacket requestPacket = GetRequestPacket();
-			Auth auth = null;
-			bool isChallengeResponseSupported = false;
-			if (mComm.IsAuthAllowed)
-			{
-				try
-				{
-					auth = new Auth();
-					isChallengeResponseSupported = InitiateChallengeResponse(requestPacket, username, auth);
-					if (password.Length > auth.MaxPasswordLength && auth.MaxPasswordLength > 0)
-						password = password.Substring(0, auth.MaxPasswordLength);
-				}
-				catch (MaxDBException ex)
-				{
-					isChallengeResponseSupported = false;
-					if (ex.ErrorCode == -5015)
-					{
-						try
-						{
-							mComm.Reconnect();
-						}
-						catch (MaxDBException exc)
-						{
-							throw new MaxDBConnectionException(exc);
-						}
-					}
-					else
-						throw;
-				}
-			}
-
-#if (NET20 || MONO) && SAFE
-			if (bEncrypt && !isChallengeResponseSupported)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_CHALLENGERESPONSENOTSUPPORTED));
-#endif // (NET20 || MONO) && SAFE
-
-			/*
-            * build connect statement
-            */
-			connectCmd = "CONNECT " + mConnArgs.username + " IDENTIFIED BY :PW SQLMODE " + SqlModeName.Value[(byte)iMode];
-			if (iTimeout > 0)
-				connectCmd += " TIMEOUT " + iTimeout;
-			if (mIsolationLevel != IsolationLevel.Unspecified)
-				connectCmd += " ISOLATION LEVEL " + MapIsolationLevel(mIsolationLevel).ToString(CultureInfo.InvariantCulture);
-			if (iCacheLimit > 0)
-				connectCmd += " CACHELIMIT " + iCacheLimit;
-			if (bSpaceOption)
-			{
-				connectCmd += " SPACE OPTION ";
-				SetKernelFeatureRequest(Feature.SpaceOption);
-			}
-
-			//>>> SQL TRACE
-			if (mLogger.TraceSQL)
-				mLogger.SqlTrace(currentDt, "CONNECT COMMAND: " + connectCmd);
-			//<<< SQL TRACE
-
-			requestPacket.InitDbsCommand(false, connectCmd);
-
-			if (!isChallengeResponseSupported)
-			{
-				try
-				{
-					crypted = Crypt.Mangle(password, false);
-				}
-				catch
-				{
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INVALIDPASSWORD));
-				}
-				requestPacket.NewPart(PartKind.Data);
-				requestPacket.AddData(crypted);
-				requestPacket.AddDataString(TermID);
-				requestPacket.PartArguments++;
-			}
-			else
-			{
-				requestPacket.AddClientProofPart(auth.GetClientProof(passwordBytes));
-				requestPacket.AddClientIdPart(TermID);
-			}
-
-			byDefFeatureSet.CopyTo(byKernelFeatures, 0);
-
-			SetKernelFeatureRequest(Feature.MultipleDropParseid);
-			SetKernelFeatureRequest(Feature.CheckScrollableOption);
-			requestPacket.AddFeatureRequestPart(byKernelFeatures);
-
-			// execute
-			MaxDBReplyPacket replyPacket = Execute(requestPacket, this, GCMode.GC_DELAYED);
-			iSessionID = replyPacket.SessionID;
-			mEncoding = replyPacket.IsUnicode ? Encoding.Unicode : Encoding.ASCII;
-
-			iKernelVer = 10000 * replyPacket.KernelMajorVersion + 100 * replyPacket.KernelMinorVersion + replyPacket.KernelCorrectionLevel;
-			byte[] featureReturn = replyPacket.Features;
-
-			if (featureReturn != null)
-				byKernelFeatures = featureReturn;
-			else
-				byDefFeatureSet.CopyTo(byKernelFeatures, 0);
-
-			if (strCache != null && strCache.Length > 0)
-				mParseCache = new ParseInfoCache(strCache, iCacheSize);
-
-			//>>> SQL TRACE
-			if (mLogger.TraceSQL)
-				mLogger.SqlTrace(DateTime.Now, "SESSION ID: " + iSessionID);
-			//<<< SQL TRACE
-		}
-
-		private void SetKernelFeatureRequest(int feature)
-		{
-			byKernelFeatures[2 * (feature - 1) + 1] = 1;
-		}
-
-		internal void Cancel(object reqObj)
-		{
-			DateTime dt = DateTime.Now;
-			//>>> SQL TRACE
-			if (mLogger.TraceSQL)
-			{
-				mLogger.SqlTrace(dt, "::CANCEL");
-				mLogger.SqlTrace(dt, "SESSION ID: " + iSessionID);
-			}
-			//<<< SQL TRACE
-			if (objExec == reqObj)
-				mComm.Cancel();
-			else
-			{
-				//>>> SQL TRACE
-				if (mLogger.TraceSQL)
-				{
-					mLogger.SqlTrace(dt, "RETURN     : 100");
-					mLogger.SqlTrace(dt, "MESSAGE    : No active command found.");
-				}
-				//<<< SQL TRACE
-			}
-		}
-
-		private bool IsKernelFeatureSupported(int feature)
-		{
-			return (byKernelFeatures[2 * (feature - 1) + 1] == 1) ? true : false;
-		}
-
-		private void TryReconnect()
-		{
-			lock (strSyncObj)
-			{
-				if (mParseCache != null)
-					mParseCache.Clear();
-				mPacketPool.Clear();
-				mUnicodePacketPool.Clear();
-				bInReconnect = true;
-				try
-				{
-					mComm.Reconnect();
-					DoConnect();
-				}
-				catch (MaxDBException conn_ex)
-				{
-					throw new MaxDBConnectionException(conn_ex);
-				}
-				finally
-				{
-					bInReconnect = false;
-				}
-				throw new MaxDBTimeoutException();
-			}
-		}
-
-		internal void DropParseID(byte[] pid)
-		{
-			if (pid == null)
-				return;
-			if (mGarbageParseids == null)
-				mGarbageParseids = new GarbageParseId(IsKernelFeatureSupported(Feature.MultipleDropParseid));
-			mGarbageParseids.ThrowIntoGarbageCan(pid);
-		}
-
-		private void ExecuteSqlString(string cmd, int gcFlags)
-		{
-			MaxDBRequestPacket requestPacket = GetRequestPacket();
-			requestPacket.InitDbs(bAutoCommit);
-			requestPacket.AddString(cmd);
-			try
-			{
-				Execute(requestPacket, this, gcFlags);
-			}
-			catch (MaxDBTimeoutException)
-			{
-				//ignore
-			}
-		}
-
-		internal bool IsInTransaction
-		{
-			get
-			{
-				return (!bAutoCommit && bInTransaction);
-			}
-		}
-
-		[MethodImpl(MethodImplOptions.Synchronized)]
-		internal void Commit()
-		{
-			AssertOpen();
-
-			// send commit
-			ExecuteSqlString("COMMIT WORK", GCMode.GC_ALLOWED);
-			bInTransaction = false;
-		}
-
-		internal void Rollback()
-		{
-			AssertOpen();
-
-			// send rollback
-			ExecuteSqlString("ROLLBACK WORK", GCMode.GC_ALLOWED);
-			bInTransaction = false;
-		}
-
-		internal string NextCursorName
-		{
-			get
-			{
-				return Consts.CursorPrefix + iCursorId++;
-			}
-		}
-
-		#endregion
-#else
-		#region "Unsafe methods"
-
-		private unsafe void OpenConnection()
-		{
-			mConnectionHandler = UnsafeNativeMethods.SQLDBC_Environment_createConnection(mEnviromentHandler);
-
-			mConnectionPropertiesHandler = UnsafeNativeMethods.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
- 
-			if (iTimeout > 0) 
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mConnectionPropertiesHandler, "TIMEOUT", 
-                    iTimeout.ToString(CultureInfo.InvariantCulture));
-			if (mIsolationLevel != IsolationLevel.Unspecified)
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mConnectionPropertiesHandler, "ISOLATIONLEVEL",
-                    MapIsolationLevel(mIsolationLevel).ToString(CultureInfo.InvariantCulture));
-			if (bSpaceOption) 
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mConnectionPropertiesHandler, "SPACEOPTION", "1");
-            if (iCacheSize > 0)
-                UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mConnectionPropertiesHandler, "STATEMENTCACHESIZE", 
-                    iCacheSize.ToString(CultureInfo.InvariantCulture));
-            if (iCacheLimit > 0)
-                UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mConnectionPropertiesHandler, "CACHELIMIT", 
-                    iCacheLimit.ToString(CultureInfo.InvariantCulture));
-		
-			UnsafeNativeMethods.SQLDBC_Connection_setSQLMode(mConnectionHandler, (byte)iMode);
-
-			mLogger = new MaxDBLogger(this);
-
-			if (UnsafeNativeMethods.SQLDBC_Connection_connectASCII(mConnectionHandler,
-                "maxdb:remote://" + mConnArgs.host + "/database/" + mConnArgs.dbname, mConnArgs.dbname, 
-                mConnArgs.username, mConnArgs.password, mConnectionPropertiesHandler) != SQLDBC_Retcode.SQLDBC_OK) 
-				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT_FAILED, mConnArgs.host, mConnArgs.port),  
-					UnsafeNativeMethods.SQLDBC_Connection_getError(mConnectionHandler));
-		}
 
 		#endregion
 #endif // SAFE
@@ -928,34 +379,23 @@ namespace MaxDB.Data
 				//<<< SQL TRACE
 
 				mLogger.Flush();
-#if SAFE
-				iSessionID = -1;
+
 				if (mComm != null)
 				{
-					try
+					if (mConnStrBuilder.Pooling)
+						MaxDBConnectionPool.ReleaseEntry(this);
+					else
 					{
-						if (mGarbageParseids != null)
-							mGarbageParseids.EmptyCan();
-						ExecuteSqlString("ROLLBACK WORK RELEASE", GCMode.GC_NONE);
-					}
-					catch (MaxDBException)
-					{
-					}
-					finally
-					{
-						mComm.Close();
-						mComm = null;
-					}
-				}
+#if SAFE
+						mComm.Close(true, true);
 #else
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(mConnectionPropertiesHandler);
-				mConnectionPropertiesHandler = IntPtr.Zero;
-
-				UnsafeNativeMethods.SQLDBC_Connection_close(mConnectionHandler);
-
-				UnsafeNativeMethods.SQLDBC_Environment_releaseConnection(mEnviromentHandler, mConnectionHandler);
-				mConnectionHandler = IntPtr.Zero;
+						mComm.Close();
 #endif // SAFE
+						mComm.Dispose();
+					}
+
+					mComm = null;
+				}
 			}
 		}
 
@@ -988,7 +428,7 @@ namespace MaxDB.Data
 			{
 				// Returns the connection time-out value set in the connection
 				// string. Zero indicates an indefinite time-out period.
-				return iTimeout;
+				return mConnStrBuilder.Timeout;
 			}
 		}
 
@@ -1014,27 +454,38 @@ namespace MaxDB.Data
 			return new MaxDBCommand();
 		}
 
-#if NET20
-		public override DataTable GetSchema()
+		internal bool Ping(MaxDBComm communication)
 		{
-			return GetSchema("MetaDataCollections");
-		}
-
-		public override DataTable GetSchema(string collectionName)
-		{
-			return GetSchema(collectionName, null);
-		}
-
-		private DataTable ExecuteInternalQuery(string sql, string table)
-		{
-			return ExecuteInternalQuery(sql, table, null);
+			SqlMode oldMode = communication.mConnStrBuilder.Mode;
+			MaxDBComm oldComm = mComm;
+			mComm = communication;
+			if (mComm.mConnStrBuilder.Mode != SqlMode.Internal)
+				mComm.mConnStrBuilder.Mode = SqlMode.Internal;
+			try
+			{
+				using (MaxDBCommand cmd = new MaxDBCommand("PING", this))
+					cmd.ExecuteNonQuery();
+				
+				return true;
+			}
+			catch
+			{
+				return false;
+			}
+			finally
+			{
+				mComm = oldComm;
+				if (oldMode != SqlMode.Internal)
+					communication.mConnStrBuilder.Mode = oldMode;
+			}
 		}
 
 		private DataTable ExecuteInternalQuery(string sql, string table, MaxDBParameterCollection parameters)
 		{
 			DataTable dt = new DataTable(table);
-			SqlMode oldMode = iMode;
-			iMode = SqlMode.Internal;
+			SqlMode oldMode = mComm.mConnStrBuilder.Mode;
+			if (oldMode != SqlMode.Internal)
+				mComm.mConnStrBuilder.Mode = SqlMode.Internal;
 
 			try
 			{
@@ -1049,11 +500,30 @@ namespace MaxDB.Data
 			}
 			finally
 			{
-				iMode = oldMode;
+				if (mComm.mConnStrBuilder.Mode != oldMode)
+					mComm.mConnStrBuilder.Mode = oldMode;
 			}
 
 			return dt;
 		}
+
+#if NET20
+
+		private DataTable ExecuteInternalQuery(string sql, string table)
+		{
+			return ExecuteInternalQuery(sql, table, null);
+		}
+
+		public override DataTable GetSchema()
+		{
+			return GetSchema("MetaDataCollections");
+		}
+
+		public override DataTable GetSchema(string collectionName)
+		{
+			return GetSchema(collectionName, null);
+		}
+
 
 		public override DataTable GetSchema(string collectionName, string[] restrictionValues)
 		{
@@ -1700,26 +1170,25 @@ namespace MaxDB.Data
         public void Open()
 #endif // NET20
 		{
-#if SAFE
-			if (bEncrypt)
+			if (mConnStrBuilder.Pooling)
 			{
-				if (mConnArgs.port == 0) mConnArgs.port = Ports.DefaultSecure;
-				mComm = new MaxDBComm(new SslSocketClass(mConnArgs.host, mConnArgs.port, iTimeout, true,
-					strSslCertificateName != null ? strSslCertificateName : mConnArgs.host));
+#if SAFE
+				mComm = MaxDBConnectionPool.GetPoolEntry(this, mLogger);
+#else
+				mComm = MaxDBConnectionPool.GetPoolEntry(this);
+#endif // SAFE
 			}
 			else
 			{
-				if (mConnArgs.port == 0) mConnArgs.port = Ports.Default;
-				mComm = new MaxDBComm(new SocketClass(mConnArgs.host, mConnArgs.port, iTimeout, true));
-			}
-
-			mLogger = new MaxDBLogger();
-			DoConnect();
+#if SAFE
+				mComm = new MaxDBComm(mLogger);
 #else
-            OpenConnection();
-			mEncoding = UnsafeNativeMethods.SQLDBC_Connection_isUnicodeDatabase(mConnectionHandler) == 1 ? Encoding.Unicode : Encoding.ASCII;
-			iKernelVer = UnsafeNativeMethods.SQLDBC_Connection_getKernelVersion(mConnectionHandler);
-#endif // SAFE
+				mComm = new MaxDBComm();
+#endif //SAFE
+				mComm.mConnStrBuilder = mConnStrBuilder;
+
+				mComm.Open(mConnArgs);
+			}
 		}
 
 #if NET20
@@ -1731,9 +1200,10 @@ namespace MaxDB.Data
 			get
 			{
 #if SAFE
-				return iSessionID >= 0 ? ConnectionState.Open : ConnectionState.Closed;
+				return mComm != null && mComm.iSessionID >= 0 ? ConnectionState.Open : ConnectionState.Closed;
 #else
-				if (mConnectionHandler != IntPtr.Zero && UnsafeNativeMethods.SQLDBC_Connection_isConnected(mConnectionHandler) == SQLDBC_BOOL.SQLDBC_TRUE)
+				if (mComm != null && mComm.mConnectionHandler != IntPtr.Zero &&
+					UnsafeNativeMethods.SQLDBC_Connection_isConnected(mComm.mConnectionHandler) == SQLDBC_BOOL.SQLDBC_TRUE)
 					return ConnectionState.Open;
 				else
 					return ConnectionState.Closed;
@@ -1742,6 +1212,15 @@ namespace MaxDB.Data
 		}
 
 		#endregion
+
+		public static void ClearPool(MaxDBConnection connection)
+		{
+			MaxDBConnectionPool.ClearEntry(connection);
+		}
+
+		public static void ClearAllPools()
+		{
+		}
 
 		#region IDisposable Members
 
@@ -1766,11 +1245,6 @@ namespace MaxDB.Data
 			{
 				if (State == ConnectionState.Open)
 					Close();
-
-#if !SAFE
-				UnsafeNativeMethods.SQLDBC_Environment_delete_SQLDBC_Environment(mEnviromentHandler);
-				mEnviromentHandler = IntPtr.Zero;
-#endif // !SAFE
 
 				if (mLogger != null)
 					((IDisposable)mLogger).Dispose();

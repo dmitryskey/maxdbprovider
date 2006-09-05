@@ -150,7 +150,7 @@ namespace MaxDB.Data
         internal int[] ExecuteBatch(MaxDBParameterCollection[] batchParams)
         {
             AssertOpen();
-            strCursorName = dbConnection.NextCursorName;
+            strCursorName = dbConnection.mComm.NextCursorName;
 			
 			Prepare();
 
@@ -176,7 +176,7 @@ namespace MaxDB.Data
             //<<< SQL TRACE
 
             List<PutValue> streamVec = null;
-            bool inTrans = dbConnection.IsInTransaction;
+            bool inTrans = dbConnection.mComm.IsInTransaction;
 
             try
             {
@@ -221,7 +221,7 @@ namespace MaxDB.Data
                 {
                     streamVec = null;
                     int firstRecordNo = inputCursor;
-                    requestPacket = dbConnection.GetRequestPacket();
+					requestPacket = dbConnection.mComm.GetRequestPacket();
                     requestPacket.InitExecute(mParseInfo.MassParseID, dbConnection.AutoCommit);
                     if (executeCount == -1)
                         requestPacket.AddUndefinedResultCount();
@@ -273,7 +273,7 @@ namespace MaxDB.Data
 
                     try
                     {
-                        replyPacket = dbConnection.Execute(requestPacket, this, GCMode.GC_DELAYED);
+						replyPacket = dbConnection.mComm.Execute(dbConnection.mConnArgs, requestPacket, this, GCMode.GC_DELAYED);
                     }
                     catch (MaxDBException ex)
                     {
@@ -353,7 +353,7 @@ namespace MaxDB.Data
 			requestPacket.InitParseCommand(sqlCmd, true, parseAgain);
 			if (bSetWithInfo)
 				requestPacket.SetWithInfo();
-			replyPacket = dbConnection.Execute(requestPacket, false, true, this, gcFlags);
+			replyPacket = dbConnection.mComm.Execute(dbConnection.mConnArgs, requestPacket, false, true, this, gcFlags);
 			return replyPacket;
 		}
 
@@ -363,7 +363,7 @@ namespace MaxDB.Data
 
 			try
 			{
-				replyPacket = SendCommand(dbConnection.GetRequestPacket(), sql, GCMode.GC_ALLOWED, parseAgain);
+				replyPacket = SendCommand(dbConnection.mComm.GetRequestPacket(), sql, GCMode.GC_ALLOWED, parseAgain);
 			}
 			catch (IndexOutOfRangeException) 
 			{
@@ -377,14 +377,14 @@ namespace MaxDB.Data
 		private void Reparse()
 		{
 			object[] tmpArgs = objInputArgs;
-			mParseInfo = DoParse(mParseInfo.SqlCommand, true);
+			mParseInfo = DoParse(mParseInfo.SqlCommand + " ", true);
 			objInputArgs = tmpArgs;
 		}
 
 		internal bool Execute(CommandBehavior behavior)
 		{
 			AssertOpen();
-			strCursorName = dbConnection.NextCursorName;
+			strCursorName = dbConnection.mComm.NextCursorName;
 
 			return Execute(iMaxParseAgainCnt, behavior);
 		}
@@ -434,7 +434,7 @@ namespace MaxDB.Data
 				
 				baReplyMemory = null;
 
-				requestPacket = dbConnection.GetRequestPacket();
+				requestPacket = dbConnection.mComm.GetRequestPacket();
 				requestPacket.InitExecute(mParseInfo.ParseID, dbConnection.AutoCommit);
 				if (mParseInfo.IsSelect) 
 					requestPacket.AddCursorPart(strCursorName);
@@ -477,7 +477,7 @@ namespace MaxDB.Data
 
 				try 
 				{
-					replyPacket = dbConnection.Execute(requestPacket, this,                                              
+					replyPacket = dbConnection.mComm.Execute(dbConnection.mConnArgs, requestPacket, this,                                              
 						(lstInputProcedureLongs == null) ? GCMode.GC_ALLOWED : GCMode.GC_NONE);
 					// Recycling of parse infos and cursor names is not allowed
 					// if streams are in the command. Even sending it just behind
@@ -494,7 +494,7 @@ namespace MaxDB.Data
 						//<<< SQL TRACE
 						ResetPutValues(lstInputLongs);
 						Reparse();
-						dbConnection.FreeRequestPacket(requestPacket);
+						dbConnection.mComm.FreeRequestPacket(requestPacket);
 						afterParseAgain--;
 						return Execute(afterParseAgain, behavior);
 					}
@@ -524,7 +524,7 @@ namespace MaxDB.Data
 			}
 			catch (MaxDBTimeoutException) 
 			{
-				if (dbConnection.IsInTransaction) 
+				if (dbConnection.mComm.IsInTransaction) 
 					throw;
 				else 
 				{
@@ -1025,11 +1025,11 @@ namespace MaxDB.Data
 						break;
 					case PartKind.ShortInfo:
 						if (infos == null)
-							infos = replyPacket.ParseShortFields(dbConnection.bSpaceOption, false, null, false);
+							infos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, false);
 						break;
 					case PartKind.VardataShortInfo:
 						if (infos == null)
-							infos = replyPacket.ParseShortFields(dbConnection.bSpaceOption, false, null, true);
+							infos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, true);
 						break;
 					case PartKind.ResultCount:
 						// only if this is not a query
@@ -1088,11 +1088,11 @@ namespace MaxDB.Data
 								break;
 							case PartKind.ShortInfo:
 								if (infos == null)
-									infos = replyPacket.ParseShortFields(dbConnection.bSpaceOption, false, null, false);
+									infos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, false);
 								break;
 							case PartKind.VardataShortInfo:
 								if (infos == null)
-									infos = replyPacket.ParseShortFields(dbConnection.bSpaceOption, false, null, true);
+									infos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, true);
 								break;
 							case PartKind.ErrorText:
 								newSFI = false;
@@ -1147,7 +1147,7 @@ namespace MaxDB.Data
 
 			MaxDBReplyPacket replyPacket;
 			MaxDBParseInfo result = null;
-			ParseInfoCache cache = dbConnection.mParseCache;
+			ParseInfoCache cache = dbConnection.mComm.mParseCache;
 			string[] columnNames = null;
 
 			if (parseAgain) 
@@ -1207,12 +1207,12 @@ namespace MaxDB.Data
 							//<<< SQL TRACE
 							break;
 						case PartKind.ShortInfo:
-							shortInfos = replyPacket.ParseShortFields(dbConnection.bSpaceOption,
+							shortInfos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption,
 								result.IsDBProc, result.mProcParamInfos, false);
 							break;
 						case PartKind.VardataShortInfo:
 							result.bVarDataInput = true;
-							shortInfos = replyPacket.ParseShortFields(dbConnection.bSpaceOption,
+							shortInfos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption,
 								result.IsDBProc, result.mProcParamInfos, true);
 							break;
 						case PartKind.ResultTableName:
@@ -1236,7 +1236,7 @@ namespace MaxDB.Data
 					}
 				}
 				result.SetShortInfosAndColumnNames(shortInfos, columnNames);
-				if ((cache != null) && !parseAgain) 
+				if (cache != null && !parseAgain) 
 					cache.AddParseInfo (result);
 			}
 			objInputArgs = new object[result.mParamInfos.Length];
@@ -1247,16 +1247,17 @@ namespace MaxDB.Data
 				dbConnection.mLogger.SqlTraceParseInfo(DateTime.Now, result);
 			//<<< SQL TRACE
 
+			result.dbConnection = dbConnection;
 			return result;
 		}
 
 #if NET20 && SAFE
         internal void ParseMassCmd (bool parsegain)
         {
-            MaxDBRequestPacket requestPacket = dbConnection.GetRequestPacket();
+            MaxDBRequestPacket requestPacket = dbConnection.mComm.GetRequestPacket();
             requestPacket.InitParseCommand (mParseInfo.SqlCommand, true, parsegain);
             requestPacket.SetMassCommand();
-            MaxDBReplyPacket replyPacket = dbConnection.Execute(requestPacket, this, GCMode.GC_ALLOWED);
+			MaxDBReplyPacket replyPacket = dbConnection.mComm.Execute(dbConnection.mConnArgs, requestPacket, this, GCMode.GC_ALLOWED);
             if (replyPacket.ExistsPart(PartKind.ParseId))
                 mParseInfo.MassParseID = replyPacket.ReadBytes(replyPacket.PartDataPos, 12);
         }
@@ -1367,7 +1368,7 @@ namespace MaxDB.Data
 			while (!lastStream.AtEnd) 
 			{
 				GetChangedPutValueDescriptors(replyPacket);
-				requestPacket = dbConnection.GetRequestPacket();
+				requestPacket = dbConnection.mComm.GetRequestPacket();
 				dataPart = requestPacket.InitPutValue(dbConnection.AutoCommit);
 				
 				// get all descriptors and putvals
@@ -1409,16 +1410,16 @@ namespace MaxDB.Data
 				// at end: patch last descriptor
 				dataPart.Close();
 				// execute and get descriptors
-				replyPacket = dbConnection.Execute(requestPacket, this, GCMode.GC_DELAYED);
+				replyPacket = dbConnection.mComm.Execute(dbConnection.mConnArgs, requestPacket, this, GCMode.GC_DELAYED);
 				
 				//  write trailing end of LONGs marker
 				if (requiresTrailingPacket && !bCanceled) 
 				{
-					requestPacket = dbConnection.GetRequestPacket();
+					requestPacket = dbConnection.mComm.GetRequestPacket();
 					dataPart = requestPacket.InitPutValue(dbConnection.AutoCommit);
 					lastStream.MarkAsLast(dataPart);
 					dataPart.Close();
-					dbConnection.Execute(requestPacket, this, GCMode.GC_DELAYED);
+					dbConnection.mComm.Execute(dbConnection.mConnArgs, requestPacket, this, GCMode.GC_DELAYED);
 				}
 			}
 			if (bCanceled) 
@@ -2334,13 +2335,13 @@ namespace MaxDB.Data
 		{
 			ReleaseStmtHandler();
 			if (dbConnection != null)
-				mStmt = UnsafeNativeMethods.SQLDBC_Connection_createPreparedStatement(dbConnection.mConnectionHandler);
+				mStmt = UnsafeNativeMethods.SQLDBC_Connection_createPreparedStatement(dbConnection.mComm.mConnectionHandler);
 		}
 
 		internal void ReleaseStmtHandler()
 		{
 			if (mStmt != IntPtr.Zero)
-				UnsafeNativeMethods.SQLDBC_Connection_releasePreparedStatement(dbConnection.mConnectionHandler, mStmt);
+				UnsafeNativeMethods.SQLDBC_Connection_releasePreparedStatement(dbConnection.mComm.mConnectionHandler, mStmt);
 			mStmt = IntPtr.Zero;
 		}
 
@@ -2370,9 +2371,9 @@ namespace MaxDB.Data
 #if SAFE
 			AssertOpen ();
 			bCanceled = true;
-			dbConnection.Cancel(this);
+			dbConnection.mComm.Cancel(this);
 #else
-			UnsafeNativeMethods.SQLDBC_Connection_cancel(dbConnection.mConnectionHandler);
+			UnsafeNativeMethods.SQLDBC_Connection_cancel(dbConnection.mComm.mConnectionHandler);
 #endif // SAFE
         }
 
@@ -2460,14 +2461,14 @@ namespace MaxDB.Data
 
 #if !SAFE
 				if (mStmt != IntPtr.Zero)
-					UnsafeNativeMethods.SQLDBC_Connection_releasePreparedStatement(dbConnection.mConnectionHandler, mStmt);
+					UnsafeNativeMethods.SQLDBC_Connection_releasePreparedStatement(dbConnection.mComm.mConnectionHandler, mStmt);
 #endif // !SAFE
 
 				dbConnection = value;
 
 #if !SAFE
 				if (dbConnection != null)
-					mStmt = UnsafeNativeMethods.SQLDBC_Connection_createPreparedStatement(dbConnection.mConnectionHandler);
+					mStmt = UnsafeNativeMethods.SQLDBC_Connection_createPreparedStatement(dbConnection.mComm.mConnectionHandler);
 #endif // !SAFE
 			}
 		}
@@ -2660,7 +2661,7 @@ namespace MaxDB.Data
 #if SAFE
 			mParseInfo = DoParse(strCmdText, false);
 #else
-			UnsafeNativeMethods.SQLDBC_Connection_setSQLMode(dbConnection.mConnectionHandler, (byte)dbConnection.SqlMode);
+			UnsafeNativeMethods.SQLDBC_Connection_setSQLMode(dbConnection.mComm.mConnectionHandler, (byte)dbConnection.SqlMode);
 
 			SQLDBC_Retcode rc;
 
@@ -2758,10 +2759,10 @@ namespace MaxDB.Data
 			    {
                     if (mCurrentDataReader != null)
                         ((IDisposable)mCurrentDataReader).Dispose();
-				    dbConnection.DropParseID(mParseInfo.ParseID);
+				    dbConnection.mComm.DropParseID(mParseInfo.ParseID);
 				    mParseInfo.SetParseIDAndSession(null, -1);
 #if NET20
-				    dbConnection.DropParseID(mParseInfo.MassParseID);
+				    dbConnection.mComm.DropParseID(mParseInfo.MassParseID);
 				    mParseInfo.MassParseID = null;
 #endif // NET20
 				    dbConnection = null;
