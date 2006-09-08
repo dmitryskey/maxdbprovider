@@ -69,6 +69,11 @@
 			<copy file="org.mentalis.security.dll" tofile="${outdir}/org.mentalis.security.dll" overwrite="true"/>
 		</if>
 		
+		<property name="keyfile" value=""/>
+		<if test="${framework=='net-2.0'}">
+			<property name="keyfile" value="/keyfile:MaxDBDataProvider.snk"/>
+		</if>
+		
 		<mkdir dir="${outdir}" failonerror="false"/>
 		<resgen input="MaxDBDataProvider/MaxDBMessages.resx" output="MaxDBDataProvider/MaxDBMessages.resources"/>
 		<csc output="${outdir}/MaxDB.Data.dll" target="library" unsafe="${unsafe}"
@@ -82,6 +87,7 @@
 				<include name="org.mentalis.security.dll"/>		
 			</references>
 			<sources refid="Sources"/>
+			<arg value="${keyfile}"/>
 		</csc>
 		<csc output="${outdir}/MaxDB.Test.exe" target="exe" unsafe="true"
 			define="${defines}" debug="${debug}" optimize="${opt}">
