@@ -1,5 +1,2 @@
 1. Test cases
-2. Installer
-3. Documentation
-4. Connection Polling
-5. MaxDBConnection.GetSchema() Method
+2. Documentation

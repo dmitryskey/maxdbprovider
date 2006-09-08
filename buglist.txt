@@ -1,5 +1,4 @@
 1. What does 'ODB' mean for AppID?
-2. Mono(wrapper): perfomance test fails - Packet execution failed : POS(38) Invalid keyword or missing delimiter
 3. TestGetChars fails for the MaxDB 7.5 Unicode
 
 

@@ -90,7 +90,22 @@ namespace MaxDB.UnitTesting
 						reader.Read();
 						count = reader.GetBytes(0, 0, dataOut, 0, len);
 						Assert.AreEqual(len, count);
-						Assert.AreEqual(sha.ComputeHash(dataIn2), sha.ComputeHash(dataOut));
+
+						byte[] hashIn = sha.ComputeHash(dataIn2);
+						byte[] hashOut = sha.ComputeHash(dataOut);
+
+						bool isEqual = true;
+						
+						for (int i = 0; i < hashIn.Length; i++)
+							if (hashIn[i] != hashOut[i])
+							{
+								isEqual = false;
+								break;
+							}
+						
+						if (!isEqual)
+							for (int i = 0; i < len; i++)
+								Assert.AreEqual( dataIn2[i], dataOut[i], "wrong blob value at position " + i.ToString() );
 					}
 				}
 				catch (Exception ex)
