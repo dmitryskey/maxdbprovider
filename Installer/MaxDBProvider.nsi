@@ -80,15 +80,19 @@ Section "Binaries for .Net" SecNet
   ; Put file there
   CreateDirectory "$OUTDIR\bin\net-1.1"
   CreateDirectory "$OUTDIR\bin\net-2.0"
+
   StrCmp $INST_SAFE 0 unsafe
   File "/oname=$OUTDIR\bin\net-1.1\MaxDB.Data.dll" "..\bin\net-1.1\safe\release\MaxDB.Data.dll"
   File "/oname=$OUTDIR\bin\net-1.1\org.mentalis.security.dll" "..\bin\net-1.1\safe\release\org.mentalis.security.dll"
-
   File "/oname=$OUTDIR\bin\net-2.0\MaxDB.Data.dll" "..\bin\net-2.0\safe\release\MaxDB.Data.dll"
+
+  Goto gac
 
 unsafe:
   File "/oname=$OUTDIR\bin\net-1.1\MaxDB.Data.dll" "..\bin\net-1.1\unsafe\release\MaxDB.Data.dll"
   File "/oname=$OUTDIR\bin\net-2.0\MaxDB.Data.dll" "..\bin\net-2.0\unsafe\release\MaxDB.Data.dll"
+
+gac:
 
   StrCmp $INST_GAC 0 reg
 
@@ -115,9 +119,12 @@ Section "Binaries for Mono" SecMono
   CreateDirectory "$OUTDIR\bin\mono-1.0"
   StrCmp $INST_SAFE 0 unsafe
   File "/oname=$OUTDIR\bin\mono-1.0\MaxDB.Data.dll" "..\bin\mono-1.0\safe\release\MaxDB.Data.dll"
+  Goto done
 
 unsafe:
   File "/oname=$OUTDIR\bin\mono-1.0\MaxDB.Data.dll" "..\bin\mono-1.0\unsafe\release\MaxDB.Data.dll"
+
+done:
 
 SectionEnd
 
