@@ -64,45 +64,37 @@ namespace MaxDB.Data.Utilities
 
 		public static void CheckConnection(string host, int port, int timeout)
 		{
-			Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			bool isConnected = false;
-
-			IPHostEntry entries =
-#if NET20
-				Dns.GetHostEntry(host);
-#else
-				Dns.GetHostByName(host);
-#endif
-			foreach (IPAddress ipAddr in entries.AddressList)
+			using (Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
 			{
-				sock.Blocking = false;
-				try
+				bool isConnected = false;
+
+				IPHostEntry entries =
+#if NET20
+					Dns.GetHostEntry(host);
+#else
+					Dns.GetHostByName(host);
+#endif
+				foreach (IPAddress ipAddr in entries.AddressList)
 				{
-					sock.Connect(new IPEndPoint(ipAddr, port));
+					sock.Blocking = false;
+					try
+					{
+						sock.Connect(new IPEndPoint(ipAddr, port));
+					}
+					catch (SocketException ex)
+					{
+						if (ex.ErrorCode != 10035 && ex.ErrorCode != 10036)
+							throw;
+					}
+
+					isConnected = sock.Poll(timeout * 1000000, SelectMode.SelectWrite);
+					if (isConnected)
+						break;
 				}
-				catch (SocketException ex)
-				{
-					if (ex.ErrorCode != 10035 && ex.ErrorCode != 10036)
-						throw;
-				}
 
-				ArrayList checkWrite = new ArrayList();
-				checkWrite.Add(sock);
-				ArrayList checkError = new ArrayList();
-				checkError.Add(sock);
-
-				Socket.Select(null, checkWrite, checkError, timeout * 1000000);
-				sock.Blocking = true;
-				sock.Close();
-
-				isConnected = checkWrite.Count > 0;
-
-				if (isConnected)
-					break;
+				if (!isConnected)
+					throw new MaxDBException();
 			}
-
-			if (!isConnected)
-				throw new MaxDBException();
 		}
 
 		public SocketClass(string host, int port, int timeout, bool checkSocket) 
