@@ -445,13 +445,13 @@ namespace MaxDB.Data
 #endif // NET20
 
 #if NET20
-		public static new MaxDBCommand CreateCommand()
+		public new MaxDBCommand CreateCommand()
 #else
-        public static MaxDBCommand CreateCommand()
+        public MaxDBCommand CreateCommand()
 #endif // NET20
 		{
 			// Return a new instance of a command object.
-			return new MaxDBCommand();
+			return new MaxDBCommand(string.Empty, this);
 		}
 
 		internal bool Ping(MaxDBComm communication)
