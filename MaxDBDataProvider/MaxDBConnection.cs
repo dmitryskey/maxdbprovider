@@ -4,7 +4,7 @@
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
 //	as published by the Free Software Foundation; either version 2
-//  of the License, or (at your option) any later version.
+//	of the License, or (at your option) any later version.
 //
 //	This program is distributed in the hope that it will be useful,
 //	but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -447,7 +447,7 @@ namespace MaxDB.Data
 #if NET20
 		public new MaxDBCommand CreateCommand()
 #else
-        public MaxDBCommand CreateCommand()
+		public MaxDBCommand CreateCommand()
 #endif // NET20
 		{
 			// Return a new instance of a command object.
@@ -480,6 +480,8 @@ namespace MaxDB.Data
 			}
 		}
 
+#if NET20
+
 		private DataTable ExecuteInternalQuery(string sql, string table, MaxDBParameterCollection parameters)
 		{
 			DataTable dt = new DataTable(table);
@@ -506,8 +508,6 @@ namespace MaxDB.Data
 
 			return dt;
 		}
-
-#if NET20
 
 		private DataTable ExecuteInternalQuery(string sql, string table)
 		{
