@@ -411,7 +411,7 @@ namespace MaxDB.Data
 							using (MaxDBDataReader reader = cmdColumns.ExecuteReader())
 								while (reader.Read())
 									dtMetaData.Rows.Add(new object[]{
-																		reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3)});
+										reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3)});
 						}
 					}
 					finally

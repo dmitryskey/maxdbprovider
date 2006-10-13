@@ -186,8 +186,8 @@ namespace MaxDB.Data.MaxDBProtocol
 			NoCmdLowerBound         =  12,
 			Execute                 =  13,
 			GetExecute              =  14,
-			PutValue                  =  15,
-			GetValue                  =  16,
+			PutValue                =  15,
+			GetValue                =  16,
 			Load                    =  17,
 			Unload                  =  18,
 			Ncfill1                 =  19,
@@ -303,42 +303,42 @@ namespace MaxDB.Data.MaxDBProtocol
 	internal struct PartKind 
 	{
 		public const byte 
-			Nil                     =   0,
-			ApplParameterDescription =  1,
-			ColumnNames             =   2,
-			Command                 =   3,
-			ConvTablesReturned      =   4,
-			Data                    =   5,
-			ErrorText               =   6,
-			GetInfo                 =   7,
-			Modulname               =   8,
-			Page                    =   9,
-			ParseId                  =  10,
-			ParsidOfSelect          =  11,
-			ResultCount             =  12,
-			ResultTableName         =  13,
-			ShortInfo               =  14,
-			UserInfoReturned        =  15,
-			Surrogate               =  16,
-			Bdinfo                  =  17,
-			LongData                =  18,
-			TableName               =  19,
-			SessionInfoReturned     =  20,
-			OutputColsNoParameter   =  21,
-			Key                     =  22,
-			Serial                  =  23,
-			RelativePos             =  24,
-			AbapIStream             =  25,
-			AbapOStream             =  26,
-			AbapInfo                =  27,
-			CheckpointInfo          =  28,
-			Procid                  =  29,
-			LongDemand             =  30,
-			MessageList             =  31,
-			VardataShortInfo       =  32,
-			Vardata                 =  33,
-			Feature                 =  34,
-			ClientId                =  35;
+			Nil							=   0,
+			ApplParameterDescription	=  1,
+			ColumnNames             	=   2,
+			Command                 	=   3,
+			ConvTablesReturned      	=   4,
+			Data                    	=   5,
+			ErrorText               	=   6,
+			GetInfo                 	=   7,
+			Modulname               	=   8,
+			Page                    	=   9,
+			ParseId                 	=  10,
+			ParsidOfSelect          	=  11,
+			ResultCount             	=  12,
+			ResultTableName         	=  13,
+			ShortInfo               	=  14,
+			UserInfoReturned        	=  15,
+			Surrogate               	=  16,
+			Bdinfo                  	=  17,
+			LongData                	=  18,
+			TableName               	=  19,
+			SessionInfoReturned     	=  20,
+			OutputColsNoParameter   	=  21,
+			Key                     	=  22,
+			Serial                  	=  23,
+			RelativePos             	=  24,
+			AbapIStream             	=  25,
+			AbapOStream             	=  26,
+			AbapInfo                	=  27,
+			CheckpointInfo          	=  28,
+			Procid                  	=  29,
+			LongDemand					=  30,
+			MessageList					=  31,
+			VardataShortInfo			=  32,
+			Vardata						=  33,
+			Feature						=  34,
+			ClientId					=  35;
 
 		public static readonly string[] Name = new string[]{
 										 "Nil",
@@ -472,9 +472,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	internal struct Packet
 	{
-		//
 		// indicators for fields with variable length
-		//   
 		public const byte 
 			MaxOneByteLength   = 245,
 			Ignored            = 250,
@@ -484,33 +482,26 @@ namespace MaxDB.Data.MaxDBProtocol
 			NullValue          = 254,
 			TwiByteLength      = 255;
     
-		// 
 		// property names used to identify fields
-		///
 		public const string MaxPasswordLenTag  = "maxpasswordlen";
 	}
 
 	internal struct GCMode
 	{
-		public const int 
-			/**
-			 * Control flag for garbage collection on execute. If this is
-			 * set, old cursors/parse ids are sent <i>together with</i> the current
-			 * statement for being dropped.
-			 */
+		public const int
+	
+			//Control flag for garbage collection on execute. If this is
+			//set, old cursors/parse ids are sent <i>together with</i> the current
+			//statement for being dropped.
 			GC_ALLOWED = 1,
 
-			/**
-			 * Control flag for garbage collection on execute. If this is
-			 * set, old cursors/parse ids are sent <i>after</i> the current
-			 * statement for being dropped.
-			 */
+			//Control flag for garbage collection on execute. If this is
+			//set, old cursors/parse ids are sent <i>after</i> the current
+			//statement for being dropped.
 			GC_DELAYED = 2,
 
-			/**
-			 * Control flag for garbage collection on execute. If this is
-			 * set, nothing is done to drop cursors or parse ids.
-			 */
+			//Control flag for garbage collection on execute. If this is
+			//set, nothing is done to drop cursors or parse ids.
 			GC_NONE    = 3;
 	}
 

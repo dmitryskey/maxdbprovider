@@ -27,7 +27,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	/// <summary>
 	/// Least-Recently-Used cache class
 	/// </summary>
-	public class LeastRecentlyUsedCache
+	internal class LeastRecentlyUsedCache
 	{
 		/// <summary>
 		/// double list class for internal purpuses

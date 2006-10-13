@@ -33,7 +33,7 @@ namespace MaxDB.Data
     /// </summary>
 
     [Serializable]
-    public class PartNotFoundException : Exception
+    internal class PartNotFoundException : Exception
     {
         public PartNotFoundException()
             : base()
@@ -57,7 +57,7 @@ namespace MaxDB.Data
     }
 
     [Serializable]
-    public class MaxDBCommunicationException : DataException
+    internal class MaxDBCommunicationException : DataException
     {
         public MaxDBCommunicationException()
             : base()
@@ -85,6 +85,55 @@ namespace MaxDB.Data
         }
     }
 
+	/// <summary>
+	/// The exception that is thrown when MaxDB returns an error.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// This class is created whenever the MaxDB Data Provider encounters an error generated from the server.
+	/// </para>
+	/// <para>
+	/// Any open connections are not automatically closed when an exception is thrown.  If 
+	/// the client application determines that the exception is fatal, it should close any open
+	/// <see cref="MaxDBDataReader"/> objects or <see cref="MaxDBConnection"/> objects.
+	/// </para>
+	/// </remarks>
+	/// <example>
+	/// The following example generates a <B>MaxDBException</B> due to a missing server, 
+	/// and then displays the exception.
+	/// 
+	/// <code lang="Visual Basic">
+	/// Public Sub ShowException()
+    ///		Dim mySelectQuery As String = "SELECT column1 FROM table1"
+	///		Dim myConnection As New MaxDBConnection ("Data Source=localhost;Database=Sample;")
+    ///		Dim myCommand As New MaxDBCommand(mySelectQuery, myConnection)
+	///
+    ///		Try
+    ///			myCommand.Connection.Open()
+	///		Catch e As MaxDBException
+	///			MessageBox.Show( e.Message )
+    ///		End Try
+	///	End Sub
+	/// </code>
+	/// <code lang="C#">
+	/// public void ShowException() 
+	/// {
+    ///		string mySelectQuery = "SELECT column1 FROM table1";
+	///		MaxDBConnection myConnection =
+	///			new MaxDBConnection("Data Source=localhost;Database=Sample;");
+	///		MaxDBCommand myCommand = new MaxDBCommand(mySelectQuery,myConnection);
+	///
+	///		try 
+    ///		{
+    ///			myCommand.Connection.Open();
+    ///		}
+	///		catch (MaxDBException e) 
+    ///		{
+	///			MessageBox.Show( e.Message );
+    ///		}
+	///	}
+	///	</code>
+	/// </example>
     [Serializable]
     public class MaxDBException : 
 #if NET20
@@ -97,19 +146,18 @@ namespace MaxDB.Data
         private string strSqlState;
         private int iErrorCode;
 
-        public MaxDBException()
+        internal MaxDBException()
             : base()
         {
         }
 
-        public MaxDBException(string message)
+        internal MaxDBException(string message)
             : base(message)
         {
         }
 
-        public MaxDBException(string message, Exception innerException)
-            :
-            base(message, innerException)
+        internal MaxDBException(string message, Exception innerException)
+            : base(message, innerException)
         {
         }
 
@@ -118,33 +166,33 @@ namespace MaxDB.Data
         {
         }
 
-        public MaxDBException(string message, string sqlState)
+        internal MaxDBException(string message, string sqlState)
             : base(message)
         {
             strSqlState = sqlState;
         }
 
-        public MaxDBException(string message, string sqlState, Exception innerException)
+        internal MaxDBException(string message, string sqlState, Exception innerException)
             : base(message, innerException)
         {
             strSqlState = sqlState;
         }
 
-        public MaxDBException(string message, string sqlState, int vendorCode)
+        internal MaxDBException(string message, string sqlState, int vendorCode)
             : base(message)
         {
             strSqlState = sqlState;
             iErrorCode = vendorCode;
         }
 
-        public MaxDBException(string message, string sqlState, int vendorCode, Exception innerException)
+        internal MaxDBException(string message, string sqlState, int vendorCode, Exception innerException)
             : base(message, innerException)
         {
             strSqlState = sqlState;
             iErrorCode = vendorCode;
         }
 
-        public MaxDBException(string message, string sqlState, int vendorCode, int errorPosition)
+        internal MaxDBException(string message, string sqlState, int vendorCode, int errorPosition)
             : base(message)
         {
             strSqlState = sqlState;
@@ -152,7 +200,7 @@ namespace MaxDB.Data
             iErrorPosition = errorPosition;
         }
 
-        public MaxDBException(string message, string sqlState, int vendorCode, int errorPosition, Exception innerException)
+        internal MaxDBException(string message, string sqlState, int vendorCode, int errorPosition, Exception innerException)
             : base(message, innerException)
         {
             strSqlState = sqlState;
@@ -172,6 +220,9 @@ namespace MaxDB.Data
             info.AddValue("SqlState", SqlState);
         }
 
+		/// <summary>
+		/// Error code
+		/// </summary>
 #if NET20
         public override int ErrorCode
 #else
@@ -184,6 +235,9 @@ namespace MaxDB.Data
             }
         }
 
+		/// <summary>
+		/// Error position
+		/// </summary>
         public int ErrorPos
         {
             get
@@ -192,6 +246,9 @@ namespace MaxDB.Data
             }
         }
 
+		/// <summary>
+		/// SQL state
+		/// </summary>
         public string SqlState
         {
             get
@@ -200,6 +257,9 @@ namespace MaxDB.Data
             }
         }
 
+		/// <summary>
+		/// Check whether connection is releasing
+		/// </summary>
         public virtual bool IsConnectionReleasing
         {
             get
@@ -237,7 +297,7 @@ namespace MaxDB.Data
     }
 
     [Serializable]
-    public class DatabaseException : MaxDBException
+    internal class DatabaseException : MaxDBException
     {
         public DatabaseException()
             : base()
@@ -271,7 +331,7 @@ namespace MaxDB.Data
     }
 
     [Serializable]
-    public class MaxDBConnectionException : MaxDBException
+    internal class MaxDBConnectionException : MaxDBException
     {
         public MaxDBConnectionException()
             : base()
@@ -309,7 +369,7 @@ namespace MaxDB.Data
     }
 
     [Serializable]
-    public class MaxDBTimeoutException : DatabaseException
+    internal class MaxDBTimeoutException : DatabaseException
     {
         public MaxDBTimeoutException()
             : base(MaxDBMessages.Extract(MaxDBError.TIMEOUT), "08000", 700, 0)
@@ -342,7 +402,7 @@ namespace MaxDB.Data
     }
 
     [Serializable]
-    public class MaxDBConversionException : MaxDBException
+    internal class MaxDBConversionException : MaxDBException
     {
         public MaxDBConversionException()
             : base()
@@ -366,7 +426,7 @@ namespace MaxDB.Data
     }
 
     [Serializable]
-    public class MaxDBValueOverflowException : MaxDBException
+    internal class MaxDBValueOverflowException : MaxDBException
     {
         public MaxDBValueOverflowException()
             : base()
@@ -402,7 +462,7 @@ namespace MaxDB.Data
     }
 
     [Serializable]
-    public class StreamIOException : IOException
+    internal class StreamIOException : IOException
     {
         private DataException mSqlException;
 
@@ -453,7 +513,7 @@ namespace MaxDB.Data
     }
 
     [Serializable]
-    public class InvalidColumnException : DataException
+    internal class InvalidColumnException : DataException
     {
         public InvalidColumnException()
             : base()

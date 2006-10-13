@@ -542,6 +542,14 @@ namespace MaxDB.Data.MaxDBProtocol
 				return false;
 			}
 		}
+
+		public bool IsLittleEndian
+		{
+			get
+			{
+				return (ReadByte(HeaderOffset.END + ConnectPacketOffset.MessCode + 1) == SwapMode.Swapped);
+			}
+		}
 	}
 
 	#endregion

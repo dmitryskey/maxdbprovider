@@ -40,23 +40,19 @@ namespace MaxDB.UnitTesting
 
         public BaseTest()
 		{
-			//
-			// TODO: Add constructor logic here
-			//
+			if (mAppSettings["LogFileName"] != null)
+			{
+				msw = new StreamWriter(mAppSettings["LogFileName"]);
+
+				Trace.Listeners.Clear();
+				Trace.Listeners.Add(new TextWriterTraceListener(msw));
+			}
 		}
 
 		protected void Init(string DDLQuery)
 		{
             try
             {
-                if (mAppSettings["LogFileName"] != null)
-                {
-                    msw = new StreamWriter(mAppSettings["LogFileName"]);
-
-                    Trace.Listeners.Clear();
-                    Trace.Listeners.Add(new TextWriterTraceListener(msw));
-                }
-
                 mconn = new MaxDBConnection(mAppSettings["ConnectionString"]);
                 mconn.Open();
                 mconn.AutoCommit = true;
