@@ -37,13 +37,11 @@ using Mono.Security.Protocol.Tls;
 
 namespace MaxDB.Data.Utilities
 {
+#if SAFE
 	/// <summary>
 	/// Interface to support tcp and ssl connection.
 	/// </summary>
-    /// 
-
-#if SAFE
-	public interface IMaxDBSocket
+	internal interface IMaxDBSocket
 	{
 		bool ReopenSocketAfterInfoPacket{get;}
 		bool DataAvailable{get;}

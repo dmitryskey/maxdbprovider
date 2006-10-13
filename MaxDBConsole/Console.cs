@@ -1,5 +1,4 @@
-﻿/*
-using System;
+﻿using System;
 using System.Text;
 using System.IO;
 using System.Data;
@@ -223,18 +222,33 @@ namespace MaxDB.Test
         }
 	}
 }
-*/
 
+/*
 using System;
 using System.Data;
 using MaxDB.Data;
+using System.Collections.Specialized;
+using System.IO;
+using System.Diagnostics;
 
 public class Test
 {
 	public static void Main(string[] args)
 	{
+		NameValueCollection mAppSettings = System.Configuration.ConfigurationSettings.AppSettings;
+
+		StreamWriter msw = null;
+
+		if (mAppSettings["LogFileName"] != null)
+		{
+			msw = new StreamWriter(mAppSettings["LogFileName"]);
+
+			Trace.Listeners.Clear();
+			Trace.Listeners.Add(new TextWriterTraceListener(msw));
+		}
+
 		string connectionString =
-		   "Server=localhost;" +
+		   "Server=sheep;" +
 		   "Database=uhoteldb;" +
 		   "User ID=SCOTT;" +
 		   "Password=TIGER;";
@@ -244,12 +258,12 @@ public class Test
 		// requires a table to be created named employee
 		// with columns firstname and lastname
 		// such as,
-		//        CREATE TABLE employee (
+		//        CREATE TABLE employee_tmp (
 		//           firstname varchar(32),
 		//           lastname varchar(32));
 		string sql =
 			"SELECT firstname, lastname " +
-			"FROM employee";
+			"FROM employee_tmp";
 		dbcmd.CommandText = sql;
 		IDataReader reader = dbcmd.ExecuteReader();
 		while (reader.Read())
@@ -266,5 +280,8 @@ public class Test
 		dbcmd = null;
 		dbcon.Dispose();
 		dbcon = null;
+
+		if (msw != null) msw.Close();
 	}
 }
+*/

@@ -46,6 +46,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		private int iPort;
 		private int iSender;
 		private bool bIsAuthAllowed;
+		private bool bIsServerLittleEndian;
 		private int iMaxCmdSize;
 		private bool bSession;
 		private TimeSpan ts = new TimeSpan(1);
@@ -91,7 +92,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				//    mSocket.Stream.Read(answer, 0, 1024);
 				//    string sss = System.Text.Encoding.ASCII.GetString(answer);
 				//}
-				
+
 				ConnectPacketData connData = new ConnectPacketData();
 				connData.DBName = dbname;
 				connData.Port = port;
@@ -142,9 +143,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 				reply = GetConnectReply();
 				bIsAuthAllowed = reply.IsAuthAllowed;
+				bIsServerLittleEndian = reply.IsLittleEndian;
 				iMaxCmdSize = reply.MaxDataLength - reply.MinReplySize;
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT_FAILED, mSocket.Host, mSocket.Port), ex);
 			}
@@ -168,33 +170,33 @@ namespace MaxDB.Data.MaxDBProtocol
 			int len = mSocket.Stream.Read(replyBuffer, 0, replyBuffer.Length);
 			if (len <= HeaderOffset.END)
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RECV_CONNECT));
-			
-			MaxDBConnectPacket replyPacket = new MaxDBConnectPacket(replyBuffer, 
+
+			MaxDBConnectPacket replyPacket = new MaxDBConnectPacket(replyBuffer,
 				replyBuffer[HeaderOffset.END + ConnectPacketOffset.MessCode + 1] == SwapMode.Swapped);
 
 			int actLen = replyPacket.ActSendLength;
 			if (actLen < 0 || actLen > 500 * 1024)
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.REPLY_GARBLED));
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.REPLY_GARBLED));
 
-            int bytesRead;
+			int bytesRead;
 
-            while (len < actLen)
+			while (len < actLen)
 			{
-                bytesRead = mSocket.Stream.Read(replyPacket.GetArrayData(), len, actLen - len);
+				bytesRead = mSocket.Stream.Read(replyPacket.GetArrayData(), len, actLen - len);
 
-                if (bytesRead <= 0)
-                    break;
+				if (bytesRead <= 0)
+					break;
 
-                len += bytesRead;
+				len += bytesRead;
 
-                if (!mSocket.DataAvailable) System.Threading.Thread.Sleep(ts); //wait for end of data
+				if (!mSocket.DataAvailable) System.Threading.Thread.Sleep(ts); //wait for end of data
 			};
 
-            if (len < actLen)
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.REPLY_GARBLED));
+			if (len < actLen)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.REPLY_GARBLED));
 
-            if (len > actLen)
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CHUNKOVERFLOW, actLen, len, replyBuffer.Length));
+			if (len > actLen)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CHUNKOVERFLOW, actLen, len, replyBuffer.Length));
 
 			iSender = replyPacket.PacketSender;
 
@@ -250,7 +252,7 @@ namespace MaxDB.Data.MaxDBProtocol
 					cancel_socket.Close();
 				}
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				throw new MaxDBException(ex.Message);
 			}
@@ -258,7 +260,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public byte[] Execute(MaxDBRequestPacket userPacket, int len)
 		{
-			MaxDBPacket rawPacket = new MaxDBPacket(userPacket.GetArrayData(), 0, userPacket.Swapped); 
+			MaxDBPacket rawPacket = new MaxDBPacket(userPacket.GetArrayData(), 0, userPacket.Swapped);
 			rawPacket.FillHeader(RSQLTypes.USER_DATA_REQUEST, iSender);
 			rawPacket.SetSendLength(len + HeaderOffset.END);
 
@@ -270,31 +272,37 @@ namespace MaxDB.Data.MaxDBProtocol
 			if (headerLength != HeaderOffset.END)
 				throw new MaxDBCommunicationException(RTEReturnCodes.SQLRECEIVE_LINE_DOWN);
 
-			MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf, true);
-				//headerBuf[HeaderOffset.END + PacketHeaderOffset.MessSwap] == SwapMode.Swapped); //???
+			// auto-detect header byte-order
+			//ulong littleEndianValue = headerBuf[0] + headerBuf[1] * 0x100UL +
+			//                headerBuf[2] * 0x10000UL + headerBuf[3] * 0x1000000UL;
+			//ulong bigEndianValue = headerBuf[0] * 0x1000000UL + headerBuf[1] * 0x10000UL +
+			//                headerBuf[2] * 0x100UL + headerBuf[3];
+			//MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf, littleEndianValue < bigEndianValue);
+			MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf, bIsServerLittleEndian);
+
 			int returnCode = header.ReturnCode;
 			if (returnCode != 0)
 				throw new MaxDBCommunicationException(returnCode);
 
 			byte[] packetBuf = new byte[header.MaxSendLength - HeaderOffset.END];
 			int replyLen = HeaderOffset.END;
-            int bytesRead;
-			
-            while (replyLen < header.ActSendLength)
+			int bytesRead;
+
+			while (replyLen < header.ActSendLength)
 			{
-                bytesRead = mSocket.Stream.Read(packetBuf, replyLen - HeaderOffset.END, header.ActSendLength - replyLen);
-                if (bytesRead <= 0)
-                    break;
-                replyLen += bytesRead;
-				if (!mSocket.DataAvailable) System.Threading.Thread.Sleep(ts); //wait for end of data
+				bytesRead = mSocket.Stream.Read(packetBuf, replyLen - HeaderOffset.END, header.ActSendLength - replyLen);
+				if (bytesRead <= 0)
+					break;
+				replyLen += bytesRead;
+				if (!mSocket.DataAvailable) System.Threading.Thread.Sleep(ts); //wait for the end of data
 			};
 
-            if (replyLen < header.ActSendLength)
-                throw new MaxDBCommunicationException(RTEReturnCodes.SQLRECEIVE_LINE_DOWN);
+			if (replyLen < header.ActSendLength)
+				throw new MaxDBCommunicationException(RTEReturnCodes.SQLRECEIVE_LINE_DOWN);
 
-            if (replyLen > header.ActSendLength)
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CHUNKOVERFLOW,
-                    header.ActSendLength, replyLen, packetBuf.Length + HeaderOffset.END));
+			if (replyLen > header.ActSendLength)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CHUNKOVERFLOW,
+					header.ActSendLength, replyLen, packetBuf.Length + HeaderOffset.END));
 
 			return packetBuf;
 		}
@@ -541,7 +549,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				else
 					packet =
 #if NET20
-						mUnicodePacketPool.Pop();
+ mUnicodePacketPool.Pop();
 #else
                         (MaxDBUnicodeRequestPacket)mUnicodePacketPool.Pop();
 #endif // NET20
@@ -553,7 +561,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				else
 					packet =
 #if NET20
-						mPacketPool.Pop();
+ mPacketPool.Pop();
 #else
                         (MaxDBRequestPacket)mPacketPool.Pop();
 #endif // NET20

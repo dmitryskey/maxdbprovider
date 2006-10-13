@@ -40,23 +40,33 @@ namespace MaxDB.Data
 	};
 
 	/// <summary>
-	/// SQL Mode
+	/// MaxDB SQL Mode
 	/// </summary>
 	/// <remarks>
 	/// copy of vsp001::tsp1_sqlmode
 	/// </remarks>
 	public enum SqlMode
 	{
+		/// <summary>Unknown mode</summary>
 		Nil = 0,
+		/// <summary>Session mode</summary>
 		SessionSqlMode = 1,
+		/// <summary>Internal mode</summary>
 		Internal = 2,
+		/// <summary>ANSI mode</summary>
 		Ansi = 3,
+		/// <summary>DB2 mode</summary>
 		Db2 = 4,
+		/// <summary>Oracle mode</summary>
 		Oracle = 5,
+		/// <summary>SAP R/3 mode</summary>
 		SapR3 = 6,
 	}
 
-	public class MaxDBConnection :
+	/// <summary>
+	/// Represents an open connection to a MaxDB database. This class cannot be inherited.
+	/// </summary>
+	public sealed class MaxDBConnection :
 #if NET20
 		DbConnection
 #else
@@ -125,13 +135,18 @@ namespace MaxDB.Data
 
 		internal MaxDBLogger mLogger;
 
-		// Always have a default constructor.
+		/// <summary>
+		/// Default constructor
+		/// </summary>
 		public MaxDBConnection()
 		{
 			mLogger = new MaxDBLogger();
 		}
 
-		// Have a constructor that takes a connection string.
+		/// <summary>
+		/// A constructor that takes a connection string
+		/// </summary>
+		/// <param name="connectionString">Connection String</param>
 		public MaxDBConnection(string connectionString)
 			: this()
 		{
@@ -250,7 +265,7 @@ namespace MaxDB.Data
 			}
 		}
 
-		public static int MapIsolationLevel(IsolationLevel level)
+		internal static int MapIsolationLevel(IsolationLevel level)
 		{
 			switch (level)
 			{
@@ -313,6 +328,11 @@ namespace MaxDB.Data
 
 		#region IDbConnection Members
 
+		/// <summary>
+		/// Initiate a local transaction with the specified isolation level.
+		/// </summary>
+		/// <param name="isolationLevel">Isolation level <see cref="IsolationLevel"/> under which the transaction should run.</param>
+		/// <returns>A <see cref="DbTransaction"/> object.</returns>
 #if NET20
 		protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
 #else
@@ -322,6 +342,11 @@ namespace MaxDB.Data
 			return BeginTransaction(isolationLevel);
 		}
 
+		/// <summary>
+		/// Initiate a local transaction with the specified isolation level.
+		/// </summary>
+		/// <param name="isolationLevel">Isolation level <see cref="IsolationLevel"/> under which the transaction should run.</param>
+		/// <returns>A <see cref="MaxDBTransaction"/> object.</returns>
 #if NET20
 		public new MaxDBTransaction BeginTransaction(IsolationLevel isolationLevel)
 #else
@@ -339,6 +364,10 @@ namespace MaxDB.Data
 		}
 #endif
 
+		/// <summary>
+		/// Initiate a local transaction 
+		/// </summary>
+		/// <returns>A <see cref="MaxDBTransaction"/> object.</returns>
 #if NET20
 		public new MaxDBTransaction BeginTransaction()
 #else
@@ -348,17 +377,25 @@ namespace MaxDB.Data
 			return new MaxDBTransaction(this);
 		}
 
+		/// <summary>
+		/// Change the database setting on the back-end. Note that it is a method
+		/// and not a property because the operation requires an expensive round trip.
+		/// </summary>
+		/// <param name="databaseName">Database name</param>
 #if NET20
 		public override void ChangeDatabase(string databaseName)
 #else
         public void ChangeDatabase(string databaseName)
 #endif // NET20
 		{
-			// Change the database setting on the back-end. Note that it is a method
-			// and not a property because the operation requires an expensive round trip.
 			mConnArgs.dbname = databaseName;
 		}
 
+		/// <summary>
+		/// Close the database connection and set the ConnectionState
+		///	property. If the underlying connection to the server is
+		/// being pooled, Close() will release it back to the pool.
+		/// </summary>
 		[MethodImpl(MethodImplOptions.Synchronized)]
 #if NET20
 		public override void Close()
@@ -366,11 +403,6 @@ namespace MaxDB.Data
         public void Close()
 #endif // NET20
 		{
-			/*
-			 * Close the database connection and set the ConnectionState
-			 * property. If the underlying connection to the server is
-			 * being pooled, Close() will release it back to the pool.
-			 */
 			if (State == ConnectionState.Open)
 			{
 				//>>> SQL TRACE
@@ -399,6 +431,23 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the string used to connect to a MaxDB Server database.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// The <b>ConnectionString</b> always returns exactly what the user set. 
+		/// Security-sensitive information may be removed.
+		/// </para>
+		/// <para>
+		/// You can use this property to connect to a database.
+		/// The following example illustrates a typical connection string.
+		/// <c>"Server=MyServer;Database=MyDB;User ID=MyLogin;Password=MyPassword;"</c>
+		/// </para>
+		/// <para>To connect to a local machine, specify "localhost" or "127.0.0.1" for the server. 
+		/// If you do not specify a server, localhost is assumed.
+		/// </para>
+		/// </remarks>
 #if NET20
 		public override string ConnectionString
 #else
@@ -407,7 +456,6 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				// Always return exactly what the user set. Security-sensitive information may be removed.
 				return strConnection;
 			}
 			set
@@ -418,6 +466,10 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Returns the connection time-out value set in the connection
+		/// string. Zero indicates an indefinite time-out period.
+		/// </summary>
 #if NET20
 		public override int ConnectionTimeout
 #else
@@ -426,12 +478,14 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				// Returns the connection time-out value set in the connection
-				// string. Zero indicates an indefinite time-out period.
 				return mConnStrBuilder.Timeout;
 			}
 		}
 
+		/// <summary>
+		/// Creates and returns a <see cref="DbCommand"/> object associated with the <see cref="MaxDBConnection"/>.
+		/// </summary>
+		/// <returns>A <see cref="DbCommand"/> object.</returns>
 #if NET20
 		protected override DbCommand CreateDbCommand()
 		{
@@ -444,6 +498,10 @@ namespace MaxDB.Data
 		}
 #endif // NET20
 
+		/// <summary>
+		/// Creates and returns a <see cref="MaxDBCommand"/> object associated with the <see cref="MaxDBConnection"/>.
+		/// </summary>
+		/// <returns>A <see cref="MaxDBCommand"/> object.</returns>
 #if NET20
 		public new MaxDBCommand CreateCommand()
 #else
@@ -523,7 +581,6 @@ namespace MaxDB.Data
 		{
 			return GetSchema(collectionName, null);
 		}
-
 
 		public override DataTable GetSchema(string collectionName, string[] restrictionValues)
 		{

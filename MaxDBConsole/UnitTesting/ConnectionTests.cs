@@ -50,6 +50,12 @@ namespace MaxDB.UnitTesting
 			mconnStrBadDbName = mAppSettings["ConnectionStringBadDbName"];
 		}
 
+		[TestFixtureTearDown]
+		public void TearDown()
+		{
+			if (msw != null) msw.Close();
+		}
+
 		[Test]
 		public void TestConnection()
 		{

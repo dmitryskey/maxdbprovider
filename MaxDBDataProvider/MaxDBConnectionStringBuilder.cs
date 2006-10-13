@@ -27,7 +27,7 @@ namespace MaxDB.Data
 {
 	public sealed class MaxDBConnectionStringBuilder :
 #if NET20
- DbConnectionStringBuilder
+		DbConnectionStringBuilder
 #else
         IDictionary, ICollection
 #endif
@@ -270,7 +270,10 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				return (string)mKeyValuePairs[ConnectionStringParams.DATA_SOURCE];
+				if (mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] != null)
+					return (string)mKeyValuePairs[ConnectionStringParams.DATA_SOURCE];
+				else
+					return "localhost";
 			}
 			set
 			{

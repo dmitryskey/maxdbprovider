@@ -214,10 +214,8 @@ namespace MaxDB.Data.Utilities
 
 		public short ReadInt16(int offset)
         {
-
-			offset += iOffset;
             if (BitConverter.IsLittleEndian == bSwapMode)
-				return BitConverter.ToInt16(byData, offset);
+				return BitConverter.ToInt16(byData, offset + iOffset);
 			else
 				return (short)ReadUInt16(offset);
 		}
@@ -229,9 +227,8 @@ namespace MaxDB.Data.Utilities
 
 		public uint ReadUInt32(int offset)
         {
-			offset += iOffset;
             if (BitConverter.IsLittleEndian == bSwapMode)
-				return BitConverter.ToUInt32(byData, offset);
+				return BitConverter.ToUInt32(byData, offset + iOffset);
 			else
 			{
 				if (bSwapMode)
@@ -248,11 +245,8 @@ namespace MaxDB.Data.Utilities
 
 		public int ReadInt32(int offset)
         {
-
-			offset += iOffset;
-
             if (BitConverter.IsLittleEndian == bSwapMode)
-				return BitConverter.ToInt32(byData, offset);
+				return BitConverter.ToInt32(byData, offset + iOffset);
 			else
 				return (int)ReadUInt32(offset);
 		}
@@ -265,7 +259,7 @@ namespace MaxDB.Data.Utilities
 		public ulong ReadUInt64(int offset)
 		{
 			if (BitConverter.IsLittleEndian == bSwapMode)
-				return BitConverter.ToUInt64(byData, offset);
+				return BitConverter.ToUInt64(byData, offset + iOffset);
 			else
 			{
 				if (bSwapMode)
@@ -277,9 +271,8 @@ namespace MaxDB.Data.Utilities
 
 		public long ReadInt64(int offset)
 		{
-			offset += iOffset;
 			if (BitConverter.IsLittleEndian == bSwapMode)
-				return BitConverter.ToInt64(byData, offset);
+				return BitConverter.ToInt64(byData, offset + iOffset);
 			else
 				return (long)ReadUInt64(offset);
 		}
@@ -291,7 +284,6 @@ namespace MaxDB.Data.Utilities
 
 		public string ReadAscii(int offset, int len)
         {
-
 			offset += iOffset;
             return Encoding.ASCII.GetString(byData, offset, len);
 		}

@@ -1431,6 +1431,14 @@ namespace MaxDB.Data.MaxDBProtocol
 			return (!IsDBNull(mem) ? mem.ReadAscii(iBufferPosition, iPhysicalLength - 1) : null);
 		}
 
+		public override byte[] GetBytes(ISqlParameterController controller, ByteArray mem)
+		{
+			if (!IsDBNull(mem))
+				return mem.ReadBytes(iBufferPosition, iPhysicalLength - 1);
+			else
+				return null;
+		}
+
 		public override DateTime GetDateTime(ByteArray mem)
 		{
             if (!IsDBNull(mem))
@@ -1591,6 +1599,14 @@ namespace MaxDB.Data.MaxDBProtocol
 		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
 			return (!IsDBNull(mem) ? mem.ReadAscii(iBufferPosition, iPhysicalLength - 1) : null);
+		}
+
+		public override byte[] GetBytes(ISqlParameterController controller, ByteArray mem)
+		{
+			if (!IsDBNull(mem))
+				return mem.ReadBytes(iBufferPosition, iPhysicalLength - 1);
+			else
+				return null;
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)
@@ -1790,6 +1806,14 @@ namespace MaxDB.Data.MaxDBProtocol
 		public override string GetString(ISqlParameterController controller, ByteArray mem)
 		{
 			return (!IsDBNull(mem) ? mem.ReadAscii(iBufferPosition, iPhysicalLength - 1) : null);
+		}
+
+		public override byte[] GetBytes(ISqlParameterController controller, ByteArray mem)
+		{
+			if (!IsDBNull(mem))
+				return mem.ReadBytes(iBufferPosition, iPhysicalLength - 1);
+			else
+				return null;
 		}
 
 		public override DateTime GetDateTime(ByteArray mem)
