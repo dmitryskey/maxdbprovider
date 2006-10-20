@@ -161,6 +161,9 @@ namespace MaxDB.Data
         {
         }
 
+		/// <summary>
+		/// This constructor is intended for internal use and can not to be called directly from your code.
+		/// </summary>
         protected MaxDBException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
@@ -208,6 +211,11 @@ namespace MaxDB.Data
             iErrorPosition = errorPosition;
         }
 
+		/// <summary>
+		/// This member overrides <see cref="Exception.GetObjectData"/> method
+		/// </summary>
+		/// <param name="info">Serialization info</param>
+		/// <param name="context">Streaming context</param>
         [SecurityPermissionAttribute(SecurityAction.Demand, SerializationFormatter = true)]
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
