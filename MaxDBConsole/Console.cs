@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Text;
 using System.IO;
 using System.Data;
@@ -222,6 +223,7 @@ namespace MaxDB.Test
         }
 	}
 }
+*/
 
 /*
 using System;
@@ -285,3 +287,43 @@ public class Test
 	}
 }
 */
+
+using System;
+using System.Data;
+using MaxDB.Data;
+using System.Collections.Specialized;
+using System.IO;
+using System.Diagnostics;
+
+public class Test
+{
+	public static void Main(string[] args)
+	{
+		try
+		{
+			string connectionString =
+			   "Server=sheep;" +
+			   "Database=uhoteldb;" +
+			   "User ID=SCOTT;" +
+			   "Password=TIGER;";
+			IDbConnection dbcon = new MaxDBConnection(connectionString);
+			dbcon.Open();
+
+			IDbConnection dbcon2 = new MaxDBConnection(connectionString);
+			dbcon2.Open();
+			dbcon2.Close();
+			dbcon2.Dispose();
+
+			dbcon.Close();
+			dbcon.Dispose();
+		}
+		catch (Exception ex)
+		{
+			Console.Out.WriteLine(ex.Message);
+			return;
+		}
+
+		Console.Out.WriteLine("OK");
+	}
+}
+

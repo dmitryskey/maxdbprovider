@@ -30,7 +30,7 @@ namespace MaxDB.Data.MaxDBProtocol
 	internal class LeastRecentlyUsedCache
 	{
 		/// <summary>
-		/// double list class for internal purpuses
+		/// double list class for internal purposes
 		/// </summary>
 		private class DoubleList
 		{
@@ -47,7 +47,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 
 			/// <summary>
-			/// property to get list element
+			/// Gets a list element
 			/// </summary>
 			public object Data
 			{

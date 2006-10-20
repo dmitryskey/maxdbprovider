@@ -26,7 +26,7 @@ namespace MaxDB.Data.Utilities
 	internal class ByteArray
 	{
 		protected byte[] byData; //data buffer
-		protected bool bSwapMode = Consts.IsLittleEndian;
+		protected bool bSwapMode = Consts.IsLittleEndian; //is data array little-endian or big-endian
  
 #if SAFE
         protected int iOffset; //data buffer offset

@@ -25,6 +25,10 @@ using System.Globalization;
 
 namespace MaxDB.Data
 {
+	/// <summary>
+	/// Provides a simple way to create and manage the contents of connection strings used by the <see cref="MaxDBConnection"/> class.
+	/// This class cannot be inherited.
+	/// </summary>
 	public sealed class MaxDBConnectionStringBuilder :
 #if NET20
 		DbConnectionStringBuilder
@@ -36,15 +40,25 @@ namespace MaxDB.Data
 		private Hashtable mKeyValuePairs = new Hashtable();
 		private bool bBrowsable = true;
 
+		/// <summary>
+		/// Default constructor.
+		/// </summary>
 		public MaxDBConnectionStringBuilder()
 		{
 		}
 
+		/// <summary>
+		/// A constructor that takes a connection string.
+		/// </summary>
+		/// <param name="connectionString">Connection string.</param>
 		public MaxDBConnectionStringBuilder(string connectionString)
 		{
 			ConnectionString = connectionString;
 		}
 
+		/// <summary>
+		/// Gets or sets a value that indicates whether the <see cref="ConnectionString"/> property is visible in Visual Studio designers. 
+		/// </summary>
 #if NET20
 		public new bool BrowsableConnectionString
 #else
@@ -61,6 +75,12 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Append a key and value to an existing <see cref="StringBuilder"/> object. 
+		/// </summary>
+		/// <param name="builder">The <see cref="StringBuilder"/> to which to add the key/value pair.</param>
+		/// <param name="keyword">Key value.</param>
+		/// <param name="value">The value for the supplied key.</param>
 #if NET20
 		public static new void AppendKeyValuePair(StringBuilder builder, string keyword, string value)
 #else
@@ -73,6 +93,11 @@ namespace MaxDB.Data
 			builder.Append(keyword).Append("=").Append(value).Append(";");
 		}
 
+		/// <summary>
+		/// Indicates whether the specified key exists in this <see cref="MaxDBConnectionStringBuilder"/> instance. 
+		/// </summary>
+		/// <param name="keyword">Key value.</param>
+		/// <returns>true if an entry with the specified key was found and false otherwise.</returns>
 #if NET20
 		public override bool ShouldSerialize(string keyword)
 #else
@@ -82,11 +107,21 @@ namespace MaxDB.Data
 			return mKeyValuePairs.ContainsKey(keyword);
 		}
 
+		/// <summary>
+		/// Return connection string.
+		/// </summary>
+		/// <returns>Connection string.</returns>
 		public override string ToString()
 		{
 			return ConnectionString;
 		}
 
+		/// <summary>
+		/// Try to retrieve value for the specified key.
+		/// </summary>
+		/// <param name="keyword">The key of the item.</param>
+		/// <param name="value">The corresponding value.</param>
+		/// <returns>true if an entry with the specified key was found and false otherwise.</returns>
 #if NET20
 		public override bool TryGetValue(string keyword, out object value)
 #else
@@ -147,6 +182,16 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the string used to connect to a MaxDB Server database.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// You can use this property to connect to a database.
+		/// The following example illustrates a typical connection string.
+		/// <c>"Server=MyServer;Database=MyDB;User ID=MyLogin;Password=MyPassword;"</c>
+		/// </para>
+		/// </remarks>
 #if NET20
 		public new string ConnectionString
 #else
@@ -266,6 +311,15 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Database server address or IP.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// To connect to a local machine, specify "localhost" or "127.0.0.1" for the server. 
+		/// If you do not specify a server, localhost is returned.
+		/// </para>
+		///</remarks>
 		public string DataSource
 		{
 			get
@@ -281,6 +335,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Database name.
+		/// </summary>
 		public string InitialCatalog
 		{
 			get
@@ -293,6 +350,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Database user login.
+		/// </summary>
 		public string UserId
 		{
 			get
@@ -305,6 +365,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Database user password.
+		/// </summary>
 		public string Password
 		{
 			get
@@ -317,6 +380,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Connection timeout. If you do not specify a timeout, 0 is returned.
+		/// </summary>
 		public int Timeout
 		{
 			get
@@ -332,6 +398,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Connection <see cref="SqlMode"/> mode. If you do not specify a mode, internal one is returned.
+		/// </summary>
 		public SqlMode Mode
 		{
 			get
@@ -347,6 +416,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Whether character values contain at least 1 blank, or are NULL. 
+		/// </summary>
 		public bool SpaceOption
 		{
 			get
@@ -362,6 +434,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Should the connection use SSL connection. If you do not specify this flag, false is returned.
+		/// </summary>
 		public bool Encrypt
 		{
 			get
@@ -377,6 +452,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// SSL certificate name.
+		/// </summary>
 		public string SslCertificateName
 		{
 			get
@@ -404,6 +482,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Get or set statement cache size
+		/// </summary>
 		public int CacheSize
 		{
 			get
@@ -419,6 +500,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Get or set statement cache limit
+		/// </summary>
 		public int CacheLimit
 		{
 			get
@@ -434,6 +518,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Check whether the connection supports pooling.
+		/// </summary>
 		public bool Pooling
 		{
 			get
@@ -449,6 +536,10 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Maximum number of seconds a connection should live. This is checked when a connection is returned to the pool.
+		/// Default value is 0.
+		/// </summary>
 		public int ConnectionLifetime
 		{
 			get
@@ -464,6 +555,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Minimum number of connections to have in the pool. Default value is 0.
+		/// </summary>
 		public int MinPoolSize
 		{
 			get
@@ -479,6 +573,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Maximum number of connections to have in the pool. Default value is 100.
+		/// </summary>
 		public int MaxPoolSize
 		{
 			get
@@ -496,6 +593,11 @@ namespace MaxDB.Data
 
 		#region IDictionary Members
 
+		/// <summary>
+		/// Add key/value pair.
+		/// </summary>
+		/// <param name="key">The key of the item.</param>
+		/// <param name="value">The value for the specified key.</param>
 #if NET20
 		public new void Add(string key, object value)
 #else
@@ -505,6 +607,9 @@ namespace MaxDB.Data
 			mKeyValuePairs[key] = value;
 		}
 
+		/// <summary>
+		/// Remove all key/value pairs. 
+		/// </summary>
 #if NET20
 		public override void Clear()
 #else
@@ -514,16 +619,28 @@ namespace MaxDB.Data
 			mKeyValuePairs.Clear();
 		}
 
+		/// <summary>
+		/// Check whether the key can be found.
+		/// </summary>
+		/// <param name="key">Key value.</param>
+		/// <returns>true if an entry with the specified key was found and false otherwise.</returns>
 		public bool Contains(object key)
 		{
 			return mKeyValuePairs.ContainsKey(key);
 		}
 
+		/// <summary>
+		/// Returns an enumerator to support iterating through the collection. 
+		/// </summary>
+		/// <returns>An enumerator object.</returns>
 		public IDictionaryEnumerator GetEnumerator()
 		{
 			return mKeyValuePairs.GetEnumerator();
 		}
 
+		/// <summary>
+		/// Gets a value indicating whether the collection is fixed-sized.
+		/// </summary>
 #if NET20
 		public override bool IsFixedSize
 #else
@@ -536,6 +653,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets a value indicating whether the collection is read-only.
+		/// </summary>
 #if NET20
 		public new bool IsReadOnly
 #else
@@ -548,6 +668,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// The collection of keys. 
+		/// </summary>
 #if NET20
 		public override ICollection Keys
 #else
@@ -560,6 +683,11 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Remove the item with specified key.
+		/// </summary>
+		/// <param name="keyword">The key of the item</param>
+		/// <returns>true if an entry with the specified key was found and false otherwise.</returns>
 #if NET20
 		public override bool Remove(string keyword)
 		{
@@ -579,6 +707,9 @@ namespace MaxDB.Data
 		}
 #endif
 
+		/// <summary>
+		/// The collection of values.
+		/// </summary>
 #if NET20
 		public override ICollection Values
 #else
@@ -591,6 +722,11 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the value associated with the specified key. 
+		/// </summary>
+		/// <param name="keyword">The key of the item.</param>
+		/// <returns>The value associated with the specified key.</returns>
 #if NET20
 		public override object this[string keyword]
 #else
@@ -611,16 +747,29 @@ namespace MaxDB.Data
 
 		#region ICollection Members
 
+		/// <summary>
+		/// Copy values to the one-dimensional array starting at the specified index of the target array.
+		/// </summary>
+		/// <param name="array">A target array.</param>
+		/// <param name="index">The index in the array at which to begin copying.</param>
 		public void CopyTo(Array array, int index)
 		{
 			mKeyValuePairs.CopyTo(array, index);
 		}
 
+		/// <summary>
+		/// Copy values to the one-dimensional string array starting at the specified index of the target array.
+		/// </summary>
+		/// <param name="array">A target array.</param>
+		/// <param name="index">The index in the array at which to begin copying.</param>
 		public void CopyTo(string[] array, int index)
 		{
 			mKeyValuePairs.CopyTo(array, index);
 		}
 
+		/// <summary>
+		/// Gets the number of items in the collection.
+		/// </summary>
 #if NET20
 		public override int Count
 #else
@@ -633,6 +782,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets a value indicating whether collection is synchronized.
+		/// </summary>
 		public bool IsSynchronized
 		{
 			get
@@ -641,6 +793,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets an object that can be used to synchronize access to the collection. 
+		/// </summary>
 		public object SyncRoot
 		{
 			get

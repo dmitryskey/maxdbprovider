@@ -146,7 +146,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// A constructor that takes a connection string
 		/// </summary>
-		/// <param name="connectionString">Connection String</param>
+		/// <param name="connectionString">Connection string</param>
 		public MaxDBConnection(string connectionString)
 			: this()
 		{
@@ -164,7 +164,8 @@ namespace MaxDB.Data
 				mConnArgs.port = 0;
 				try
 				{
-					mConnArgs.port = int.Parse(hostPort[1], CultureInfo.InvariantCulture);
+					if (hostPort.Length > 1)
+						mConnArgs.port = int.Parse(hostPort[1], CultureInfo.InvariantCulture);
 				}
 				catch (IndexOutOfRangeException)
 				{
@@ -185,6 +186,9 @@ namespace MaxDB.Data
 			mConnArgs.password = mConnStrBuilder.Password;
 		}
 
+		/// <summary>
+		/// MaxDB database encoding (<see cref="Encoding.ASCII"/> or <see cref="Encoding.Unicode"/>).
+		/// </summary>
 		public Encoding DatabaseEncoding
 		{
 			get
@@ -197,6 +201,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// MaxDB database SQL mode (<see cref="SqlMode"/>). 
+		/// </summary>
 		public SqlMode SqlMode
 		{
 			get
@@ -211,6 +218,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// MaxDB database AutoCommit mode.
+		/// </summary>
 		public bool AutoCommit
 		{
 			get
@@ -242,6 +252,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// MaxDB server version (e.g. 7.6.34)
+		/// </summary>
 #if NET20
 		public override string ServerVersion
 #else
@@ -552,7 +565,8 @@ namespace MaxDB.Data
 				using (MaxDBCommand cmd = new MaxDBCommand(sql, this))
 				{
 					if (parameters != null)
-						cmd.Parameters.AddRange(parameters.ToArray());
+						foreach(MaxDBParameter parameter in parameters)
+							cmd.Parameters.Add(parameter);
 					MaxDBDataAdapter da = new MaxDBDataAdapter();
 					da.SelectCommand = cmd;
 					da.Fill(dt);
@@ -572,16 +586,31 @@ namespace MaxDB.Data
 			return ExecuteInternalQuery(sql, table, null);
 		}
 
+		/// <summary>
+		/// Returns schema information for the data source of this <see cref="MaxDBConnection"/>. 
+		/// </summary>
+		/// <returns>A <see cref="DataTable"/> that contains schema information. </returns>
 		public override DataTable GetSchema()
 		{
 			return GetSchema("MetaDataCollections");
 		}
 
+		/// <summary>
+		/// Returns schema information for the data source of this <see cref="MaxDBConnection"/>
+		/// using the specified string for the schema name. 
+		/// </summary>
+		/// <returns>A <see cref="DataTable"/> that contains schema information.</returns>
 		public override DataTable GetSchema(string collectionName)
 		{
 			return GetSchema(collectionName, null);
 		}
 
+		/// <summary>
+		/// Returns schema information for the data source of this <see cref="MaxDBConnection"/>
+		/// using the specified string for the schema name and 
+		/// the specified string array for the restriction values. 
+		/// </summary>
+		/// <returns>A <see cref="DataTable"/> that contains schema information.</returns>
 		public override DataTable GetSchema(string collectionName, string[] restrictionValues)
 		{
 			DataTable dt = new DataTable("SchemaTable");
@@ -1197,6 +1226,9 @@ namespace MaxDB.Data
 		}
 #endif // NET20
 
+		/// <summary>
+		/// Gets the name of the current database or the database to be used after a connection is opened.
+		/// </summary>
 #if NET20
 		public override string Database
 #else
@@ -1209,6 +1241,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Data source address or IP.
+		/// </summary>
 #if NET20
 		public override string DataSource
 #else
@@ -1221,6 +1256,13 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Opens a database connection with the property settings specified by the ConnectionString.
+		/// </summary>
+		/// <remarks>
+		/// <para>The <see cref="MaxDBConnection"/> draws an open connection from the connection pool if one is available. 
+		/// Otherwise, it establishes a new connection to an instance of MaxDB.</para>
+		/// </remarks>
 #if NET20
 		public override void Open()
 #else
@@ -1248,6 +1290,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets the current <see cref="ConnectionState"/> of the connection.
+		/// </summary>
 #if NET20
 		public override ConnectionState State
 #else
@@ -1270,11 +1315,18 @@ namespace MaxDB.Data
 
 		#endregion
 
+		/// <summary>
+		/// Empties the connection pool associated with the specified connection.
+		/// </summary>
+		/// <param name="connection">The <see cref="MaxDBConnection"/> to be cleared from the pool.</param>
 		public static void ClearPool(MaxDBConnection connection)
 		{
 			MaxDBConnectionPool.ClearEntry(connection);
 		}
 
+		/// <summary>
+		/// Empties the connection pool. 
+		/// </summary>
 		public static void ClearAllPools()
 		{
 		}
@@ -1289,6 +1341,10 @@ namespace MaxDB.Data
 		}
 #endif // NET20
 
+		/// <summary>
+		/// This method is intended for internal use and can not to be called directly from your code.
+		/// </summary>
+		/// <param name="disposing">Disposing flag</param>
 #if NET20
 		protected override void Dispose(bool disposing)
 #else

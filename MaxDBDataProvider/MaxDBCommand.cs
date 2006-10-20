@@ -2623,7 +2623,8 @@ namespace MaxDB.Data
             get 
             {
                 MaxDBParameterCollection collection = new MaxDBParameterCollection();
-                collection.AddRange(this.Parameters.ToArray());
+				foreach (MaxDBParameter parameter in this.Parameters)
+					collection.Add(parameter);
                 return collection;
             }
         }
