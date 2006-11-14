@@ -91,18 +91,27 @@ namespace MaxDB.Data
 #endif // SAFE
 
         /// <summary>
-		/// Implement the default constructor here.
+		/// Initializes a new instance of the <b>MaxDBCommand</b> class.
 		/// </summary>
 		public MaxDBCommand()
 		{
 		}
 
-		// Implement other constructors here.
+		/// <summary>
+		/// Initializes a new instance of the <b>MaxDBCommand</b> class with the text of the query.
+		/// </summary>
+		/// <param name="cmdText">The text of the query.</param>
 		public MaxDBCommand(string cmdText)
 		{
 			strCmdText = cmdText;
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <b>MaxDBCommand</b> class 
+		/// with the text of the query and a <see cref="MaxDBConnection"/>.
+		/// </summary>
+		/// <param name="cmdText">The text of the query.</param>
+		/// <param name="connection">A <see cref="MaxDBConnection"/> that represents the connection to an instance of MaxDB Server.</param>
 		public MaxDBCommand(string cmdText, MaxDBConnection connection) : this(cmdText)
 		{
 			dbConnection  = connection;
@@ -112,6 +121,13 @@ namespace MaxDB.Data
 #endif
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="MaxDBCommand"/> class with the text of the query, a <see cref="MaxDBConnection"/>, 
+		/// and the <see cref="MaxDBTransaction"/>.
+		/// </summary>
+		/// <param name="cmdText">The text of the query.</param>
+		/// <param name="connection">A <see cref="MaxDBConnection"/> that represents the connection to an instance of MaxDB Server.</param>
+		/// <param name="transaction">The <see cref="MaxDBTransaction"/> in which the <see cref="MaxDBCommand"/> executes.</param>
 		public MaxDBCommand(string cmdText, MaxDBConnection connection, MaxDBTransaction transaction) : this(cmdText, connection)
 		{
 			dbTransaction      = transaction;
@@ -130,6 +146,9 @@ namespace MaxDB.Data
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.OBJECTISCLOSED));
 		}
 
+		/// <summary>
+		/// Gets or sets a value indicating whether the command object should be visible in a Windows Forms Designer control.
+		/// </summary>
 #if NET20
         public override bool DesignTimeVisible
 #else
@@ -2350,7 +2369,7 @@ namespace MaxDB.Data
 
         #region ICloneable Members
 
-        public object Clone()
+        object ICloneable.Clone()
 		{
 			MaxDBCommand clone = new MaxDBCommand(strCmdText, dbConnection, dbTransaction);
 			foreach (MaxDBParameter p in Parameters) 
@@ -2362,6 +2381,9 @@ namespace MaxDB.Data
 
 		#region IDbCommand Members
 
+		/// <summary>
+		/// Attempts to cancel the execution of a <b>MaxDBCommand</b>.
+		/// </summary>
 #if NET20
         public override void Cancel()
 #else
@@ -2377,6 +2399,9 @@ namespace MaxDB.Data
 #endif // SAFE
         }
 
+		/// <summary>
+		/// Gets or sets the SQL statement to execute at the data source.
+		/// </summary>
 #if NET20
         public override string CommandText
 #else
@@ -2396,6 +2421,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the wait time before terminating the attempt to execute a command and generating an error.
+		/// </summary>
 #if NET20
         public override int CommandTimeout
 #else
@@ -2412,6 +2440,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets a value indicating how the <see cref="CommandText"/> property is to be interpreted.
+		/// </summary>
 #if NET20
         public override CommandType CommandType
 #else
@@ -2428,6 +2459,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// This method is intended for internal use and can not to be called directly from your code.
+		/// </summary>
 #if NET20
         protected override DbConnection DbConnection
 #else
@@ -2444,6 +2478,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the <see cref="MaxDBConnection"/> used by this instance of the <b>MaxDBCommand</b>.
+		/// </summary>
 #if NET20
         public new MaxDBConnection Connection
 #else
@@ -2473,6 +2510,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// This method is intended for internal use and can not to be called directly from your code.
+		/// </summary>
 #if NET20
 		protected override DbParameter CreateDbParameter()
 #else
@@ -2482,27 +2522,38 @@ namespace MaxDB.Data
             return CreateParameter();
         }
 
+		/// <summary>
+		/// Creates a new instance of a <see cref="MaxDBParameter"/> object.
+		/// </summary>
+		/// <returns>A new <see cref="MaxDBParameter"/> object.</returns>
 #if NET20
-        public static new MaxDBParameter CreateParameter()
+        public new MaxDBParameter CreateParameter()
 #else
-		public static MaxDBParameter CreateParameter()
+		public MaxDBParameter CreateParameter()
 #endif // NET20
         {
 			return new MaxDBParameter();
 		}
 
+		/// <summary>
+		/// Executes a SQL statement against the connection and returns the number of rows affected.
+		/// </summary>
+		/// <returns>Number of rows affected.</returns>
+		/// <remarks>
+		/// You can use ExecuteNonQuery to perform any type of database operation, 
+		/// however any resultsets returned will not be available.  Any output parameters
+		/// used in calling a stored procedure will be populated with data and can be
+		/// retrieved after execution is complete.
+		/// For UPDATE, INSERT, and DELETE statements, the return value is the number
+		/// of rows affected by the command.  For all other types of statements, the return
+		/// value is -1.
+		/// </remarks>
 #if NET20
         public override int ExecuteNonQuery()
 #else
 		public int ExecuteNonQuery()
 #endif // NET20
         {
-			/*
-			 * ExecuteNonQuery is intended for commands that do
-			 * not return results, instead returning only the number
-			 * of records affected.
-			 */
-      
 			// Execute the command.
 
 			// There must be a valid and open connection.
@@ -2517,7 +2568,7 @@ namespace MaxDB.Data
 			if(bHasRowCount) 
 				return iRowsAffected;
 			else 
-				return 0;
+				return -1;
 #else
             BindAndExecute(mStmt, new MaxDBParameterCollection[1] { dbParameters });
 
@@ -2531,7 +2582,25 @@ namespace MaxDB.Data
 			return this.ExecuteReader(CommandBehavior.Default);
 		}
 #endif // !NET20
-
+		/// <summary>
+		/// Sends the <see cref="CommandText"/> to the <see cref="MaxDBConnection"/> and builds a <see cref="MaxDBDataReader"/>.
+		/// </summary>
+		/// <returns>A new <see cref="MaxDBDataReader"/> object.</returns>
+		/// <remarks>
+		/// <para>
+		/// When the <see cref="CommandType"/> property is set to <B>StoredProcedure</B>, 
+		///	the <see cref="CommandText"/> property should be set to the name of the stored 
+		///	procedure. The command executes this stored procedure when you call 
+		///	<B>ExecuteReader</B>.
+		/// </para>
+		/// <para>
+		///	While the <see cref="MaxDBDataReader"/> is in use, the associated 
+		///	<see cref="MaxDBConnection"/> is busy serving the <see cref="MaxDBDataReader"/>. 
+		///	While in this state, no other operations can be performed on the 
+		///	<see cref="MaxDBConnection"/> other than closing it. This is the case until the 
+		///	<see cref="MaxDBDataReader.Close"/> method of the <see cref="MaxDBDataReader"/> is called.
+		/// </para>
+		/// </remarks>
 #if NET20
         public new MaxDBDataReader ExecuteReader()
 #else
@@ -2542,6 +2611,11 @@ namespace MaxDB.Data
 		}
 
 #if NET20
+		/// <summary>
+		/// This method is intended for internal use and can not to be called directly from your code.
+		/// </summary>
+		/// <param name="behavior">A <see cref="CommandBehavior"/> value.</param>
+		/// <returns>A <see cref="DbDataReader"/> object.</returns>
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
 #else
 		IDataReader IDbCommand.ExecuteReader(CommandBehavior behavior)
@@ -2550,6 +2624,11 @@ namespace MaxDB.Data
             return this.ExecuteReader(behavior);
         }
 
+		/// <summary>
+		/// Sends the <see cref="CommandText"/> to the <see cref="MaxDBConnection"/> and builds a <see cref="MaxDBDataReader"/>.
+		/// </summary>
+		/// <param name="behavior">A <see cref="CommandBehavior"/> value.</param>
+		/// <returns>A <see cref="MaxDBDataReader"/> object.</returns>
 #if NET20
         public new MaxDBDataReader ExecuteReader(CommandBehavior behavior)
 #else
@@ -2604,6 +2683,20 @@ namespace MaxDB.Data
 #endif // SAFE
         }
 
+		/// <summary>
+		/// Executes the query, and returns the first column of the first row in the 
+		/// result set returned by the query. Extra columns or rows are ignored.
+		/// </summary>
+		/// <returns>The first column of the first row in the result set, or a null reference if the 
+		/// result set is empty
+		/// </returns>
+		/// <remarks>
+		/// <para>Use the <B>ExecuteScalar</B> method to retrieve a single value (for example, 
+		/// an aggregate value) from a database. This requires less code than using the 
+		/// <see cref="ExecuteReader()"/> method, and then performing the operations necessary 
+		/// to generate the single value using the data returned by a <see cref="MaxDBDataReader"/>
+		/// </para>
+		/// </remarks>
 #if NET20
         public override object ExecuteScalar()
 #else
@@ -2618,6 +2711,9 @@ namespace MaxDB.Data
 		}
 
 #if NET20
+		/// <summary>
+		/// This method is intended for internal use and can not to be called directly from your code.
+		/// </summary>
         protected override DbParameterCollection DbParameterCollection
 		{
             get 
@@ -2638,6 +2734,9 @@ namespace MaxDB.Data
 		}
 #endif // NET20
 
+		/// <summary>
+		/// Gets the <see cref="MaxDBParameterCollection"/>.
+		/// </summary>
 #if NET20
         public new MaxDBParameterCollection Parameters
 #else
@@ -2650,6 +2749,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Creates a prepared version of the command on an instance of MaxDB Server.
+		/// </summary>
 #if NET20
         public override void Prepare()
 #else
@@ -2679,6 +2781,9 @@ namespace MaxDB.Data
 #endif
 		}
 
+		/// <summary>
+		/// This property is intended for internal use and can not to be called directly from your code.
+		/// </summary>
 #if NET20
         protected override DbTransaction DbTransaction
 #else
@@ -2695,6 +2800,9 @@ namespace MaxDB.Data
             }
         }
 
+		/// <summary>
+		/// Gets or sets the <see cref="MaxDBTransaction"/> within which the <b>MaxDBCommand</b> executes.
+		/// </summary>
 #if NET20
         public new MaxDBTransaction Transaction
 #else
@@ -2715,6 +2823,11 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets how command results are applied to the <see cref="DataRow"/>
+		/// when used by the <see cref="System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)"/> method 
+		/// of the <see cref="System.Data.Common.DbDataAdapter"/>.
+		/// </summary>
 #if NET20
         public override UpdateRowSource UpdatedRowSource
 #else
@@ -2736,13 +2849,17 @@ namespace MaxDB.Data
 		#region IDisposable Members
 
 #if !NET20
-        public void Dispose()
+        void IDisposable.Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
 		}
 #endif // NET20
 
+		/// <summary>
+		/// This method is intended for internal use and can not to be called directly from your code.
+		/// </summary>
+		/// <param name="disposing">The disposing flag.</param>
 #if NET20
         protected override void Dispose(bool disposing)
 #else

@@ -152,12 +152,12 @@ namespace MaxDB.Data
 			}
 		}
 
+#if NET20
 		/// <summary>
 		/// This method is intended for internal use and can not to be called directly from your code.
 		/// </summary>
 		/// <param name="adapter">Given <see cref="DbDataAdapter"/> to use.</param>
-#if NET20
-        protected override void SetRowUpdatingHandler(DbDataAdapter adapter)
+		protected override void SetRowUpdatingHandler(DbDataAdapter adapter)
         {
             DataAdapter = (MaxDBDataAdapter)adapter;
         }
@@ -193,6 +193,7 @@ namespace MaxDB.Data
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BASETABLE_NOTFOUND));
 		}
 
+#if NET20 
 		/// <summary>
 		/// This method is intended for internal use and can not to be called directly from your code.
 		/// </summary>
@@ -200,8 +201,7 @@ namespace MaxDB.Data
 		/// <param name="row">Data row</param>
 		/// <param name="statementType">Statement type</param>
 		/// <param name="whereClause">whether 'WHERE' clause is used or not</param>
-#if NET20 
-        protected override void ApplyParameterInfo(DbParameter parameter, DataRow row, StatementType statementType, bool whereClause)
+		protected override void ApplyParameterInfo(DbParameter parameter, DataRow row, StatementType statementType, bool whereClause)
         {
         }
 #endif // NET20 
@@ -223,13 +223,13 @@ namespace MaxDB.Data
             return mSchema.Rows[parameterOrdinal]["ColumnName"].ToString();
         }
 
+#if NET20
 		/// <summary>
 		/// This method is intended for internal use and can not to be called directly from your code.
 		/// </summary>
 		/// <param name="parameterName">Parameter name to check existence.</param>
 		/// <returns>Parameter name.</returns>
-#if NET20
-        protected override string GetParameterName(string parameterName)
+		protected override string GetParameterName(string parameterName)
         {
             foreach (DataRow row in mSchema.Rows)
                 if (string.Compare(row["ColumnName"].ToString().Trim(), parameterName.Trim(), true, CultureInfo.InvariantCulture) == 0)

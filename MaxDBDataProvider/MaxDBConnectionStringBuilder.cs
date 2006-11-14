@@ -467,6 +467,17 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the property that indicates what kind of SQL statements has to cached. This property is the string of the
+		/// form [s][i][u][d][all] where 
+		/// <list type="bullet">
+		/// <item>s - cache SELECT statements</item>
+		/// <item>i - cache INSERT statements</item>
+		/// <item>u - cache UPDATE statements</item>
+		/// <item>d - cache DELETE statements</item>
+		/// <item>all - cache all statements.</item>
+		/// </list>
+		/// </summary>
 		public string Cache
 		{
 			get
@@ -700,10 +711,10 @@ namespace MaxDB.Data
 				return false;
 		}
 #else
-		public void Remove(object key)
+		public void Remove(object keyword)
 		{
-			if (Contains(key))
-				mKeyValuePairs.Remove(key);
+			if (Contains(keyword))
+				mKeyValuePairs.Remove(keyword);
 		}
 #endif
 
