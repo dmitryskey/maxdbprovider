@@ -22,7 +22,11 @@ using System.Globalization;
 
 namespace MaxDB.Data
 {
-	public class MaxDBParameter :
+	/// <summary>
+	/// Represents a parameter to a <see cref="MaxDBCommand"/>, and optionally, its mapping to <see cref="DataSet"/> columns. 
+	/// This class cannot be inherited.
+	/// </summary>
+	public sealed class MaxDBParameter :
 #if NET20
 		DbParameter,
 #else
@@ -41,21 +45,42 @@ namespace MaxDB.Data
 		internal object objValue;
 		internal object objInputValue;
 
+		/// <summary>
+		/// Initializes a new instance of the <b>MaxDBParameter</b> class.
+		/// </summary>
 		public MaxDBParameter()
 		{
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="MaxDBParameter"/> class with the parameter name and the data type.
+		/// </summary>
+		/// <param name="parameterName">The name of the parameter to map.</param>
+		/// <param name="type">One of the <see cref="MaxDBType"/> values.</param>
 		public MaxDBParameter(string parameterName, MaxDBType type)
 		{
 			strParamName = parameterName;
 			dbType = type;
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="MaxDBParameter"/> class with the parameter name, 
+		/// the <see cref="MaxDBType"/>, and the source column name.
+		/// </summary>
+		/// <param name="parameterName">The name of the parameter to map.</param>
+		/// <param name="type">One of the <see cref="MaxDBType"/> values.</param>
+		/// <param name="sourceColumn">The name of the source column. </param>
 		public MaxDBParameter(string parameterName, MaxDBType type, string sourceColumn) : this(parameterName, type)
 		{
 			strSourceColumn = sourceColumn;
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="MaxDBParameter"/> class with the parameter name 
+		/// and a value of the new <b>MaxDBParameter</b>.
+		/// </summary>
+		/// <param name="parameterName">The name of the parameter to map.</param>
+		/// <param name="value">An <see cref="Object"/> that is the value of the <see cref="MaxDBParameter"/>.</param>
 		public MaxDBParameter(string parameterName, object value)
 		{
 			if (value == null)
@@ -66,18 +91,50 @@ namespace MaxDB.Data
 			Value = value;
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="MaxDBParameter"/> class with the parameter name, 
+		/// the <see cref="MaxDBType"/>, and the size.
+		/// </summary>
+		/// <param name="parameterName">The name of the parameter to map.</param>
+		/// <param name="type">One of the <see cref="MaxDBType"/> values.</param>
+		/// <param name="size">The length of the parameter.</param>
 		public MaxDBParameter(string parameterName, MaxDBType type, int size)
 			: this(parameterName, type)
 		{
 			iSize = size;
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="MaxDBParameter"/> class with the parameter name, 
+		/// the <see cref="MaxDBType"/>, the size, and the source column name.
+		/// </summary>
+		/// <param name="parameterName">The name of the parameter to map.</param>
+		/// <param name="type">One of the <see cref="MaxDBType"/> values.</param>
+		/// <param name="size">The length of the parameter. </param>
+		/// <param name="sourceColumn">The name of the source column. </param>
 		public MaxDBParameter(string parameterName, MaxDBType type, int size, string sourceColumn)
 			: this(parameterName, type, size)
 		{
 			strSourceColumn = sourceColumn;
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="MaxDBParameter"/> class with the parameter name, 
+		/// the type of the parameter, the size of the parameter, nullability of the parameter, a <see cref="ParameterDirection"/>, 
+		/// the precision of the parameter, the scale of the parameter, the source column, a <see cref="DataRowVersion"/> to use, 
+		/// and the value of the parameter.
+		/// </summary>
+		/// <param name="parameterName">The name of the parameter to map.</param>
+		/// <param name="type">One of the <see cref="MaxDBType"/> values.</param>
+		/// <param name="size">The length of the parameter.</param>
+		/// <param name="direction">One of the <see cref="ParameterDirection"/> values.</param>
+		/// <param name="isNullable">true if the value of the field can be null, otherwise false.</param>
+		/// <param name="precision">The total number of digits to the left and right of the decimal point to which 
+		/// <see cref="MaxDBParameter.Value"/> is resolved.</param>
+		/// <param name="scale">The total number of decimal places to which <see cref="MaxDBParameter.Value"/> is resolved.</param>
+		/// <param name="sourceColumn">The name of the source column.</param>
+		/// <param name="sourceVersion">One of the <see cref="DataRowVersion"/> values.</param>
+		/// <param name="value">An <see cref="Object"/> that is the value of the <see cref="MaxDBParameter"/>.</param>
 		public MaxDBParameter(string parameterName, MaxDBType type, int size, ParameterDirection direction,
 			bool isNullable, byte precision, byte scale, string sourceColumn, DataRowVersion sourceVersion, object value)
 			: this(parameterName, type, size, sourceColumn)
@@ -90,6 +147,9 @@ namespace MaxDB.Data
 			Precision = precision;
 		}
 
+		/// <summary>
+		/// Gets or sets the length of the <b>MaxDBParameter</b>. 
+		/// </summary>
 #if NET20
 		public override int Size
 #else
@@ -165,7 +225,7 @@ namespace MaxDB.Data
 
 		#region ICloneable Members
 
-		public object Clone()
+		object ICloneable.Clone()
 		{
 			return new MaxDBParameter(strParamName, dbType, iSize, mDirection, bNullable, 0, 0, strSourceColumn, mSourceVersion, objValue);
 		}
@@ -174,6 +234,10 @@ namespace MaxDB.Data
 
 		#region IDbDataParameter Members
 
+		/// <summary>
+		/// Gets or sets a value indicating whether the parameter is input-only, output-only, bidirectional, 
+		/// or a stored procedure return value parameter.
+		/// </summary>
 #if NET20
 		public override ParameterDirection Direction
 #else
@@ -190,6 +254,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the <see cref="DbType"/> of the parameter.
+		/// </summary>
 #if NET20
 		public override DbType DbType
 #else
@@ -298,6 +365,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the value of the parameter.
+		/// </summary>
 #if NET20
 		public override object Value
 #else
@@ -350,6 +420,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets a value indicating whether the parameter accepts null values.
+		/// </summary>
 #if NET20
 		public override bool IsNullable
 #else
@@ -366,6 +439,10 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Sets or gets a value which indicates whether the source column is nullable. This allows <see cref="MaxDBCommandBuilder"/> 
+		/// to correctly generate Update statements for nullable columns. 
+		/// </summary>
 #if NET20
 		public override bool SourceColumnNullMapping
 #else
@@ -382,6 +459,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the <see cref="DataRowVersion"/> to use when loading <see cref="Value"/>.
+		/// </summary>
 #if NET20
 		public override DataRowVersion SourceVersion
 #else
@@ -398,6 +478,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the name of the <b>MaxDBParameter</b>.
+		/// </summary>
 #if NET20
 		public override string ParameterName
 #else
@@ -414,6 +497,10 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the name of the source column that is mapped to the <see cref="DataSet"/> and used for loading or 
+		/// returning the <see cref="Value"/>.
+		/// </summary>
 #if NET20
 		public override string SourceColumn
 #else
@@ -430,6 +517,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the maximum number of digits used to represent the <see cref="Value"/> property.
+		/// </summary>
 		public byte Precision
 		{
 			get
@@ -442,6 +532,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the number of decimal places to which <see cref="Value"/> is resolved.
+		/// </summary>
 		public byte Scale
 		{
 			get
@@ -455,6 +548,9 @@ namespace MaxDB.Data
 		}
 
 #if NET20
+		/// <summary>
+		/// Resets the type associated with this <b>MaxDBParameter</b>. 
+		/// </summary>
 		public override void ResetDbType()
 		{
 			throw new NotImplementedException();

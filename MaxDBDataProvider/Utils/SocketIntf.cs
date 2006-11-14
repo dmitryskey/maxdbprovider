@@ -449,7 +449,7 @@ namespace MaxDB.Data.Utilities
 
     #region "Join stream class reimplementation"
 
-    public class JoinStream : Stream
+    internal class JoinStream : Stream
 	{
 		private Stream[] mStreams;
 		private Stream mCurrentStream;
@@ -830,7 +830,7 @@ namespace MaxDB.Data.Utilities
 
 	#region "Raw byte stream reader class implementation"
 
-	public class RawByteReader : StreamReader
+	internal class RawByteReader : StreamReader
 	{
 		public RawByteReader(Stream stream) : base(stream)
 		{

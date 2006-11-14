@@ -23,15 +23,13 @@ using System.Globalization;
 
 namespace MaxDB.Data.Utilities
 {
-	public enum MaxDBTraceLevel
+	internal enum MaxDBTraceLevel
 	{
 		None = 0,
 		SqlOnly = 1,
 		Full = 2
 	}
-	/// <summary>
-	/// Summary description for Logger.
-	/// </summary>
+
 	internal class MaxDBTraceSwitch : Switch
 	{
 		public MaxDBTraceSwitch(string displayName, string description): base(displayName, description)

@@ -155,7 +155,7 @@ namespace MaxDB.Data
 #if NET20
         public override bool IsSynchronized
 #else
-		public virtual bool IsSynchronized
+		public bool IsSynchronized
 #endif // NET20
 		{
 			get
@@ -585,7 +585,7 @@ namespace MaxDB.Data
         {
             MaxDBParameterCollection clone = new MaxDBParameterCollection();
             foreach (MaxDBParameter param in this)
-                clone.Add(param.Clone());
+                clone.Add(((ICloneable)param).Clone());
             return clone;
         }
 

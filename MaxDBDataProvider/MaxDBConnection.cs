@@ -341,12 +341,12 @@ namespace MaxDB.Data
 
 		#region IDbConnection Members
 
+#if NET20
 		/// <summary>
 		/// Initiate a local transaction with the specified isolation level.
 		/// </summary>
 		/// <param name="isolationLevel">Isolation level <see cref="IsolationLevel"/> under which the transaction should run.</param>
 		/// <returns>A <see cref="DbTransaction"/> object.</returns>
-#if NET20
 		protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
 #else
 		IDbTransaction IDbConnection.BeginTransaction(IsolationLevel isolationLevel)
@@ -495,16 +495,21 @@ namespace MaxDB.Data
 			}
 		}
 
+
+#if NET20
 		/// <summary>
 		/// Creates and returns a <see cref="DbCommand"/> object associated with the <see cref="MaxDBConnection"/>.
 		/// </summary>
 		/// <returns>A <see cref="DbCommand"/> object.</returns>
-#if NET20
 		protected override DbCommand CreateDbCommand()
 		{
 			return CreateCommand();
 		}
 #else
+		/// <summary>
+		/// Creates and returns a <see cref="IDbCommand"/> object associated with the <see cref="MaxDBConnection"/>.
+		/// </summary>
+		/// <returns>A <see cref="IDbCommand"/> object.</returns>
 		IDbCommand IDbConnection.CreateCommand()
 		{
 			return CreateCommand();
@@ -1334,7 +1339,7 @@ namespace MaxDB.Data
 		#region IDisposable Members
 
 #if !NET20
-        public void Dispose()
+        void IDisposable.Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -1344,7 +1349,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// This method is intended for internal use and can not to be called directly from your code.
 		/// </summary>
-		/// <param name="disposing">Disposing flag</param>
+		/// <param name="disposing">The disposing flag.</param>
 #if NET20
 		protected override void Dispose(bool disposing)
 #else

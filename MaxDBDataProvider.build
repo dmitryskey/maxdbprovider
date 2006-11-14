@@ -76,7 +76,7 @@
 		
 		<mkdir dir="${outdir}" failonerror="false"/>
 		<resgen input="MaxDBDataProvider/MaxDBMessages.resx" output="MaxDBDataProvider/MaxDBMessages.resources"/>
-		<csc output="${outdir}/MaxDB.Data.dll" target="library" unsafe="${unsafe}"
+		<csc output="${outdir}/MaxDB.Data.dll" target="library" unsafe="${unsafe}" doc="${outdir}/MaxDB.Data.xml"
 			define="${defines}" debug="${debug}" optimize="${opt}">
 			<resources>
 				<include name="MaxDBDataProvider/MaxDBMessages.resources"/>

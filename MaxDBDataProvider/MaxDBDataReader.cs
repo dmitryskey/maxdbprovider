@@ -32,6 +32,21 @@ using System.Runtime.InteropServices;
 
 namespace MaxDB.Data
 {
+	/// <summary>
+ 	/// Provides a means of reading a forward-only stream of rows from a MaxDB database. This class cannot be inherited.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// To create a <B>MaxDBDataReader</B>, you must call the <see cref="MaxDBCommand.ExecuteReader()"/>
+	/// method of the <see cref="MaxDBCommand"/> object, rather than directly using a constructor.
+	/// </para>
+	/// <para>
+	/// While the <B>MaxDBDataReader</B> is in use, the associated <see cref="MaxDBConnection"/>
+	/// is busy serving the <B>MaxDBDataReader</B>, and no other operations can be performed 
+	/// on the <B>MaxDBConnection</B> other than closing it. This is the case until the 
+	/// <see cref="MaxDBDataReader.Close"/> method of the <B>MaxDBDataReader</B> is called.
+	/// </para>
+	/// </remarks>
 	public sealed class MaxDBDataReader :
 #if NET20
  DbDataReader
@@ -214,6 +229,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets a value indicating whether the data reader is closed.
+		/// </summary>
 #if NET20
 		public override bool IsClosed
 #else
@@ -227,6 +245,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets the number of rows changed, inserted, or deleted by execution of the SQL statement.
+		/// </summary>
 #if NET20
 		public override int RecordsAffected
 #else
@@ -239,6 +260,9 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Closes the MaxDBDataReader object.
+		/// </summary>
 #if NET20
 		public override void Close()
 #else
@@ -270,6 +294,10 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Advances the data reader to the next result, when reading the results of batch SQL statements.
+		/// </summary>
+		/// <returns>Always <b>false</b>.</returns>
 #if NET20
 		public override bool NextResult()
 #else
@@ -279,6 +307,10 @@ namespace MaxDB.Data
 			return false;
 		}
 
+		/// <summary>
+		/// Advances the MaxDBDataReader to the next record.
+		/// </summary>
+		/// <returns><b>true</b> if there are more rows; otherwise, <b>false</b>.</returns>
 #if NET20
 		public override bool Read()
 #else
@@ -349,6 +381,10 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		/// <summary>
+		/// Returns a DataTable that describes the column metadata of the MaxDBDataReader.
+		/// </summary>
+		/// <returns>The DataTable object with column metadata.</returns>
 #if NET20
 		public override DataTable GetSchemaTable()
 #else
@@ -477,13 +513,15 @@ namespace MaxDB.Data
 			return schema;
 		}
 
+		/// <summary>
+		/// Gets the count of the number of columns, which in this case is the size of the column metadata array.
+		/// </summary>
 #if NET20
 		public override int FieldCount
 #else
 		public int FieldCount
 #endif // NET20
 		{
-			// Return the count of the number of columns, which in this case is the size of the column metadata array.
 			get
 			{
 #if SAFE
@@ -494,20 +532,26 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Return the count of the number of columns, which in this case is the size of the column metadata array.
+		/// </summary>
 #if NET20
 		public override int VisibleFieldCount
 #else
 		public int VisibleFieldCount
 #endif // NET20
 		{
-			// Return the count of the number of columns, which in this case is the size of the column metadata array.
 			get
 			{
 				return FieldCount;
 			}
 		}
 
-
+		/// <summary>
+		/// Gets the name of the specified column.
+		/// </summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>Name of the column.</returns>
 #if NET20
 		public override string GetName(int i)
 #else
@@ -523,6 +567,11 @@ namespace MaxDB.Data
 #endif
 		}
 
+		/// <summary>
+		/// Gets the name of the source data type.
+		/// </summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>Data type name of the column.</returns>
 #if NET20
 		public override string GetDataTypeName(int i)
 #else
@@ -544,6 +593,11 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		/// <summary>
+		/// Gets the Type that is the data type of the column.
+		/// </summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>Type of the column.</returns>
 #if NET20
 		public override Type GetFieldType(int i)
 #else
@@ -560,6 +614,11 @@ namespace MaxDB.Data
 #endif
 		}
 
+		/// <summary>
+		/// Gets the value of the specified column in its native format.
+		/// </summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>Object that represents the value of the column.</returns>
 #if NET20
 		public override object GetValue(int i)
 #else
@@ -685,6 +744,11 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		/// <summary>
+		/// Gets all attribute columns in the collection for the current row.
+		/// </summary>
+		/// <param name="values">Array to store values.</param>
+		/// <returns>The number of the stored values.</returns>
 #if NET20
 		public override int GetValues(object[] values)
 #else
@@ -699,6 +763,11 @@ namespace MaxDB.Data
 			return Math.Min(FieldCount, values.Length);
 		}
 
+		/// <summary>
+		/// Gets the column ordinal, given the name of the column.
+		/// </summary>
+		/// <param name="name">The name of the column.</param>
+		/// <returns>The column ordinal.</returns>
 #if NET20
 		public override int GetOrdinal(string name)
 #else
@@ -715,6 +784,10 @@ namespace MaxDB.Data
 			throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAME_NOTFOUND, name));
 		}
 
+		/// <summary>
+		/// Overloaded. Gets the value of a column in its native format.
+		/// In C#, this property is the indexer for the MaxDBDataReader class.
+		/// </summary>
 #if NET20
 		public override object this[int i]
 #else
@@ -727,6 +800,10 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets the value of a column in its native format.
+		///	In C#, this property is the indexer for the MaxDBDataReader class.
+		/// </summary>
 #if NET20
 		public override object this[string name]
 #else
@@ -756,6 +833,11 @@ namespace MaxDB.Data
 		}
 #endif  // SAFE
 
+		/// <summary>
+		/// Gets the value of the specified column as a Boolean.
+		/// </summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>Boolean value of the column.</returns>
 #if NET20
 		public override bool GetBoolean(int i)
 #else
@@ -845,6 +927,11 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		/// <summary>
+		/// Gets the value of the specified column as a Byte.
+		/// </summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>The byte value of the column.</returns>
 #if NET20
 		public override byte GetByte(int i)
 #else
@@ -932,6 +1019,15 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		/// <summary>
+		/// Reads a stream of bytes from the specified column offset into the buffer an array starting at the given buffer offset.
+		/// </summary>
+		/// <param name="i">The zero-based column ordinal. </param>
+		/// <param name="fieldOffset">The index within the field from which to begin the read operation. </param>
+		/// <param name="buffer">The buffer into which to read the stream of bytes. </param>
+		/// <param name="bufferoffset">The index for buffer to begin the read operation. </param>
+		/// <param name="length">The maximum length to copy into the buffer. </param>
+		/// <returns>The actual number of bytes read.</returns>
 #if NET20
 		public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
 #else
@@ -961,6 +1057,11 @@ namespace MaxDB.Data
 #endif
 		}
 
+		/// <summary>
+		/// Gets the value of the specified column as a Char.
+		/// </summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>The char value of the column.</returns>
 #if NET20
 		public override char GetChar(int i)
 #else
@@ -973,6 +1074,15 @@ namespace MaxDB.Data
 			return GetString(i)[0];
 		}
 
+		/// <summary>
+		/// Reads a stream of chars from the specified column offset into the buffer an array starting at the given buffer offset.
+		/// </summary>
+		/// <param name="i">The zero-based column ordinal. </param>
+		/// <param name="fieldoffset">The index within the field from which to begin the read operation. </param>
+		/// <param name="buffer">The buffer into which to read the stream of chars. </param>
+		/// <param name="bufferoffset">The index for buffer to begin the read operation. </param>
+		/// <param name="length">The maximum length to copy into the buffer. </param>
+		/// <returns>The actual number of chars read.</returns>
 #if NET20
 		public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
 #else
@@ -1025,6 +1135,9 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		/// <summary>Gets the value of the specified column as a globally-unique identifier (GUID).</summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>The value of the specified column.</returns>
 #if NET20
 		public override Guid GetGuid(int i)
 #else
@@ -1037,6 +1150,9 @@ namespace MaxDB.Data
 			return new Guid(GetString(i));
 		}
 
+		/// <summary>Gets the value of the specified column as a 16-bit signed integer.</summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>The value of the specified column.</returns>
 #if NET20
 		public override short GetInt16(int i)
 #else
@@ -1122,6 +1238,9 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		/// <summary>Gets the value of the specified column as a 32-bit signed integer.</summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>The value of the specified column.</returns>
 #if NET20
 		public override int GetInt32(int i)
 #else
@@ -1207,6 +1326,9 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		/// <summary>Gets the value of the specified column as a 64-bit signed integer.</summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>The value of the specified column.</returns>
 #if NET20
 		public override long GetInt64(int i)
 #else
@@ -1291,6 +1413,9 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		/// <summary>Gets the value of the specified column as a single-precision floating point number.</summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>The value of the specified column.</returns>
 #if NET20
 		public override float GetFloat(int i)
 #else
@@ -1376,6 +1501,9 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		///	<summary>Gets the value of the specified column as a double-precision floating point number.</summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>The value of the specified column.</returns>
 #if NET20
 		public override double GetDouble(int i)
 #else
@@ -1461,6 +1589,9 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		/// <summary>Gets the value of the specified column as a <see cref="String"/> object.</summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>The value of the specified column.</returns>
 #if NET20
 		public override string GetString(int i)
 #else
@@ -1588,6 +1719,9 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		/// <summary>Gets the value of the specified column as a <see cref="Decimal"/> object.</summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>The value of the specified column.</returns>
 #if NET20
 		public override decimal GetDecimal(int i)
 #else
@@ -1672,6 +1806,9 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		/// <summary>Gets the value of the specified column as a <see cref="DateTime"/> object.</summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns>The value of the specified column.</returns>
 #if NET20
 		public override DateTime GetDateTime(int i)
 #else
@@ -1732,17 +1869,22 @@ namespace MaxDB.Data
 		}
 
 #if !NET20
+		/// <summary>
+		/// This method is not supported.
+		/// </summary>
+		/// <param name="i"></param>
+		/// <returns></returns>
 		public IDataReader GetData(int i)
 		{
-			/*
-			 * The sample code does not support this method. Normally,
-			 * this would be used to expose nested tables and
-			 * other hierarchical data.
-			 */
 			throw new NotSupportedException();
 		}
 #endif // !NET20
 
+		/// <summary>
+		/// Gets a value indicating whether the column contains non-existent or missing values.
+		/// </summary>
+		/// <param name="i">The zero-based column ordinal.</param>
+		/// <returns><b>true</b> if the specified column value is equivalent to DBNull; otherwise, <b>false</b>.</returns>
 #if NET20
 		public override bool IsDBNull(int i)
 #else
@@ -1758,6 +1900,9 @@ namespace MaxDB.Data
 #endif // SAFE
 		}
 
+		/// <summary>
+		/// Gets a value indicating whether the MaxDBDataReader contains one or more rows.
+		/// </summary>
 #if NET20
 		public override bool HasRows
 #else
@@ -2285,6 +2430,10 @@ namespace MaxDB.Data
 		#endregion
 #endif // SAFE
 
+		/// <summary>
+		/// gets an enumerator that can iterate through this collection.
+		/// </summary>
+		/// <returns>The object that represents an enumerator.</returns>
 #if NET20
 		public override IEnumerator GetEnumerator()
 #else
@@ -2297,13 +2446,17 @@ namespace MaxDB.Data
 		#region IDisposable Members
 
 #if !NET20
-		public void Dispose()
+		void IDisposable.Dispose()
 		{
 			Dispose(true);
 			GC.SuppressFinalize(this);
 		}
 #endif // NET20
 
+		/// <summary>
+		/// This method is intended for internal use and can not to be called directly from your code.
+		/// </summary>
+		/// <param name="disposing">Disposing flag</param>
 #if NET20
 		protected override void Dispose(bool disposing)
 #else

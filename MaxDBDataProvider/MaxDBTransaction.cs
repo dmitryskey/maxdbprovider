@@ -21,7 +21,15 @@ using MaxDB.Data.Utilities;
 
 namespace MaxDB.Data
 {
-	public class MaxDBTransaction :
+	/// <summary>
+	/// Represents a SQL transaction to be made in a MaxDB database. This class cannot be inherited.
+	/// </summary>
+	/// <remarks>
+	/// The application creates a <B>MaxDBTransaction</B> object by calling <see cref="MaxDBConnection.BeginTransaction()"/>
+	/// on the <see cref="MaxDBConnection"/> object. All subsequent operations associated with the 
+	/// transaction (for example, committing or aborting the transaction), are performed on the  <B>MaxDBTransaction</B> object.
+	/// </remarks>
+	public sealed class MaxDBTransaction :
 #if NET20
         DbTransaction
 #else
@@ -37,6 +45,12 @@ namespace MaxDB.Data
 
 		#region IDbTransaction Members
 
+		/// <summary>
+		/// Commits the database transaction.
+		/// </summary>
+		/// <remarks>
+		/// The <b>Commit</b> method is equivalent to the MaxDB SQL statement COMMIT [WORK].
+		/// </remarks>
 #if NET20
         public override void Commit()
 #else
@@ -56,6 +70,9 @@ namespace MaxDB.Data
 #endif // SAFE
         }
 
+		/// <summary>
+		/// This property is intended for internal use and can not to be used directly from your code.
+		/// </summary>
 #if NET20
         protected override DbConnection DbConnection
 #else
@@ -68,6 +85,17 @@ namespace MaxDB.Data
 			}
 		}
 
+		/// <summary>
+		/// Gets the <see cref="MaxDBConnection"/> object associated with the transaction, or a null reference (Nothing in Visual Basic) 
+		/// if the transaction is no longer valid.
+		/// </summary>
+		/// <value>The <see cref="MaxDBConnection"/> object associated with this transaction.</value>
+		/// <remarks>
+		/// A single application may have multiple database connections, each 
+		/// with zero or more transactions. This property enables you to 
+		/// determine the connection object associated with a particular 
+		/// transaction created by <see cref="MaxDBConnection.BeginTransaction()"/>.
+		/// </remarks>
 #if NET20
 		public new MaxDBConnection Connection
 #else
@@ -79,7 +107,16 @@ namespace MaxDB.Data
 				return dbConnection; 
 			}
 		}
- 
+
+		/// <summary>
+		/// Specifies the <see cref="IsolationLevel"/> for this transaction.
+		/// </summary>
+		/// <value>
+		/// The <see cref="IsolationLevel"/> for this transaction. The default is <b>ReadCommitted</b>.
+		/// </value>
+		/// <remarks>
+		/// Parallel transactions are not supported. Therefore, the IsolationLevel applies to the entire transaction.
+		/// </remarks>
 #if NET20
         public override IsolationLevel IsolationLevel
 #else
@@ -108,6 +145,12 @@ namespace MaxDB.Data
             }
 		}
 
+		/// <summary>
+		/// Rollbacks the database transaction.
+		/// </summary>
+		/// <remarks>
+		/// The <b>Rollback</b> method is equivalent to the MaxDB SQL statement ROLLBACK [WORK].
+		/// </remarks>
 #if NET20
         public override void Rollback()
 #else
@@ -132,13 +175,17 @@ namespace MaxDB.Data
 		#region IDisposable Members
 
 #if !NET20
-        public void Dispose()
+        void IDisposable.Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
 		}
 #endif // NET20
 
+		/// <summary>
+		/// This method is intended for internal use and can not to be called directly from your code.
+		/// </summary>
+		/// <param name="disposing">The disposing flag.</param>
 #if NET20
         protected override void Dispose(bool disposing)
 #else
