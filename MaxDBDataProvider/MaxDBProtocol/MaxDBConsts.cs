@@ -1051,7 +1051,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			{
 				StringBuilder result = new StringBuilder((array.Length - offset) * 2);
 				for(int i = offset; i < array.Length && i < length; i++)
-                    result.Append(array[i].ToString("X2", CultureInfo.InvariantCulture));
+				result.Append(array[i].ToString("X2", CultureInfo.InvariantCulture));
 
 				return result.ToString();
 			}
