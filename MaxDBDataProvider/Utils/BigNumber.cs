@@ -1304,6 +1304,8 @@ namespace MaxDB.Data.Utilities
 				else
 				{
 					int_part = num.TrimStart('0');
+					if (int_part.Trim().Length == 0)
+						int_part = "0";
                     biNumber = new BigInteger(long.Parse(int_part, CultureInfo.InvariantCulture));
 					return;
 				}
