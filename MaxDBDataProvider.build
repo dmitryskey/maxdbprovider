@@ -3,8 +3,8 @@
 
 	<property name="nunit-Net-1.1" value="D:\Program Files\NUnit 2.2.7" />
 	<property name="nunit-Net-2.0" value="D:\Program Files\NUnit-Net-2.0 2.2.7" />
-	<property name="nunit-Mono-1.0" value="/usr/lib/mono/1.0" />
-	<property name="nunit-Mono-2.0" value="/usr/lib/mono/2.0" />
+	<property name="nunit-Mono-1.0" value="/usr/local/lib/mono/1.0" />
+	<property name="nunit-Mono-2.0" value="/usr/local/lib/mono/2.0" />
 
 	<property name="MaxDB-7.5" value="gunichevvm" />
 	<property name="MaxDB-7.6" value="sheep" />
@@ -48,7 +48,7 @@
 	</target>
 
 	<!-- builds the client on all supported Mono Frameworks -->
-	<target name="mono" depends="mono-1.0-safe mono-1.0-unsafe">
+	<target name="mono" depends="mono-1.0-safe mono-1.0-unsafe mono-2.0-safe mono-2.0-unsafe">
 		<!--
 		<call target="Docs"/>
 		-->
@@ -99,6 +99,7 @@
 				<include name="${outdir}/MaxDB.Data.dll"/>
 				<include name="System.Data.dll"/>		
 				<include name="System.Drawing.dll"/>
+				<include name="System.Configuration.dll"/>
 				<include name="${nunit-lib}/nunit.framework.dll"/>
 			</references>
 		</csc>

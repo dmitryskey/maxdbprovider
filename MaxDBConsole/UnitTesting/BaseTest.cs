@@ -31,14 +31,14 @@ namespace MaxDB.UnitTesting
 	{
 		protected MaxDBConnection mconn;
 		protected StreamWriter msw = null;
-        protected NameValueCollection mAppSettings =
-#if NET20 && !MONO
-            System.Configuration.ConfigurationManager.AppSettings;
+		protected NameValueCollection mAppSettings =
+#if NET20
+			System.Configuration.ConfigurationManager.AppSettings;
 #else
-            System.Configuration.ConfigurationSettings.AppSettings;
-#endif // NET20 && !MONO
+			System.Configuration.ConfigurationSettings.AppSettings;
+#endif // NET20
 
-        public BaseTest()
+		public BaseTest()
 		{
 			if (mAppSettings["LogFileName"] != null)
 			{
@@ -51,20 +51,20 @@ namespace MaxDB.UnitTesting
 
 		protected void Init(string DDLQuery)
 		{
-            try
-            {
-                mconn = new MaxDBConnection(mAppSettings["ConnectionString"]);
-                mconn.Open();
-                mconn.AutoCommit = true;
+			try
+			{
+				mconn = new MaxDBConnection(mAppSettings["ConnectionString"]);
+				mconn.Open();
+				mconn.AutoCommit = true;
 
-                DropTestTable();
+				DropTestTable();
 
-                (new MaxDBCommand(DDLQuery, mconn)).ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.Message);
-            }
+				(new MaxDBCommand(DDLQuery, mconn)).ExecuteNonQuery();
+			}
+			catch (Exception ex)
+			{
+				Assert.Fail(ex.Message);
+			}
 		}
 
 		protected void Close() 
@@ -99,37 +99,37 @@ namespace MaxDB.UnitTesting
 				cmd.ExecuteNonQuery();
 		}
 
-        protected void DropDbProcedure(string proc)
-        {
-            try
-            {
-                ExecuteNonQuery("DROP DBPROC " + proc);
-            }
-            catch (MaxDBException ex)
-            {
-                if (ex.ErrorCode != -4016) Assert.Fail(ex.Message);
-            }
-        }
+		protected void DropDbProcedure(string proc)
+		{
+			try
+			{
+				ExecuteNonQuery("DROP DBPROC " + proc);
+			}
+			catch (MaxDBException ex)
+			{
+				if (ex.ErrorCode != -4016) Assert.Fail(ex.Message);
+			}
+		}
 
-        protected void DropDbFunction(string func)
-        {
-            try
-            {
-                ExecuteNonQuery("DROP FUNCTION " + func);
-            }
-            catch (MaxDBException ex)
-            {
-                if (ex.ErrorCode != -4023) Assert.Fail(ex.Message);
-            }
-        }
+		protected void DropDbFunction(string func)
+		{
+			try
+			{
+				ExecuteNonQuery("DROP FUNCTION " + func);
+			}
+			catch (MaxDBException ex)
+			{
+				if (ex.ErrorCode != -4023) Assert.Fail(ex.Message);
+			}
+		}
 
-        protected byte[] CreateBlob(int size)
-        {
-            byte[] buf = new byte[size];
+		protected byte[] CreateBlob(int size)
+		{
+			byte[] buf = new byte[size];
 
-            Random r = new Random();
-            r.NextBytes(buf);
-            return buf;
-        }
+			Random r = new Random();
+			r.NextBytes(buf);
+			return buf;
+		}
 	}
 }

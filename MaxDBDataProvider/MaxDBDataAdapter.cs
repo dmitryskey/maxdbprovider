@@ -63,7 +63,7 @@ namespace MaxDB.Data
         private MaxDBCommand cmdUpdate;
         private MaxDBCommand cmdDelete;
 
-#if NET20 && !MONO
+#if NET20
         private int batUpdateSize;
         private MaxDBCommand batInsertCmd;
         private MaxDBCommand batUpdateCmd;
@@ -72,7 +72,7 @@ namespace MaxDB.Data
         private List<MaxDBParameterCollection> lstUpdateParams = new List<MaxDBParameterCollection>();
         private List<MaxDBParameterCollection> lstDeleteParams = new List<MaxDBParameterCollection>();
         private StatementType stCurrentType = StatementType.Select;
-#endif // NET20 && !MONO
+#endif // NET20
 
         static private readonly object EventRowUpdated = new object();
         static private readonly object EventRowUpdating = new object();
@@ -155,9 +155,7 @@ namespace MaxDB.Data
         override protected void OnRowUpdating(RowUpdatingEventArgs value)
         {
 #if NET20
-#if !MONO
             stCurrentType = value.StatementType;
-#endif // !MONO
             EventHandler<MaxDBRowUpdatingEventArgs> handler = (EventHandler<MaxDBRowUpdatingEventArgs>) Events[EventRowUpdating];
 #else
             MaxDBRowUpdatingEventHandler handler = (MaxDBRowUpdatingEventHandler) Events[EventRowUpdating];
@@ -423,7 +421,7 @@ namespace MaxDB.Data
         }
         #endregion
 
-#if NET20 && !MONO
+#if NET20
 		/// <summary>
 		/// Gets or sets a value that enables or disables batch processing support, and specifies the number of commands that can be executed in a batch. 
 		/// </summary>
@@ -524,7 +522,7 @@ namespace MaxDB.Data
             }
             return rowAffected;
         }
-#endif // NET20 && !MONO
+#endif // NET20
 
     }
 
