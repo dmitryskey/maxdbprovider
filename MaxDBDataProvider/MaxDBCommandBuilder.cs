@@ -37,12 +37,12 @@ namespace MaxDB.Data
 	/// <B>MaxDBCommandBuilder</B>.</para>
 	/// <para>The select statement must have "FOR UPDATE" suffix.</para>
 	/// </remarks>
-    [System.ComponentModel.DesignerCategory("Code")]
-	public sealed class MaxDBCommandBuilder : 
+	[System.ComponentModel.DesignerCategory("Code")]
+	public sealed class MaxDBCommandBuilder :
 #if NET20
-        DbCommandBuilder
+		DbCommandBuilder
 #else
-        Component
+		Component
 #endif
 	{
 		private string strPrefix = "'";
@@ -80,7 +80,7 @@ namespace MaxDB.Data
 		/// The beginning character or characters to use.  The default value is '.
 		/// </value>
 #if NET20
-        public override string QuotePrefix
+		public override string QuotePrefix
 #else
 		public string QuotePrefix
 #endif // NET20
@@ -104,7 +104,7 @@ namespace MaxDB.Data
 		/// The ending character or characters to use.  The default value is '.
 		/// </value>
 #if NET20
-        public override string QuoteSuffix
+		public override string QuoteSuffix
 #else
 		public string QuoteSuffix
 #endif // NET20
@@ -123,7 +123,7 @@ namespace MaxDB.Data
 		/// Gets or sets a <see cref="MaxDBDataAdapter"/> object for which SQL statements are automatically generated.
 		/// </summary>
 #if NET20
-        public new MaxDBDataAdapter DataAdapter
+		public new MaxDBDataAdapter DataAdapter
 #else
 		public MaxDBDataAdapter DataAdapter
 #endif // NET20
@@ -136,7 +136,7 @@ namespace MaxDB.Data
 			{
 				if (mAdapter != null)
 #if NET20
-                    mAdapter.RowUpdating -= new EventHandler<MaxDBRowUpdatingEventArgs>(OnRowUpdating);
+					mAdapter.RowUpdating -= new EventHandler<MaxDBRowUpdatingEventArgs>(OnRowUpdating);
 #else
 					mAdapter.RowUpdating -= new MaxDBRowUpdatingEventHandler(OnRowUpdating);
 #endif // NET20
@@ -145,7 +145,7 @@ namespace MaxDB.Data
 					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.ADAPTER_NULL));
 				mAdapter = value;
 #if NET20
-                mAdapter.RowUpdating += new EventHandler<MaxDBRowUpdatingEventArgs>(OnRowUpdating);
+				mAdapter.RowUpdating += new EventHandler<MaxDBRowUpdatingEventArgs>(OnRowUpdating);
 #else
 				mAdapter.RowUpdating += new MaxDBRowUpdatingEventHandler(OnRowUpdating);
 #endif // NET20
@@ -158,9 +158,9 @@ namespace MaxDB.Data
 		/// </summary>
 		/// <param name="adapter">Given <see cref="DbDataAdapter"/> to use.</param>
 		protected override void SetRowUpdatingHandler(DbDataAdapter adapter)
-        {
-            DataAdapter = (MaxDBDataAdapter)adapter;
-        }
+		{
+			DataAdapter = (MaxDBDataAdapter)adapter;
+		}
 #endif // NET20
 
 		/// <summary>
@@ -174,7 +174,7 @@ namespace MaxDB.Data
 		/// </para>
 		/// </remarks>
 #if NET20
-        public override void RefreshSchema()
+		public override void RefreshSchema()
 #else
 		public void RefreshSchema()
 #endif // NET20
@@ -183,7 +183,7 @@ namespace MaxDB.Data
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.ADAPTER_NULL));
 			if (mAdapter.SelectCommand == null)
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SELECT_NULL));
-		
+
 			MaxDBDataReader dr = mAdapter.SelectCommand.ExecuteReader(CommandBehavior.SchemaOnly);
 			mSchema = dr.GetSchemaTable();
 
@@ -193,7 +193,7 @@ namespace MaxDB.Data
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BASETABLE_NOTFOUND));
 		}
 
-#if NET20 
+#if NET20
 		/// <summary>
 		/// This method is intended for internal use and can not to be called directly from your code.
 		/// </summary>
@@ -202,9 +202,9 @@ namespace MaxDB.Data
 		/// <param name="statementType">Statement type</param>
 		/// <param name="whereClause">whether 'WHERE' clause is used or not</param>
 		protected override void ApplyParameterInfo(DbParameter parameter, DataRow row, StatementType statementType, bool whereClause)
-        {
-        }
-#endif // NET20 
+		{
+		}
+#endif // NET20
 
 		/// <summary>
 		/// This method is intended for internal use and can not to be called directly from your code.
@@ -212,16 +212,16 @@ namespace MaxDB.Data
 		/// <param name="parameterOrdinal">Parameter ordinal.</param>
 		/// <returns>Parameter name.</returns>
 #if NET20
-        protected override string GetParameterName(int parameterOrdinal)
+		protected override string GetParameterName(int parameterOrdinal)
 #else
 		private string GetParameterName(int parameterOrdinal)
 #endif // NET20
-        {
-            if (parameterOrdinal < 0 || parameterOrdinal >= mSchema.Rows.Count)
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLINDEX_NOTFOUND));
+		{
+			if (parameterOrdinal < 0 || parameterOrdinal >= mSchema.Rows.Count)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLINDEX_NOTFOUND));
 
-            return mSchema.Rows[parameterOrdinal]["ColumnName"].ToString();
-        }
+			return mSchema.Rows[parameterOrdinal]["ColumnName"].ToString();
+		}
 
 #if NET20
 		/// <summary>
@@ -230,13 +230,13 @@ namespace MaxDB.Data
 		/// <param name="parameterName">Parameter name to check existence.</param>
 		/// <returns>Parameter name.</returns>
 		protected override string GetParameterName(string parameterName)
-        {
-            foreach (DataRow row in mSchema.Rows)
-                if (string.Compare(row["ColumnName"].ToString().Trim(), parameterName.Trim(), true, CultureInfo.InvariantCulture) == 0)
-                    return parameterName;
+		{
+			foreach (DataRow row in mSchema.Rows)
+				if (string.Compare(row["ColumnName"].ToString().Trim(), parameterName.Trim(), true, CultureInfo.InvariantCulture) == 0)
+					return parameterName;
 
-            throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAME_NOTFOUND));
-        }
+			throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAME_NOTFOUND));
+		}
 #endif // NET20
 
 		/// <summary>
@@ -245,13 +245,13 @@ namespace MaxDB.Data
 		/// <param name="parameterOrdinal">Parameter ordinal.</param>
 		/// <returns>Parameter placeholder of the form :COLUMNNAME.</returns>
 #if NET20
-        protected override string GetParameterPlaceholder(int parameterOrdinal)
+		protected override string GetParameterPlaceholder(int parameterOrdinal)
 #else
 		private string GetParameterPlaceholder(int parameterOrdinal)
 #endif // NET20
-        {
-            return ":" + mSchema.Rows[parameterOrdinal]["ColumnName"].ToString();
-        }
+		{
+			return ":" + mSchema.Rows[parameterOrdinal]["ColumnName"].ToString();
+		}
 
 		private MaxDBCommand CreateCommand()
 		{
@@ -262,7 +262,7 @@ namespace MaxDB.Data
 
 		private MaxDBParameter CreateParameter(int index, DataRowVersion version)
 		{
-            DataRow row = mSchema.Rows[index];
+			DataRow row = mSchema.Rows[index];
 			return new MaxDBParameter(
 				GetParameterName(index),
 				(MaxDBType)row["ProviderType"],
@@ -298,7 +298,7 @@ namespace MaxDB.Data
 		/// </remarks>
 		/// <returns>The <see cref="MaxDBCommand"/> object generated to handle delete operations.</returns>
 #if NET20
-        public new MaxDBCommand GetDeleteCommand()
+		public new MaxDBCommand GetDeleteCommand()
 #else
 		public MaxDBCommand GetDeleteCommand()
 #endif // NET20
@@ -306,24 +306,24 @@ namespace MaxDB.Data
 			if (mSchema == null)
 				RefreshSchema();
 
-			if (cmdDelete != null) 
+			if (cmdDelete != null)
 				return cmdDelete;
 
 			MaxDBCommand cmd = CreateCommand();
 
 			StringBuilder whereStmt = new StringBuilder();
-	
-			for(int i = 0; i < mSchema.Rows.Count; i++)
+
+			for (int i = 0; i < mSchema.Rows.Count; i++)
 			{
-                DataRow row = mSchema.Rows[i];
+				DataRow row = mSchema.Rows[i];
 				string columnName = row["ColumnName"].ToString();
 
-                if ((bool)row["IsKeyColumn"])
+				if ((bool)row["IsKeyColumn"])
 				{
 					if (whereStmt.Length > 0)
 						whereStmt.Append(" AND ");
 
-                    whereStmt.Append(columnName + " = " + GetParameterPlaceholder(i));
+					whereStmt.Append(columnName + " = " + GetParameterPlaceholder(i));
 
 					cmd.Parameters.Add(CreateParameter(i, DataRowVersion.Original));
 				}
@@ -359,7 +359,7 @@ namespace MaxDB.Data
 		/// </remarks>
 		/// <returns>The <see cref="MaxDBCommand"/> object generated to handle insert operations.</returns>
 #if NET20
-        public new MaxDBCommand GetInsertCommand()
+		public new MaxDBCommand GetInsertCommand()
 #else
 		public MaxDBCommand GetInsertCommand()
 #endif // NET20
@@ -375,9 +375,9 @@ namespace MaxDB.Data
 			StringBuilder columns = new StringBuilder();
 			StringBuilder markers = new StringBuilder();
 
-            for (int i = 0; i < mSchema.Rows.Count; i++)
+			for (int i = 0; i < mSchema.Rows.Count; i++)
 			{
-                DataRow row = mSchema.Rows[i];
+				DataRow row = mSchema.Rows[i];
 				string columnName = row["ColumnName"].ToString();
 				if (!(bool)row["IsAutoIncrement"])
 				{
@@ -388,7 +388,7 @@ namespace MaxDB.Data
 					}
 
 					columns.Append(columnName);
-                    markers.Append(GetParameterPlaceholder(i));
+					markers.Append(GetParameterPlaceholder(i));
 
 					cmd.Parameters.Add(CreateParameter(i, DataRowVersion.Current));
 				}
@@ -423,7 +423,7 @@ namespace MaxDB.Data
 		/// </remarks>
 		/// <returns>The <see cref="MaxDBCommand"/> object generated to handle update operations.</returns>
 #if NET20
-        public new MaxDBCommand GetUpdateCommand()
+		public new MaxDBCommand GetUpdateCommand()
 #else
 		public MaxDBCommand GetUpdateCommand()
 #endif // NET20
@@ -441,17 +441,17 @@ namespace MaxDB.Data
 			StringBuilder whereStmt = new StringBuilder();
 			MaxDBParameterCollection whereParams = new MaxDBParameterCollection();
 
-            for (int i = 0; i < mSchema.Rows.Count; i++)
+			for (int i = 0; i < mSchema.Rows.Count; i++)
 			{
-                DataRow row = mSchema.Rows[i];
+				DataRow row = mSchema.Rows[i];
 				string columnName = row["ColumnName"].ToString();
 
-                if ((bool)row["IsKeyColumn"])
+				if ((bool)row["IsKeyColumn"])
 				{
 					if (whereStmt.Length > 0)
 						whereStmt.Append(" AND ");
 
-                    whereStmt.Append(columnName + " = " + GetParameterPlaceholder(i));
+					whereStmt.Append(columnName + " = " + GetParameterPlaceholder(i));
 					whereParams.Add(CreateParameter(i, DataRowVersion.Current));
 				}
 				else
@@ -459,7 +459,7 @@ namespace MaxDB.Data
 					if (setStmt.Length > 0)
 						setStmt.Append(", ");
 
-                    setStmt.Append(columnName + " = " + GetParameterPlaceholder(i));
+					setStmt.Append(columnName + " = " + GetParameterPlaceholder(i));
 					setParams.Add(CreateParameter(i, DataRowVersion.Current));
 				}
 			}
@@ -467,14 +467,14 @@ namespace MaxDB.Data
 			cmd.CommandType = CommandType.Text;
 			cmd.CommandText = "UPDATE " + strBaseTable + " SET " + setStmt.ToString();
 
-            foreach (MaxDBParameter param in setParams)
-                cmd.Parameters.Add(param);
+			foreach (MaxDBParameter param in setParams)
+				cmd.Parameters.Add(param);
 
 			if (whereStmt.Length > 0)
 			{
 				cmd.CommandText += " WHERE " + whereStmt.ToString();
-                foreach (MaxDBParameter param in whereParams)
-                    cmd.Parameters.Add(param);
+				foreach (MaxDBParameter param in whereParams)
+					cmd.Parameters.Add(param);
 			}
 
 			cmdUpdate = cmd;
@@ -483,13 +483,13 @@ namespace MaxDB.Data
 
 		private void OnRowUpdating(object sender, MaxDBRowUpdatingEventArgs args)
 		{
-			if (args.Status != UpdateStatus.Continue) 
+			if (args.Status != UpdateStatus.Continue)
 				return;
 
 			if (mSchema == null)
 				RefreshSchema();
 
-			switch(args.StatementType)
+			switch (args.StatementType)
 			{
 				case StatementType.Select:
 					return;
@@ -504,7 +504,7 @@ namespace MaxDB.Data
 					break;
 			}
 
-			foreach(MaxDBParameter param in args.Command.Parameters)
+			foreach (MaxDBParameter param in args.Command.Parameters)
 			{
 				if (param.SourceVersion == DataRowVersion.Original)
 					param.Value = args.Row[param.SourceColumn, DataRowVersion.Original];

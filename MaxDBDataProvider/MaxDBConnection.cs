@@ -70,7 +70,7 @@ namespace MaxDB.Data
 #if NET20
 		DbConnection
 #else
-        IDbConnection, IDisposable
+		IDbConnection, IDisposable
 #endif // NET20
 	{
 		internal MaxDBConnectionStringBuilder mConnStrBuilder;
@@ -87,20 +87,20 @@ namespace MaxDB.Data
 		//hash algorithm is equal to the SQLDBC counterpart
 
 #if NET20
-        private class TableNameHashCodeProvider : IEqualityComparer
-        {
-            bool IEqualityComparer.Equals(object x, object y)
-            {
-                return (string)x == (string)y;
-            }
+		private class TableNameHashCodeProvider : IEqualityComparer
+		{
+			bool IEqualityComparer.Equals(object x, object y)
+			{
+				return (string)x == (string)y;
+			}
 
-            int IEqualityComparer.GetHashCode(object obj)
+			int IEqualityComparer.GetHashCode(object obj)
 #else
 		private class TableNameHashCodeProvider : IHashCodeProvider
 		{
 			int IHashCodeProvider.GetHashCode(object obj)
 #endif // NET20
-            {
+			{
 				// the X31 hash formula is hash = (hash<<5) - hash + char(i) for i in 1 ... string length
 				// as it degenerates when the input are 0's, a little bit decoration is added
 				// to hash UTF8 data and UCS2 data equally. 
@@ -110,8 +110,8 @@ namespace MaxDB.Data
 				if (str.Length > 0)
 				{
 					int result = 0;
-					
-					foreach(char c in str)
+
+					foreach (char c in str)
 					{
 						byte[] b = BitConverter.GetBytes(c);
 						if (b[0] < 128 && b[1] == 0)
@@ -128,7 +128,7 @@ namespace MaxDB.Data
 #if !NET20
 			, new Comparer(System.Globalization.CultureInfo.InvariantCulture)
 #endif // !NET20
-            );
+);
 
 		#endregion
 #endif // !SAFE
@@ -258,7 +258,7 @@ namespace MaxDB.Data
 #if NET20
 		public override string ServerVersion
 #else
-        public string ServerVersion
+		public string ServerVersion
 #endif // NET20
 		{
 			get
@@ -319,8 +319,8 @@ namespace MaxDB.Data
 #else
 			mComm.mIsolationLevel = level;
 
-			if (UnsafeNativeMethods.SQLDBC_Connection_setTransactionIsolation(mComm.mConnectionHandler, MapIsolationLevel(level)) 
-				!= SQLDBC_Retcode.SQLDBC_OK) 
+			if (UnsafeNativeMethods.SQLDBC_Connection_setTransactionIsolation(mComm.mConnectionHandler, MapIsolationLevel(level))
+				!= SQLDBC_Retcode.SQLDBC_OK)
 				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.CONNECTION_ISOLATIONLEVEL),
 					UnsafeNativeMethods.SQLDBC_Connection_getError(mComm.mConnectionHandler));
 #endif // SAFE
@@ -363,7 +363,7 @@ namespace MaxDB.Data
 #if NET20
 		public new MaxDBTransaction BeginTransaction(IsolationLevel isolationLevel)
 #else
-        public MaxDBTransaction BeginTransaction(IsolationLevel isolationLevel)
+		public MaxDBTransaction BeginTransaction(IsolationLevel isolationLevel)
 #endif // NET20
 		{
 			SetIsolationLevel(isolationLevel);
@@ -384,7 +384,7 @@ namespace MaxDB.Data
 #if NET20
 		public new MaxDBTransaction BeginTransaction()
 #else
-        public MaxDBTransaction BeginTransaction()
+		public MaxDBTransaction BeginTransaction()
 #endif // NET20
 		{
 			return new MaxDBTransaction(this);
@@ -398,7 +398,7 @@ namespace MaxDB.Data
 #if NET20
 		public override void ChangeDatabase(string databaseName)
 #else
-        public void ChangeDatabase(string databaseName)
+		public void ChangeDatabase(string databaseName)
 #endif // NET20
 		{
 			mConnArgs.dbname = databaseName;
@@ -413,7 +413,7 @@ namespace MaxDB.Data
 #if NET20
 		public override void Close()
 #else
-        public void Close()
+		public void Close()
 #endif // NET20
 		{
 			if (State == ConnectionState.Open)
@@ -464,7 +464,7 @@ namespace MaxDB.Data
 #if NET20
 		public override string ConnectionString
 #else
-        public string ConnectionString
+		public string ConnectionString
 #endif // NET20
 		{
 			get
@@ -486,7 +486,7 @@ namespace MaxDB.Data
 #if NET20
 		public override int ConnectionTimeout
 #else
-        public int ConnectionTimeout
+		public int ConnectionTimeout
 #endif // NET20
 		{
 			get
@@ -541,7 +541,7 @@ namespace MaxDB.Data
 			{
 				using (MaxDBCommand cmd = new MaxDBCommand("PING", this))
 					cmd.ExecuteNonQuery();
-				
+
 				return true;
 			}
 			catch
@@ -557,7 +557,6 @@ namespace MaxDB.Data
 		}
 
 #if NET20
-
 		private DataTable ExecuteInternalQuery(string sql, string table, MaxDBParameterCollection parameters)
 		{
 			DataTable dt = new DataTable(table);
@@ -570,7 +569,7 @@ namespace MaxDB.Data
 				using (MaxDBCommand cmd = new MaxDBCommand(sql, this))
 				{
 					if (parameters != null)
-						foreach(MaxDBParameter parameter in parameters)
+						foreach (MaxDBParameter parameter in parameters)
 							cmd.Parameters.Add(parameter);
 					MaxDBDataAdapter da = new MaxDBDataAdapter();
 					da.SelectCommand = cmd;
@@ -1061,7 +1060,7 @@ namespace MaxDB.Data
 				}
 				else
 					sql += " WHERE 1=1 ";
-				
+
 				if (restrictionValues != null && restrictionValues.Length > 0 && restrictionValues[0] != null)
 				{
 					sql += " AND TABLE_SCHEM = :TABLE_SCHEM ";
@@ -1237,7 +1236,7 @@ namespace MaxDB.Data
 #if NET20
 		public override string Database
 #else
-        public string Database
+		public string Database
 #endif // NET20
 		{
 			get
@@ -1252,7 +1251,7 @@ namespace MaxDB.Data
 #if NET20
 		public override string DataSource
 #else
-        public string DataSource
+		public string DataSource
 #endif // NET20
 		{
 			get
@@ -1271,7 +1270,7 @@ namespace MaxDB.Data
 #if NET20
 		public override void Open()
 #else
-        public void Open()
+		public void Open()
 #endif // NET20
 		{
 			if (mConnStrBuilder.Pooling)
@@ -1301,7 +1300,7 @@ namespace MaxDB.Data
 #if NET20
 		public override ConnectionState State
 #else
-        public ConnectionState State
+		public ConnectionState State
 #endif // NET20
 		{
 			get
@@ -1339,10 +1338,10 @@ namespace MaxDB.Data
 		#region IDisposable Members
 
 #if !NET20
-        void IDisposable.Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+		void IDisposable.Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
 		}
 #endif // NET20
 
@@ -1353,7 +1352,7 @@ namespace MaxDB.Data
 #if NET20
 		protected override void Dispose(bool disposing)
 #else
-        private void Dispose(bool disposing)
+		private void Dispose(bool disposing)
 #endif // NET20
 		{
 #if NET20

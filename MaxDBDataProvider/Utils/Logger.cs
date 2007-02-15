@@ -32,7 +32,8 @@ namespace MaxDB.Data.Utilities
 
 	internal class MaxDBTraceSwitch : Switch
 	{
-		public MaxDBTraceSwitch(string displayName, string description): base(displayName, description)
+		public MaxDBTraceSwitch(string displayName, string description)
+			: base(displayName, description)
 		{
 		}
 
@@ -40,7 +41,7 @@ namespace MaxDB.Data.Utilities
 		{
 			get
 			{
-				switch(SwitchSetting)
+				switch (SwitchSetting)
 				{
 					case (int)MaxDBTraceLevel.None:
 						return MaxDBTraceLevel.None;
@@ -73,7 +74,7 @@ namespace MaxDB.Data.Utilities
 
 	internal class MaxDBLogger : IDisposable
 	{
-		public const int 
+		public const int
 			NumSize = 4,
 			TypeSize = 16,
 			LenSize = 10,
@@ -96,7 +97,7 @@ namespace MaxDB.Data.Utilities
 #if !SAFE
 		public MaxDBLogger(MaxDBConnection conn)
 		{
-            if (mSwitcher.TraceSQL)
+			if (mSwitcher.TraceSQL)
 			{
 				dbConnection = conn;
 
@@ -105,8 +106,8 @@ namespace MaxDB.Data.Utilities
 				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "TIMESTAMP", "1");
 
 				strLogName = Path.GetTempPath() + "adonetlog.html";
- 				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "FILENAME", "\"" + strLogName + "\"");
-                if (mSwitcher.TraceFull)
+				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "FILENAME", "\"" + strLogName + "\"");
+				if (mSwitcher.TraceFull)
 					UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "PACKET", "1");
 				UnsafeNativeMethods.SQLDBC_Environment_setTraceOptions(dbConnection.mComm.mEnviromentHandler, mProperties);
 			}
@@ -117,7 +118,7 @@ namespace MaxDB.Data.Utilities
 		{
 			get
 			{
-                return mSwitcher.TraceSQL;
+				return mSwitcher.TraceSQL;
 			}
 		}
 
@@ -126,7 +127,7 @@ namespace MaxDB.Data.Utilities
 		{
 			get
 			{
-                return mSwitcher.TraceFull;
+				return mSwitcher.TraceFull;
 			}
 		}
 #endif // SAFE
@@ -135,9 +136,9 @@ namespace MaxDB.Data.Utilities
 		{
 #if SAFE
 			if (mSwitcher.TraceSQL)
-                Trace.WriteLine(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " " + msg);
+				Trace.WriteLine(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " " + msg);
 #endif // SAFE
-        }
+		}
 
 #if SAFE
 		public void SqlTraceParseInfo(DateTime dt, object objInfo)
@@ -151,35 +152,35 @@ namespace MaxDB.Data.Utilities
 					SqlTrace(dt, "I   T              L    P   IO    N");
 					foreach (DBTechTranslator info in parseInfo.ParamInfo)
 					{
-                        Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
+						Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
 
 						SqlTraceTransl(info);
 
 						if (FunctionCode.IsQuery(parseInfo.FuncCode))
 						{
-							if(!info.IsOutput) 
+							if (!info.IsOutput)
 							{
-								if(info.IsInput) 
+								if (info.IsInput)
 								{
-									if(info.IsOutput) 
+									if (info.IsOutput)
 										Trace.Write(" INOUT ");// ... two in one. We must reduce the overall number !!!
-									else 
+									else
 										Trace.Write(" IN    ");
-								} 
-								else 
+								}
+								else
 									Trace.Write(" OUT   ");
 							}
 						}
 						else
 						{
-							if(info.IsInput) 
+							if (info.IsInput)
 							{
-								if(info.IsOutput) 
+								if (info.IsOutput)
 									Trace.Write(" INOUT ");// ... two in one. We must reduce the overall number !!!
-								else 
+								else
 									Trace.Write(" IN    ");
-							} 
-							else 
+							}
+							else
 								Trace.Write(" OUT   ");
 						}
 
@@ -191,63 +192,63 @@ namespace MaxDB.Data.Utilities
 				{
 					SqlTrace(dt, "COLUMNS:");
 					SqlTrace(dt, "I   T              L           P           N");
-					foreach(DBTechTranslator info in parseInfo.ColumnInfo)
+					foreach (DBTechTranslator info in parseInfo.ColumnInfo)
 					{
-                        Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
+						Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
 						SqlTraceTransl(info);
 						Trace.WriteLine(info.ColumnName);
 					}
 				}
-            }
-        }
+			}
+		}
 
 		public void SqlTraceDataHeader(DateTime dt)
 		{
 			SqlTrace(dt, "I".PadRight(NumSize) + "T".PadRight(TypeSize) + "L".PadRight(LenSize) + "I".PadRight(InputSize) + "DATA");
-        }
+		}
 #endif // SAFE
 
 #if SAFE
 		private static void SqlTraceTransl(DBTechTranslator info)
 		{
-            Trace.Write(info.ColumnIndex.ToString(CultureInfo.InvariantCulture).PadRight(4));
+			Trace.Write(info.ColumnIndex.ToString(CultureInfo.InvariantCulture).PadRight(4));
 			Trace.Write(info.ColumnTypeName.PadRight(15));
-            Trace.Write((info.PhysicalLength - 1).ToString(CultureInfo.InvariantCulture).PadRight(12));
-            Trace.Write(info.Precision.ToString(CultureInfo.InvariantCulture).PadRight(12));
-        }
+			Trace.Write((info.PhysicalLength - 1).ToString(CultureInfo.InvariantCulture).PadRight(12));
+			Trace.Write(info.Precision.ToString(CultureInfo.InvariantCulture).PadRight(12));
+		}
 #endif // SAFE
 
-        public void Flush()
+		public void Flush()
 		{
-            if (mSwitcher.TraceSQL)
+			if (mSwitcher.TraceSQL)
 			{
 #if SAFE
 				Trace.Flush();
 #else
 
-                if (!File.Exists(strLogName))
-                    return;
-                string tmpFile = Path.GetTempFileName();
-                File.Copy(strLogName, tmpFile, true);
-                StreamReader sr = new StreamReader(tmpFile);
-                string header = sr.ReadLine();
-                if (header != null)
-                {
-                    string line;
-                    do
-                    {
-                        line = sr.ReadLine();
-                        if (line != null)
-                            Trace.WriteLine(line);
-                    }
-                    while (line != null);
-                }
-                sr.Close();
-                File.Delete(tmpFile);
+				if (!File.Exists(strLogName))
+					return;
+				string tmpFile = Path.GetTempFileName();
+				File.Copy(strLogName, tmpFile, true);
+				StreamReader sr = new StreamReader(tmpFile);
+				string header = sr.ReadLine();
+				if (header != null)
+				{
+					string line;
+					do
+					{
+						line = sr.ReadLine();
+						if (line != null)
+							Trace.WriteLine(line);
+					}
+					while (line != null);
+				}
+				sr.Close();
+				File.Delete(tmpFile);
 
-                Trace.Flush();
+				Trace.Flush();
 #endif // SAFE
-            }
+			}
 		}
 
 		#region IDisposable Members

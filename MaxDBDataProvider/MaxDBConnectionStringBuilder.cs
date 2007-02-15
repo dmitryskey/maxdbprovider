@@ -33,9 +33,9 @@ namespace MaxDB.Data
 #if NET20
 		DbConnectionStringBuilder
 #else
-        IDictionary, ICollection
+		IDictionary, ICollection
 #endif
-, IEnumerable
+		, IEnumerable
 	{
 		private Hashtable mKeyValuePairs = new Hashtable();
 		private bool bBrowsable = true;
@@ -62,7 +62,7 @@ namespace MaxDB.Data
 #if NET20
 		public new bool BrowsableConnectionString
 #else
-        public bool BrowsableConnectionString
+		public bool BrowsableConnectionString
 #endif // NET20
 		{
 			get
@@ -84,7 +84,7 @@ namespace MaxDB.Data
 #if NET20
 		public static new void AppendKeyValuePair(StringBuilder builder, string keyword, string value)
 #else
-        public static void AppendKeyValuePair(StringBuilder builder, string keyword, string value)
+		public static void AppendKeyValuePair(StringBuilder builder, string keyword, string value)
 #endif // NET20
 		{
 			if (builder == null)
@@ -101,7 +101,7 @@ namespace MaxDB.Data
 #if NET20
 		public override bool ShouldSerialize(string keyword)
 #else
-        public bool ShouldSerialize(string keyword)
+		public bool ShouldSerialize(string keyword)
 #endif
 		{
 			return mKeyValuePairs.ContainsKey(keyword);
@@ -125,7 +125,7 @@ namespace MaxDB.Data
 #if NET20
 		public override bool TryGetValue(string keyword, out object value)
 #else
-        public bool TryGetValue(string keyword, out object value)
+		public bool TryGetValue(string keyword, out object value)
 #endif
 		{
 			if (mKeyValuePairs.ContainsKey(keyword))
@@ -195,7 +195,7 @@ namespace MaxDB.Data
 #if NET20
 		public new string ConnectionString
 #else
-        public string ConnectionString
+		public string ConnectionString
 #endif
 		{
 			get
@@ -624,7 +624,7 @@ namespace MaxDB.Data
 #if NET20
 		public override void Clear()
 #else
-        public void Clear()
+		public void Clear()
 #endif // NET20
 		{
 			mKeyValuePairs.Clear();
@@ -655,7 +655,7 @@ namespace MaxDB.Data
 #if NET20
 		public override bool IsFixedSize
 #else
-        public bool IsFixedSize
+		public bool IsFixedSize
 #endif // NET20
 		{
 			get
@@ -670,7 +670,7 @@ namespace MaxDB.Data
 #if NET20
 		public new bool IsReadOnly
 #else
-        public bool IsReadOnly
+		public bool IsReadOnly
 #endif // NET20
 		{
 			get
@@ -685,7 +685,7 @@ namespace MaxDB.Data
 #if NET20
 		public override ICollection Keys
 #else
-        public ICollection Keys
+		public ICollection Keys
 #endif // NET20
 		{
 			get
@@ -741,7 +741,7 @@ namespace MaxDB.Data
 #if NET20
 		public override object this[string keyword]
 #else
-        public object this[object keyword]
+		public object this[object keyword]
 #endif // NET20
 		{
 			get

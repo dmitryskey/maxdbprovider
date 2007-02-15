@@ -26,35 +26,35 @@ namespace MaxDB.Data
 {
 	class MaxDBFactory : DbProviderFactory
 	{
-        public override DbCommand CreateCommand()
-        {
-            return new MaxDBCommand();
-        }
+		public override DbCommand CreateCommand()
+		{
+			return new MaxDBCommand();
+		}
 
-        public override DbCommandBuilder CreateCommandBuilder()
-        {
-            return new MaxDBCommandBuilder();
-        }
+		public override DbCommandBuilder CreateCommandBuilder()
+		{
+			return new MaxDBCommandBuilder();
+		}
 
-        public override DbConnection CreateConnection()
-        {
-            return new MaxDBConnection();
-        }
+		public override DbConnection CreateConnection()
+		{
+			return new MaxDBConnection();
+		}
 
-        public override DbConnectionStringBuilder CreateConnectionStringBuilder()
-        {
-            return new MaxDBConnectionStringBuilder();
-        }
+		public override DbConnectionStringBuilder CreateConnectionStringBuilder()
+		{
+			return new MaxDBConnectionStringBuilder();
+		}
 
-        public override DbDataAdapter CreateDataAdapter()
-        {
-            return new MaxDBDataAdapter();
-        }
+		public override DbDataAdapter CreateDataAdapter()
+		{
+			return new MaxDBDataAdapter();
+		}
 
-        public override DbParameter CreateParameter()
-        {
-            return new MaxDBParameter();
-        }
+		public override DbParameter CreateParameter()
+		{
+			return new MaxDBParameter();
+		}
 	}
 }
 

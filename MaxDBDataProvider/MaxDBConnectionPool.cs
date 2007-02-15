@@ -205,7 +205,7 @@ namespace MaxDB.Data
 		{
 			lock (mPool.SyncRoot)
 			{
-				while(mPool.Keys.Count > 0)
+				while (mPool.Keys.Count > 0)
 				{
 					foreach (string key in mPool.Keys)
 					{

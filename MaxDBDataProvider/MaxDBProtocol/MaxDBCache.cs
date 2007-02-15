@@ -67,12 +67,12 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			public void Remove()
 			{
-				if (mPrevLink != null) 
+				if (mPrevLink != null)
 					mPrevLink.mNextLink = mNextLink;
 
-				if (mNextLink != null) 
+				if (mNextLink != null)
 					mNextLink.mPrevLink = mPrevLink;
-			
+
 				mPrevLink = null;
 				mNextLink = null;
 			}
@@ -88,7 +88,8 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			object objKey;
 
-			public Association(object key, object val) : base(val)
+			public Association(object key, object val)
+				: base(val)
 			{
 				objKey = key;
 			}
@@ -107,7 +108,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		private Association lruBottom;
 		private int currentSize;
 		private int maxSize;
-    
+
 		public LeastRecentlyUsedCache(int cacheSize)
 		{
 			maxSize = cacheSize;
@@ -130,7 +131,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				Association entry;
 
 				entry = (Association)lookup[key];
-				if (entry != null) 
+				if (entry != null)
 				{
 					result = entry.Data;
 					MoveToTop(entry);
@@ -142,25 +143,25 @@ namespace MaxDB.Data.MaxDBProtocol
 				Association newEntry = new Association(key, value);
 
 				lookup[key] = newEntry;
-				if (lruTop != null) 
+				if (lruTop != null)
 					lruTop.Prepend(newEntry);
-			
+
 				lruTop = newEntry;
-				if (lruBottom == null) 
+				if (lruBottom == null)
 					lruBottom = newEntry;
-			
+
 				currentSize++;
-				if (currentSize > maxSize) 
-					RemoveLast ();
+				if (currentSize > maxSize)
+					RemoveLast();
 			}
 		}
 
 		private void MoveToTop(Association entry)
 		{
-			if (entry == lruTop) 
+			if (entry == lruTop)
 				return;
 
-			if (entry == lruBottom) 
+			if (entry == lruBottom)
 				lruBottom = (Association)entry.Prev;
 			entry.Remove();
 			lruTop.Prepend(entry);
@@ -171,14 +172,14 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			Association toDelete = lruBottom;
 
-			lruBottom = (Association) toDelete.Prev;
+			lruBottom = (Association)toDelete.Prev;
 			lookup.Remove(toDelete.Key);
 			currentSize--;
 		}
 
-        public object[] ClearAll()
+		public object[] ClearAll()
 		{
-			object[] result= new object[lookup.Count];
+			object[] result = new object[lookup.Count];
 			lookup.Values.CopyTo(result, 0);
 			Clear();
 			return result;
@@ -194,7 +195,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		private string strName;
 		private int iHits;
 		private int iMisses;
-		
+
 		public CacheInfo(string name)
 		{
 			strName = name;
@@ -209,7 +210,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			iHits++;
 		}
-		
+
 		public void AddMiss()
 		{
 			iMisses++;
@@ -220,7 +221,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			get
 			{
 				long all = iHits + iMisses;
-				return (double) iHits / (double) all * 100.0;
+				return (double)iHits / (double)all * 100.0;
 			}
 		}
 	}
@@ -237,36 +238,37 @@ namespace MaxDB.Data.MaxDBProtocol
 		private bool[] bKindFilter;
 		private CacheInfo[] ciStats;
 
-		public ParseInfoCache(string cache, int cacheSize) : base(cacheSize > 0 ? cacheSize : iDefaultSize)
+		public ParseInfoCache(string cache, int cacheSize)
+			: base(cacheSize > 0 ? cacheSize : iDefaultSize)
 		{
-            string kindDecl = cache;
+			string kindDecl = cache;
 
-            bKindFilter = new bool[iMaxFunctionCode];
-            if (kindDecl.IndexOf('?') >= 0)
-            {
-                bKeepStats = true;
-                ciStats = new CacheInfo[iMaxFunctionCode];
-                ciStats[FunctionCode.Nil] = new CacheInfo("other");
-                ciStats[FunctionCode.Insert] = new CacheInfo("insert");
-                ciStats[FunctionCode.Select] = new CacheInfo("select");
-                ciStats[FunctionCode.Update] = new CacheInfo("update");
-                ciStats[FunctionCode.Delete] = new CacheInfo("delete");
-            }
+			bKindFilter = new bool[iMaxFunctionCode];
+			if (kindDecl.IndexOf('?') >= 0)
+			{
+				bKeepStats = true;
+				ciStats = new CacheInfo[iMaxFunctionCode];
+				ciStats[FunctionCode.Nil] = new CacheInfo("other");
+				ciStats[FunctionCode.Insert] = new CacheInfo("insert");
+				ciStats[FunctionCode.Select] = new CacheInfo("select");
+				ciStats[FunctionCode.Update] = new CacheInfo("update");
+				ciStats[FunctionCode.Delete] = new CacheInfo("delete");
+			}
 
-            if (kindDecl.IndexOf("all") >= 0)
-                for (int i = 0; i < iMaxFunctionCode; ++i)
-                    bKindFilter[i] = true;
-            else
-            {
-                if (kindDecl.IndexOf("i") >= 0)
-                    bKindFilter[FunctionCode.Insert] = true;
-                if (kindDecl.IndexOf("u") >= 0)
-                    bKindFilter[FunctionCode.Update] = true;
-                if (kindDecl.IndexOf("d") >= 0)
-                    bKindFilter[FunctionCode.Delete] = true;
-                if (kindDecl.IndexOf("s") >= 0)
-                    bKindFilter[FunctionCode.Select] = true;
-            }
+			if (kindDecl.IndexOf("all") >= 0)
+				for (int i = 0; i < iMaxFunctionCode; ++i)
+					bKindFilter[i] = true;
+			else
+			{
+				if (kindDecl.IndexOf("i") >= 0)
+					bKindFilter[FunctionCode.Insert] = true;
+				if (kindDecl.IndexOf("u") >= 0)
+					bKindFilter[FunctionCode.Update] = true;
+				if (kindDecl.IndexOf("d") >= 0)
+					bKindFilter[FunctionCode.Delete] = true;
+				if (kindDecl.IndexOf("s") >= 0)
+					bKindFilter[FunctionCode.Select] = true;
+			}
 		}
 
 		public MaxDBParseInfo FindParseInfo(string sqlCmd)
@@ -274,7 +276,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			MaxDBParseInfo result = null;
 
 			result = (MaxDBParseInfo)this[sqlCmd];
-			if (bKeepStats && result != null) 
+			if (bKeepStats && result != null)
 				ciStats[result.FuncCode].AddHit();
 
 			return result;
@@ -285,18 +287,18 @@ namespace MaxDB.Data.MaxDBProtocol
 		public void AddParseInfo(MaxDBParseInfo parseinfo)
 		{
 			int functionCode = MapFunctionCode(parseinfo.FuncCode);
-			if (bKindFilter[functionCode]) 
+			if (bKindFilter[functionCode])
 			{
 				this[parseinfo.SqlCommand] = parseinfo;
 				parseinfo.IsCached = true;
-				if (bKeepStats) 
+				if (bKeepStats)
 					ciStats[functionCode].AddMiss();
 			}
 		}
 
 		static private int MapFunctionCode(int functionCode)
 		{
-			switch (functionCode) 
+			switch (functionCode)
 			{
 				case FunctionCode.Insert:
 				case FunctionCode.Update:

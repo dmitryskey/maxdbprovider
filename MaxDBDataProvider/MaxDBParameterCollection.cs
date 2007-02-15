@@ -29,13 +29,13 @@ namespace MaxDB.Data
 	/// Represents a collection of parameters relevant to a <see cref="MaxDBCommand"/> as 
 	/// well as their respective mappings to columns in a <see cref="DataSet"/>. This class cannot be inherited.
 	/// </summary>
-	public sealed class MaxDBParameterCollection : 
+	public sealed class MaxDBParameterCollection :
 #if NET20
-        DbParameterCollection
+		DbParameterCollection
 #else
-        IList, ICollection, IEnumerable
+		IList, ICollection, IEnumerable
 #endif
-        ,IDataParameterCollection, ICloneable
+		, IDataParameterCollection, ICloneable
 	{
 		private MaxDBParameter[] mCollection = new MaxDBParameter[0];
 
@@ -45,11 +45,11 @@ namespace MaxDB.Data
 		{
 			get
 			{
-                return this[IndexOf(parameterName)];
+				return this[IndexOf(parameterName)];
 			}
 			set
 			{
-                this[IndexOf(parameterName)] = (MaxDBParameter)value;
+				this[IndexOf(parameterName)] = (MaxDBParameter)value;
 			}
 		}
 
@@ -59,12 +59,12 @@ namespace MaxDB.Data
 		/// <param name="parameterName">The value of the <see cref="MaxDBParameter"/> object to find. </param>
 		/// <returns>true if the collection contains the <see cref="MaxDBParameter"/> object; otherwise, false.</returns>
 #if NET20
-        public override bool Contains(string parameterName)
+		public override bool Contains(string parameterName)
 #else
 		public bool Contains(string parameterName)
 #endif // NET20
 		{
-			return(-1 != IndexOf(parameterName));
+			return (-1 != IndexOf(parameterName));
 		}
 
 		/// <summary>
@@ -73,13 +73,13 @@ namespace MaxDB.Data
 		/// <param name="parameterName">The <see cref="MaxDBParameter"/> object to locate. </param>
 		/// <returns>The zero-based location of the <see cref="MaxDBParameter"/> in the collection.</returns>
 #if NET20
-        public override int IndexOf(string parameterName)
+		public override int IndexOf(string parameterName)
 #else
 		public int IndexOf(string parameterName)
 #endif // NET20
 		{
 			int index = 0;
-			foreach(MaxDBParameter item in this) 
+			foreach (MaxDBParameter item in this)
 			{
 				if (_cultureAwareCompare(item.ParameterName, parameterName) == 0)
 					return index;
@@ -93,7 +93,7 @@ namespace MaxDB.Data
 		/// </summary>
 		/// <param name="parameterName">The name of the parameter.</param>
 #if NET20
-        public override void RemoveAt(string parameterName)
+		public override void RemoveAt(string parameterName)
 #else
 		public void RemoveAt(string parameterName)
 #endif // NET20
@@ -116,7 +116,7 @@ namespace MaxDB.Data
 		/// <param name="array">A target array.</param>
 		/// <param name="index">The index in the array at which to begin copying.</param>
 #if NET20
-        public override void CopyTo(Array array, int index)
+		public override void CopyTo(Array array, int index)
 #else
 		public void CopyTo(Array array, int index)
 #endif // NET20
@@ -129,16 +129,16 @@ namespace MaxDB.Data
 		/// </summary>
 		/// <param name="array">A target array.</param>
 		/// <param name="index">The index in the array at which to begin copying.</param>
-        public void CopyTo(MaxDBParameter[] array, int index)
-        {
-            mCollection.CopyTo(array, index);
-        }
+		public void CopyTo(MaxDBParameter[] array, int index)
+		{
+			mCollection.CopyTo(array, index);
+		}
 
 		/// <summary>
 		/// Gets the number of <see cref="MaxDBParameter"/> objects in the collection.
 		/// </summary>
 #if NET20
-        public override int Count
+		public override int Count
 #else
 		public int Count
 #endif // NET20
@@ -153,7 +153,7 @@ namespace MaxDB.Data
 		/// Gets a value indicating whether collection is synchronized.
 		/// </summary>
 #if NET20
-        public override bool IsSynchronized
+		public override bool IsSynchronized
 #else
 		public bool IsSynchronized
 #endif // NET20
@@ -168,10 +168,10 @@ namespace MaxDB.Data
 		/// Gets an object that can be used to synchronize access to the collection. 
 		/// </summary>
 #if NET20
-        public override object SyncRoot
+		public override object SyncRoot
 #else
 		public object SyncRoot
- #endif // NET20
+#endif // NET20
 		{
 			get
 			{
@@ -188,11 +188,11 @@ namespace MaxDB.Data
 		/// </summary>
 		/// <returns>An enumerator object.</returns>
 #if NET20
-        public override IEnumerator GetEnumerator()
+		public override IEnumerator GetEnumerator()
 #else
 		public IEnumerator GetEnumerator()
 #endif // NET20
-        {
+		{
 			return mCollection.GetEnumerator();
 		}
 
@@ -206,7 +206,7 @@ namespace MaxDB.Data
 		/// <param name="value">The <see cref="MaxDBParameter"/> to add to the collection.</param>
 		/// <returns>The index of the new <see cref="MaxDBParameter"/> object.</returns>
 #if NET20
-        public override int Add(object value)
+		public override int Add(object value)
 #else
 		public int Add(object value)
 #endif
@@ -219,7 +219,7 @@ namespace MaxDB.Data
 		/// Removes all items from the collection.
 		/// </summary>
 #if NET20
-        public override void Clear()
+		public override void Clear()
 #else
 		public void Clear()
 #endif // NET20
@@ -233,12 +233,12 @@ namespace MaxDB.Data
 		/// <param name="value">The value of the <see cref="MaxDBParameter"/> object to find.</param>
 		/// <returns>true if the collection contains the <see cref="MaxDBParameter"/> object and false otherwise.</returns>
 #if NET20
-        public override bool Contains(object value)
+		public override bool Contains(object value)
 #else
 		public bool Contains(object value)
 #endif // NET20
 		{
-			foreach(MaxDBParameter param in mCollection)
+			foreach (MaxDBParameter param in mCollection)
 				if (param == value)
 					return true;
 
@@ -250,13 +250,13 @@ namespace MaxDB.Data
 		/// </summary>
 		/// <param name="index">The zero-based index of the parameter.</param>
 #if NET20
-        public override void RemoveAt(int index)
+		public override void RemoveAt(int index)
 #else
 		public void RemoveAt(int index)
 #endif // NET20
 		{
 #if NET20
-            List<MaxDBParameter> tmp_array = new List<MaxDBParameter>(mCollection);
+			List<MaxDBParameter> tmp_array = new List<MaxDBParameter>(mCollection);
 #else
             ArrayList tmp_array = new ArrayList(mCollection);
 #endif // NET20
@@ -271,7 +271,7 @@ namespace MaxDB.Data
 		/// <param name="value">The <see cref="MaxDBParameter"/> object to locate. </param>
 		/// <returns>The zero-based location of the <see cref="MaxDBParameter"/> in the collection.</returns>
 #if NET20
-        public override int IndexOf(object value)
+		public override int IndexOf(object value)
 #else
 		public int IndexOf(object value)
 #endif // NET20
@@ -288,17 +288,17 @@ namespace MaxDB.Data
 		/// </summary>
 		/// <param name="index">Collection index.</param>
 		/// <param name="value"><see cref="MaxDBParameter"/> object to insert.</param>
-        public void Insert(int index, MaxDBParameter value)
-        {
+		public void Insert(int index, MaxDBParameter value)
+		{
 #if NET20
-            List<MaxDBParameter> tmp_array = new List<MaxDBParameter>(mCollection);
+			List<MaxDBParameter> tmp_array = new List<MaxDBParameter>(mCollection);
 #else
             ArrayList tmp_array = new ArrayList(mCollection);
 #endif // NET20
-            tmp_array.Insert(index, (MaxDBParameter)value);
-            mCollection = new MaxDBParameter[tmp_array.Count];
-            tmp_array.CopyTo(mCollection);
-        }
+			tmp_array.Insert(index, (MaxDBParameter)value);
+			mCollection = new MaxDBParameter[tmp_array.Count];
+			tmp_array.CopyTo(mCollection);
+		}
 
 		/// <summary>
 		/// Inserts a <see cref="MaxDBParameter"/> into the collection at the specified index.
@@ -306,19 +306,19 @@ namespace MaxDB.Data
 		/// <param name="index">Collection index.</param>
 		/// <param name="value">Object to insert.</param>
 #if NET20
-        public override void Insert(int index, object value)
+		public override void Insert(int index, object value)
 #else
 		public void Insert(int index, object value)
 #endif // NET20
 		{
-            Insert(index, (MaxDBParameter)value);
+			Insert(index, (MaxDBParameter)value);
 		}
 
 		/// <summary>
 		/// Gets a value indicating whether the collection has fixed size.
 		/// </summary>
 #if NET20
-        public override bool IsFixedSize
+		public override bool IsFixedSize
 #else
 		public bool IsFixedSize
 #endif // NET20
@@ -333,7 +333,7 @@ namespace MaxDB.Data
 		/// Gets a value indicating whether the collection is read-only.
 		/// </summary>
 #if NET20
-        public override bool IsReadOnly
+		public override bool IsReadOnly
 #else
 		public bool IsReadOnly
 #endif // NET20
@@ -349,24 +349,24 @@ namespace MaxDB.Data
 		/// </summary>
 		/// <param name="value">Object to remove</param>
 #if NET20
-        public override void Remove(object value)
+		public override void Remove(object value)
 #else
 		public void Remove(object value)
 #endif // NET20
 		{
-            Remove((MaxDBParameter)value);
+			Remove((MaxDBParameter)value);
 		}
 
 		/// <summary>
 		/// Removes the specified <see cref="MaxDBParameter"/> from the collection.
 		/// </summary>
 		/// <param name="value">The <see cref="MaxDBParameter"/> to remove</param>
-        public void Remove(MaxDBParameter value)
-        {
-            int index = ((IList)this).IndexOf(value);
-			if (index >=0)
-			    RemoveAt(index);
-        }
+		public void Remove(MaxDBParameter value)
+		{
+			int index = ((IList)this).IndexOf(value);
+			if (index >= 0)
+				RemoveAt(index);
+		}
 
 		object IList.this[int index]
 		{
@@ -388,7 +388,7 @@ namespace MaxDB.Data
 		/// <param name="index">The index of the <see cref="MaxDBParameter"/></param>
 		/// <returns>The <see cref="MaxDBParameter"/> object.</returns>
 #if NET20
-        public new MaxDBParameter this[int index]
+		public new MaxDBParameter this[int index]
 #else
 		public MaxDBParameter this[int index]
 #endif
@@ -410,8 +410,8 @@ namespace MaxDB.Data
 		/// <returns>The newly added <see cref="MaxDBParameter"/> object.</returns>
 		public MaxDBParameter Add(MaxDBParameter value)
 		{
-            if (value == null)
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+			if (value == null)
+				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
 
 			if (value.ParameterName != null)
 			{
@@ -498,17 +498,17 @@ namespace MaxDB.Data
 		/// </summary>
 		/// <param name="values">Adds an array of values to the end of the <see cref="MaxDBParameterCollection"/>.</param>
 #if NET20
-        public override void AddRange(Array values)
+		public override void AddRange(Array values)
 #else
         public void AddRange(Array values)
 #endif // NET20
-        {
+		{
 			if (values == null)
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
 
 			foreach (MaxDBParameter param in values)
 				Add(param);
-        }
+		}
 
 		/// <summary>
 		/// Adds elements to the end of the <see cref="MaxDBParameterCollection"/>. 
@@ -518,7 +518,7 @@ namespace MaxDB.Data
 #if NET20
 		public void AddRange(MaxDBParameter[] values)
 #else
-        public void AddRange(MaxDBParameter[] values)
+		public void AddRange(MaxDBParameter[] values)
 #endif // NET20
 		{
 			if (values == null)
@@ -527,68 +527,68 @@ namespace MaxDB.Data
 			foreach (MaxDBParameter param in values)
 				Add(param);
 		}
- 
+
 #if NET20
 		/// <summary>
 		/// This method is intended for internal use and can not to be called directly from your code.
 		/// </summary>
 		/// <param name="index">The index of the <see cref="DbParameter"/>.</param>
 		/// <returns>The <see cref="DbParameter"/> object.</returns>
-        protected override DbParameter GetParameter(int index)
-        {
-            return this[index];
-        }
+		protected override DbParameter GetParameter(int index)
+		{
+			return this[index];
+		}
 
 		/// <summary>
 		/// This method is intended for internal use and can not to be called directly from your code.
 		/// </summary>
 		/// <param name="parameterName">The name of the <see cref="DbParameter"/>.</param>
 		/// <returns>The <see cref="DbParameter"/> object.</returns>
-        protected override DbParameter GetParameter(string parameterName)
-        {
-            return this[parameterName];
-        }
+		protected override DbParameter GetParameter(string parameterName)
+		{
+			return this[parameterName];
+		}
 
 		/// <summary>
 		/// This method is intended for internal use and can not to be called directly from your code.
 		/// </summary>
 		/// <param name="index">The index of the <see cref="DbParameter"/>.</param>
 		/// <param name="value">The <see cref="MaxDBParameter.Value"/> of the <see cref="MaxDBParameter"/> to set.</param>
-        protected override void SetParameter(int index, DbParameter value)
-        {
-            this[index] = (MaxDBParameter)value;
-        }
+		protected override void SetParameter(int index, DbParameter value)
+		{
+			this[index] = (MaxDBParameter)value;
+		}
 
 		/// <summary>
 		/// This method is intended for internal use and can not to be called directly from your code.
 		/// </summary>
 		/// <param name="parameterName">The name of the <see cref="DbParameter"/>.</param>
 		/// <param name="value">The <see cref="MaxDBParameter.Value"/> of the <see cref="MaxDBParameter"/> to set.</param>
-        protected override void SetParameter(string parameterName, DbParameter value)
-        {
-            this[parameterName] = (MaxDBParameter)value;
-        }
+		protected override void SetParameter(string parameterName, DbParameter value)
+		{
+			this[parameterName] = (MaxDBParameter)value;
+		}
 #endif // NET20
 
-        #region ICloneable Members
+		#region ICloneable Members
 
-        object ICloneable.Clone()
-        {
-            return this.Clone();
-        }
+		object ICloneable.Clone()
+		{
+			return this.Clone();
+		}
 
 		/// <summary>
 		/// Clone <see cref="MaxDBParameterCollection"/> object.
 		/// </summary>
 		/// <returns>The cloned <see cref="MaxDBParameterCollection"/> object.</returns>
-        public MaxDBParameterCollection Clone()
-        {
-            MaxDBParameterCollection clone = new MaxDBParameterCollection();
-            foreach (MaxDBParameter param in this)
-                clone.Add(((ICloneable)param).Clone());
-            return clone;
-        }
+		public MaxDBParameterCollection Clone()
+		{
+			MaxDBParameterCollection clone = new MaxDBParameterCollection();
+			foreach (MaxDBParameter param in this)
+				clone.Add(((ICloneable)param).Clone());
+			return clone;
+		}
 
-        #endregion
-    }
+		#endregion
+	}
 }
