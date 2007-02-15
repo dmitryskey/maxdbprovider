@@ -31,11 +31,11 @@ namespace MaxDB.Data
 	/// </remarks>
 	public sealed class MaxDBTransaction :
 #if NET20
-        DbTransaction
+		DbTransaction
 #else
-        IDbTransaction, IDisposable
+		IDbTransaction, IDisposable
 #endif // NET20
-    {
+	{
 		private MaxDBConnection dbConnection;
 
 		internal MaxDBTransaction(MaxDBConnection conn)
@@ -52,11 +52,11 @@ namespace MaxDB.Data
 		/// The <b>Commit</b> method is equivalent to the MaxDB SQL statement COMMIT [WORK].
 		/// </remarks>
 #if NET20
-        public override void Commit()
+		public override void Commit()
 #else
 		public void Commit()
 #endif // NET20
-        {
+		{
 			dbConnection.AssertOpen();
 
 			//>>> SQL TRACE
@@ -68,18 +68,18 @@ namespace MaxDB.Data
 			if (UnsafeNativeMethods.SQLDBC_Connection_commit(dbConnection.mComm.mConnectionHandler) != SQLDBC_Retcode.SQLDBC_OK)
 				MaxDBException.ThrowException("COMMIT", UnsafeNativeMethods.SQLDBC_Connection_getError(dbConnection.mComm.mConnectionHandler));
 #endif // SAFE
-        }
+		}
 
 		/// <summary>
 		/// This property is intended for internal use and can not to be used directly from your code.
 		/// </summary>
 #if NET20
-        protected override DbConnection DbConnection
+		protected override DbConnection DbConnection
 #else
 		IDbConnection IDbTransaction.Connection
 #endif // NET20
-        {
-			get 
+		{
+			get
 			{
 				return this.Connection;
 			}
@@ -99,12 +99,12 @@ namespace MaxDB.Data
 #if NET20
 		public new MaxDBConnection Connection
 #else
-        public MaxDBConnection Connection
+		public MaxDBConnection Connection
 #endif // NET20
-        {
-			get  
-			{ 
-				return dbConnection; 
+		{
+			get
+			{
+				return dbConnection;
 			}
 		}
 
@@ -118,12 +118,12 @@ namespace MaxDB.Data
 		/// Parallel transactions are not supported. Therefore, the IsolationLevel applies to the entire transaction.
 		/// </remarks>
 #if NET20
-        public override IsolationLevel IsolationLevel
+		public override IsolationLevel IsolationLevel
 #else
 		public IsolationLevel IsolationLevel
 #endif // NET20
-        {
-			get 
+		{
+			get
 			{
 #if SAFE
 				return dbConnection.mComm.mIsolationLevel;
@@ -132,17 +132,20 @@ namespace MaxDB.Data
 				{
 					case 0:
 						return IsolationLevel.ReadUncommitted;
-					case 1: case 10:
+					case 1:
+					case 10:
 						return IsolationLevel.ReadCommitted;
-					case 2: case 20:
+					case 2:
+					case 20:
 						return IsolationLevel.RepeatableRead;
-					case 3: case 30:
+					case 3:
+					case 30:
 						return IsolationLevel.Serializable;
 					default:
 						return IsolationLevel.Unspecified;
 				}
 #endif // SAFE
-            }
+			}
 		}
 
 		/// <summary>
@@ -152,11 +155,11 @@ namespace MaxDB.Data
 		/// The <b>Rollback</b> method is equivalent to the MaxDB SQL statement ROLLBACK [WORK].
 		/// </remarks>
 #if NET20
-        public override void Rollback()
+		public override void Rollback()
 #else
-        public void Rollback()
+		public void Rollback()
 #endif // NET20
-        {
+		{
 			dbConnection.AssertOpen();
 
 			//>>> SQL TRACE
@@ -168,17 +171,17 @@ namespace MaxDB.Data
 			if (UnsafeNativeMethods.SQLDBC_Connection_rollback(dbConnection.mComm.mConnectionHandler) != SQLDBC_Retcode.SQLDBC_OK)
 				throw new MaxDBException("ROLLBACK" + UnsafeNativeMethods.SQLDBC_Connection_getError(dbConnection.mComm.mConnectionHandler));
 #endif // SAFE
-        }
+		}
 
-		#endregion   
+		#endregion
 
 		#region IDisposable Members
 
 #if !NET20
-        void IDisposable.Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+		void IDisposable.Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
 		}
 #endif // NET20
 
@@ -187,17 +190,17 @@ namespace MaxDB.Data
 		/// </summary>
 		/// <param name="disposing">The disposing flag.</param>
 #if NET20
-        protected override void Dispose(bool disposing)
+		protected override void Dispose(bool disposing)
 #else
-        private void Dispose(bool disposing)
+		private void Dispose(bool disposing)
 #endif // NET20
-        {
+		{
 #if NET20
-            base.Dispose(disposing);
+			base.Dispose(disposing);
 #endif // NET20
-            if (disposing && null != dbConnection)
-                Rollback();// implicitly rollback if transaction still valid
-        }
+			if (disposing && null != dbConnection)
+				Rollback();// implicitly rollback if transaction still valid
+		}
 
 		#endregion
 	}

@@ -67,7 +67,7 @@ namespace MaxDB.UnitTesting
 			}
 		}
 
-		protected void Close() 
+		protected void Close()
 		{
 			DropTestTable();
 			((IDisposable)mconn).Dispose();
@@ -81,7 +81,7 @@ namespace MaxDB.UnitTesting
 				ExecuteNonQuery("EXISTS TABLE Test");
 				ExecuteNonQuery("DROP TABLE Test");
 			}
-			catch(MaxDBException ex)
+			catch (MaxDBException ex)
 			{
 				if (ex.ErrorCode != -4004)
 					throw;
@@ -95,7 +95,7 @@ namespace MaxDB.UnitTesting
 
 		protected void ExecuteNonQuery(string cmdSql)
 		{
-			using(MaxDBCommand cmd = new MaxDBCommand(cmdSql, mconn))
+			using (MaxDBCommand cmd = new MaxDBCommand(cmdSql, mconn))
 				cmd.ExecuteNonQuery();
 		}
 

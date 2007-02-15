@@ -26,30 +26,30 @@ using System.Data;
 
 namespace MaxDB.UnitTesting
 {
-    [TestFixture]
-    public class StressTests : BaseTest
-    {
-        [TestFixtureSetUp]
-        public void SetUp()
-        {
-            Init("CREATE TABLE Test (id INT NOT NULL, name varchar(100), blob1 LONG BYTE, text1 LONG ASCII, PRIMARY KEY(id))");
-        }
+	[TestFixture]
+	public class StressTests : BaseTest
+	{
+		[TestFixtureSetUp]
+		public void SetUp()
+		{
+			Init("CREATE TABLE Test (id INT NOT NULL, name varchar(100), blob1 LONG BYTE, text1 LONG ASCII, PRIMARY KEY(id))");
+		}
 
-        [TestFixtureTearDown]
-        public void TearDown()
-        {
-            Close();
-        }
+		[TestFixtureTearDown]
+		public void TearDown()
+		{
+			Close();
+		}
 
-        [Test]
-        public void TestMultiPacket()
-        {
-            const int len = 20000000;
+		[Test]
+		public void TestMultiPacket()
+		{
+			const int len = 20000000;
 
-            byte[] dataIn = CreateBlob(len);
-            byte[] dataIn2 = CreateBlob(len);
+			byte[] dataIn = CreateBlob(len);
+			byte[] dataIn2 = CreateBlob(len);
 
-            ClearTestTable();
+			ClearTestTable();
 
 			using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES (:id, NULL, :blob, NULL)", mconn))
 			{
@@ -90,17 +90,17 @@ namespace MaxDB.UnitTesting
 						byte[] hashOut = sha.ComputeHash(dataOut);
 
 						bool isEqual = true;
-						
+
 						for (int i = 0; i < hashIn.Length; i++)
 							if (hashIn[i] != hashOut[i])
 							{
 								isEqual = false;
 								break;
 							}
-						
+
 						if (!isEqual)
 							for (int i = 0; i < len; i++)
-								Assert.AreEqual( dataIn2[i], dataOut[i], "wrong blob value at position " + i.ToString() );
+								Assert.AreEqual(dataIn2[i], dataOut[i], "wrong blob value at position " + i.ToString());
 					}
 				}
 				catch (Exception ex)
@@ -108,16 +108,16 @@ namespace MaxDB.UnitTesting
 					Assert.Fail(ex.Message);
 				}
 			}
-        }
+		}
 
-        [Test]
-        public void TestSequence()
-        {
-            const int count = 8000;
+		[Test]
+		public void TestSequence()
+		{
+			const int count = 8000;
 			int[] id2_values = new int[count];
 			int[] id_values = new int[count];
 
-            ClearTestTable();
+			ClearTestTable();
 
 			using (MaxDBDataAdapter da = new MaxDBDataAdapter())
 			{
@@ -137,31 +137,31 @@ namespace MaxDB.UnitTesting
 				da.Update(dt);
 			}
 
-            using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
-            {
-                int i2 = 0;
+			using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
+			{
+				int i2 = 0;
 
-                try
-                {
-                    using (MaxDBDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
+				try
+				{
+					using (MaxDBDataReader reader = cmd.ExecuteReader())
+					{
+						while (reader.Read())
+						{
 							id_values[i2] = i2 + 1;
 							id2_values[i2] = reader.GetInt32(0);
-                            i2++;
-                        }
+							i2++;
+						}
 
-                        Assert.AreEqual(count, i2);
+						Assert.AreEqual(count, i2);
 						Assert.AreEqual(id_values, id2_values, "Sequence out of order");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Assert.Fail(ex.Message);
-                }
-            }
-        }
+					}
+				}
+				catch (Exception ex)
+				{
+					Assert.Fail(ex.Message);
+				}
+			}
+		}
 
-    }
+	}
 }

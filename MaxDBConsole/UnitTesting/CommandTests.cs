@@ -33,7 +33,7 @@ namespace MaxDB.UnitTesting
 	public class CommandTests : BaseTest
 	{
 		[TestFixtureSetUp]
-		public void SetUp() 
+		public void SetUp()
 		{
 			Init("CREATE TABLE Test (id int NOT NULL, name VARCHAR(100))");
 		}
@@ -47,12 +47,12 @@ namespace MaxDB.UnitTesting
 		[Test]
 		public void TestInsert()
 		{
-			try 
+			try
 			{
 				ClearTestTable();
 
 				// do the insert
-				using(MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name) VALUES(10, 'Test')", mconn))
+				using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name) VALUES(10, 'Test')", mconn))
 				{
 					int cnt = cmd.ExecuteNonQuery();
 					Assert.AreEqual(1, cnt, "Insert Count");
@@ -60,7 +60,7 @@ namespace MaxDB.UnitTesting
 					// make sure we get the right value back out
 					cmd.CommandText = "SELECT name FROM Test WHERE id = 10";
 					string name = (string)cmd.ExecuteScalar();
-					Assert.AreEqual("Test", name, "Insert result" );
+					Assert.AreEqual("Test", name, "Insert result");
 
 					// now do the insert with parameters
 					cmd.CommandText = "INSERT INTO Test (id, name) VALUES( :id, :name)";
@@ -73,10 +73,10 @@ namespace MaxDB.UnitTesting
 					cmd.Parameters.Clear();
 					cmd.CommandText = "SELECT name FROM Test WHERE id = 11";
 					name = (string)cmd.ExecuteScalar();
-					Assert.AreEqual("Test2", name, "Insert with parameters result" );
+					Assert.AreEqual("Test2", name, "Insert with parameters result");
 				}
 			}
-			catch(MaxDBException ex)
+			catch (MaxDBException ex)
 			{
 				Assert.Fail(ex.Message);
 			}
@@ -85,7 +85,7 @@ namespace MaxDB.UnitTesting
 		[Test]
 		public void TestUpdate()
 		{
-			try 
+			try
 			{
 				ClearTestTable();
 
@@ -93,7 +93,7 @@ namespace MaxDB.UnitTesting
 				ExecuteNonQuery("INSERT INTO Test (id,name) VALUES(11, 'Test2')");
 
 				// do the update
-				using(MaxDBCommand cmd = new MaxDBCommand("UPDATE Test SET name='Test3' WHERE id = 10 OR id = 11", mconn))
+				using (MaxDBCommand cmd = new MaxDBCommand("UPDATE Test SET name='Test3' WHERE id = 10 OR id = 11", mconn))
 				{
 					MaxDBConnection c = (MaxDBConnection)cmd.Connection;
 					Assert.AreEqual(mconn, c);
@@ -104,7 +104,7 @@ namespace MaxDB.UnitTesting
 					cmd.CommandText = "SELECT name FROM Test WHERE id = 10";
 					string name = (string)cmd.ExecuteScalar();
 					Assert.AreEqual("Test3", name, "Update result for id = 10");
-			
+
 					cmd.CommandText = "SELECT name FROM Test WHERE id = 11";
 					name = (string)cmd.ExecuteScalar();
 					Assert.AreEqual("Test3", name, "Update result for id = 11");
@@ -114,7 +114,7 @@ namespace MaxDB.UnitTesting
 					cmd.Parameters.Add(new MaxDBParameter(":name", "Test5"));
 					cmd.Parameters.Add(new MaxDBParameter(":id", 11));
 					cnt = cmd.ExecuteNonQuery();
-					Assert.AreEqual(1, cnt, "Update with Parameters Count" );
+					Assert.AreEqual(1, cnt, "Update with Parameters Count");
 
 					// make sure we get the right value back out
 					cmd.Parameters.Clear();
@@ -132,18 +132,18 @@ namespace MaxDB.UnitTesting
 		[Test]
 		public void TestDelete()
 		{
-			try 
+			try
 			{
 				ClearTestTable();
 
 				ExecuteNonQuery("INSERT INTO Test (id, name) VALUES(1, 'Test')");
 				ExecuteNonQuery("INSERT INTO Test (id, name) VALUES(2, 'Test2')");
 
-				using(MaxDBCommand cmd = new MaxDBCommand("DELETE FROM Test WHERE id = 1 or id = 2", mconn))
+				using (MaxDBCommand cmd = new MaxDBCommand("DELETE FROM Test WHERE id = 1 or id = 2", mconn))
 				{
 					int delcnt = cmd.ExecuteNonQuery();
 					Assert.AreEqual(2, delcnt);
-			
+
 					// find out how many rows we have now
 					cmd.CommandText = "SELECT COUNT(*) FROM Test";
 					Assert.AreEqual(0, cmd.ExecuteScalar(), "Delete all count");
@@ -151,18 +151,18 @@ namespace MaxDB.UnitTesting
 			}
 			catch (Exception ex)
 			{
-				Assert.Fail( ex.Message );
+				Assert.Fail(ex.Message);
 			}
 		}
 
 		[Test]
 		public void TestInsertNullParameter()
 		{
-			try 
+			try
 			{
 				ClearTestTable();
-				
-				using(MaxDBCommand cmd = new MaxDBCommand("INSERT INTO test VALUES(1, :str)", mconn))
+
+				using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO test VALUES(1, :str)", mconn))
 				{
 					cmd.Parameters.Add(":str", MaxDBType.VarCharA);
 					cmd.Parameters[0].Value = null;
@@ -177,7 +177,7 @@ namespace MaxDB.UnitTesting
 					}
 				}
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				Assert.Fail(ex.Message);
 			}
@@ -245,29 +245,29 @@ namespace MaxDB.UnitTesting
 				ClearTestTable();
 				mconn.AutoCommit = false;
 
-                using (MaxDBCommand cnt_cmd = new MaxDBCommand("SELECT count(*) FROM Test", mconn))
-                {
-                    using (trans = mconn.BeginTransaction())
-                    {
-                        using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES(1, 'Test1')", mconn, trans))
-                        {
-                            cmd.ExecuteNonQuery();
-                            trans.Commit();
-                        }
+				using (MaxDBCommand cnt_cmd = new MaxDBCommand("SELECT count(*) FROM Test", mconn))
+				{
+					using (trans = mconn.BeginTransaction())
+					{
+						using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES(1, 'Test1')", mconn, trans))
+						{
+							cmd.ExecuteNonQuery();
+							trans.Commit();
+						}
 
-                        Assert.AreEqual(1, cnt_cmd.ExecuteScalar(), "Insert count after commit");
+						Assert.AreEqual(1, cnt_cmd.ExecuteScalar(), "Insert count after commit");
 
-                        trans = mconn.BeginTransaction();
+						trans = mconn.BeginTransaction();
 
-                        using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES(2, 'Test2')", mconn, trans))
-                        {
-                            cmd.ExecuteNonQuery();
-                            trans.Rollback();
-                        }
-                    }
+						using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES(2, 'Test2')", mconn, trans))
+						{
+							cmd.ExecuteNonQuery();
+							trans.Rollback();
+						}
+					}
 
 					Assert.AreEqual(1, cnt_cmd.ExecuteScalar(), "Insert count after rollback");
-                }
+				}
 			}
 			catch (Exception ex)
 			{
@@ -281,19 +281,19 @@ namespace MaxDB.UnitTesting
 		}
 
 		[Test]
-		public void TestCloneCommand() 
+		public void TestCloneCommand()
 		{
 			try
 			{
-				using(MaxDBTransaction txn = mconn.BeginTransaction())
-                    using(MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test WHERE id = :id", mconn, txn))
-				    {
-					    cmd.Parameters.Add(":test", 1);
+				using (MaxDBTransaction txn = mconn.BeginTransaction())
+				using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test WHERE id = :id", mconn, txn))
+				{
+					cmd.Parameters.Add(":test", 1);
 
-					    IDbCommand cmd2 = ((ICloneable)cmd).Clone() as IDbCommand;
-					    cmd2.ToString();
-					    txn.Rollback();
-				    }
+					IDbCommand cmd2 = ((ICloneable)cmd).Clone() as IDbCommand;
+					cmd2.ToString();
+					txn.Rollback();
+				}
 			}
 			catch (Exception ex)
 			{
@@ -303,16 +303,16 @@ namespace MaxDB.UnitTesting
 
 		private MaxDBCommand mcmd;
 
-		private void CancelQuery() 
+		private void CancelQuery()
 		{
 			System.Threading.Thread.Sleep(100);
 			mcmd.Cancel();
 		}
 
 		[Test]
-		public void TestCancel() 
+		public void TestCancel()
 		{
-            // we use db procedure in order to insert rows as fast as possible
+			// we use db procedure in order to insert rows as fast as possible
 			string dbProc = "CREATE DBPROC InsertManyRows (IN cnt INTEGER) AS" +
 					"    VAR i INTEGER;" +
 					"TRY" +
@@ -329,7 +329,7 @@ namespace MaxDB.UnitTesting
 				ClearTestTable();
 				ExecuteNonQuery(dbProc);
 			}
-			catch(MaxDBException ex)
+			catch (MaxDBException ex)
 			{
 				if (ex.ErrorCode != -6006)
 					Assert.Fail(ex.Message);
@@ -339,30 +339,30 @@ namespace MaxDB.UnitTesting
 			{
 				ExecuteNonQuery("CALL InsertManyRows(128000)");
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				Assert.Fail(ex.Message);
 			}
 
-            using (mcmd = new MaxDBCommand("UPDATE test SET name = '" + DateTime.Now.ToString() + "'", mconn))
-            {
-                Thread cancel_thread = new Thread(new ThreadStart(this.CancelQuery));
-                cancel_thread.Start();
+			using (mcmd = new MaxDBCommand("UPDATE test SET name = '" + DateTime.Now.ToString() + "'", mconn))
+			{
+				Thread cancel_thread = new Thread(new ThreadStart(this.CancelQuery));
+				cancel_thread.Start();
 
-                try
-                {
-                    mcmd.ExecuteNonQuery();
+				try
+				{
+					mcmd.ExecuteNonQuery();
 
-                    Assert.Fail("Execution should not have finished.");
-                }
-                catch (MaxDBException ex)
-                {
-                    if (ex.ErrorCode != -102)
-                        Assert.Fail(ex.Message);
-                }
-            }
+					Assert.Fail("Execution should not have finished.");
+				}
+				catch (MaxDBException ex)
+				{
+					if (ex.ErrorCode != -102)
+						Assert.Fail(ex.Message);
+				}
+			}
 
-            DropDbProcedure("InsertManyRows");
+			DropDbProcedure("InsertManyRows");
 		}
 	}
 }

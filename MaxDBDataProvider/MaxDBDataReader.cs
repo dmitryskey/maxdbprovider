@@ -33,7 +33,7 @@ using System.Runtime.InteropServices;
 namespace MaxDB.Data
 {
 	/// <summary>
- 	/// Provides a means of reading a forward-only stream of rows from a MaxDB database. This class cannot be inherited.
+	/// Provides a means of reading a forward-only stream of rows from a MaxDB database. This class cannot be inherited.
 	/// </summary>
 	/// <remarks>
 	/// <para>
@@ -49,7 +49,7 @@ namespace MaxDB.Data
 	/// </remarks>
 	public sealed class MaxDBDataReader :
 #if NET20
- DbDataReader
+		DbDataReader
 #else
 		IDataReader, IDataRecord, IEnumerable, IDisposable
 #endif // NET20
@@ -75,7 +75,7 @@ namespace MaxDB.Data
 		private bool bEmpty;                           // is this result set totally empty
 		// a vector of all streams that went outside.
 #if NET20
-        private List<Stream> lstOpenStreams;
+		private List<Stream> lstOpenStreams;
 #else
 		private ArrayList lstOpenStreams;                
 #endif // NET20
@@ -109,9 +109,9 @@ namespace MaxDB.Data
 			strUpdatedTableName = cmd.mParseInfo.UpdatedTableName;
 
 			InitializeFields();
-			lstOpenStreams = new 
+			lstOpenStreams = new
 #if NET20
-                List<Stream>(5);
+				List<Stream>(5);
 #else
 				ArrayList(5);
 #endif // NET20
@@ -159,13 +159,13 @@ namespace MaxDB.Data
 					iRowsInResultSet = mCurrentChunk.Size;
 					mCurrentChunk.RowsInResultSet = iRowsInResultSet;
 				}
-					// otherwise, we may have navigated through it from start ...
+				// otherwise, we may have navigated through it from start ...
 				else if (mCurrentChunk.IsLast && mCurrentChunk.IsForward)
 				{
 					iRowsInResultSet = mCurrentChunk.End;
 					mCurrentChunk.RowsInResultSet = iRowsInResultSet;
 				}
-					// ... or from end
+				// ... or from end
 				else if (mCurrentChunk.IsFirst && !mCurrentChunk.IsForward)
 				{
 					iRowsInResultSet = -mCurrentChunk.Start;
@@ -1948,7 +1948,7 @@ namespace MaxDB.Data
 
 		private void CloseOpenStreams()
 		{
-			foreach(Stream stream in lstOpenStreams)
+			foreach (Stream stream in lstOpenStreams)
 			{
 				try
 				{
@@ -1976,7 +1976,7 @@ namespace MaxDB.Data
 			{
 				reply = mFetchInfo.ExecFetchNext();
 			}
-			catch(MaxDBException ex)
+			catch (MaxDBException ex)
 			{
 				if (ex.ErrorCode == 100)
 				{

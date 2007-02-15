@@ -33,7 +33,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	#region "Parse information class"
 
-	internal class MaxDBParseInfo 
+	internal class MaxDBParseInfo
 	{
 		internal MaxDBConnection dbConnection;
 		private string strSqlCmd;
@@ -44,14 +44,14 @@ namespace MaxDB.Data.MaxDBProtocol
 		internal short sInputCount;
 
 #if NET20
-        private bool bIsMassCmd; // flag is set to true if command is a mass command
+		private bool bIsMassCmd; // flag is set to true if command is a mass command
 #endif // NET20
-        private bool bIsSelect; // flag is set to true if command is a select command 
-        private bool bIsDBProc; // flag is set to true if command is a call dbproc command 
-        private bool bHasLongs; // flag is set to true if command handle long columns 
+		private bool bIsSelect; // flag is set to true if command is a select command 
+		private bool bIsDBProc; // flag is set to true if command is a call dbproc command 
+		private bool bHasLongs; // flag is set to true if command handle long columns 
 		private bool bCached; // flag is set to true if command is in parseinfo cache 
-        private int iFuncCode;
-                
+		private int iFuncCode;
+
 		private int iSessionId; // unique identifier for the connection
 		internal string[] strColumnNames;
 
@@ -71,68 +71,68 @@ namespace MaxDB.Data.MaxDBProtocol
 			strSqlCmd = sqlCmd;
 			iFuncCode = functionCode;
 			iSessionId = -1;
-			if ((iFuncCode == FunctionCode.Select) || (iFuncCode == FunctionCode.Show) 
+			if ((iFuncCode == FunctionCode.Select) || (iFuncCode == FunctionCode.Show)
 				|| (iFuncCode == FunctionCode.DBProcWithResultSetExecute) || (iFuncCode == FunctionCode.Explain))
 				bIsSelect = true;
-        
-			if ((iFuncCode == FunctionCode.DBProcWithResultSetExecute) || (iFuncCode == FunctionCode.DBProcExecute)) 
+
+			if ((iFuncCode == FunctionCode.DBProcWithResultSetExecute) || (iFuncCode == FunctionCode.DBProcExecute))
 				bIsDBProc = true;
-        
-			if (iFuncCode == FunctionCode.DBProcExecute) 
+
+			if (iFuncCode == FunctionCode.DBProcExecute)
 				DescribeProcedureCall();
 		}
 
-		~MaxDBParseInfo() 
+		~MaxDBParseInfo()
 		{
 			bCached = false;
 			DropParseIDs();
 		}
 
-        public bool IsSelect
-        {
-            get 
-            { 
-                return bIsSelect; 
-            }
-            set 
-            { 
-                bIsSelect = value; 
-            }
-        }
+		public bool IsSelect
+		{
+			get
+			{
+				return bIsSelect;
+			}
+			set
+			{
+				bIsSelect = value;
+			}
+		}
 
-        public bool IsDBProc
-        {
-            get 
-            { 
-                return bIsDBProc; 
-            }
-        }
+		public bool IsDBProc
+		{
+			get
+			{
+				return bIsDBProc;
+			}
+		}
 
-        public int FuncCode
-        {
-            get 
-            { 
-                return iFuncCode; 
-            }
-        }
+		public int FuncCode
+		{
+			get
+			{
+				return iFuncCode;
+			}
+		}
 
 #if NET20
-        public bool IsMassCmd
-        {
-            get 
-            { 
-                return bIsMassCmd; 
-            }
-        }
+		public bool IsMassCmd
+		{
+			get
+			{
+				return bIsMassCmd;
+			}
+		}
 #endif // NET20
 
-        public bool HasLongs
-        {
-            get 
-            { 
-                return bHasLongs; 
-            }
-        }
+		public bool HasLongs
+		{
+			get
+			{
+				return bHasLongs;
+			}
+		}
 
 		public bool IsCached
 		{
@@ -148,21 +148,21 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public string UpdatedTableName
 		{
-			get 
-			{ 
-				return strUpdatedTableName; 
+			get
+			{
+				return strUpdatedTableName;
 			}
-			set 
-			{ 
-				strUpdatedTableName = value; 
+			set
+			{
+				strUpdatedTableName = value;
 			}
 		}
 
 		public string SqlCommand
 		{
-			get 
-			{ 
-				return strSqlCmd; 
+			get
+			{
+				return strSqlCmd;
 			}
 		}
 
@@ -179,142 +179,142 @@ namespace MaxDB.Data.MaxDBProtocol
 			int i = 0;
 			int cmdchars_len = cmdchars.Length;
 			// ODBC like dbfunction call.
-			if (cmdchars[i] == '{') 
+			if (cmdchars[i] == '{')
 				i++;
-        
-			if (i == cmdchars_len) 
+
+			if (i == cmdchars_len)
 				return;
-        
-			while(char.IsWhiteSpace(cmdchars[i])) 
-				if (++i == cmdchars_len) 
+
+			while (char.IsWhiteSpace(cmdchars[i]))
+				if (++i == cmdchars_len)
 					return;
 			// 'call'
-			if (cmdchars[i] == 'C' || cmdchars[i] == 'c') 
+			if (cmdchars[i] == 'C' || cmdchars[i] == 'c')
 			{
-				if (++i == cmdchars_len) 
+				if (++i == cmdchars_len)
 					return;
-			} 
-			else 
-				return;
-        
-			if (cmdchars[i] == 'A' || cmdchars[i] == 'a') 
-			{
-				if (++i == cmdchars_len) 
-					return;
-			} 
-			else 
-				return;
-        
-			if (cmdchars[i] == 'L' || cmdchars[i] == 'l') 		
-			{
-				if (++i == cmdchars_len) 
-					return;
-			} 
-			else 
+			}
+			else
 				return;
 
-			if (cmdchars[i] == 'L' || cmdchars[i] == 'l') 		
+			if (cmdchars[i] == 'A' || cmdchars[i] == 'a')
 			{
-				if (++i == cmdchars_len) 
+				if (++i == cmdchars_len)
 					return;
-			} 
-			else 
+			}
+			else
 				return;
 
-			while (char.IsWhiteSpace(cmdchars[i])) 
-				if (++i == cmdchars_len) 
+			if (cmdchars[i] == 'L' || cmdchars[i] == 'l')
+			{
+				if (++i == cmdchars_len)
 					return;
- 
+			}
+			else
+				return;
+
+			if (cmdchars[i] == 'L' || cmdchars[i] == 'l')
+			{
+				if (++i == cmdchars_len)
+					return;
+			}
+			else
+				return;
+
+			while (char.IsWhiteSpace(cmdchars[i]))
+				if (++i == cmdchars_len)
+					return;
+
 			// now to the mess of parsing the first identifier.
 			int idstart = i;
 			int idend = i;
 			bool quoted = false;
-			if (cmdchars[i] == '"') 
+			if (cmdchars[i] == '"')
 			{
 				++idstart;
 				++idend;
 				quoted = true;
-				if (++i == cmdchars_len) 
+				if (++i == cmdchars_len)
 					return;
 			}
 
-			for(;;) 
+			for (; ; )
 			{
-				if (cmdchars[i] == '.' && !quoted) 
+				if (cmdchars[i] == '.' && !quoted)
 					break;
-            
-				if (cmdchars[i] == '(' && !quoted) 
+
+				if (cmdchars[i] == '(' && !quoted)
 					break;
-            
-				if (char.IsWhiteSpace(cmdchars[i]) && !quoted) 
+
+				if (char.IsWhiteSpace(cmdchars[i]) && !quoted)
 					break;
-            
-				if (quoted && cmdchars[i] == '"') 
+
+				if (quoted && cmdchars[i] == '"')
 					break;
-            
+
 				++idend;
-				if (++i == cmdchars_len) 
+				if (++i == cmdchars_len)
 					return;
-			} 
+			}
 
 			string procedureName = new string(cmdchars, idstart, idend - idstart);
 			string ownerName = null;
-			if (!quoted) 
+			if (!quoted)
 				procedureName = procedureName.ToUpper(CultureInfo.InvariantCulture);
-        
-			if (cmdchars[i] == '"') 
+
+			if (cmdchars[i] == '"')
 				++i;
-        
-			while (i < cmdchars_len && char.IsWhiteSpace(cmdchars[i])) 
-				if (++i == cmdchars_len) 
+
+			while (i < cmdchars_len && char.IsWhiteSpace(cmdchars[i]))
+				if (++i == cmdchars_len)
 					break;
 
-			if (i < cmdchars_len) 
+			if (i < cmdchars_len)
 			{
-				if (cmdchars[i] == '.') 
+				if (cmdchars[i] == '.')
 				{
-					if (++i == cmdchars_len) 
+					if (++i == cmdchars_len)
 						return;
-                
-					while (char.IsWhiteSpace(cmdchars[i])) 
+
+					while (char.IsWhiteSpace(cmdchars[i]))
 					{
-						if (++i == cmdchars_len) 
+						if (++i == cmdchars_len)
 							return;
 					}
 					idstart = i;
 					idend = i;
 					quoted = false;
-					if (cmdchars[i] == '"') 
+					if (cmdchars[i] == '"')
 					{
 						++idstart;
 						++idend;
 						quoted = true;
-						if (++i == cmdchars_len) 
+						if (++i == cmdchars_len)
 							return;
 					}
 
-					for(;;) 
+					for (; ; )
 					{
-						if (cmdchars[i] == '.' && !quoted) 
+						if (cmdchars[i] == '.' && !quoted)
 							break;
-                    
-						if (cmdchars[i] == '(' && !quoted) 
+
+						if (cmdchars[i] == '(' && !quoted)
 							break;
-                    
-						if (char.IsWhiteSpace(cmdchars[i]) && !quoted) 
+
+						if (char.IsWhiteSpace(cmdchars[i]) && !quoted)
 							break;
-                    
-						if (quoted && cmdchars[i] == '"') 
+
+						if (quoted && cmdchars[i] == '"')
 							break;
-                    
+
 						++idend;
-						if (++i == cmdchars_len) 
+						if (++i == cmdchars_len)
 							return;
-					} 
-					
+					}
+
 					if (quoted)
-                        procedureName = new string(cmdchars, idstart, idend - idstart);
-                    else
+						procedureName = new string(cmdchars, idstart, idend - idstart);
+					else
 						procedureName = (new string(cmdchars, idstart, idend - idstart)).ToUpper(CultureInfo.InvariantCulture);
 				}
 			}
@@ -322,7 +322,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			// Now we have procedure name and possibly the user name.
 			MaxDBCommand cmd = null;
 			string sql = "SELECT 1 FROM DUAL WHERE FALSE";
-			if (ownerName == null) 
+			if (ownerName == null)
 			{
 				sql = "SELECT PARAM_NO, "
 					+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
@@ -330,8 +330,8 @@ namespace MaxDB.Data.MaxDBProtocol
 					+ "DBPROCEDURE = :DBPROCEDURE ORDER BY PARAM_NO, ASCII_OFFSET";
 				cmd = new MaxDBCommand(sql, dbConnection);
 				cmd.Parameters.Add("DBPROCEDURE", procedureName);
-			} 
-			else 
+			}
+			else
 			{
 				sql = "SELECT PARAM_NO, "
 					+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
@@ -344,7 +344,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			// We have a result set and can now create a parameter info.
 			MaxDBDataReader rs = cmd.ExecuteReader();
-			if (!rs.Read()) 
+			if (!rs.Read())
 			{
 				mProcParamInfos = new DBProcParameterInfo[0];
 				rs.Close();
@@ -354,27 +354,27 @@ namespace MaxDB.Data.MaxDBProtocol
 			ArrayList parameterInfos = new ArrayList();
 			DBProcParameterInfo currentInfo = null;
 			int currentIndex = 0;
-			do 
+			do
 			{
 				int index = rs.GetInt32(0);
 				// Check if we have a structure element or a new parameter.
-				if (index != currentIndex) 
+				if (index != currentIndex)
 				{
 					string datatype = rs.GetString(2);
-                    if (string.Compare(datatype, "ABAPTABLE", true, CultureInfo.InvariantCulture) == 0 ||
-                        string.Compare(datatype, "STRUCTURE", true, CultureInfo.InvariantCulture) == 0) 
+					if (string.Compare(datatype, "ABAPTABLE", true, CultureInfo.InvariantCulture) == 0 ||
+						string.Compare(datatype, "STRUCTURE", true, CultureInfo.InvariantCulture) == 0)
 					{
 						currentInfo = new DBProcParameterInfo(datatype);
 						parameterInfos.Add(currentInfo);
-					} 
-					else 
+					}
+					else
 					{
 						currentInfo = null;
 						parameterInfos.Add(currentInfo);
 					}
 					currentIndex = index;
-				} 
-				else 
+				}
+				else
 				{
 					string datatype = rs.GetString(1);
 					string code = rs.GetString(2);
@@ -384,10 +384,10 @@ namespace MaxDB.Data.MaxDBProtocol
 					int unicodeOffset = rs.GetInt32(8);
 					currentInfo.AddStructureElement(datatype, code, len, dec, asciiOffset, unicodeOffset);
 				}
-			} 
+			}
 			while (rs.Read());
 			rs.Close();
-			mProcParamInfos = (DBProcParameterInfo[]) parameterInfos.ToArray(typeof(DBProcParameterInfo));
+			mProcParamInfos = (DBProcParameterInfo[])parameterInfos.ToArray(typeof(DBProcParameterInfo));
 		}
 
 #if NET20
@@ -400,12 +400,12 @@ namespace MaxDB.Data.MaxDBProtocol
 			set
 			{
 				byMassParseId = value;
-				if (value == null) 
+				if (value == null)
 					return;
 
-				for (int i = 0; i < FunctionCode.massCmdAppCodes.Length; i++) 
+				for (int i = 0; i < FunctionCode.massCmdAppCodes.Length; i++)
 				{
-					if (value[iApplCodeByte] == FunctionCode.massCmdAppCodes[i]) 
+					if (value[iApplCodeByte] == FunctionCode.massCmdAppCodes[i])
 					{
 						bIsMassCmd = true;
 						return;
@@ -421,7 +421,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		 * 
 		 * @return <code>true</code> if the session ids are equal
 		 */
-		public bool IsValid 
+		public bool IsValid
 		{
 			get
 			{
@@ -437,14 +437,14 @@ namespace MaxDB.Data.MaxDBProtocol
 		 * @param sessionId
 		 *            the session id of the parse id.
 		 */
-		public void SetParseIDAndSession(byte[] parseId, int sessionId) 
+		public void SetParseIDAndSession(byte[] parseId, int sessionId)
 		{
 			iSessionId = sessionId;
 			byParseId = parseId;
 		}
 
 		[MethodImpl(MethodImplOptions.Synchronized)]
-		public void DropParseIDs() 
+		public void DropParseIDs()
 		{
 			if (dbConnection != null && dbConnection.mComm != null)
 			{
@@ -462,7 +462,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		}
 
 		// Gets the information about parameters in sql statement
-		public DBTechTranslator[] ParamInfo 
+		public DBTechTranslator[] ParamInfo
 		{
 			get
 			{
@@ -470,7 +470,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 		}
 
-		public DBTechTranslator[] ColumnInfo 
+		public DBTechTranslator[] ColumnInfo
 		{
 			get
 			{
@@ -481,7 +481,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		/**
 		 * Gets the parse id.
 		 */
-		public byte[] ParseID 
+		public byte[] ParseID
 		{
 			get
 			{
@@ -518,7 +518,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			mColumnInfos = null;
 			strColumnNames = columnNames;
 
-			if (shortInfo == null && columnNames == null) 
+			if (shortInfo == null && columnNames == null)
 			{
 				mParamInfos = mColumnInfos = new DBTechTranslator[0];
 				return;
@@ -527,23 +527,23 @@ namespace MaxDB.Data.MaxDBProtocol
 			// we have variants:
 			// only a select is really good. All other variants
 			// do not and never deliver information on being prepared.
-			if (iFuncCode == FunctionCode.Select) 
+			if (iFuncCode == FunctionCode.Select)
 			{
-				if (columnNames == null || columnNames.Length == 0) 
+				if (columnNames == null || columnNames.Length == 0)
 				{
 					mParamInfos = shortInfo;
-					for (int i = 0; i < mParamInfos.Length; ++i) 
+					for (int i = 0; i < mParamInfos.Length; ++i)
 					{
 						DBTechTranslator current = shortInfo[i];
-						if (current.IsInput) 
+						if (current.IsInput)
 						{
 							current.ColumnIndex = i;
 							sInputCount++;
 						}
 						bHasLongs |= current.IsLongKind;
 					}
-				} 
-				else 
+				}
+				else
 				{
 					int column_count = columnNames.Length;
 					mColumnInfos = new DBTechTranslator[column_count];
@@ -552,12 +552,12 @@ namespace MaxDB.Data.MaxDBProtocol
 					int colInfoIdx = 0;
 					int paramInfoIdx = 0;
 
-					for (int i = 0; i < shortInfo.Length; ++i) 
+					for (int i = 0; i < shortInfo.Length; ++i)
 					{
 						DBTechTranslator current = shortInfo[i];
-						if (current.IsInput) 
+						if (current.IsInput)
 						{
-							if (paramInfoIdx == mParamInfos.Length) 
+							if (paramInfoIdx == mParamInfos.Length)
 							{
 								throw new DataException(MaxDBMessages.Extract(MaxDBError.INTERNAL_UNEXPECTEDINPUT, paramInfoIdx));
 							}
@@ -565,10 +565,10 @@ namespace MaxDB.Data.MaxDBProtocol
 							mParamInfos[paramInfoIdx] = current;
 							paramInfoIdx++;
 							sInputCount++;
-						} 
-						else 
+						}
+						else
 						{
-							if (colInfoIdx == mColumnInfos.Length) 
+							if (colInfoIdx == mColumnInfos.Length)
 								throw new DataException(MaxDBMessages.Extract(MaxDBError.INTERNAL_UNEXPECTEDOUTPUT, colInfoIdx));
 							mColumnInfos[colInfoIdx] = current;
 							current.ColumnIndex = colInfoIdx;
@@ -578,52 +578,52 @@ namespace MaxDB.Data.MaxDBProtocol
 						bHasLongs |= shortInfo[i].IsLongKind;
 					}
 				}
-			} 
-			else 
+			}
+			else
 			{ // no result set data, as we cannot to be sure
 				mParamInfos = shortInfo;
-				if (columnNames != null) 
+				if (columnNames != null)
 				{
 					// fortunately at least column names
 					// sometimes only output parameters are named
-					if (columnNames.Length == mParamInfos.Length) 
+					if (columnNames.Length == mParamInfos.Length)
 					{
-						for (int i = 0; i < columnNames.Length; ++i) 
+						for (int i = 0; i < columnNames.Length; ++i)
 						{
 							DBTechTranslator current = mParamInfos[i];
 							current.ColumnIndex = i;
 							current.ColumnName = columnNames[i];
-							if (mProcParamInfos != null && i < mProcParamInfos.Length) 
+							if (mProcParamInfos != null && i < mProcParamInfos.Length)
 								current.SetProcParamInfo(mProcParamInfos[i]);
 							sInputCount += (short)(current.IsInput ? 1 : 0);
 							bHasLongs |= current.IsLongKind;
 						}
-					} 
-					else 
+					}
+					else
 					{ // we will leave out the input parameters
 						int colNameIdx = 0;
-						for (int j = 0; j < mParamInfos.Length; ++j) 
+						for (int j = 0; j < mParamInfos.Length; ++j)
 						{
 							DBTechTranslator current = mParamInfos[j];
 							current.ColumnIndex = j;
-							if (mProcParamInfos != null && j < mProcParamInfos.Length) 
+							if (mProcParamInfos != null && j < mProcParamInfos.Length)
 								current.SetProcParamInfo(mProcParamInfos[j]);
-							if (current.IsOutput) 
+							if (current.IsOutput)
 								current.ColumnName = columnNames[colNameIdx++];
-							else 
+							else
 								++sInputCount;
 							bHasLongs |= current.IsLongKind;
 						}
 					}
-				} 
-				else 
+				}
+				else
 				{
 					// No column names at all. OK.
-					for (int i = 0; i < mParamInfos.Length; ++i) 
+					for (int i = 0; i < mParamInfos.Length; ++i)
 					{
 						DBTechTranslator current = mParamInfos[i];
 						current.ColumnIndex = i;
-						if (mProcParamInfos != null && i < mProcParamInfos.Length) 
+						if (mProcParamInfos != null && i < mProcParamInfos.Length)
 							current.SetProcParamInfo(mProcParamInfos[i]);
 						sInputCount += (short)(current.IsInput ? 1 : 0);
 						bHasLongs |= current.IsLongKind;
@@ -639,24 +639,24 @@ namespace MaxDB.Data.MaxDBProtocol
 			string currentName;
 			strColumnNames = colName;
 
-			if (colCount == colName.Length) 
+			if (colCount == colName.Length)
 			{
 				mColumnInfos = info;
-				for (int i = 0; i < colCount; ++i) 
+				for (int i = 0; i < colCount; ++i)
 				{
 					currentInfo = info[i];
 					currentName = colName[i];
 					currentInfo.ColumnName = currentName;
 					currentInfo.ColumnIndex = i;
 				}
-			} 
-			else 
+			}
+			else
 			{
 				int outputColCnt = 0;
 				mColumnInfos = new DBTechTranslator[colName.Length];
-				for (int i = 0; i < colCount; ++i) 
+				for (int i = 0; i < colCount; ++i)
 				{
-					if (info[i].IsOutput) 
+					if (info[i].IsOutput)
 					{
 						currentInfo = mColumnInfos[outputColCnt] = info[i];
 						currentName = colName[outputColCnt];
@@ -673,35 +673,35 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	#region "Database procedure parameter information"
 
-	internal class StructureElement 
+	internal class StructureElement
 	{
-        public string strTypeName;
-        public string strCodeType;
-        public int iLength;
-        public int iPrecision;
-        public int iASCIIOffset;
-        public int iUnicodeOffset;
+		public string strTypeName;
+		public string strCodeType;
+		public int iLength;
+		public int iPrecision;
+		public int iASCIIOffset;
+		public int iUnicodeOffset;
 
-        public StructureElement(string typeName, string codeType, int length, int precision, int asciiOffset, int unicodeOffset) 
+		public StructureElement(string typeName, string codeType, int length, int precision, int asciiOffset, int unicodeOffset)
 		{
-			strTypeName      = typeName.ToUpper(CultureInfo.InvariantCulture).Trim();
-			strCodeType      = codeType.ToUpper(CultureInfo.InvariantCulture).Trim();
-			iLength        = length;
-			iPrecision     = precision;
-			iASCIIOffset   = asciiOffset;
-			iUnicodeOffset = unicodeOffset;  		   	
+			strTypeName = typeName.ToUpper(CultureInfo.InvariantCulture).Trim();
+			strCodeType = codeType.ToUpper(CultureInfo.InvariantCulture).Trim();
+			iLength = length;
+			iPrecision = precision;
+			iASCIIOffset = asciiOffset;
+			iUnicodeOffset = unicodeOffset;
 		}
-		
+
 		public string SqlTypeName
 		{
 			get
 			{
-				switch(strTypeName.ToUpper(CultureInfo.InvariantCulture).Trim())
+				switch (strTypeName.ToUpper(CultureInfo.InvariantCulture).Trim())
 				{
 					case "CHAR":
 						return strTypeName + "(" + iLength + ") " + strCodeType;
 					case "FIXED":
-						return strTypeName + "(" + iLength + ", " + iPrecision +")";
+						return strTypeName + "(" + iLength + ", " + iPrecision + ")";
 					case "BOOLEAN":
 						return strTypeName;
 					default:
@@ -711,67 +711,67 @@ namespace MaxDB.Data.MaxDBProtocol
 		}
 	}
 
-	internal class DBProcParameterInfo 
+	internal class DBProcParameterInfo
 	{
-		public const int ABAPTABLE  = 1;
-		public const int STRUCTURE  = 2;
+		public const int ABAPTABLE = 1;
+		public const int STRUCTURE = 2;
 
-		private int    iType;
+		private int iType;
 		private string strSqlTypeName;
 		private string strBaseTypeName;
 #if NET20
-        private List<StructureElement> lstTypeElements;
+		private List<StructureElement> lstTypeElements;
 #else
 		private ArrayList lstTypeElements;
 #endif
-	
+
 		/*
 		  Creates a new DB procedure parameter info.
 		  @param datatype The data type as read from DBPROCPARAMINFO.
 		  @param len The length information from DBPROCPARAMINFO.
 		  @param dec The precision information from DBPROCPARAMINFO.
 		*/
-		public DBProcParameterInfo(string datatype) 
+		public DBProcParameterInfo(string datatype)
 		{
-			if(string.Compare(datatype.Trim(), "ABAPTABLE", true, CultureInfo.InvariantCulture) == 0) 
+			if (string.Compare(datatype.Trim(), "ABAPTABLE", true, CultureInfo.InvariantCulture) == 0)
 			{
 				iType = ABAPTABLE;
-                lstTypeElements = new 
+				lstTypeElements = new
 #if NET20
-                List<StructureElement>();
+ List<StructureElement>();
 #else
 				ArrayList();
 #endif
-			} 
-			else if(string.Compare(datatype.Trim(), "STRUCTURE", true, CultureInfo.InvariantCulture) == 0) 
+			}
+			else if (string.Compare(datatype.Trim(), "STRUCTURE", true, CultureInfo.InvariantCulture) == 0)
 			{
 				iType = STRUCTURE;
-                lstTypeElements = new 
+				lstTypeElements = new
 #if NET20
-                List<StructureElement>();
+ List<StructureElement>();
 #else
 				ArrayList();
 #endif
-			} 
+			}
 		}
-	
-		public void AddStructureElement(string typeName, string codeType, int length, int precision, int asciiOffset, int unicodeOffset) 
+
+		public void AddStructureElement(string typeName, string codeType, int length, int precision, int asciiOffset, int unicodeOffset)
 		{
-			if(lstTypeElements == null) 
-				return;		
-			else 
+			if (lstTypeElements == null)
+				return;
+			else
 				lstTypeElements.Add(new StructureElement(typeName, codeType, length, precision, asciiOffset, unicodeOffset));
 		}
 
-		public int MemberCount 
+		public int MemberCount
 		{
 			get
 			{
 				return lstTypeElements.Count;
 			}
 		}
-	
-		public int ElementType 
+
+		public int ElementType
 		{
 			get
 			{
@@ -779,11 +779,11 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 		}
 
-		public StructureElement this[int index] 
+		public StructureElement this[int index]
 		{
 			get
 			{
-				return (StructureElement) lstTypeElements[index];
+				return (StructureElement)lstTypeElements[index];
 			}
 		}
 
@@ -791,40 +791,40 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				if (this.strSqlTypeName == null) 
+				if (this.strSqlTypeName == null)
 				{
 					StringBuilder typeBuffer = new StringBuilder();
-					StringBuilder baseType   = new StringBuilder();
+					StringBuilder baseType = new StringBuilder();
 					string close = ")";
-					if (iType == ABAPTABLE) 
+					if (iType == ABAPTABLE)
 					{
-						if (lstTypeElements.Count == 1) 
+						if (lstTypeElements.Count == 1)
 						{
 							StructureElement el = (StructureElement)lstTypeElements[0];
-							if(el.strTypeName.ToUpper(CultureInfo.InvariantCulture).Trim() == "CHAR") 
+							if (el.strTypeName.ToUpper(CultureInfo.InvariantCulture).Trim() == "CHAR")
 							{
-								if (el.strCodeType.ToUpper(CultureInfo.InvariantCulture).Trim() == "ASCII") 
+								if (el.strCodeType.ToUpper(CultureInfo.InvariantCulture).Trim() == "ASCII")
 									strSqlTypeName = "CHARACTER STREAM";
-								else if (el.strCodeType.ToUpper(CultureInfo.InvariantCulture).Trim() == "BYTE") 
+								else if (el.strCodeType.ToUpper(CultureInfo.InvariantCulture).Trim() == "BYTE")
 									strSqlTypeName = "BYTE STREAM";
-							} 
-							else if(el.strTypeName.ToUpper(CultureInfo.InvariantCulture).Trim() == "WYDE") 
+							}
+							else if (el.strTypeName.ToUpper(CultureInfo.InvariantCulture).Trim() == "WYDE")
 								strSqlTypeName = "CHARACTER STREAM";
-						
+
 							typeBuffer.Append("STREAM(");
-						} 
-						else 
+						}
+						else
 						{
 							typeBuffer.Append("STREAM(STRUCTURE(");
-							close="))";
+							close = "))";
 						}
-					} 
-					else 
+					}
+					else
 						typeBuffer.Append("STRUCTURE(");
 
-					for(int i = 0; i< lstTypeElements.Count; ++i) 
+					for (int i = 0; i < lstTypeElements.Count; ++i)
 					{
-						if(i!=0) 
+						if (i != 0)
 						{
 							baseType.Append(", ");
 							typeBuffer.Append(", ");
@@ -837,12 +837,12 @@ namespace MaxDB.Data.MaxDBProtocol
 					strSqlTypeName = typeBuffer.ToString();
 					strBaseTypeName = baseType.ToString();
 				}
-		
+
 				return strSqlTypeName;
 			}
 		}
 
-		public string BaseTypeName 
+		public string BaseTypeName
 		{
 			get
 			{
@@ -855,16 +855,16 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	#region "Database procedure parameters structure"
 
-	internal class DBProcStructure 
+	internal class DBProcStructure
 	{
-		private object[] objElements; 
+		private object[] objElements;
 
-		public DBProcStructure(object[] elements) 
+		public DBProcStructure(object[] elements)
 		{
 			objElements = elements;
 		}
-    
-		public object[] Attributes 
+
+		public object[] Attributes
 		{
 			get
 			{
@@ -876,29 +876,29 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	#region "SQL parameter controller interface"
 
-	internal interface ISqlParameterController 
+	internal interface ISqlParameterController
 	{
-		MaxDBConnection Connection{get;}
-		ByteArray ReplyData{get;}
+		MaxDBConnection Connection { get;}
+		ByteArray ReplyData { get;}
 	}
-	
+
 	#endregion
 
 	#region "Fetch information class"
 
 	internal class FetchInfo
 	{
-		private MaxDBConnection     dbConnection;           // current connection
-		private string              strCursorName;          // cursor
-		private DBTechTranslator[]  mColumnInfo;            // short info of all columns
-		private int                 iRecordSize;            // physical row size
-		private string				strFetchParamString;	// cache for fetch parameters
+		private MaxDBConnection dbConnection;           // current connection
+		private string strCursorName;          // cursor
+		private DBTechTranslator[] mColumnInfo;            // short info of all columns
+		private int iRecordSize;            // physical row size
+		private string strFetchParamString;	// cache for fetch parameters
 
 		public FetchInfo(MaxDBConnection connection, string cursorName, DBTechTranslator[] infos, string[] columnNames)
 		{
 			dbConnection = connection;
 			strCursorName = cursorName;
-			if(infos != null && columnNames != null) 
+			if (infos != null && columnNames != null)
 				SetMetaData(infos, columnNames);
 		}
 
@@ -910,10 +910,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			iRecordSize = 0;
 
-			if (colCount == colName.Length) 
+			if (colCount == colName.Length)
 			{
 				mColumnInfo = info;
-				for (int i = 0; i < colCount; ++i) 
+				for (int i = 0; i < colCount; ++i)
 				{
 					currentInfo = info[i];
 					currentInfo.ColumnName = colName[i];
@@ -922,16 +922,16 @@ namespace MaxDB.Data.MaxDBProtocol
 					iRecordSize = Math.Max(iRecordSize, currentFieldEnd);
 				}
 			}
-			else 
+			else
 			{
 				int outputColCnt = 0;
 				mColumnInfo = new DBTechTranslator[colName.Length];
-				for (int i = 0; i < colCount; ++i) 
+				for (int i = 0; i < colCount; ++i)
 				{
-					if (info [i].IsOutput)
+					if (info[i].IsOutput)
 					{
-						currentInfo = mColumnInfo[outputColCnt] = info [i];
-						currentInfo.ColumnName = colName [outputColCnt];
+						currentInfo = mColumnInfo[outputColCnt] = info[i];
+						currentInfo.ColumnName = colName[outputColCnt];
 						currentInfo.ColumnIndex = outputColCnt++;
 						currentFieldEnd = currentInfo.PhysicalLength + currentInfo.BufPos - 1;
 						iRecordSize = Math.Max(iRecordSize, currentFieldEnd);
@@ -986,11 +986,11 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			if (mColumnInfo == null)
 				Describe();
-				
-			if(strFetchParamString == null) 
+
+			if (strFetchParamString == null)
 			{
 				StringBuilder tmp = new StringBuilder("?");
-				for(int i = 1; i < mColumnInfo.Length; i++) 
+				for (int i = 1; i < mColumnInfo.Length; i++)
 					tmp.Append(", ?");
 				strFetchParamString = tmp.ToString();
 			}
@@ -1002,19 +1002,19 @@ namespace MaxDB.Data.MaxDBProtocol
 			dbConnection.mLogger.SqlTrace(dt, "::FETCH NEXT " + strCursorName);
 			dbConnection.mLogger.SqlTrace(dt, "SQL COMMAND: " + cmd);
 			//<<< SQL TRACE
-			
+
 			MaxDBRequestPacket request = dbConnection.mComm.GetRequestPacket();
-            byte currentSQLMode = request.SwitchSqlMode((byte)SqlMode.Internal);
+			byte currentSQLMode = request.SwitchSqlMode((byte)SqlMode.Internal);
 			request.InitDbsCommand(dbConnection.AutoCommit, cmd);
 
 			request.SetMassCommand();
 			request.AddResultCount(30000);
 
-			try 
+			try
 			{
 				return dbConnection.mComm.Execute(dbConnection.mConnArgs, request, this, GCMode.GC_DELAYED);
-			} 
-			finally 
+			}
+			finally
 			{
 				request.SwitchSqlMode(currentSQLMode);
 			}
@@ -1048,13 +1048,13 @@ namespace MaxDB.Data.MaxDBProtocol
 
 #endif // SAFE
 
-    #region "General column information"
+	#region "General column information"
 
-    internal class GeneralColumnInfo
+	internal class GeneralColumnInfo
 	{
-        private GeneralColumnInfo()
-        {
-        }
+		private GeneralColumnInfo()
+		{
+		}
 
 		public static bool IsLong(int columnType)
 		{
@@ -1098,7 +1098,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public static string GetTypeName(int columnType)
 		{
-			switch (columnType) 
+			switch (columnType)
 			{
 				case DataType.CHA:
 				case DataType.CHE:
@@ -1153,7 +1153,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public static Type GetType(int columnType)
 		{
-			switch(columnType)
+			switch (columnType)
 			{
 				case DataType.FIXED:
 				case DataType.FLOAT:
@@ -1213,7 +1213,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public static MaxDBType GetMaxDBType(int columnType)
 		{
-			switch(columnType)
+			switch (columnType)
 			{
 				case DataType.FIXED:
 					return MaxDBType.Fixed;

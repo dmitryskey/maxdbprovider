@@ -25,84 +25,84 @@ namespace MaxDB.Data
 	public enum MaxDBType
 	{
 		/// <summary>Data type FIXED.</summary>
-		Fixed		= DataType.FIXED,
+		Fixed = DataType.FIXED,
 		/// <summary>Data type FLOAT.</summary>
-		Float		= DataType.FLOAT,
+		Float = DataType.FLOAT,
 		/// <summary>Data type CHAR ASCII.</summary>    
-		CharA		= DataType.CHA,
+		CharA = DataType.CHA,
 		/// <summary>Data type CHAR EBCDIC (deprecated).</summary>     
-		CharE		= DataType.CHE,
+		CharE = DataType.CHE,
 		/// <summary>Data type CHAR BYTE.</summary>     
-		CharB 		= DataType.CHB,
+		CharB = DataType.CHB,
 		/// <summary>Internally used (deprecated).</summary>     
-		RowId 		= DataType.ROWID,
+		RowId = DataType.ROWID,
 		/// <summary>Data type LONG ASCII.</summary>    
-		StrA  		= DataType.STRA,
+		StrA = DataType.STRA,
 		/// <summary>Data type LONG EBCDIC (deprecated).</summary>     
-		StrE  		= DataType.STRE,
+		StrE = DataType.STRE,
 		/// <summary>Data type LONG BYTE.</summary>    
-		StrB  		= DataType.STRB,
+		StrB = DataType.STRB,
 		/// <summary>Internally used (deprecated).</summary>     
-		StrDB 		= DataType.STRDB,
+		StrDB = DataType.STRDB,
 		/// <summary>Data type DATE (SQL mode INTERNAL).</summary>    
-		Date  		= DataType.DATE,
+		Date = DataType.DATE,
 		/// <summary>Data type TIME (SQL mode INTERNAL).</summary>     
-		Time  		= DataType.TIME,
+		Time = DataType.TIME,
 		/// <summary>Data type FLOAT (output of arithmetic expressions).</summary>
-		VFloat		= DataType.VFLOAT,
+		VFloat = DataType.VFLOAT,
 		/// <summary>Data type TIMESTAMP (SQL mode INTERNAL), or DATE (SQL mode Oracle).</summary>    
-		Timestamp	= DataType.TIMESTAMP,
+		Timestamp = DataType.TIMESTAMP,
 		/// <summary>Internally used (deprecated).</summary>     
-		Unknown		= DataType.UNKNOWN,
+		Unknown = DataType.UNKNOWN,
 		/// <summary>Internally used (deprecated).</summary>     
-		Number		= DataType.NUMBER,
+		Number = DataType.NUMBER,
 		/// <summary>Internally used (deprecated).</summary>     
-		NoNumber	= DataType.NONUMBER,
+		NoNumber = DataType.NONUMBER,
 		/// <summary>Internally used (deprecated).</summary>     
-		Duration	= DataType.DURATION,
+		Duration = DataType.DURATION,
 		/// <summary>Internally used (deprecated).</summary>     
 		DByteEbcdic = DataType.DBYTEEBCDIC,
 		/// <summary>Data type LONG ASCII (deprecated).</summary> 
-		LongA		= DataType.LONGA,
+		LongA = DataType.LONGA,
 		/// <summary>Data type LONG EBCDIC (deprecated).</summary>   
-		LongE		= DataType.LONGE,
+		LongE = DataType.LONGE,
 		/// <summary>Data type LONG BYTE (deprecated).</summary>   
-		LongB		= DataType.LONGB,
+		LongB = DataType.LONGB,
 		/// <summary>Internally used (deprecated).</summary>  
-		LongDB		= DataType.LONGDB,
+		LongDB = DataType.LONGDB,
 		/// <summary>Data type BOOLEAN.</summary>    
-		Boolean		= DataType.BOOLEAN,
+		Boolean = DataType.BOOLEAN,
 		/// <summary>Data type CHAR UNICODE.</summary>    
-		Unicode		= DataType.UNICODE,
+		Unicode = DataType.UNICODE,
 		/// <summary>Internally used (deprecated).</summary>    
-		DTFiller1	= DataType.DTFILLER1,
+		DTFiller1 = DataType.DTFILLER1,
 		/// <summary>Internally used (deprecated).</summary>    
-		DTFiller2	= DataType.DTFILLER2,
+		DTFiller2 = DataType.DTFILLER2,
 		/// <summary>Internally used (deprecated).</summary>    
-		DTFiller3	= DataType.DTFILLER3,
+		DTFiller3 = DataType.DTFILLER3,
 		/// <summary>Internally used (deprecated).</summary>    
-		DTFiller4	= DataType.DTFILLER4,
+		DTFiller4 = DataType.DTFILLER4,
 		/// <summary>Data type SMALLINT.</summary>    
-		SmallInt	= DataType.SMALLINT,
+		SmallInt = DataType.SMALLINT,
 		/// <summary>Data type INTEGER.</summary>   
-		Integer		= DataType.INTEGER,
+		Integer = DataType.INTEGER,
 		/// <summary>Data type Data type VARCHAR ASCII.</summary>   
-		VarCharA	= DataType.VARCHARA,
+		VarCharA = DataType.VARCHARA,
 		/// <summary>Data type Data type VARCHAR EBCDIC (deprecated).</summary>   
-		VarCharE	= DataType.VARCHARE,
+		VarCharE = DataType.VARCHARE,
 		/// <summary>Data type Data type VARCHAR BYTE.</summary>    
-		VarCharB	= DataType.VARCHARB,
+		VarCharB = DataType.VARCHARB,
 		/// <summary>Data type LONG UNICODE.</summary>   
-		StrUni		= DataType.STRUNI,
+		StrUni = DataType.STRUNI,
 		/// <summary>Data type LONG UNICODE (deprecated).</summary>   
-		LongUni		= DataType.LONGUNI,
+		LongUni = DataType.LONGUNI,
 		/// <summary>Data type VARCHAR UNICODE.</summary>   
-		VarCharUni	= DataType.VARCHARUNI,
+		VarCharUni = DataType.VARCHARUNI,
 		/// <summary>Data type used for C++ Stored Procedures.</summary>  
-		Udt			= DataType.UDT,
+		Udt = DataType.UDT,
 		/// <summary>Data type used for C++ Stored Procedures.</summary>   
-		AbapStream	= DataType.ABAPTABHANDLE,
+		AbapStream = DataType.ABAPTABHANDLE,
 		/// <summary>Data type used for C++ Stored Procedures.</summary>
-		Dwyde		= DataType.DWYDE,
+		Dwyde = DataType.DWYDE,
 	}
 }

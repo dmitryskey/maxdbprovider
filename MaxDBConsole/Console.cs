@@ -27,7 +27,7 @@ namespace MaxDB.Test
 			//
 			string connStr =
 #if NET20
-		    System.Configuration.ConfigurationManager.AppSettings["ConnectionString"];
+ System.Configuration.ConfigurationManager.AppSettings["ConnectionString"];
 #else
                     System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"];
 #endif // NET20

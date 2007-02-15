@@ -30,9 +30,9 @@ namespace MaxDB.Data
 #if NET20
 		DbParameter,
 #else
-        IDbDataParameter, IDataParameter,
+		IDbDataParameter, IDataParameter,
 #endif // NET20
-		ICloneable
+ ICloneable
 	{
 		internal MaxDBType dbType = MaxDBType.VarCharA;
 		internal ParameterDirection mDirection = ParameterDirection.Input;
@@ -70,7 +70,8 @@ namespace MaxDB.Data
 		/// <param name="parameterName">The name of the parameter to map.</param>
 		/// <param name="type">One of the <see cref="MaxDBType"/> values.</param>
 		/// <param name="sourceColumn">The name of the source column. </param>
-		public MaxDBParameter(string parameterName, MaxDBType type, string sourceColumn) : this(parameterName, type)
+		public MaxDBParameter(string parameterName, MaxDBType type, string sourceColumn)
+			: this(parameterName, type)
 		{
 			strSourceColumn = sourceColumn;
 		}
@@ -504,7 +505,7 @@ namespace MaxDB.Data
 #if NET20
 		public override string SourceColumn
 #else
-        public string SourceColumn
+		public string SourceColumn
 #endif // NET20
 		{
 			get
