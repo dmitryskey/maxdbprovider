@@ -26,11 +26,11 @@ namespace MaxDB.Test
 			// TODO: Add code to start application here
 			//
 			string connStr =
-#if NET20 && !MONO
- System.Configuration.ConfigurationManager.AppSettings["ConnectionString"];
+#if NET20
+		    System.Configuration.ConfigurationManager.AppSettings["ConnectionString"];
 #else
                     System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"];
-#endif // NET20 && !MONO
+#endif // NET20
 
 			MaxDBConnection maxdbconn = new MaxDBConnection(connStr);
 			maxdbconn.Open();

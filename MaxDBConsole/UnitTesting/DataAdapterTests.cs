@@ -115,7 +115,7 @@ namespace MaxDB.UnitTesting
 
 					// make sure our refresh of auto increment values worked
 					Assert.AreEqual(1, count, "At least one row should be inserted");
-					Assert.AreNotEqual(dt.Rows[dt.Rows.Count - 1]["id"], DBNull.Value, "id field shouldn't be NULL");
+					Assert.IsFalse(dt.Rows[dt.Rows.Count - 1]["id"] == DBNull.Value, "id field shouldn't be NULL");
 
 					dt.Rows[0]["id2"] = 2;
 					dt.Rows[0]["name"] = "TestName2";
