@@ -1306,7 +1306,7 @@ namespace MaxDB.Data.Utilities
 					int_part = num.TrimStart('0');
 					if (int_part.Trim().Length == 0)
 						int_part = "0";
-                    biNumber = new BigInteger(long.Parse(int_part, CultureInfo.InvariantCulture));
+					biNumber = new BigInteger(long.Parse(int_part, CultureInfo.InvariantCulture));
 					return;
 				}
 
@@ -1332,9 +1332,9 @@ namespace MaxDB.Data.Utilities
 				}
 
 				if (cur_off < num.Length)
-                    s = int.Parse(num.Substring(cur_off), CultureInfo.InvariantCulture);
+					s = int.Parse(num.Substring(cur_off), CultureInfo.InvariantCulture);
 
-                biNumber = new BigInteger(long.Parse(int_part + float_part, CultureInfo.InvariantCulture));
+				biNumber = new BigInteger(long.Parse(int_part + float_part, CultureInfo.InvariantCulture));
 				iScale = float_part.Length - s;
 			}
 			else
@@ -1439,19 +1439,19 @@ namespace MaxDB.Data.Utilities
 			return (long)val.setScale(0).unscaledValue;
 		}
 
-        public static explicit operator float(BigDecimal val)
-        {
-            return float.Parse(val.ToString(), CultureInfo.InvariantCulture);
-        }
+		public static explicit operator float(BigDecimal val)
+		{
+			return float.Parse(val.ToString(), CultureInfo.InvariantCulture);
+		}
 
 		public static explicit operator double(BigDecimal val)
 		{
-            return double.Parse(val.ToString(), CultureInfo.InvariantCulture);
+			return double.Parse(val.ToString(), CultureInfo.InvariantCulture);
 		}
 
 		public static explicit operator decimal(BigDecimal val)
 		{
-            return decimal.Parse(val.ToString(), CultureInfo.InvariantCulture);
+			return decimal.Parse(val.ToString(), CultureInfo.InvariantCulture);
 		}
 
 		public static implicit operator BigDecimal(long val)
@@ -1479,7 +1479,7 @@ namespace MaxDB.Data.Utilities
 			return (new BigDecimal(val));
 		}
 
-        public BigDecimal MovePointLeft(int n)
+		public BigDecimal MovePointLeft(int n)
 		{
 			if (n >= 0)
 				return new BigDecimal(biNumber, iScale + n);
