@@ -4,6 +4,7 @@ using System.IO;
 using System.Data;
 using System.Data.Odbc;
 using System.Diagnostics;
+
 using System.Configuration;
 using System.ComponentModel;
 using System.Threading;
@@ -27,10 +28,11 @@ namespace MaxDB.Test
 			//
 			string connStr =
 #if NET20
- System.Configuration.ConfigurationManager.AppSettings["ConnectionString"];
+			System.Configuration.ConfigurationManager.AppSettings["ConnectionString"];
 #else
-                    System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"];
+			System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"];
 #endif // NET20
+
 
 			MaxDBConnection maxdbconn = new MaxDBConnection(connStr);
 			maxdbconn.Open();

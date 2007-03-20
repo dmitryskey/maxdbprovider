@@ -5,6 +5,8 @@
 	<property name="nunit-Net-2.0" value="D:\Program Files\NUnit-Net-2.0 2.2.7" />
 	<property name="nunit-Mono-1.0" value="/usr/local/lib/mono/1.0" />
 	<property name="nunit-Mono-2.0" value="/usr/local/lib/mono/2.0" />
+	<property name="nunit-console-Mono-1.0" value="/root/Tests/1.0" />
+	<property name="nunit-console-Mono-2.0" value="/root/Tests/2.0" />
 
 	<property name="MaxDB-7.5" value="gunichevvm" />
 	<property name="MaxDB-7.6" value="sheep" />
@@ -108,6 +110,7 @@
 	<!-- target .Net 1.1 Safe-->
 	<target name="net-1.1-safe" description=".NET 1.1 safe target">
 		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
+		<property name="nunit-exe" value="${nunit-lib}"/>
 		<property name="framework" value="net-1.1"/>
 		<property name="defines" value="SAFE" />
 		<property name="unsafe" value="false"/>
@@ -117,6 +120,7 @@
 	<!-- target .Net 1.1 Unsafe-->
 	<target name="net-1.1-unsafe" description=".NET 1.1 unsafe target">
 		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
+		<property name="nunit-exe" value="${nunit-lib}"/>
 		<property name="framework" value="net-1.1"/>
 		<property name="defines" value="" />
 		<property name="unsafe" value="true"/>
@@ -126,6 +130,7 @@
 	<!-- target .Net 2.0 Safe-->
 	<target name="net-2.0-safe" description=".NET 2.0 safe target">
 		<property name="nunit-lib" value="${nunit-Net-2.0}/bin"/>
+		<property name="nunit-exe" value="${nunit-lib}"/>
 		<property name="framework" value="net-2.0"/>
 		<property name="defines" value="SAFE;NET20" />
 		<property name="unsafe" value="false"/>
@@ -135,6 +140,7 @@
 	<!-- target .Net 2.0 Unsafe-->
 	<target name="net-2.0-unsafe" description=".NET 2.0 unsafe target">
 		<property name="nunit-lib" value="${nunit-Net-2.0}/bin"/>
+		<property name="nunit-exe" value="${nunit-lib}"/>
 		<property name="framework" value="net-2.0"/>
 		<property name="defines" value="NET20" />
 		<property name="unsafe" value="true"/>
@@ -144,6 +150,7 @@
 	<!-- target Mono 1.0 Safe-->
 	<target name="mono-1.0-safe" description="Mono 1.0 safe target">
 		<property name="nunit-lib" value="${nunit-Mono-1.0}"/>
+		<property name="nunit-exe" value="${nunit-console-Mono-1.0}"/>
 		<property name="framework" value="mono-1.0"/>
 		<property name="defines" value="SAFE;MONO" />
 		<property name="unsafe" value="false"/>
@@ -153,6 +160,7 @@
 	<!-- target Mono 1.0 Unsafe-->
 	<target name="mono-1.0-unsafe" description="Mono 1.0 unsafe target">
 		<property name="nunit-lib" value="${nunit-Mono-1.0}"/>
+		<property name="nunit-exe" value="${nunit-console-Mono-1.0}"/>
 		<property name="framework" value="mono-1.0"/>
 		<property name="defines" value="MONO" />
 		<property name="unsafe" value="true"/>
@@ -162,6 +170,7 @@
 	<!-- target Mono 2.0 Safe-->
 	<target name="mono-2.0-safe" description="Mono 2.0 safe target">
 		<property name="nunit-lib" value="${nunit-Mono-2.0}"/>
+		<property name="nunit-exe" value="${nunit-console-Mono-2.0}"/>
 		<property name="framework" value="mono-2.0"/>
 		<property name="defines" value="SAFE;NET20;MONO" />
 		<property name="unsafe" value="false"/>
@@ -171,6 +180,7 @@
 	<!-- target Mono 2.0 Unsafe-->
 	<target name="mono-2.0-unsafe" description="Mono 2.0 unsafe target">
 		<property name="nunit-lib" value="${nunit-Mono-2.0}"/>
+		<property name="nunit-exe" value="${nunit-console-Mono-2.0}"/>
 		<property name="framework" value="mono-2.0"/>
 		<property name="defines" value="NET20;MONO" />
 		<property name="unsafe" value="true"/>
@@ -319,10 +329,10 @@
 	<target name="tests-mono">
                 <call target="test-mono-1.0-safe"/>
 		<call target="test-mono-1.0-unsafe"/>
-<!--
+
 		<call target="test-mono-2.0-safe"/>
 		<call target="test-mono-2.0-unsafe"/>
--->
+
 	</target>
 	
 	<target name="test-net-1.1-safe" depends="net-1.1-safe">
@@ -383,7 +393,7 @@
 
 	<!-- execute the test suite against a single database instance, possibly using coverage	-->
 	<target name="testdb" description="Target to test a database with all possible configurations">
-		<property name="nunit-exe" value="${nunit-lib}/nunit-console.exe"/>
+		<property name="nunit-console" value="${nunit-exe}/nunit-console.exe"/>
 
 		<if test="${unsafe=='true'}">
 			<property name="workdir" value="bin/${framework}/unsafe/${buildType}"/>
@@ -399,7 +409,7 @@
 
 		<copy file="MaxDBConsole/Configs/${config}.config" tofile="${workdir}/${testfile}.config" overwrite="true"/>
 
-		<exec program="${nunit-exe}" commandline="/nologo /xml=../../../../results/${outfile} ${testfile}" failonerror="false" workingdir="${workdir}"/>
+		<exec program="${nunit-console}" commandline="/nologo /xml=../../../../results/${outfile} ${testfile}" failonerror="false" workingdir="${workdir}"/>
 	</target>
 
 	<!-- Run fxcop on the current build -->	

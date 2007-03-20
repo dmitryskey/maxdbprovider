@@ -32,7 +32,7 @@ namespace MaxDB.UnitTesting
 #if SAFE
 		private string mconnStrBadAddr;
 #endif // SAFE
-		private string mconnStrSsl;
+//		private string mconnStrSsl;
 		private string mconnStrBadLogin;
 		private string mconnStrBadPassword;
 		private string mconnStrBadDbName;
@@ -44,7 +44,7 @@ namespace MaxDB.UnitTesting
 #if SAFE
 			mconnStrBadAddr = mAppSettings["ConnectionStringBadAddr"];
 #endif // SAFE
-			mconnStrSsl = mAppSettings["ConnectionStringSsl"];
+//			mconnStrSsl = mAppSettings["ConnectionStringSsl"];
 			mconnStrBadLogin = mAppSettings["ConnectionStringBadLogin"];
 			mconnStrBadPassword = mAppSettings["ConnectionStringBadPassword"];
 			mconnStrBadDbName = mAppSettings["ConnectionStringBadDbName"];
@@ -62,11 +62,13 @@ namespace MaxDB.UnitTesting
 			TestConnectionByString(mconnStr);
 		}
 
-		//[Test] 
+/*  
+		[Test] 
 		public void TestConnectionSsl()
 		{
 			TestConnectionByString(mconnStrSsl);
 		}
+*/
 
 #if SAFE
 		[Test]
