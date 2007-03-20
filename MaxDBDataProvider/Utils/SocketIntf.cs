@@ -68,7 +68,7 @@ namespace MaxDB.Data.Utilities
 
 				IPHostEntry entries =
 #if NET20
- Dns.GetHostEntry(host);
+					Dns.GetHostEntry(host);
 #else
 					Dns.GetHostByName(host);
 #endif
