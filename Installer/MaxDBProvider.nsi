@@ -117,12 +117,16 @@ SectionEnd
 Section "Binaries for Mono" SecMono
 
   CreateDirectory "$OUTDIR\bin\mono-1.0"
+  CreateDirectory "$OUTDIR\bin\mono-2.0"
+
   StrCmp $INST_SAFE 0 unsafe
   File "/oname=$OUTDIR\bin\mono-1.0\MaxDB.Data.dll" "..\bin\mono-1.0\safe\release\MaxDB.Data.dll"
+  File "/oname=$OUTDIR\bin\mono-2.0\MaxDB.Data.dll" "..\bin\mono-2.0\safe\release\MaxDB.Data.dll"
   Goto done
 
 unsafe:
   File "/oname=$OUTDIR\bin\mono-1.0\MaxDB.Data.dll" "..\bin\mono-1.0\unsafe\release\MaxDB.Data.dll"
+  File "/oname=$OUTDIR\bin\mono-2.0\MaxDB.Data.dll" "..\bin\mono-2.0\unsafe\release\MaxDB.Data.dll"
 
 done:
 
@@ -136,7 +140,7 @@ Section "Source Code" SecSource
   StrCpy $0 $OUTDIR
   SetOutPath $OUTDIR\Sources
 
-  File /r /x bin /x obj /x _svn /x *.exe "..\*.*"
+  File /r /x bin /x obj /x _svn /x results /x *.exe "..\*.*"
 
   StrCpy $OUTDIR $0
 
