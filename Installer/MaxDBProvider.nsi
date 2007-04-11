@@ -2,6 +2,8 @@
 ;
 ;--------------------------------
 
+SetCompressor /solid lzma
+
 ;--------------------------------
 ;Include Modern UI
 !include "MUI.nsh"
