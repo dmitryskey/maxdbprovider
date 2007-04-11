@@ -4,8 +4,10 @@
 
 ;--------------------------------
 ;Include Modern UI
+!include "MUI.nsh"
 
-  !include "MUI.nsh"
+; Include functions and plugin
+!addplugindir "." 
 
 ; The name of the installer
 Name "MaxDB Provider"
@@ -96,9 +98,10 @@ gac:
 
   StrCmp $INST_GAC 0 reg
 
-  ExecWait '"$GAC_PATH_1_1" -i "$OUTDIR\bin\net-1.1\MaxDB.Data.dll"'
-
-  ExecWait '"$GAC_PATH_2_0" -i "$OUTDIR\bin\net-2.0\MaxDB.Data.dll"' 
+  MaxDBProvider::SetWindowCursor "WAIT"
+  MaxDBProvider::ExecWaitMin '"$GAC_PATH_1_1" -i "$OUTDIR\bin\net-1.1\MaxDB.Data.dll"' "$TEMP"
+  MaxDBProvider::ExecWaitMin '"$GAC_PATH_2_0" -i "$OUTDIR\bin\net-2.0\MaxDB.Data.dll"' "$TEMP"
+  MaxDBProvider::SetWindowCursor "ARROW"
 
 reg:
   ; Write the installation path into the registry
@@ -423,9 +426,10 @@ Section "Uninstall"
 
   StrCmp $INST_GAC 0 unreg
 
-  ExecWait '"$GAC_PATH_1_1" -u "MaxDB.Data"'
-
-  ExecWait '"$GAC_PATH_2_0" -u "MaxDB.Data"' 
+  MaxDBProvider::SetWindowCursor "WAIT"
+  MaxDBProvider::ExecWaitMin '"$GAC_PATH_1_1" -u "MaxDB.Data"' "$TEMP"
+  MaxDBProvider::ExecWaitMin '"$GAC_PATH_2_0" -u "MaxDB.Data"' "$TEMP"
+  MaxDBProvider::SetWindowCursor "ARROW"
 
 unreg:
   
@@ -433,13 +437,8 @@ unreg:
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MaxDBProvider"
   DeleteRegKey HKLM SOFTWARE\MaxDBProvider
 
-  ; Remove files and uninstaller
-  Delete $INSTDIR\uninstall.exe
-  RMDir /r $INSTDIR\bin
-  RMDir /r $INSTDIR\Sources
 
-  RMDir "$INSTDIR"
-
+  RMDir /r $INSTDIR
   RMDir /r $SMPROGRAMS\MaxDBProvider
 
 
