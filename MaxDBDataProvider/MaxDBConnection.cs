@@ -150,7 +150,6 @@ namespace MaxDB.Data
 		public MaxDBConnection(string connectionString)
 			: this()
 		{
-			BigDecimal dd = new BigDecimal("+0012e040");
 			strConnection = connectionString;
 			mConnStrBuilder = new MaxDBConnectionStringBuilder(connectionString);
 			SetConnectionParameters();
