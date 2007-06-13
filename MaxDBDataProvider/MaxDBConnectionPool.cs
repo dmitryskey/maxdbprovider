@@ -47,7 +47,7 @@ namespace MaxDB.Data
 #endif // SAFE
 
 			for (int i = 0; i < mConnStrBuilder.MinPoolSize; i++)
-				CreateEntry();
+				entryList.Add(CreateEntry());
 		}
 
 		public MaxDBComm GetEntry()
@@ -75,7 +75,7 @@ namespace MaxDB.Data
 				entryList = newList;
 
 				for (int i = entryList.Count; i < mConnStrBuilder.MinPoolSize; i++)
-					CreateEntry();
+					entryList.Add(CreateEntry());
 			}
 
 			lock (entryList.SyncRoot)
