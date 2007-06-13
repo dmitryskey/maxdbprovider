@@ -1289,57 +1289,106 @@ namespace MaxDB.Data.Utilities
 			int s = 0;
 			int cur_off = 0;
 
-			if (num.Length > 0)
+			// initially iScale = 0 and biNumber is null
+
+			// empty string = 0
+			if (num.Trim().Length == 0)
 			{
-				num = num.Replace(CultureInfo.InvariantCulture.NumberFormat.CurrencyGroupSeparator, string.Empty);
-				int dot_index = num.IndexOf(strSeparator, cur_off);
+				biNumber = new BigInteger(0);
+				return;
+			}
 
-				if (dot_index >= 0)
-				{
-					if (num.IndexOf(strSeparator, dot_index + 1) >= 0)
-						throw new FormatException();
+			// find the decimal separator and exponent position
+			num = num.Replace(CultureInfo.InvariantCulture.NumberFormat.CurrencyGroupSeparator, string.Empty);
+			int dot_index = num.IndexOf(strSeparator, cur_off);
+			int exp_index = num.IndexOf('e', cur_off);
+			if (exp_index < 0) 
+				exp_index = num.IndexOf('E', cur_off);
 
-					int_part = num.Substring(0, dot_index - cur_off).TrimStart('0');
-					cur_off = dot_index + 1;
-				}
-				else
-				{
-					int_part = num.TrimStart('0');
-					if (int_part.Trim().Length == 0)
-						int_part = "0";
-					biNumber = new BigInteger(long.Parse(int_part, CultureInfo.InvariantCulture));
-					return;
-				}
+			// check number format
+			if (num.IndexOf(strSeparator, dot_index + 1) >= 0)
+				throw new FormatException();
+			int last_exp_index = num.IndexOf('e', exp_index + 1);
+			if (last_exp_index < 0) 
+				last_exp_index = num.IndexOf('E', exp_index + 1);
+			if (last_exp_index >= 0)
+				throw new FormatException();
 
-				int exp_index = num.IndexOf('e', cur_off);
-				if (exp_index < 0) exp_index = num.IndexOf('E', cur_off);
-
+			// if this number is integer
+			if (dot_index < 0)
+			{
+				// with exponent
 				if (exp_index >= 0)
 				{
-					int last_exp_index = num.IndexOf('e', exp_index + 1);
-					if (last_exp_index < 0) last_exp_index = num.IndexOf('E', exp_index + 1);
-					if (last_exp_index >= 0)
-						throw new FormatException();
-
-					float_part = num.Substring(cur_off, exp_index - cur_off).TrimEnd('0');
+					// extract integer part
+					int_part = num.Substring(0, exp_index - cur_off).TrimStart('0');
 					cur_off = exp_index + 1;
+
+					// extract exponent value
+					if (cur_off < num.Length)
+						s = int.Parse(num.Substring(cur_off), CultureInfo.InvariantCulture);
+
+					if (int_part.Trim().Length == 0)
+						biNumber = new BigInteger(0);
+					else
+					{
+						biNumber = new BigInteger(long.Parse(int_part, CultureInfo.InvariantCulture));
+						if (biNumber != 0)
+							iScale = -s;
+					}
 				}
 				else
 				{
-					float_part = num.Substring(cur_off).TrimEnd('0');
-					biNumber = new BigInteger(long.Parse(int_part + float_part, CultureInfo.InvariantCulture));
-					iScale = float_part.Length;
-					return;
+					// just get integer part
+					int_part = num.TrimStart('0');
+					if (int_part.Trim().Length == 0)
+						biNumber = new BigInteger(0);
+					else
+						biNumber = new BigInteger(long.Parse(int_part, CultureInfo.InvariantCulture));
 				}
 
-				if (cur_off < num.Length)
-					s = int.Parse(num.Substring(cur_off), CultureInfo.InvariantCulture);
-
-				biNumber = new BigInteger(long.Parse(int_part + float_part, CultureInfo.InvariantCulture));
-				iScale = float_part.Length - s;
+				return;
 			}
-			else
+
+			// extract integer part
+			int_part = num.Substring(0, dot_index - cur_off).TrimStart('0');
+			cur_off = dot_index + 1;
+
+			string float_num = int_part;
+
+			// if exponent doesn't exist just extract float part 
+			if (exp_index < 0)
+			{
+				float_part = num.Substring(cur_off).TrimEnd('0');
+				float_num += float_part;
+				if (float_num.Trim().Length == 0)
+					biNumber = new BigInteger(0);
+				else
+				{
+					biNumber = new BigInteger(long.Parse(float_num, CultureInfo.InvariantCulture));
+					if (biNumber != 0)
+						iScale = float_part.Length;
+				}
+				return;
+			}
+
+			// extract float part
+			float_part = num.Substring(cur_off, exp_index - cur_off).TrimEnd('0');
+			cur_off = exp_index + 1;
+
+			// get exponent value
+			if (cur_off < num.Length)
+				s = int.Parse(num.Substring(cur_off), CultureInfo.InvariantCulture);
+
+			float_num += float_part;
+			if (float_num.Trim().Length == 0)
 				biNumber = new BigInteger(0);
+			else
+			{
+				biNumber = new BigInteger(long.Parse(float_num, CultureInfo.InvariantCulture));
+				if (biNumber != 0)
+					iScale = float_part.Length - s;
+			}
 		}
 
 		public int Scale
