@@ -145,7 +145,7 @@ Section "Source Code" SecSource
   StrCpy $0 $OUTDIR
   SetOutPath $OUTDIR\Sources
 
-  File /r /x bin /x obj /x _svn /x results /x *.exe "..\*.*"
+  File /r /x bin /x obj /x _svn /x results /x *.exe /x MaxDBProvider.dll "..\*.*"
 
   StrCpy $OUTDIR $0
 

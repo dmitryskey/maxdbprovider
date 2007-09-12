@@ -38,7 +38,7 @@ namespace MaxDB.Data
 	/// </summary>
 	sealed public class MaxDBCommand :
 #if NET20
-		DbCommand
+ DbCommand
 #else // NET20
 		IDbCommand, IDisposable
 #endif // NET20
@@ -142,7 +142,7 @@ namespace MaxDB.Data
 		{
 			if (dbConnection == null
 #if SAFE
-				|| dbConnection.mComm == null
+ || dbConnection.mComm == null
 #endif // SAFE
 )
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.OBJECTISCLOSED));
@@ -1302,7 +1302,7 @@ namespace MaxDB.Data
 			// get all putval objects
 			lstInputLongs = new
 #if NET20
-				List<PutValue>();
+ List<PutValue>();
 #else
 				ArrayList();
 #endif
@@ -1339,7 +1339,7 @@ namespace MaxDB.Data
 		{
 			lstInputProcedureLongs = new
 #if NET20
-				List<AbstractProcedurePutValue>();
+ List<AbstractProcedurePutValue>();
 #else
 				ArrayList();
 #endif
@@ -2720,10 +2720,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				MaxDBParameterCollection collection = new MaxDBParameterCollection();
-				foreach (MaxDBParameter parameter in this.Parameters)
-					collection.Add(parameter);
-				return collection;
+				return this.Parameters;
 			}
 		}
 #else

@@ -32,8 +32,6 @@ namespace MaxDB.Test
 #else
 			System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"];
 #endif // NET20
-
-
 			MaxDBConnection maxdbconn = new MaxDBConnection(connStr);
 			maxdbconn.Open();
 
@@ -44,13 +42,25 @@ namespace MaxDB.Test
 				cmd.CommandText = "INSERT INTO Test (id, name) VALUES(1, 'name 1')";
 				cmd.ExecuteNonQuery();
 
-				cmd.CommandText = "SELECT * FROM Test";
+                //cmd.CommandText = "SELECT * FROM Test";
 
-				using (MaxDBDataReader reader = cmd.ExecuteReader())
-				{
-					reader.Read();
-					Console.WriteLine(reader.GetString(1));
-				}
+                //using (MaxDBDataReader reader = cmd.ExecuteReader())
+                //{
+                //    reader.Read();
+                //    Console.WriteLine(reader.GetString(1));
+                //}
+
+                MaxDBDataAdapter ta = new MaxDBDataAdapter();
+                ta.SelectCommand = new MaxDBCommand("CALL spTest(:val)", maxdbconn);
+                ta.SelectCommand.CommandType = CommandType.StoredProcedure;
+                MaxDBParameter p = ta.SelectCommand.Parameters.Add(":val", MaxDBType.Number);
+                p.Precision = 10;
+                p.Scale = 3;
+                p.Value = 123.334;
+                //ta.SelectCommand = new MaxDBCommand("SELECT * FROM Test", maxdbconn);
+
+                DataSet ds = new DataSet();
+                ta.Fill(ds);
 
 				cmd.CommandText = "DROP TABLE Test";
 				cmd.ExecuteNonQuery();
@@ -74,7 +84,6 @@ namespace MaxDB.Test
 			}
 
 			maxdbconn.Close();
-
 
 			return;
 
