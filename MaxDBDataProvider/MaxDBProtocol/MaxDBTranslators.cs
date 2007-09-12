@@ -549,7 +549,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		protected override void PutSpecific(DataPart dataPart, object data)
 		{
-			byte[] bytes = Encoding.GetEncoding(1251).GetBytes(data.ToString());
+			byte[] bytes = Encoding.GetEncoding(1252).GetBytes(data.ToString());
 			if (bytes.Length > iPhysicalLength - 1)
 				throw new MaxDBValueOverflowException(-1);
 			dataPart.WriteDefineByte((byte)' ', iBufferPosition - 1);

@@ -24,8 +24,16 @@ using System.Data.Common;
 
 namespace MaxDB.Data
 {
-	class MaxDBFactory : DbProviderFactory
+	public sealed class MaxDBFactory : DbProviderFactory
 	{
+		// Fields
+		public static readonly MaxDBFactory Instance;
+
+		static MaxDBFactory()
+		{
+			Instance = new MaxDBFactory();
+		}
+
 		public override DbCommand CreateCommand()
 		{
 			return new MaxDBCommand();

@@ -1031,6 +1031,8 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
+                if (mColumnInfo == null)
+                    Describe();
 				return mColumnInfo.Length;
 			}
 		}
