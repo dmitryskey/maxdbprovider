@@ -1,6 +1,4 @@
 1. DataReaderTests.TestGetChars fails due to SQLDBC bug #1141912 (MaxDB 7.5, UNICODE = TRUE)
-2. DataAdapterTests.TestUpdatingOfManyRows fails due to SQLDBC bug #1142121 (UNICODE = TRUE)
-3. ConnectionTests.TestConnectionTimeout fails due to Mono bug #79352
 
 
 
