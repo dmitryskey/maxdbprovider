@@ -61,6 +61,19 @@ namespace MaxDB.UnitTesting
 					p.Scale = 3;
 					p.Value = 123.334;
 
+					using (MaxDBDataAdapter adapter = new MaxDBDataAdapter())
+					{
+						adapter.SelectCommand = cmd;
+
+						DataSet dataSet = new DataSet();
+						adapter.Fill(dataSet);
+						Assert.AreEqual(dataSet.Tables.Count, 1, "there must be a table");
+						Assert.AreEqual(dataSet.Tables[0].Rows.Count, 1, "there must be one row");
+						Assert.AreEqual(dataSet.Tables[0].Columns.Count, 2, "there must be 2 columns");
+						Assert.AreEqual(p.Value, Convert.ToDouble(dataSet.Tables[0].Rows[0].ItemArray[0]), "wrong decimal value of the first column");
+						Assert.AreEqual((double)p.Value * 1000, Convert.ToDouble(dataSet.Tables[0].Rows[0].ItemArray[1]), "wrong decimal value of the second column");
+					}
+
 					using (MaxDBDataReader reader = cmd.ExecuteReader())
 					{
 						Assert.IsTrue(reader.Read(), "data reader shouldn't be empty");
