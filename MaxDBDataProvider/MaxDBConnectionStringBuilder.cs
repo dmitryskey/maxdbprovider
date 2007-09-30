@@ -303,6 +303,9 @@ namespace MaxDB.Data
 							case ConnectionStringParams.MAX_POOL_SIZE:
 								ParseIntParameter(ConnectionStringParams.MAX_POOL_SIZE, param);
 								break;
+							case ConnectionStringParams.CODE_PAGE:
+								ParseIntParameter(ConnectionStringParams.CODE_PAGE, param);
+								break;
 						}
 				}
 
@@ -599,6 +602,21 @@ namespace MaxDB.Data
 			set
 			{
 				mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE] = value;
+			}
+		}
+
+		public int CodePage
+		{
+			get
+			{
+				if (mKeyValuePairs[ConnectionStringParams.CODE_PAGE] != null)
+					return (int)mKeyValuePairs[ConnectionStringParams.CODE_PAGE];
+				else
+					return 1252;
+			}
+			set
+			{
+				mKeyValuePairs[ConnectionStringParams.CODE_PAGE] = value;
 			}
 		}
 

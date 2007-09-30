@@ -350,6 +350,7 @@ namespace MaxDB.Data
 						dbType = MaxDBType.Timestamp;
 						break;
 					case DbType.AnsiString:
+					case DbType.AnsiStringFixedLength:
 					case DbType.Guid:
 						dbType = MaxDBType.VarCharA;
 						break;

@@ -324,19 +324,39 @@ namespace MaxDB.Data.MaxDBProtocol
 			string sql = "SELECT 1 FROM DUAL WHERE FALSE";
 			if (ownerName == null)
 			{
-				sql = "SELECT PARAM_NO, "
-					+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
-					+ "UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER=USER AND "
-					+ "DBPROCEDURE = :DBPROCEDURE ORDER BY PARAM_NO, ASCII_OFFSET";
+				if (dbConnection.KernelVersion < 70400)
+				{
+					sql = "SELECT PARAM_NO, "
+						+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, OFFSET AS ASCII_OFFSET, "
+						+ "OFFSET AS UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER=USER AND "
+						+ "DBPROCEDURE = :DBPROCEDURE ORDER BY PARAM_NO, ASCII_OFFSET";
+				}
+				else
+				{
+					sql = "SELECT PARAM_NO, "
+						+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
+						+ "UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER=USER AND "
+						+ "DBPROCEDURE = :DBPROCEDURE ORDER BY PARAM_NO, ASCII_OFFSET";
+				}
 				cmd = new MaxDBCommand(sql, dbConnection);
 				cmd.Parameters.Add("DBPROCEDURE", procedureName);
 			}
 			else
 			{
-				sql = "SELECT PARAM_NO, "
-					+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
-					+ "UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER = :OWNER AND "
-					+ "DBPROCEDURE = :DBPROCEDURE ORDER BY PARAM_NO, ASCII_OFFSET";
+				if (dbConnection.KernelVersion < 70400)
+				{
+					sql = "SELECT PARAM_NO, "
+						+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, OFFSET AS ASCII_OFFSET, "
+						+ "OFFSET AS UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER = :OWNER AND "
+						+ "DBPROCEDURE = :DBPROCEDURE ORDER BY PARAM_NO, ASCII_OFFSET";
+				}
+				else
+				{
+					sql = "SELECT PARAM_NO, "
+						+ "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, ASCII_OFFSET, "
+						+ "UNICODE_OFFSET FROM DBPROCPARAMINFO WHERE OWNER = :OWNER AND "
+						+ "DBPROCEDURE = :DBPROCEDURE ORDER BY PARAM_NO, ASCII_OFFSET";
+				}
 				cmd = new MaxDBCommand(sql, dbConnection);
 				cmd.Parameters.Add("OWNER", ownerName);
 				cmd.Parameters.Add("DBPROCEDURE", procedureName);
@@ -630,6 +650,7 @@ namespace MaxDB.Data.MaxDBProtocol
 					}
 				}
 			}
+            DBTechTranslator.SetEncoding(mParamInfos, dbConnection.UserAsciiEncoding);
 		}
 
 		public void SetMetaData(DBTechTranslator[] info, string[] colName)
@@ -938,6 +959,7 @@ namespace MaxDB.Data.MaxDBProtocol
 					}
 				}
 			}
+            DBTechTranslator.SetEncoding(mColumnInfo, dbConnection.UserAsciiEncoding);
 		}
 
 		private void Describe()

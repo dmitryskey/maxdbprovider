@@ -905,7 +905,8 @@ namespace MaxDB.Data.MaxDBProtocol
 			POOLING = "POOLING",
 			CONNECTION_LIFETIME = "CONNECTION LIFETIME",
 			MIN_POOL_SIZE = "MIN POOL SIZE",
-			MAX_POOL_SIZE = "MAX POOL SIZE";
+			MAX_POOL_SIZE = "MAX POOL SIZE",
+            CODE_PAGE = "CODE_PAGE";
 	}
 
 	/// <summary>
