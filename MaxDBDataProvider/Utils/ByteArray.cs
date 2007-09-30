@@ -284,15 +284,26 @@ namespace MaxDB.Data.Utilities
 
 		public string ReadAscii(int offset, int len)
 		{
-			offset += iOffset;
-			return Encoding.ASCII.GetString(byData, offset, len);
+			return ReadEncoding(Encoding.ASCII, offset, len);
+		}
+
+		public string ReadEncoding(Encoding encoding, int offset, int len)
+		{
+ 			offset += iOffset;
+
+			return encoding.GetString(byData, offset, len);
 		}
 
 #endif // SAFE
 
 		public void WriteAscii(string value, int offset)
 		{
-			WriteBytes(Encoding.ASCII.GetBytes(value), offset);
+			WriteEncoding(Encoding.ASCII, value, offset);
+		}
+
+		public void WriteEncoding(Encoding encoding, string value, int offset)
+		{
+			WriteBytes(encoding.GetBytes(value), offset);
 		}
 
 		public string ReadUnicode(int offset, int len)

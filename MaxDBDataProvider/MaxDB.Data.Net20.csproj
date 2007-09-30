@@ -154,11 +154,6 @@
     <Compile Include="MaxDBMessages.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MaxDBMessages.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>MaxDBMessages.resx</DependentUpon>
-    </Compile>
     <Compile Include="MaxDBParameter.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -221,7 +216,6 @@
     </Compile>
     <EmbeddedResource Include="MaxDBMessages.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>MaxDBMessages.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
