@@ -1,24 +1,23 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
-    <ProductVersion>8.0.50727</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{96EABFAC-9C28-40C6-AD1F-08121496C11E}</ProjectGuid>
+    <ProjectGuid>{78C374CB-3D0C-4EC7-B670-C8190B4E844B}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ApplicationIcon>
-    </ApplicationIcon>
+    <ApplicationIcon>App.ico</ApplicationIcon>
     <AssemblyKeyContainerName>
     </AssemblyKeyContainerName>
-    <AssemblyName>MaxDB.Data.Net20</AssemblyName>
-    <AssemblyOriginatorKeyFile>MaxDBDataProvider.snk</AssemblyOriginatorKeyFile>
+    <AssemblyName>MaxDB.Test.Net35</AssemblyName>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
     <DefaultClientScript>JScript</DefaultClientScript>
     <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
     <DefaultTargetSchema>IE50</DefaultTargetSchema>
     <DelaySign>false</DelaySign>
-    <OutputType>Library</OutputType>
-    <RootNamespace>
-    </RootNamespace>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MaxDB.Test</RootNamespace>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
     <StartupObject>
     </StartupObject>
@@ -26,7 +25,8 @@
     </FileUpgradeFlags>
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
-    <SignAssembly>true</SignAssembly>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_Unsafe|AnyCPU' ">
     <OutputPath>bin\Debug\</OutputPath>
@@ -36,7 +36,8 @@
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
     <DefineConstants>TRACE;DEBUG;NET20</DefineConstants>
-    <DocumentationFile>bin\Debug\MaxDB.Data.Net20.XML</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
     <DebugSymbols>true</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
     <NoStdLib>false</NoStdLib>
@@ -58,7 +59,8 @@
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
     <DefineConstants>TRACE;NET20</DefineConstants>
-    <DocumentationFile>bin\Release\MaxDB.Data.Net20.XML</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
     <DebugSymbols>false</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
     <NoStdLib>false</NoStdLib>
@@ -74,13 +76,14 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_Safe|AnyCPU' ">
     <OutputPath>bin\Debug\</OutputPath>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <BaseAddress>285212672</BaseAddress>
     <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
-    <DefineConstants>TRACE;DEBUG;NET20;SAFE</DefineConstants>
-    <DocumentationFile>bin\Debug\MaxDB.Data.Net20.XML</DocumentationFile>
+    <DefineConstants>TRACE;DEBUG;SAFE;NET20</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
     <DebugSymbols>true</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
     <NoStdLib>false</NoStdLib>
@@ -96,13 +99,14 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release_Safe|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <BaseAddress>285212672</BaseAddress>
     <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
-    <DefineConstants>TRACE;NET20;SAFE</DefineConstants>
-    <DocumentationFile>bin\Release\MaxDB.Data.Net20.XML</DocumentationFile>
+    <DefineConstants>TRACE;SAFE;NET20</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
     <DebugSymbols>false</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
     <NoStdLib>false</NoStdLib>
@@ -117,110 +121,60 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="nunit.framework">
+      <Name>nunit.framework</Name>
+      <HintPath>..\..\..\..\Program Files\NUnit V2.1\\bin\nunit.framework.dll</HintPath>
+      <AssemblyFolderKey>hklm\dn\nunit.framework</AssemblyFolderKey>
+    </Reference>
     <Reference Include="System">
       <Name>System</Name>
     </Reference>
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
     <Reference Include="System.Data">
       <Name>System.Data</Name>
+    </Reference>
+    <Reference Include="System.Windows.Forms">
+      <Name>System.Windows.Forms</Name>
     </Reference>
     <Reference Include="System.Xml">
       <Name>System.XML</Name>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
+    <Content Include="App.ico" />
     <Compile Include="AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MaxDBCommand.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="MaxDBCommandBuilder.cs">
-    </Compile>
-    <Compile Include="MaxDBConnection.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="MaxDBConnectionPool.cs">
-    </Compile>
-    <Compile Include="MaxDBConnectionStringBuilder.cs" />
-    <Compile Include="MaxDBDataAdapter.cs">
-    </Compile>
-    <Compile Include="MaxDBDataReader.cs">
+    <Compile Include="Console.cs" />
+    <Compile Include="UnitTesting\BaseTest.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MaxDBException.cs">
+    <Compile Include="UnitTesting\CommandBuilderTests.cs" />
+    <Compile Include="UnitTesting\CommandTests.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MaxDBFactory.cs" />
-    <Compile Include="MaxDBMessages.cs">
+    <Compile Include="UnitTesting\ConnectionTests.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MaxDBParameter.cs">
+    <Compile Include="UnitTesting\DataAdapterTests.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MaxDBParameterCollection.cs">
+    <Compile Include="UnitTesting\DataReaderTests.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MaxDBProtocol\MaxDBCache.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MaxDBProtocol\MaxDBComm.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MaxDBProtocol\MaxDBConsts.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MaxDBProtocol\MaxDBDataPart.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MaxDBProtocol\MaxDBGarbage.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MaxDBProtocol\MaxDBInfo.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MaxDBProtocol\MaxDBPacket.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MaxDBProtocol\MaxDBTranslators.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MaxDBProtocol\MaxDBValue.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MaxDBTransaction.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MaxDBType.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Utils\BigNumber.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Utils\ByteArray.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Utils\Crypt.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Utils\Logger.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Utils\SocketIntf.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Utils\SQLDBC.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Utils\VDNNumber.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <EmbeddedResource Include="MaxDBMessages.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
+    <Compile Include="UnitTesting\DBProcedureTests.cs" />
+    <Compile Include="UnitTesting\LanguageTests.cs" />
+    <Compile Include="UnitTesting\StressTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="MaxDBDataProvider.snk" />
+    <ProjectReference Include="..\MaxDBDataProvider\MaxDB.Data.Net35.csproj">
+      <Project>{96EABFAC-9C28-40C6-AD1F-08121496C11E}</Project>
+      <Name>MaxDB.Data.Net35</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
