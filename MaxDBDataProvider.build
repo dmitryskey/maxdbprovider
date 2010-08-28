@@ -1,8 +1,8 @@
 <project name="MaxDBDataProvider" default="net" xmlns="http://nant.sf.net/schemas/nant-0.84.win32.net-1.0.xsd">
 	<description>ADO.NET Provider for MaxDB</description>
 
-	<property name="nunit-Net-1.1" value="C:\Program Files\NUnit 2.2.8" />
-	<property name="nunit-Net-2.0" value="C:\Program Files\NUnit-Net-2.0 2.2.8" />
+	<property name="nunit-Net-1.1" value="C:\Program Files (x86)\NUnit 2.5.7\bin\net-1.1" />
+	<property name="nunit-Net-2.0" value="C:\Program Files (x86)\NUnit 2.5.7\bin\net-2.0" />
 	<property name="nunit-Mono-1.0" value="/usr/local/lib/mono/1.0" />
 	<property name="nunit-Mono-2.0" value="/usr/local/lib/mono/2.0" />
 	<property name="nunit-console-Mono-1.0" value="/root/Tests/1.0" />

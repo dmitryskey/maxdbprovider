@@ -1,7 +1,7 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
-    <ProductVersion>8.0.50727</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{96EABFAC-9C28-40C6-AD1F-08121496C11E}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -10,7 +10,7 @@
     </ApplicationIcon>
     <AssemblyKeyContainerName>
     </AssemblyKeyContainerName>
-    <AssemblyName>MaxDB.Data.Net20</AssemblyName>
+    <AssemblyName>MaxDB.Data.Net35</AssemblyName>
     <AssemblyOriginatorKeyFile>MaxDBDataProvider.snk</AssemblyOriginatorKeyFile>
     <DefaultClientScript>JScript</DefaultClientScript>
     <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
@@ -27,6 +27,8 @@
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <SignAssembly>true</SignAssembly>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_Unsafe|AnyCPU' ">
     <OutputPath>bin\Debug\</OutputPath>
@@ -36,7 +38,7 @@
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
     <DefineConstants>TRACE;DEBUG;NET20</DefineConstants>
-    <DocumentationFile>bin\Debug\MaxDB.Data.Net20.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\MaxDB.Data.Net35.xml</DocumentationFile>
     <DebugSymbols>true</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
     <NoStdLib>false</NoStdLib>
@@ -58,7 +60,7 @@
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
     <DefineConstants>TRACE;NET20</DefineConstants>
-    <DocumentationFile>bin\Release\MaxDB.Data.Net20.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\MaxDB.Data.Net35.xml</DocumentationFile>
     <DebugSymbols>false</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
     <NoStdLib>false</NoStdLib>
@@ -80,7 +82,7 @@
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
     <DefineConstants>TRACE;DEBUG;NET20;SAFE</DefineConstants>
-    <DocumentationFile>bin\Debug\MaxDB.Data.Net20.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\MaxDB.Data.Net35.xml</DocumentationFile>
     <DebugSymbols>true</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
     <NoStdLib>false</NoStdLib>
@@ -102,7 +104,7 @@
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
     <DefineConstants>TRACE;NET20;SAFE</DefineConstants>
-    <DocumentationFile>bin\Release\MaxDB.Data.Net20.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\MaxDB.Data.Net35.xml</DocumentationFile>
     <DebugSymbols>false</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
     <NoStdLib>false</NoStdLib>
@@ -119,6 +121,9 @@
   <ItemGroup>
     <Reference Include="System">
       <Name>System</Name>
+    </Reference>
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data">
       <Name>System.Data</Name>
@@ -153,6 +158,11 @@
     <Compile Include="MaxDBFactory.cs" />
     <Compile Include="MaxDBMessages.cs">
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MaxDBMessages.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>MaxDBMessages.resx</DependentUpon>
     </Compile>
     <Compile Include="MaxDBParameter.cs">
       <SubType>Code</SubType>
@@ -217,6 +227,7 @@
     <EmbeddedResource Include="MaxDBMessages.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>
+      <LastGenOutput>MaxDBMessages.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
