@@ -605,6 +605,9 @@ namespace MaxDB.Data
 			}
 		}
 
+        /// <summary>
+        /// Gets or sets the current user code page (1252 by default).
+        /// </summary>
 		public int CodePage
 		{
 			get

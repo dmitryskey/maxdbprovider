@@ -298,6 +298,9 @@ namespace MaxDB.Data
 
 		private Encoding userAsciiEncoding;
 
+        /// <summary>
+        /// Gets or sets the user encoding.
+        /// </summary>
 		public Encoding UserAsciiEncoding
 		{
 			get

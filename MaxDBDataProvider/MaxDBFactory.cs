@@ -24,9 +24,14 @@ using System.Data.Common;
 
 namespace MaxDB.Data
 {
+    /// <summary>
+    /// MaxDB factory class.
+    /// </summary>
 	public sealed class MaxDBFactory : DbProviderFactory
 	{
-		// Fields
+		/// <summary>
+		/// The current instance.
+		/// </summary>
 		public static readonly MaxDBFactory Instance;
 
 		static MaxDBFactory()
@@ -34,31 +39,55 @@ namespace MaxDB.Data
 			Instance = new MaxDBFactory();
 		}
 
+        /// <summary>
+        /// Returns MaxDB create command object.
+        /// </summary>
+        /// <returns>MaxDBCommand object instance.</returns>
 		public override DbCommand CreateCommand()
 		{
 			return new MaxDBCommand();
 		}
 
+        /// <summary>
+        /// Returns MaxDB command builder object.
+        /// </summary>
+        /// <returns>MaxDBCommandBuilder object instance.</returns>
 		public override DbCommandBuilder CreateCommandBuilder()
 		{
 			return new MaxDBCommandBuilder();
 		}
 
+        /// <summary>
+        /// Returns MaxDB connection object.
+        /// </summary>
+        /// <returns>MaxDBConnection object instance.</returns>
 		public override DbConnection CreateConnection()
 		{
 			return new MaxDBConnection();
 		}
 
+        /// <summary>
+        /// Returns MaxDB connection string builder object.
+        /// </summary>
+        /// <returns>MaxDBConnectionStringBuilder object instance.</returns>
 		public override DbConnectionStringBuilder CreateConnectionStringBuilder()
 		{
 			return new MaxDBConnectionStringBuilder();
 		}
 
+        /// <summary>
+        /// Returns MaxDB data adapter object.
+        /// </summary>
+        /// <returns>MaxDBDataAdapter object instance.</returns>
 		public override DbDataAdapter CreateDataAdapter()
 		{
 			return new MaxDBDataAdapter();
 		}
 
+        /// <summary>
+        /// Returns MaxDB parameter object.
+        /// </summary>
+        /// <returns>MaxDBParameter object instance.</returns>
 		public override DbParameter CreateParameter()
 		{
 			return new MaxDBParameter();

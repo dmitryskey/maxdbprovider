@@ -1,13 +1,5 @@
 ﻿using System;
-using System.Text;
-using System.IO;
 using System.Data;
-using System.Data.Odbc;
-using System.Diagnostics;
-
-using System.Configuration;
-using System.ComponentModel;
-using System.Threading;
 using MaxDB.Data;
 
 namespace MaxDB.Test
@@ -42,13 +34,13 @@ namespace MaxDB.Test
 				cmd.CommandText = "INSERT INTO Test (id, name) VALUES(1, 'name 1')";
 				cmd.ExecuteNonQuery();
 
-                //cmd.CommandText = "SELECT * FROM Test";
+                cmd.CommandText = "SELECT * FROM Test";
 
-                //using (MaxDBDataReader reader = cmd.ExecuteReader())
-                //{
-                //    reader.Read();
-                //    Console.WriteLine(reader.GetString(1));
-                //}
+                using (MaxDBDataReader reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Console.WriteLine(reader.GetString(1));
+                }
 
                 MaxDBDataAdapter ta = new MaxDBDataAdapter();
                 ta.SelectCommand = new MaxDBCommand("CALL spTest(:val)", maxdbconn);
