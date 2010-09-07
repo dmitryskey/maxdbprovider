@@ -42,15 +42,29 @@
 		<property name="build.dir" value="."/>
 	</if>
 
-	<!-- builds the client on all supported .Net Frameworks -->
-	<target name="net" depends="net-1.1-safe net-1.1-unsafe net-2.0-safe net-2.0-unsafe">
+	<!-- builds the client on .Net Frameworks 1.1-->
+	<target name="net-1.1" depends="net-1.1-safe net-1.1-unsafe">
 		<!--
 		<call target="Docs"/>
 		-->
 	</target>
 
-	<!-- builds the client on all supported Mono Frameworks -->
-	<target name="mono" depends="mono-1.0-safe mono-1.0-unsafe mono-2.0-safe mono-2.0-unsafe">
+	<!-- builds the client for Mono Frameworks (obsolete 1.0 Profile)-->
+	<target name="mono-1.0" depends="mono-1.0-safe mono-1.0-unsafe">
+		<!--
+		<call target="Docs"/>
+		-->
+	</target>
+
+	<!-- builds the client on .Net Frameworks 2.0-->
+	<target name="net-2.0" depends="net-2.0-safe net-2.0-unsafe">
+		<!--
+		<call target="Docs"/>
+		-->
+	</target>
+
+	<!-- builds the client for Mono Frameworks -->
+	<target name="mono-2.0" depends="mono-2.0-safe mono-2.0-unsafe">
 		<!--
 		<call target="Docs"/>
 		-->
@@ -109,8 +123,8 @@
 
 	<!-- target .Net 1.1 Safe-->
 	<target name="net-1.1-safe" description=".NET 1.1 safe target">
-		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
-		<property name="nunit-exe" value="${nunit-lib}"/>
+		<property name="nunit-lib" value="${nunit-Net-1.1}/framework"/>
+		<property name="nunit-exe" value="${nunit-Net-1.1}"/>
 		<property name="framework" value="net-1.1"/>
 		<property name="defines" value="SAFE" />
 		<property name="unsafe" value="false"/>
@@ -119,8 +133,8 @@
 
 	<!-- target .Net 1.1 Unsafe-->
 	<target name="net-1.1-unsafe" description=".NET 1.1 unsafe target">
-		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
-		<property name="nunit-exe" value="${nunit-lib}"/>
+		<property name="nunit-lib" value="${nunit-Net-1.1}/framework"/>
+		<property name="nunit-exe" value="${nunit-Net-1.1}"/>
 		<property name="framework" value="net-1.1"/>
 		<property name="defines" value="" />
 		<property name="unsafe" value="true"/>
@@ -129,8 +143,8 @@
 
 	<!-- target .Net 2.0 Safe-->
 	<target name="net-2.0-safe" description=".NET 2.0 safe target">
-		<property name="nunit-lib" value="${nunit-Net-2.0}/bin"/>
-		<property name="nunit-exe" value="${nunit-lib}"/>
+		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
+		<property name="nunit-exe" value="${nunit-Net-2.0}"/>
 		<property name="framework" value="net-2.0"/>
 		<property name="defines" value="SAFE;NET20" />
 		<property name="unsafe" value="false"/>
@@ -139,8 +153,8 @@
 
 	<!-- target .Net 2.0 Unsafe-->
 	<target name="net-2.0-unsafe" description=".NET 2.0 unsafe target">
-		<property name="nunit-lib" value="${nunit-Net-2.0}/bin"/>
-		<property name="nunit-exe" value="${nunit-lib}"/>
+		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
+		<property name="nunit-exe" value="${nunit-Net-2.0}"/>
 		<property name="framework" value="net-2.0"/>
 		<property name="defines" value="NET20" />
 		<property name="unsafe" value="true"/>
@@ -188,8 +202,7 @@
 	</target>
 
 	<!-- FxCop targets -->
-	<target name="fxcop-all" depends="fxcop-net-1.1-safe, fxcop-net-1.1-unsafe, fxcop-net-2.0-safe, fxcop-net-2.0-unsafe">
-	</target>
+	<target name="fxcop-all" depends="fxcop-net-1.1-safe, fxcop-net-1.1-unsafe, fxcop-net-2.0-safe, fxcop-net-2.0-unsafe" />
 
 	<!-- target FxCop .Net 1.1 Safe-->
 	<target name="fxcop-net-1.1-safe" depends="net-1.1-safe">
@@ -332,32 +345,31 @@
 
 		<call target="test-mono-2.0-safe"/>
 		<call target="test-mono-2.0-unsafe"/>
-
 	</target>
 	
 	<target name="test-net-1.1-safe" depends="net-1.1-safe">
-		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
+		<property name="nunit-lib" value="${nunit-Net-1.1}/framework"/>
 		<property name="framework" value="net-1.1"/>
 		<property name="unsafe" value="false"/>
 		<call target="testdb"/>
 	</target>
 
 	<target name="test-net-1.1-unsafe" depends="net-1.1-unsafe">
-		<property name="nunit-lib" value="${nunit-Net-1.1}/bin"/>
+		<property name="nunit-lib" value="${nunit-Net-1.1}/framework"/>
 		<property name="framework" value="net-1.1"/>
 		<property name="unsafe" value="true"/>
 		<call target="testdb"/>
 	</target>
 
 	<target name="test-net-2.0-safe" depends="net-2.0-safe">
-		<property name="nunit-lib" value="${nunit-Net-2.0}/bin"/>
+		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
 		<property name="framework" value="net-2.0"/>
 		<property name="unsafe" value="false"/>
 		<call target="testdb"/>
 	</target>
 
 	<target name="test-net-2.0-unsafe" depends="net-2.0-unsafe">
-		<property name="nunit-lib" value="${nunit-Net-2.0}/bin"/>
+		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
 		<property name="framework" value="net-2.0"/>
 		<property name="unsafe" value="true"/>
 		<call target="testdb"/>
@@ -440,5 +452,4 @@
             		</fileset>
 		</delete>
 	</target>
-
 </project>
