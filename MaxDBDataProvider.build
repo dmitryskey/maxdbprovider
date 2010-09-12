@@ -3,8 +3,8 @@
 
 	<property name="nunit-Net-1.1" value="C:\Program Files (x86)\NUnit 2.5.7\bin\net-1.1" />
 	<property name="nunit-Net-2.0" value="C:\Program Files (x86)\NUnit 2.5.7\bin\net-2.0" />
-	<property name="nunit-Mono-1.0" value="/usr/local/lib/mono/1.0" />
-	<property name="nunit-Mono-2.0" value="/usr/local/lib/mono/2.0" />
+	<property name="nunit-Mono-1.0" value="/usr/lib/mono/1.0" />
+	<property name="nunit-Mono-2.0" value="/usr/lib/mono/2.0" />
 	<property name="nunit-console-Mono-1.0" value="/root/Tests/1.0" />
 	<property name="nunit-console-Mono-2.0" value="/root/Tests/2.0" />
 
