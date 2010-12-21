@@ -15,22 +15,23 @@
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 using System;
-using System.Text;
 using System.Collections;
 using MaxDB.Data.MaxDBProtocol;
+#if SAFE
 using MaxDB.Data.Utilities;
+#endif //SAFE
 using System.Threading;
 
 namespace MaxDB.Data
 {
 	internal class MaxDBConnectionPoolEntry
 	{
-		private MaxDBConnectionStringBuilder mConnStrBuilder;
+		private readonly MaxDBConnectionStringBuilder mConnStrBuilder;
 #if SAFE
-		private MaxDBLogger mLogger;
+		private readonly MaxDBLogger mLogger;
 #endif // SAFE
 		private ArrayList entryList = new ArrayList();
-		private int activeCount = 0;
+		private int activeCount;
 
 #if SAFE
 		public MaxDBConnectionPoolEntry(MaxDBConnection conn, MaxDBLogger logger)
@@ -47,7 +48,9 @@ namespace MaxDB.Data
 #endif // SAFE
 
 			for (int i = 0; i < mConnStrBuilder.MinPoolSize; i++)
-				entryList.Add(CreateEntry());
+			{
+			    entryList.Add(CreateEntry());
+			}
 		}
 
 		public MaxDBComm GetEntry()
@@ -103,14 +106,12 @@ namespace MaxDB.Data
 
 		private MaxDBComm CreateEntry()
 		{
-			MaxDBComm comm;
-
 #if SAFE
-			comm = new MaxDBComm(mLogger);
+            MaxDBComm comm = new MaxDBComm(mLogger);
 #else
-			comm = new MaxDBComm();
+			MaxDBComm comm = new MaxDBComm();
 #endif //SAFE
-			comm.mConnStrBuilder = mConnStrBuilder;
+            comm.mConnStrBuilder = mConnStrBuilder;
 
 			comm.Open(ConnectionArguments);
 			activeCount++;
@@ -144,7 +145,7 @@ namespace MaxDB.Data
 
 	internal sealed class MaxDBConnectionPool
 	{
-		private static Hashtable mPool = new Hashtable();
+		private static readonly Hashtable mPool = new Hashtable();
 
 #if SAFE
 		public static MaxDBComm GetPoolEntry(MaxDBConnection conn, MaxDBLogger logger)
@@ -158,17 +159,19 @@ namespace MaxDB.Data
 			{
 				MaxDBConnectionPoolEntry poolEntry;
 
-				if (mPool.ContainsKey(key))
-					poolEntry = (MaxDBConnectionPoolEntry)mPool[key];
-				else
-				{
+                if (mPool.ContainsKey(key))
+                {
+                    poolEntry = (MaxDBConnectionPoolEntry) mPool[key];
+                }
+                else
+                {
 #if SAFE
-					poolEntry = new MaxDBConnectionPoolEntry(conn, logger);
+                    poolEntry = new MaxDBConnectionPoolEntry(conn, logger);
 #else
 					poolEntry = new MaxDBConnectionPoolEntry(conn);
 #endif // SAFE
-					mPool[key] = poolEntry;
-				}
+                    mPool[key] = poolEntry;
+                }
 
 				return poolEntry.GetEntry();
 			}

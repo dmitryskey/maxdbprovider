@@ -19,17 +19,18 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Text;
+using MaxDB.Data.MaxDBProtocol;
+using MaxDB.Data.Utilities;
+#if SAFE
 using System.Collections;
 #if NET20
 using System.Collections.Generic;
 #endif // NET20
-using System.ComponentModel;
-using MaxDB.Data.MaxDBProtocol;
-using MaxDB.Data.Utilities;
-using System.Reflection;
 using System.Globalization;
+#else
 using System.Runtime.InteropServices;
 using System.Security.Permissions;
+#endif //SAFE
 
 namespace MaxDB.Data
 {
@@ -142,9 +143,9 @@ namespace MaxDB.Data
 		{
 			if (dbConnection == null
 #if SAFE
- || dbConnection.mComm == null
+                || dbConnection.mComm == null
 #endif // SAFE
-)
+            )
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.OBJECTISCLOSED));
 		}
 
@@ -204,9 +205,9 @@ namespace MaxDB.Data
 				bCanceled = false;
 				int count = batchParams.Length;
 				MaxDBRequestPacket requestPacket;
-				MaxDBReplyPacket replyPacket = null;
+				MaxDBReplyPacket replyPacket;
 				int inputCursor = 0;
-				bool noError = true;
+				const bool noError = true;
 				int recordSize = 0;
 				int insertCountPartSize = MaxDBRequestPacket.ResultCountPartSize;
 				int executeCount = -1;
@@ -221,18 +222,16 @@ namespace MaxDB.Data
 				}
 				//<<< SQL TRACE
 
-				if (mParseInfo.MassParseID == null)
+                if (mParseInfo == null || mParseInfo.MassParseID == null)
 					ParseMassCmd(false);
 
-				if (mParseInfo.mParamInfos.Length > 0)
+                if (mParseInfo != null && mParseInfo.mParamInfos.Length > 0)
 				{
-					int currentFieldEnd;
-
 					foreach (DBTechTranslator currentInfo in mParseInfo.mParamInfos)
 					{
 						if (currentInfo.IsInput)
 						{
-							currentFieldEnd = currentInfo.PhysicalLength + currentInfo.BufPos - 1;
+							int currentFieldEnd = currentInfo.PhysicalLength + currentInfo.BufPos - 1;
 							recordSize = Math.Max(recordSize, currentFieldEnd);
 						}
 					}
@@ -290,7 +289,10 @@ namespace MaxDB.Data
 						dataPart.CloseArrayPart((short)(inputCursor - firstRecordNo));
 					}
 					else
-						inputCursor++; //commands without parameters
+                    {
+                        // commands without parameters
+                        inputCursor++;
+                    }
 
 					try
 					{
@@ -370,11 +372,13 @@ namespace MaxDB.Data
 
 		private MaxDBReplyPacket SendCommand(MaxDBRequestPacket requestPacket, string sqlCmd, int gcFlags, bool parseAgain)
 		{
-			MaxDBReplyPacket replyPacket;
-			requestPacket.InitParseCommand(sqlCmd, true, parseAgain);
+		    requestPacket.InitParseCommand(sqlCmd, true, parseAgain);
 			if (bSetWithInfo)
-				requestPacket.SetWithInfo();
-			replyPacket = dbConnection.mComm.Execute(dbConnection.mConnArgs, requestPacket, false, true, this, gcFlags);
+			{
+			    requestPacket.SetWithInfo();
+			}
+
+			MaxDBReplyPacket replyPacket = dbConnection.mComm.Execute(dbConnection.mConnArgs, requestPacket, false, true, this, gcFlags);
 			return replyPacket;
 		}
 
@@ -560,7 +564,7 @@ namespace MaxDB.Data
 			}
 		}
 
-		private void FillInputParameters(MaxDBParameterCollection cmd_params, ref object[] inputArgs)
+		private void FillInputParameters(MaxDBParameterCollection cmdParams, ref object[] inputArgs)
 		{
 			DateTime dt = DateTime.Now;
 
@@ -576,7 +580,7 @@ namespace MaxDB.Data
 			// We must add a data part if we have input parameters or even if we have output streams.
 			for (int i = 0; i < mParseInfo.ParamInfo.Length; i++)
 			{
-				MaxDBParameter param = cmd_params[i];
+				MaxDBParameter param = cmdParams[i];
 
 				if (!FindColumnInfo(i).IsInput)
 					continue;
@@ -587,6 +591,7 @@ namespace MaxDB.Data
 					StringBuilder sbOut = new StringBuilder();
 					sbOut.Append((i + 1).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.NumSize));
 					sbOut.Append(mParseInfo.ParamInfo[i].ColumnTypeName.PadRight(MaxDBLogger.TypeSize));
+                    string strValue;
 
 					switch (param.dbType)
 					{
@@ -611,40 +616,63 @@ namespace MaxDB.Data
 							sbOut.Append((mParseInfo.ParamInfo[i].PhysicalLength - 1).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
 							if (param.objInputValue != DBNull.Value)
 							{
-								string str_value;
 								if (param.objInputValue.GetType() == typeof(char[]))
-									str_value = new string((char[])param.objInputValue);
+								{
+								    strValue = new string((char[])param.objInputValue);
+								}
 								else
-									str_value = (string)param.objInputValue;
-								sbOut.Append(str_value.Length.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
-								if (str_value.Length > MaxDBLogger.DataSize)
-									sbOut.Append(str_value.Substring(0, MaxDBLogger.DataSize)).Append("...");
+								{
+								    strValue = (string)param.objInputValue;
+								}
+
+								sbOut.Append(strValue.Length.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
+								if (strValue.Length > MaxDBLogger.DataSize)
+								{
+								    sbOut.Append(strValue.Substring(0, MaxDBLogger.DataSize)).Append("...");
+								}
 								else
-									sbOut.Append(str_value);
+								{
+								    sbOut.Append(strValue);
+								}
 							}
 							else
-								sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							{
+							    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							}
+
 							break;
 						case MaxDBType.Unicode:
 						case MaxDBType.StrUni:
 						case MaxDBType.VarCharUni:
 						case MaxDBType.LongUni:
 							sbOut.Append((mParseInfo.ParamInfo[i].PhysicalLength - 1).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
-							if (param.objInputValue != DBNull.Value)
+
+					        if (param.objInputValue != DBNull.Value)
 							{
-								string str_value;
-								if (param.objInputValue.GetType() == typeof(char[]))
-									str_value = new string((char[])param.objInputValue);
+							    if (param.objInputValue.GetType() == typeof(char[]))
+							    {
+							        strValue = new string((char[])param.objInputValue);
+							    }
 								else
-									str_value = (string)param.objInputValue;
-								sbOut.Append((str_value.Length * Consts.UnicodeWidth).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
-								if (str_value.Length > MaxDBLogger.DataSize)
-									sbOut.Append(str_value.Substring(0, MaxDBLogger.DataSize)).Append("...");
+							    {
+							        strValue = (string)param.objInputValue;
+							    }
+
+								sbOut.Append((strValue.Length * Consts.UnicodeWidth).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
+								if (strValue.Length > MaxDBLogger.DataSize)
+								{
+								    sbOut.Append(strValue.Substring(0, MaxDBLogger.DataSize)).Append("...");
+								}
 								else
-									sbOut.Append(str_value);
+								{
+								    sbOut.Append(strValue);
+								}
 							}
 							else
-								sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+					        {
+					            sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+					        }
+
 							break;
 						case MaxDBType.Date:
 						case MaxDBType.Timestamp:
@@ -712,20 +740,16 @@ namespace MaxDB.Data
 							else
 								sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
 							break;
-						case MaxDBType.CharB:
-						case MaxDBType.StrB:
-						case MaxDBType.VarCharB:
-						case MaxDBType.LongB:
 						default:
 							sbOut.Append(mParseInfo.ParamInfo[i].PhysicalLength.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
 							if (param.objInputValue != DBNull.Value)
 							{
-								byte[] byte_value = (byte[])param.objInputValue;
-								sbOut.Append(byte_value.Length.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
-								if (byte_value.Length > MaxDBLogger.DataSize / 2)
-									sbOut.Append("0X" + Consts.ToHexString(byte_value, MaxDBLogger.DataSize / 2)).Append("...");
+								byte[] byteValue = (byte[])param.objInputValue;
+								sbOut.Append(byteValue.Length.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
+								if (byteValue.Length > MaxDBLogger.DataSize / 2)
+									sbOut.Append("0X" + Consts.ToHexString(byteValue, MaxDBLogger.DataSize / 2)).Append("...");
 								else
-									sbOut.Append("0X" + Consts.ToHexString(byte_value));
+									sbOut.Append("0X" + Consts.ToHexString(byteValue));
 							}
 							else
 								sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
@@ -755,17 +779,16 @@ namespace MaxDB.Data
 						case MaxDBType.StrUni:
 						case MaxDBType.VarCharUni:
 						case MaxDBType.LongUni:
-							if (param.objInputValue != null && param.objInputValue.ToString().Length == 0
-								&& dbConnection.SqlMode == SqlMode.Oracle)
-								// in ORACLE mode a null values will be inserted if the string value is equal to "" 
-								inputArgs[i] = null;
-							else
-							{
-								if (param.objInputValue.GetType() == typeof(char[]))
-									inputArgs[i] = FindColumnInfo(i).TransStringForInput(new string((char[])param.objInputValue));
-								else
-									inputArgs[i] = FindColumnInfo(i).TransStringForInput((string)param.objInputValue);
-							}
+                            if (param.objInputValue != null && param.objInputValue.ToString().Length == 0
+                                && dbConnection.SqlMode == SqlMode.Oracle)
+                            {
+                                // in ORACLE mode a null values will be inserted if the string value is equal to "" 
+                                inputArgs[i] = null;
+                            }
+                            else
+                            {
+                                inputArgs[i] = param.objInputValue.GetType() == typeof(char[]) ? FindColumnInfo(i).TransStringForInput(new string((char[])param.objInputValue)) : FindColumnInfo(i).TransStringForInput((string)param.objInputValue);
+                            }
 							break;
 						case MaxDBType.Date:
 						case MaxDBType.Timestamp:
@@ -773,9 +796,14 @@ namespace MaxDB.Data
 							break;
 						case MaxDBType.Time:
 							if (param.objInputValue is DateTime)
-								inputArgs[i] = FindColumnInfo(i).TransDateTimeForInput((DateTime)param.objInputValue);
+							{
+							    inputArgs[i] = FindColumnInfo(i).TransDateTimeForInput((DateTime)param.objInputValue);
+							}
 							else
-								inputArgs[i] = FindColumnInfo(i).TransTimeSpanForInput((TimeSpan)param.objInputValue);
+							{
+							    inputArgs[i] = FindColumnInfo(i).TransTimeSpanForInput((TimeSpan)param.objInputValue);
+							}
+
 							break;
 						case MaxDBType.Fixed:
 						case MaxDBType.Float:
@@ -790,10 +818,6 @@ namespace MaxDB.Data
 						case MaxDBType.SmallInt:
 							inputArgs[i] = FindColumnInfo(i).TransInt16ForInput((short)param.objInputValue);
 							break;
-						case MaxDBType.CharB:
-						case MaxDBType.StrB:
-						case MaxDBType.VarCharB:
-						case MaxDBType.LongB:
 						default:
 							inputArgs[i] = FindColumnInfo(i).TransBytesForInput((byte[])param.objInputValue);
 							break;
@@ -1152,7 +1176,9 @@ namespace MaxDB.Data
 			}
 
 			if (rowNotFound)
-				reader.Empty = true;
+			{
+			    reader.Empty = true;
+			}
 
 			return reader;
 		}
@@ -1161,10 +1187,14 @@ namespace MaxDB.Data
 		private MaxDBParseInfo DoParse(string sql, bool parseAgain)
 		{
 			if (sql == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLSTATEMENT_NULL), "42000");
+			{
+			    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLSTATEMENT_NULL), "42000");
+			}
 
 			if (mCmdType == CommandType.TableDirect)
-				throw new NotSupportedException(MaxDBMessages.Extract(MaxDBError.TABLEDIRECT_UNSUPPORTED));
+			{
+			    throw new NotSupportedException(MaxDBMessages.Extract(MaxDBError.TABLEDIRECT_UNSUPPORTED));
+			}
 
 			MaxDBReplyPacket replyPacket;
 			MaxDBParseInfo result = null;
@@ -1209,7 +1239,9 @@ namespace MaxDB.Data
 				}
 
 				if (!parseAgain)
-					result = new MaxDBParseInfo(dbConnection, sql, replyPacket.FuncCode);
+				{
+				    result = new MaxDBParseInfo(dbConnection, sql, replyPacket.FuncCode);
+				}
 
 				replyPacket.ClearPartOffset();
 				DBTechTranslator[] shortInfos = null;
@@ -1258,14 +1290,18 @@ namespace MaxDB.Data
 				}
 				result.SetShortInfosAndColumnNames(shortInfos, columnNames);
 				if (cache != null && !parseAgain)
-					cache.AddParseInfo(result);
+				{
+				    cache.AddParseInfo(result);
+				}
 			}
 			objInputArgs = new object[result.mParamInfos.Length];
 			ClearParameters();
 
 			//>>> SQL TRACE
 			if (dbConnection.mLogger.TraceSQL)
-				dbConnection.mLogger.SqlTraceParseInfo(DateTime.Now, result);
+			{
+			    dbConnection.mLogger.SqlTraceParseInfo(DateTime.Now, result);
+			}
 			//<<< SQL TRACE
 
 			result.dbConnection = dbConnection;
@@ -1302,7 +1338,7 @@ namespace MaxDB.Data
 			// get all putval objects
 			lstInputLongs = new
 #if NET20
- List<PutValue>();
+                List<PutValue>();
 #else
 				ArrayList();
 #endif
@@ -1339,7 +1375,7 @@ namespace MaxDB.Data
 		{
 			lstInputProcedureLongs = new
 #if NET20
- List<AbstractProcedurePutValue>();
+                List<AbstractProcedurePutValue>();
 #else
 				ArrayList();
 #endif
@@ -1365,10 +1401,15 @@ namespace MaxDB.Data
 		private MaxDBReplyPacket ProcessProcedureStreams(MaxDBReplyPacket packet)
 		{
 			if (packet.ExistsPart(PartKind.AbapIStream))
-				throw new NotSupportedException(MaxDBMessages.Extract(MaxDBError.OMS_UNSUPPORTED));
+			{
+			    throw new NotSupportedException(MaxDBMessages.Extract(MaxDBError.OMS_UNSUPPORTED));
+			}
 
 			foreach (AbstractProcedurePutValue pv in lstInputProcedureLongs)
-				pv.CloseStream();
+			{
+			    pv.CloseStream();
+			}
+
 			return packet;
 		}
 
@@ -1380,8 +1421,7 @@ namespace MaxDB.Data
 			PutValue lastStream = (PutValue)lstInputLongs[lstInputLongs.Count - 1];
 			MaxDBRequestPacket requestPacket;
 			DataPart dataPart;
-			int descriptorPos;
-			PutValue putval;
+		    PutValue putval;
 			short firstOpenStream = 0;
 			int count = lstInputLongs.Count;
 			bool requiresTrailingPacket = false;
@@ -1400,7 +1440,7 @@ namespace MaxDB.Data
 						firstOpenStream++;
 					else
 					{
-						descriptorPos = dataPart.Extent;
+						int descriptorPos = dataPart.Extent;
 						putval.PutDescriptor(dataPart, descriptorPos);
 						dataPart.AddArg(descriptorPos, LongDesc.Size + 1);
 						if (bCanceled)
@@ -1412,7 +1452,9 @@ namespace MaxDB.Data
 						{
 							putval.TransferStream(dataPart, i);
 							if (putval.AtEnd)
-								firstOpenStream++;
+							{
+							    firstOpenStream++;
+							}
 						}
 					}
 				}
@@ -1450,17 +1492,15 @@ namespace MaxDB.Data
 		private void GetChangedPutValueDescriptors(MaxDBReplyPacket replyPacket)
 		{
 			byte[][] descriptorArray = replyPacket.ParseLongDescriptors();
-			byte[] descriptor;
-			ByteArray descriptorPointer;
+		    ByteArray descriptorPointer;
 			PutValue putval;
-			int valIndex;
-			if (!replyPacket.ExistsPart(PartKind.LongData))
+		    if (!replyPacket.ExistsPart(PartKind.LongData))
 				return;
 			for (int i = 0; i < descriptorArray.Length; ++i)
 			{
-				descriptor = descriptorArray[i];
+				byte[] descriptor = descriptorArray[i];
 				descriptorPointer = new ByteArray(descriptor);
-				valIndex = descriptorPointer.ReadInt16(LongDesc.ValInd);
+				int valIndex = descriptorPointer.ReadInt16(LongDesc.ValInd);
 				putval = (PutValue)lstInputLongs[valIndex];
 				putval.SetDescriptor(descriptor);
 			}
@@ -1507,9 +1547,9 @@ namespace MaxDB.Data
 			{
 				bool isInput = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterMode(meta, i) == SQLDBC_ParameterMode.In;
 
-				foreach (MaxDBParameterCollection param_array in parameters)
+				foreach (MaxDBParameterCollection paramArray in parameters)
 				{
-					MaxDBParameter param = param_array[i - 1];
+					MaxDBParameter param = paramArray[i - 1];
 
 					int valLength = 0;
 
@@ -1883,13 +1923,13 @@ namespace MaxDB.Data
 							if ((isInput || isInputOutput) && param.objInputValue != DBNull.Value)
 							{
 								DateTime dt = (DateTime)param.objInputValue;
-								//ODBC date format
-								OdbcDate dt_odbc;
-								dt_odbc.year = (short)(dt.Year % 0x10000);
-								dt_odbc.month = (ushort)(dt.Month % 0x10000);
-								dt_odbc.day = (ushort)(dt.Day % 0x10000);
+								// ODBC date format
+								OdbcDate dtOdbc = new OdbcDate();
+								dtOdbc.year = (short)(dt.Year % 0x10000);
+								dtOdbc.month = (ushort)(dt.Month % 0x10000);
+								dtOdbc.day = (ushort)(dt.Day % 0x10000);
 
-								Marshal.StructureToPtr(dt_odbc, new IntPtr(bufferPtr + bufferOffset + paramOffset), false);
+								Marshal.StructureToPtr(dtOdbc, new IntPtr(bufferPtr + bufferOffset + paramOffset), false);
 							}
 
 							addrPtr[i * paramLen + k] = bufferPtr + bufferOffset + paramOffset;

@@ -19,12 +19,16 @@ using System;
 using System.Data;
 using System.IO;
 using MaxDB.Data.MaxDBProtocol;
+#if !SAFE
 using MaxDB.Data.Utilities;
+#endif
 using System.Runtime.Serialization;
 using System.Security.Permissions;
 using System.Globalization;
 using System.Data.Common;
+#if !SAFE
 using System.Runtime.InteropServices;
+#endif
 
 namespace MaxDB.Data
 {
@@ -36,7 +40,6 @@ namespace MaxDB.Data
 	internal class PartNotFoundException : Exception
 	{
 		public PartNotFoundException()
-			: base()
 		{
 		}
 
@@ -60,7 +63,6 @@ namespace MaxDB.Data
 	internal class MaxDBCommunicationException : DataException
 	{
 		public MaxDBCommunicationException()
-			: base()
 		{
 		}
 
@@ -142,12 +144,11 @@ namespace MaxDB.Data
 		DataException
 #endif // NET20
 	{
-		private int iErrorPosition = -10899;
-		private string strSqlState;
-		private int iErrorCode;
+		private readonly int iErrorPosition = -10899;
+		private readonly string strSqlState;
+		private readonly int iErrorCode;
 
 		internal MaxDBException()
-			: base()
 		{
 		}
 
@@ -319,7 +320,6 @@ namespace MaxDB.Data
 	internal class DatabaseException : MaxDBException
 	{
 		public DatabaseException()
-			: base()
 		{
 		}
 
@@ -353,7 +353,6 @@ namespace MaxDB.Data
 	internal class MaxDBConnectionException : MaxDBException
 	{
 		public MaxDBConnectionException()
-			: base()
 		{
 		}
 
@@ -401,8 +400,7 @@ namespace MaxDB.Data
 		}
 
 		public MaxDBTimeoutException(string message, Exception innerException)
-			:
-			base(message, innerException)
+			: base(message, innerException)
 		{
 		}
 
@@ -424,7 +422,6 @@ namespace MaxDB.Data
 	internal class MaxDBConversionException : MaxDBException
 	{
 		public MaxDBConversionException()
-			: base()
 		{
 		}
 
@@ -448,7 +445,6 @@ namespace MaxDB.Data
 	internal class MaxDBValueOverflowException : MaxDBException
 	{
 		public MaxDBValueOverflowException()
-			: base()
 		{
 		}
 
@@ -486,7 +482,6 @@ namespace MaxDB.Data
 		private DataException mSqlException;
 
 		public StreamIOException()
-			: base()
 		{
 		}
 
@@ -501,7 +496,6 @@ namespace MaxDB.Data
 		}
 
 		public StreamIOException(DataException sqlEx)
-			: base()
 		{
 			mSqlException = sqlEx;
 		}
@@ -535,7 +529,6 @@ namespace MaxDB.Data
 	internal class InvalidColumnException : DataException
 	{
 		public InvalidColumnException()
-			: base()
 		{
 		}
 
