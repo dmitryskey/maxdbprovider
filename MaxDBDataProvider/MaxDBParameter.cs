@@ -17,7 +17,6 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using MaxDB.Data.MaxDBProtocol;
 using System.Globalization;
 
 namespace MaxDB.Data
@@ -88,7 +87,7 @@ namespace MaxDB.Data
 				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
 
 			strParamName = parameterName;
-			dbType = _inferType(Type.GetTypeCode(value.GetType()));
+			dbType = InferType(Type.GetTypeCode(value.GetType()));
 			Value = value;
 		}
 
@@ -167,7 +166,7 @@ namespace MaxDB.Data
 			}
 		}
 
-		private static MaxDBType _inferType(TypeCode type)
+		private static MaxDBType InferType(TypeCode type)
 		{
 			switch (type)
 			{
