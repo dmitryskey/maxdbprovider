@@ -18,8 +18,6 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Threading;
-using System.ComponentModel;
 using System.Globalization;
 using System.Data;
 using MaxDB.Data.Utilities;
@@ -728,21 +726,18 @@ namespace MaxDB.Data.MaxDBProtocol
                     case DataType.VARCHARB:
                     case DataType.VARCHARE:
                     case DataType.VARCHARUNI:
-                        return result.TrimEnd();
+                        return result.TrimEnd(' ');
                     default:
                         return result;
                 }
             }
-            else
-                return null;
+            
+            return null;
         }
 
         public override object TransBytesForInput(byte[] val)
         {
-            if (val == null)
-                return null;
-            else
-                return TransStringForInput(AsciiEncoding.GetString(val));
+            return val == null ? null : TransStringForInput(AsciiEncoding.GetString(val));
         }
 
         public override object TransCharacterStreamForInput(Stream stream, int length)
@@ -843,13 +838,13 @@ namespace MaxDB.Data.MaxDBProtocol
                     case DataType.VARCHARB:
                     case DataType.VARCHARE:
                     case DataType.VARCHARUNI:
-                        return result.TrimEnd();
+                        return result.TrimEnd(' ');
                     default:
                         return result;
                 }
             }
-            else
-                return null;
+            
+            return null;
         }
 
         public override object GetValue(ISqlParameterController controller, ByteArray mem)
