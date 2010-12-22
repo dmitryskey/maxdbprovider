@@ -1,8 +1,8 @@
 <project name="MaxDBDataProvider" default="net" xmlns="http://nant.sf.net/schemas/nant-0.84.win32.net-1.0.xsd">
 	<description>ADO.NET Provider for MaxDB</description>
 
-	<property name="nunit-Net-1.1" value="C:\Program Files (x86)\NUnit 2.5.7\bin\net-1.1" />
-	<property name="nunit-Net-2.0" value="C:\Program Files (x86)\NUnit 2.5.7\bin\net-2.0" />
+	<property name="nunit-Net-1.1" value="C:\Program Files (x86)\NUnit 2.5.9\bin\net-1.1" />
+	<property name="nunit-Net-2.0" value="C:\Program Files (x86)\NUnit 2.5.9\bin\net-2.0" />
 	<property name="nunit-Mono-1.0" value="/usr/lib/mono/1.0" />
 	<property name="nunit-Mono-2.0" value="/usr/lib/mono/2.0" />
 	<property name="nunit-console-Mono-1.0" value="/root/Tests/1.0" />
@@ -41,6 +41,13 @@
 	<if test="${not property::exists('build.dir')}">
 		<property name="build.dir" value="."/>
 	</if>
+
+	<!-- builds the client on .Net Frameworks 1.1-->
+	<target name="net" depends="net-1.1 net-2.0">
+		<!--
+		<call target="Docs"/>
+		-->
+	</target>
 
 	<!-- builds the client on .Net Frameworks 1.1-->
 	<target name="net-1.1" depends="net-1.1-safe net-1.1-unsafe">
@@ -278,13 +285,13 @@
 		<!-- test 7.6 Unicode -->		
 		<echo message="Testing MaxDB 7.6 UNICODE"/>
 		<echo message="Starting database instance"/>
-		<exec program="dbmcli" commandline="-n ${MaxDB-7.6} -d ${UnicodeDB} -u dba,dba db_online" failonerror="true"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.6} -d ${UnicodeDB} -u DBM,DBM db_online" failonerror="true"/>
 		<property name="config" value="MaxDB_76_UNICODE"/>
 
 		<call target="${test-target}"/>
 
 		<echo message="Stopping database instance"/>
-		<exec program="dbmcli" commandline="-n ${MaxDB-7.6} -d ${UnicodeDB} -u dba,dba db_stop" failonerror="true"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.6} -d ${UnicodeDB} -u DBM,DBM db_stop" failonerror="true"/>
 	</target>
 
 	<target name="test-7.6-ascii">
@@ -293,13 +300,13 @@
 		<!-- test 7.6 ASCII -->		
 		<echo message="Testing MaxDB 7.6 ASCII"/>
 		<echo message="Starting database instance"/>
-		<exec program="dbmcli" commandline="-n ${MaxDB-7.6} -d ${AsciiDB} -u dba,dba db_online" failonerror="true"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.6} -d ${AsciiDB} -u DBM,DBM db_online" failonerror="true"/>
 		<property name="config" value="MaxDB_76"/>
 
 		<call target="${test-target}"/>
 
 		<echo message="Stopping database instance"/>
-		<exec program="dbmcli" commandline="-n ${MaxDB-7.6} -d ${AsciiDB} -u dba,dba db_stop" failonerror="true"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.6} -d ${AsciiDB} -u DBM,DBM db_stop" failonerror="true"/>
 	</target>
 
 	<target name="test-7.5-unicode">
@@ -308,13 +315,13 @@
 		<!-- test 7.5 Unicode -->		
 		<echo message="Testing MaxDB 7.5 UNICODE"/>
 		<echo message="Starting database instance"/>
-		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${UnicodeDB} -u dba,dba db_online" failonerror="true"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${UnicodeDB} -u DBM,DBM db_online" failonerror="true"/>
 		<property name="config" value="MaxDB_75_UNICODE"/>
 
 		<call target="${test-target}"/>
 
 		<echo message="Stopping database instance"/>
-		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${UnicodeDB} -u dba,dba db_stop" failonerror="true"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${UnicodeDB} -u DBM,DBM db_stop" failonerror="true"/>
 	</target>
 
 	<target name="test-7.5-ascii">
@@ -323,13 +330,13 @@
 		<!-- test 7.5 ASCII -->		
 		<echo message="Testing MaxDB 7.5 ASCII"/>
 		<echo message="Starting database instance"/>
-		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${AsciiDB} -u dba,dba db_online" failonerror="true"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${AsciiDB} -u DBM,DBM db_online" failonerror="true"/>
 		<property name="config" value="MaxDB_75"/>
 
 		<call target="${test-target}"/>
 
 		<echo message="Stopping database instance"/>
-		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${AsciiDB} -u dba,dba db_stop" failonerror="true"/>
+		<exec program="dbmcli" commandline="-n ${MaxDB-7.5} -d ${AsciiDB} -u DBM,DBM db_stop" failonerror="true"/>
 	</target>
 
 	<target name="tests-net">

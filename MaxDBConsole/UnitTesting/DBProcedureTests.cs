@@ -15,8 +15,6 @@
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 using System;
-using System.Collections;
-using System.Text;
 using System.Data;
 using NUnit.Framework;
 using MaxDB.Data;
@@ -29,7 +27,7 @@ namespace MaxDB.UnitTesting
 		[TestFixtureSetUp]
 		public void SetUp()
 		{
-			Init("CREATE TABLE Test (id int NOT NULL, name VARCHAR(100))");
+            Init("CREATE TABLE Test (id int NOT NULL, name VARCHAR(100))");
 		}
 
 		[TestFixtureTearDown]
@@ -45,13 +43,16 @@ namespace MaxDB.UnitTesting
 			{
 				DropDbProcedure("spTest");
 
+                string mSchema = (new MaxDBConnectionStringBuilder(mconn.ConnectionString)).UserId;
+
 				ExecuteNonQuery("CREATE DBPROC spTest(IN val decimal(10,3)) " +
 								"RETURNS CURSOR AS " +
 								"$CURSOR = 'TEST_CURSOR'; " +
 								"DECLARE :$CURSOR CURSOR FOR " +
-								"SELECT :val, :val*1000 FROM dba.dual;");
+								"SELECT :val, :val*1000 FROM " + mSchema + ".DUAL;");
 
 				ClearTestTable();
+
 				//setup testing data
 				using (MaxDBCommand cmd = new MaxDBCommand("CALL spTest(:val)", mconn))
 				{
@@ -98,9 +99,9 @@ namespace MaxDB.UnitTesting
 			{
 				DropDbProcedure("spTest");
 
-				MaxDBConnectionStringBuilder builder = new MaxDBConnectionStringBuilder(mconn.ConnectionString);
+                string mSchema = (new MaxDBConnectionStringBuilder(mconn.ConnectionString)).UserId;
 
-				ExecuteNonQuery("CREATE DBPROC spTest(IN val INTEGER) AS INSERT INTO " + builder.UserId + ".Test VALUES(:val, 'Test');");
+				ExecuteNonQuery("CREATE DBPROC spTest(IN val INTEGER) AS INSERT INTO " + mSchema + ".Test VALUES(:val, 'Test');");
 
 				ClearTestTable();
 				//setup testing data

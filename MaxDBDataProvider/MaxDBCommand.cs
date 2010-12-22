@@ -215,7 +215,7 @@ namespace MaxDB.Data
 				iRowsAffected = -1;
 
 				//>>> SQL TRACE
-				if (dbConnection.mLogger.TraceSQL)
+                if (dbConnection.mLogger.TraceSQL && mParseInfo != null)
 				{
 					dbConnection.mLogger.SqlTrace(dt, "PARSE ID: 0x" + Consts.ToHexString(mParseInfo.ParseID));
 					dbConnection.mLogger.SqlTrace(dt, "SQL COMMAND: " + mParseInfo.SqlCommand);
@@ -223,7 +223,9 @@ namespace MaxDB.Data
 				//<<< SQL TRACE
 
                 if (mParseInfo == null || mParseInfo.MassParseID == null)
-					ParseMassCmd(false);
+                {
+                    ParseMassCmd(false);
+                }
 
                 if (mParseInfo != null && mParseInfo.mParamInfos.Length > 0)
 				{
@@ -244,16 +246,23 @@ namespace MaxDB.Data
 					requestPacket = dbConnection.mComm.GetRequestPacket();
 					requestPacket.InitExecute(mParseInfo.MassParseID, dbConnection.AutoCommit);
 					if (executeCount == -1)
-						requestPacket.AddUndefinedResultCount();
+					{
+					    requestPacket.AddUndefinedResultCount();
+					}
 					else
-						requestPacket.AddResultCount(executeCount);
+					{
+					    requestPacket.AddResultCount(executeCount);
+					}
+
 					requestPacket.AddCursorPart(strCursorName);
 					DataPart dataPart;
 					if (mParseInfo.mParamInfos.Length > 0)
 					{
 						dataPart = requestPacket.NewDataPart(mParseInfo.bVarDataInput);
 						if (executeCount == -1)
-							dataPart.SetFirstPart();
+						{
+						    dataPart.SetFirstPart();
+						}
 
 						do
 						{
@@ -266,23 +275,29 @@ namespace MaxDB.Data
 								DBTechTranslator transl = mParseInfo.mParamInfos[i];
 
 								if (transl.IsInput && row[i] != null && strInitialParamValue == row[i].ToString())
-									throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BATCHMISSINGIN,
+                                {
+                                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BATCHMISSINGIN,
 																		 (inputCursor + 1).ToString(CultureInfo.InvariantCulture),
 																		 (i + 1).ToString(CultureInfo.InvariantCulture)),
 																		 "0200");
+                                }
 
 								transl.Put(dataPart, row[i]);
 							}
+
 							if (mParseInfo.HasLongs)
 							{
 								HandleStreamsForExecute(dataPart, row);
 								if (streamVec == null)
-									streamVec = new List<PutValue>(lstInputLongs);
-
+								{
+								    streamVec = new List<PutValue>(lstInputLongs);
+								}
 							}
+
 							dataPart.MoveRecordBase();
 							inputCursor++;
-						} while ((inputCursor < count) && dataPart.HasRoomFor(recordSize, insertCountPartSize) && mParseInfo.IsMassCmd);
+						} 
+                        while ((inputCursor < count) && dataPart.HasRoomFor(recordSize, insertCountPartSize) && mParseInfo.IsMassCmd);
 
 						if (inputCursor == count)
 							dataPart.SetLastPart();
@@ -307,33 +322,45 @@ namespace MaxDB.Data
 							inputCursor = firstRecordNo;
 							continue;   // redo this packet
 						}
-						else
-						{
-							// An autocommit session does roll back automatically all what was
-							// in this package. Thus, in case of an error we must not
-							// add the current count from the packet.
-							if (!dbConnection.AutoCommit)
-							{
-								if (iRowsAffected > 0)
-									iRowsAffected += ex.ErrorPos - 1;
-								else
-									iRowsAffected = ex.ErrorPos - 1;
-							}
-							throw;
-						}
+
+					    // An autocommit session does roll back automatically all what was
+					    // in this package. Thus, in case of an error we must not
+					    // add the current count from the packet.
+					    if (!dbConnection.AutoCommit)
+					    {
+					        if (iRowsAffected > 0)
+					        {
+					            iRowsAffected += ex.ErrorPos - 1;
+					        }
+					        else
+					        {
+					            iRowsAffected = ex.ErrorPos - 1;
+					        }
+					    }
+
+					    throw;
 					}
 					executeCount = replyPacket.ResultCount(false);
 					if (mParseInfo.HasLongs)
-						HandleStreamsForPutValue(replyPacket);
+					{
+					    HandleStreamsForPutValue(replyPacket);
+					}
+
 					if (mParseInfo.IsMassCmd && executeCount != -1)
 					{
 						if (iRowsAffected > 0)
-							iRowsAffected += executeCount;
+						{
+						    iRowsAffected += executeCount;
+						}
 						else
-							iRowsAffected = executeCount;
+						{
+						    iRowsAffected = executeCount;
+						}
 					}
 					else
-						iRowsAffected = executeCount;
+					{
+					    iRowsAffected = executeCount;
+					}
 				}
 				return result;
 
@@ -341,7 +368,9 @@ namespace MaxDB.Data
 			catch (MaxDBTimeoutException)
 			{
 				if (inTrans)
-					throw;
+				{
+				    throw;
+				}
 				else
 				{
 					ResetPutValues(streamVec);
@@ -426,10 +455,9 @@ namespace MaxDB.Data
 				dbConnection.mLogger.SqlTrace(dt, "::EXECUTE " + strCursorName);
 			//<<< SQL TRACE
 
-			MaxDBRequestPacket requestPacket = null;
+			MaxDBRequestPacket requestPacket;
 			MaxDBReplyPacket replyPacket;
-			bool isQuery;
-			DataPart dataPart;
+		    DataPart dataPart;
 
 			// if this is one of the statements that is executed during parse instead of execution, execute it by doing a reparse
 			if (mParseInfo.IsAlreadyExecuted)
@@ -515,7 +543,9 @@ namespace MaxDB.Data
 					{
 						//>>> SQL TRACE
 						if (dbConnection.mLogger.TraceSQL)
-							dbConnection.mLogger.SqlTrace(dt, "PARSE AGAIN");
+						{
+						    dbConnection.mLogger.SqlTrace(dt, "PARSE AGAIN");
+						}
 						//<<< SQL TRACE
 						ResetPutValues(lstInputLongs);
 						Reparse();
@@ -529,18 +559,27 @@ namespace MaxDB.Data
 				}
 
 				// --- now it becomes difficult ...
-				if (mParseInfo.IsSelect)
-					isQuery = ParseResult(replyPacket, mParseInfo.ColumnInfo, mParseInfo.strColumnNames, behavior);
+			    bool isQuery;
+			    if (mParseInfo.IsSelect)
+			    {
+			        isQuery = ParseResult(replyPacket, mParseInfo.ColumnInfo, mParseInfo.strColumnNames, behavior);
+			    }
 				else
 				{
 					if (lstInputProcedureLongs != null)
-						replyPacket = ProcessProcedureStreams(replyPacket);
+					{
+					    replyPacket = ProcessProcedureStreams(replyPacket);
+					}
 					isQuery = ParseResult(replyPacket, mParseInfo.ColumnInfo, mParseInfo.strColumnNames, behavior);
 					int returnCode = replyPacket.ReturnCode;
 					if (replyPacket.ExistsPart(PartKind.Data))
-						baReplyMemory = replyPacket.Clone(replyPacket.PartDataPos);
+					{
+					    baReplyMemory = replyPacket.Clone(replyPacket.PartDataPos);
+					}
 					if ((mParseInfo.HasLongs && !mParseInfo.IsDBProc) && (returnCode == 0))
-						HandleStreamsForPutValue(replyPacket);
+					{
+					    HandleStreamsForPutValue(replyPacket);
+					}
 				}
 
 				FillOutputParameters(replyPacket, ref dbParameters);
@@ -550,7 +589,9 @@ namespace MaxDB.Data
 			catch (MaxDBTimeoutException)
 			{
 				if (dbConnection.mComm.IsInTransaction)
-					throw;
+				{
+				    throw;
+				}
 				else
 				{
 					ResetPutValues(lstInputLongs);
@@ -583,7 +624,9 @@ namespace MaxDB.Data
 				MaxDBParameter param = cmdParams[i];
 
 				if (!FindColumnInfo(i).IsInput)
-					continue;
+				{
+				    continue;
+				}
 
 				//>>> SQL TRACE
 				if (dbConnection.mLogger.TraceSQL)
@@ -603,7 +646,10 @@ namespace MaxDB.Data
 								sbOut.Append(((bool)param.objInputValue).ToString(CultureInfo.InvariantCulture));
 							}
 							else
-								sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							{
+							    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							}
+
 							break;
 						case MaxDBType.CharA:
 						case MaxDBType.StrA:
@@ -684,7 +730,10 @@ namespace MaxDB.Data
 								sbOut.Append(((DateTime)param.objInputValue).ToString(CultureInfo.InvariantCulture));
 							}
 							else
-								sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							{
+							    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							}
+
 							break;
 						case MaxDBType.Time:
 							sbOut.Append(mParseInfo.ParamInfo[i].PhysicalLength.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
@@ -704,7 +753,10 @@ namespace MaxDB.Data
 								}
 							}
 							else
-								sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							{
+							    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							}
+
 							break;
 						case MaxDBType.Fixed:
 						case MaxDBType.Float:
@@ -718,7 +770,10 @@ namespace MaxDB.Data
 								sbOut.Append(((double)param.objInputValue).ToString(CultureInfo.InvariantCulture));
 							}
 							else
-								sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							{
+							    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							}
+
 							break;
 						case MaxDBType.Integer:
 							sbOut.Append(mParseInfo.ParamInfo[i].PhysicalLength.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
@@ -728,7 +783,10 @@ namespace MaxDB.Data
 								sbOut.Append(((int)param.objInputValue).ToString(CultureInfo.InvariantCulture));
 							}
 							else
-								sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							{
+							    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							}
+
 							break;
 						case MaxDBType.SmallInt:
 							sbOut.Append(mParseInfo.ParamInfo[i].PhysicalLength.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
@@ -738,7 +796,10 @@ namespace MaxDB.Data
 								sbOut.Append(((short)param.objInputValue).ToString(CultureInfo.InvariantCulture));
 							}
 							else
-								sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							{
+							    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							}
+
 							break;
 						default:
 							sbOut.Append(mParseInfo.ParamInfo[i].PhysicalLength.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
@@ -747,12 +808,19 @@ namespace MaxDB.Data
 								byte[] byteValue = (byte[])param.objInputValue;
 								sbOut.Append(byteValue.Length.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
 								if (byteValue.Length > MaxDBLogger.DataSize / 2)
-									sbOut.Append("0X" + Consts.ToHexString(byteValue, MaxDBLogger.DataSize / 2)).Append("...");
+								{
+								    sbOut.Append("0X" + Consts.ToHexString(byteValue, MaxDBLogger.DataSize / 2)).Append("...");
+								}
 								else
-									sbOut.Append("0X" + Consts.ToHexString(byteValue));
+								{
+								    sbOut.Append("0X" + Consts.ToHexString(byteValue));
+								}
 							}
 							else
-								sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							{
+							    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+							}
+
 							break;
 					}
 
@@ -847,7 +915,9 @@ namespace MaxDB.Data
 				{
 					MaxDBParameter param = cmd_params[i];
 					if (!FindColumnInfo(i).IsOutput)
-						continue;
+					{
+					    continue;
+					}
 
 					if (FindColumnInfo(i).IsDBNull(baReplyMemory))
 					{
@@ -892,10 +962,6 @@ namespace MaxDB.Data
 						case MaxDBType.SmallInt:
 							param.objValue = FindColumnInfo(i).GetInt16(baReplyMemory);
 							break;
-						case MaxDBType.CharB:
-						case MaxDBType.StrB:
-						case MaxDBType.VarCharB:
-						case MaxDBType.LongB:
 						default:
 							param.objValue = FindColumnInfo(i).GetBytes(this, baReplyMemory);
 							break;
@@ -918,7 +984,10 @@ namespace MaxDB.Data
 									sbOut.Append(((bool)param.objValue).ToString(CultureInfo.InvariantCulture));
 								}
 								else
-									sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								{
+								    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								}
+
 								break;
 							case MaxDBType.CharA:
 							case MaxDBType.StrA:
@@ -931,15 +1000,22 @@ namespace MaxDB.Data
 								sbOut.Append((mParseInfo.ParamInfo[i].PhysicalLength - 1).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
 								if (param.objValue != null)
 								{
-									string str_value = (string)param.objValue;
-									sbOut.Append(str_value.Length.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
-									if (str_value.Length > MaxDBLogger.DataSize)
-										sbOut.Append(str_value.Substring(0, MaxDBLogger.DataSize)).Append("...");
+									string strValue = (string)param.objValue;
+									sbOut.Append(strValue.Length.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
+									if (strValue.Length > MaxDBLogger.DataSize)
+									{
+									    sbOut.Append(strValue.Substring(0, MaxDBLogger.DataSize)).Append("...");
+									}
 									else
-										sbOut.Append(str_value);
+									{
+									    sbOut.Append(strValue);
+									}
 								}
 								else
-									sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								{
+								    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								}
+
 								break;
 							case MaxDBType.Unicode:
 							case MaxDBType.StrUni:
@@ -948,15 +1024,22 @@ namespace MaxDB.Data
 								sbOut.Append((mParseInfo.ParamInfo[i].PhysicalLength - 1).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
 								if (param.objValue != null)
 								{
-									string str_value = (string)param.objValue;
-									sbOut.Append((str_value.Length * Consts.UnicodeWidth).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
-									if (str_value.Length > MaxDBLogger.DataSize)
-										sbOut.Append(str_value.Substring(0, MaxDBLogger.DataSize)).Append("...");
+									string strValue = (string)param.objValue;
+									sbOut.Append((strValue.Length * Consts.UnicodeWidth).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
+									if (strValue.Length > MaxDBLogger.DataSize)
+									{
+									    sbOut.Append(strValue.Substring(0, MaxDBLogger.DataSize)).Append("...");
+									}
 									else
-										sbOut.Append(str_value);
+									{
+									    sbOut.Append(strValue);
+									}
 								}
 								else
-									sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								{
+								    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								}
+
 								break;
 							case MaxDBType.Date:
 							case MaxDBType.Timestamp:
@@ -968,7 +1051,10 @@ namespace MaxDB.Data
 									sbOut.Append(((DateTime)param.objValue).ToString(CultureInfo.InvariantCulture));
 								}
 								else
-									sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								{
+								    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								}
+
 								break;
 							case MaxDBType.Time:
 								sbOut.Append(mParseInfo.ParamInfo[i].PhysicalLength.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
@@ -977,12 +1063,19 @@ namespace MaxDB.Data
 									sbOut.Append(FindColumnInfo(i).GetBytes(this, baReplyMemory).Length.ToString(
 										CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
 									if (param.objValue is DateTime)
-										sbOut.Append(((DateTime)param.objValue).ToString(CultureInfo.InvariantCulture));
+									{
+									    sbOut.Append(((DateTime)param.objValue).ToString(CultureInfo.InvariantCulture));
+									}
 									else
-										sbOut.Append(((TimeSpan)param.objValue).ToString());
+									{
+									    sbOut.Append(((TimeSpan)param.objValue).ToString());
+									}
 								}
 								else
-									sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								{
+								    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								}
+
 								break;
 							case MaxDBType.Fixed:
 							case MaxDBType.Float:
@@ -996,7 +1089,10 @@ namespace MaxDB.Data
 									sbOut.Append(((double)param.objValue).ToString(CultureInfo.InvariantCulture));
 								}
 								else
-									sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								{
+								    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								}
+
 								break;
 							case MaxDBType.Integer:
 								sbOut.Append(mParseInfo.ParamInfo[i].PhysicalLength.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
@@ -1006,7 +1102,10 @@ namespace MaxDB.Data
 									sbOut.Append(((int)param.objValue).ToString(CultureInfo.InvariantCulture));
 								}
 								else
-									sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								{
+								    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								}
+
 								break;
 							case MaxDBType.SmallInt:
 								sbOut.Append(mParseInfo.ParamInfo[i].PhysicalLength.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
@@ -1016,25 +1115,31 @@ namespace MaxDB.Data
 									sbOut.Append(((short)param.objValue).ToString(CultureInfo.InvariantCulture));
 								}
 								else
-									sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								{
+								    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								}
+
 								break;
-							case MaxDBType.CharB:
-							case MaxDBType.StrB:
-							case MaxDBType.VarCharB:
-							case MaxDBType.LongB:
 							default:
 								sbOut.Append(mParseInfo.ParamInfo[i].PhysicalLength.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
 								if (param.objValue != null)
 								{
-									byte[] byte_value = (byte[])param.objValue;
-									sbOut.Append(byte_value.Length.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
-									if (byte_value.Length > MaxDBLogger.DataSize / 2)
-										sbOut.Append("0X" + Consts.ToHexString(byte_value, MaxDBLogger.DataSize / 2)).Append("...");
+									byte[] byteValue = (byte[])param.objValue;
+									sbOut.Append(byteValue.Length.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
+									if (byteValue.Length > MaxDBLogger.DataSize / 2)
+									{
+									    sbOut.Append("0X" + Consts.ToHexString(byteValue, MaxDBLogger.DataSize / 2)).Append("...");
+									}
 									else
-										sbOut.Append("0X" + Consts.ToHexString(byte_value));
+									{
+									    sbOut.Append("0X" + Consts.ToHexString(byteValue));
+									}
 								}
 								else
-									sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								{
+								    sbOut.Append(MaxDBLogger.Null.PadRight(MaxDBLogger.InputSize));
+								}
+
 								break;
 						}
 
@@ -1048,13 +1153,12 @@ namespace MaxDB.Data
 
 		private bool ParseResult(MaxDBReplyPacket replyPacket, DBTechTranslator[] infos, string[] columnNames, CommandBehavior behavior)
 		{
-			bool isQuery;
-			bool rowNotFound = false;
+		    bool rowNotFound = false;
 			bool dataPartFound = false;
 
 			iRowsAffected = -1;
 			bHasRowCount = false;
-			isQuery = FunctionCode.IsQuery(replyPacket.FuncCode);
+			bool isQuery = FunctionCode.IsQuery(replyPacket.FuncCode);
 
 			DateTime dt = DateTime.Now;
 
@@ -1066,15 +1170,24 @@ namespace MaxDB.Data
 				{
 					case PartKind.ColumnNames:
 						if (columnNames == null)
-							columnNames = replyPacket.ParseColumnNames();
+						{
+						    columnNames = replyPacket.ParseColumnNames();
+						}
+
 						break;
 					case PartKind.ShortInfo:
 						if (infos == null)
-							infos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, false);
+						{
+						    infos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, false);
+						}
+
 						break;
 					case PartKind.VardataShortInfo:
 						if (infos == null)
-							infos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, true);
+						{
+						    infos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, true);
+						}
+
 						break;
 					case PartKind.ResultCount:
 						// only if this is not a query
@@ -1084,14 +1197,19 @@ namespace MaxDB.Data
 							bHasRowCount = true;
 							//>>> SQL TRACE
 							if (dbConnection.mLogger.TraceSQL)
-								dbConnection.mLogger.SqlTrace(dt, "RESULT COUNT: " + iRowsAffected.ToString(CultureInfo.InvariantCulture));
+							{
+							    dbConnection.mLogger.SqlTrace(dt, "RESULT COUNT: " + iRowsAffected.ToString(CultureInfo.InvariantCulture));
+							}
 							//<<< SQL TRACE
 						}
 						break;
 					case PartKind.ResultTableName:
 						string cname = replyPacket.ReadString(replyPacket.PartDataPos, replyPacket.PartLength);
 						if (cname.Length > 0)
-							strCursorName = cname;
+						{
+						    strCursorName = cname;
+						}
+
 						break;
 					case PartKind.Data:
 						dataPartFound = true;
@@ -1101,11 +1219,16 @@ namespace MaxDB.Data
 						{
 							//>>> SQL TRACE
 							if (dbConnection.mLogger.TraceSQL)
-								dbConnection.mLogger.SqlTrace(dt, "*** ROW NOT FOUND ***");
+							{
+							    dbConnection.mLogger.SqlTrace(dt, "*** ROW NOT FOUND ***");
+							}
 							//<<< SQL TRACE
 							iRowsAffected = -1;
 							rowNotFound = true;
-							if (!isQuery) iRowsAffected = 0;// for any select update count must be -1
+							if (!isQuery) 
+                            {
+                                iRowsAffected = 0;// for any select update count must be -1
+                            }
 						}
 						break;
 					case PartKind.ParsidOfSelect:
@@ -1129,15 +1252,24 @@ namespace MaxDB.Data
 						{
 							case PartKind.ColumnNames:
 								if (columnNames == null)
-									columnNames = replyPacket.ParseColumnNames();
+								{
+								    columnNames = replyPacket.ParseColumnNames();
+								}
+
 								break;
 							case PartKind.ShortInfo:
 								if (infos == null)
-									infos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, false);
+								{
+								    infos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, false);
+								}
+
 								break;
 							case PartKind.VardataShortInfo:
 								if (infos == null)
-									infos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, true);
+								{
+								    infos = replyPacket.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, true);
+								}
+
 								break;
 							case PartKind.ErrorText:
 								newSFI = false;
@@ -1148,7 +1280,9 @@ namespace MaxDB.Data
 					}
 
 					if (newSFI)
-						mParseInfo.SetMetaData(infos, columnNames);
+					{
+					    mParseInfo.SetMetaData(infos, columnNames);
+					}
 				}
 
 				mCurrentDataReader = CreateDataReader(infos, columnNames, rowNotFound, behavior, dataPartFound ? replyPacket : null);
@@ -1213,7 +1347,9 @@ namespace MaxDB.Data
 				result = cache.FindParseInfo(sql);
 				//>>> SQL TRACE
 				if (dbConnection.mLogger.TraceSQL && result != null)
-					dbConnection.mLogger.SqlTrace(DateTime.Now, "CACHED PARSE ID: 0x" + Consts.ToHexString(result.ParseID));
+				{
+				    dbConnection.mLogger.SqlTrace(DateTime.Now, "CACHED PARSE ID: 0x" + Consts.ToHexString(result.ParseID));
+				}
 				//<<< SQL TRACE
 			}
 
@@ -1256,7 +1392,9 @@ namespace MaxDB.Data
 								replyPacket.Clone(replyPacket.Offset, false).ReadInt32(parseidPos));//session id is always BigEndian number
 							//>>> SQL TRACE
 							if (dbConnection.mLogger.TraceSQL)
-								dbConnection.mLogger.SqlTrace(dt, "PARSE ID: 0x" + Consts.ToHexString(result.ParseID));
+							{
+							    dbConnection.mLogger.SqlTrace(dt, "PARSE ID: 0x" + Consts.ToHexString(result.ParseID));
+							}
 							//<<< SQL TRACE
 							break;
 						case PartKind.ShortInfo:
@@ -1275,7 +1413,9 @@ namespace MaxDB.Data
 							{
 								strCursorName = replyPacket.ReadString(replyPacket.PartDataPos, cursorLength).TrimEnd('\0');
 								if (strCursorName.Length == 0)
-									result.IsSelect = false;
+								{
+								    result.IsSelect = false;
+								}
 							}
 							break;
 						case PartKind.TableName:
@@ -1288,8 +1428,10 @@ namespace MaxDB.Data
 							break;
 					}
 				}
-				result.SetShortInfosAndColumnNames(shortInfos, columnNames);
-				if (cache != null && !parseAgain)
+				
+                result.SetShortInfosAndColumnNames(shortInfos, columnNames);
+				
+                if (cache != null && !parseAgain)
 				{
 				    cache.AddParseInfo(result);
 				}
@@ -1316,21 +1458,29 @@ namespace MaxDB.Data
 			requestPacket.SetMassCommand();
 			MaxDBReplyPacket replyPacket = dbConnection.mComm.Execute(dbConnection.mConnArgs, requestPacket, this, GCMode.GC_ALLOWED);
 			if (replyPacket.ExistsPart(PartKind.ParseId))
-				mParseInfo.MassParseID = replyPacket.ReadBytes(replyPacket.PartDataPos, 12);
+			{
+			    mParseInfo.MassParseID = replyPacket.ReadBytes(replyPacket.PartDataPos, 12);
+			}
 		}
 #endif // NET20 && SAFE
 
 		private void ClearParameters()
 		{
 			for (int i = 0; i < objInputArgs.Length; ++i)
-				objInputArgs[i] = strInitialParamValue;
+			{
+			    objInputArgs[i] = strInitialParamValue;
+			}
 		}
 
 		private static void ResetPutValues(IList inpLongs)
 		{
 			if (inpLongs != null)
-				foreach (PutValue putval in inpLongs)
-					putval.Reset();
+            {
+                foreach (PutValue putval in inpLongs)
+				{
+				    putval.Reset();
+				}
+            }
 		}
 
 		private void HandleStreamsForExecute(DataPart dataPart, object[] args)
@@ -1346,7 +1496,9 @@ namespace MaxDB.Data
 			{
 				object inarg = args[i];
 				if (inarg == null)
-					continue;
+				{
+				    continue;
+				}
 
 				try
 				{
@@ -1359,14 +1511,19 @@ namespace MaxDB.Data
 			}
 
 			if (lstInputLongs.Count > 1)
-				lstInputLongs.Sort(mPutValueComparator);
+			{
+			    lstInputLongs.Sort(mPutValueComparator);
+			}
 
 			// write data (and patch descriptor)
 			for (short i = 0; i < lstInputLongs.Count; i++)
 			{
 				PutValue putval = (PutValue)lstInputLongs[i];
 				if (putval.AtEnd)
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STREAM_ISATEND));
+				{
+				    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STREAM_ISATEND));
+				}
+
 				putval.TransferStream(dataPart, i);
 			}
 		}
@@ -1383,7 +1540,9 @@ namespace MaxDB.Data
 			{
 				object arg = objInputArgs[i];
 				if (arg == null)
-					continue;
+				{
+				    continue;
+				}
 
 				try
 				{
@@ -1416,7 +1575,9 @@ namespace MaxDB.Data
 		private void HandleStreamsForPutValue(MaxDBReplyPacket replyPacket)
 		{
 			if (lstInputLongs.Count == 0)
-				return;
+			{
+			    return;
+			}
 
 			PutValue lastStream = (PutValue)lstInputLongs[lstInputLongs.Count - 1];
 			MaxDBRequestPacket requestPacket;
@@ -2604,13 +2765,12 @@ namespace MaxDB.Data
 			Prepare();
 #if SAFE
 			if (mParseInfo != null && mParseInfo.IsSelect)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLSTATEMENT_RESULTSET));
+			{
+			    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLSTATEMENT_RESULTSET));
+			}
 
 			Execute(CommandBehavior.Default);
-			if (bHasRowCount)
-				return iRowsAffected;
-			else
-				return -1;
+		    return bHasRowCount ? iRowsAffected : -1;
 #else
 			BindAndExecute(mStmt, new MaxDBParameterCollection[1] { dbParameters });
 
@@ -2689,14 +2849,16 @@ namespace MaxDB.Data
 			if (mParseInfo.IsSelect)
 			{
 				if (mCurrentDataReader == null)
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLCOMMAND_NORESULTSET));
+				{
+				    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLCOMMAND_NORESULTSET));
+				}
 
 				mCurrentDataReader.bCloseConn = ((behavior & CommandBehavior.CloseConnection) != 0);
 				mCurrentDataReader.bSchemaOnly = ((behavior & CommandBehavior.SchemaOnly) != 0);
 				return mCurrentDataReader;
 			}
-			else
-				return new MaxDBDataReader(this);
+
+		    return new MaxDBDataReader(this);
 #else
 			if ((behavior & CommandBehavior.SingleRow) != 0 || (behavior & CommandBehavior.SchemaOnly) != 0)
 				UnsafeNativeMethods.SQLDBC_Statement_setMaxRows(mStmt, 1);
@@ -2747,9 +2909,11 @@ namespace MaxDB.Data
 		{
 			IDataReader result = ExecuteReader(CommandBehavior.SingleResult);
 			if (result.FieldCount > 0 && result.Read())
-				return result.GetValue(0);
-			else
-				return null;
+			{
+			    return result.GetValue(0);
+			}
+
+		    return null;
 		}
 
 #if NET20
@@ -2841,6 +3005,8 @@ namespace MaxDB.Data
 
 		/// <summary>
 		/// Gets or sets the <see cref="MaxDBTransaction"/> within which the <b>MaxDBCommand</b> executes.
+        /// Consider additional steps to ensure that the transaction
+        /// is compatible with the connection, because the two are usually linked.
 		/// </summary>
 #if NET20
 		public new MaxDBTransaction Transaction
@@ -2848,10 +3014,6 @@ namespace MaxDB.Data
 		public MaxDBTransaction Transaction
 #endif // NET20
 		{
-			/*
-			 * Set the transaction. Consider additional steps to ensure that the transaction
-			 * is compatible with the connection, because the two are usually linked.
-			 */
 			get
 			{
 				return dbTransaction;

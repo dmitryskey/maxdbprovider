@@ -17,7 +17,6 @@
 using System;
 using MaxDB.Data;
 using NUnit.Framework;
-using System.Configuration;
 using System.IO;
 using System.Diagnostics;
 using System.Collections.Specialized;
@@ -30,7 +29,7 @@ namespace MaxDB.UnitTesting
 	public class BaseTest
 	{
 		protected MaxDBConnection mconn;
-		protected StreamWriter msw = null;
+		protected StreamWriter msw;
 		protected NameValueCollection mAppSettings =
 #if NET20
 			System.Configuration.ConfigurationManager.AppSettings;
@@ -107,7 +106,10 @@ namespace MaxDB.UnitTesting
 			}
 			catch (MaxDBException ex)
 			{
-				if (ex.ErrorCode != -4016) Assert.Fail(ex.Message);
+				if (ex.ErrorCode != -4016)
+				{
+				    Assert.Fail(ex.Message);
+				}
 			}
 		}
 

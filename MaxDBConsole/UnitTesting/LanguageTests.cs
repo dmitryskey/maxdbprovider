@@ -16,8 +16,6 @@
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 using System;
-using System.Data;
-using System.IO;
 using System.Globalization;
 using System.Threading;
 using NUnit.Framework;
@@ -111,7 +109,9 @@ namespace MaxDB.UnitTesting
 		public void TestUnicodeParameter()
 		{
 			if (mconn.DatabaseEncoding != Encoding.Unicode)
-				Assert.Ignore("Non-unicode database"); ;
+			{
+			    Assert.Ignore("Non-unicode database");
+			}
 
 			ClearTestTable();
 
@@ -195,12 +195,16 @@ namespace MaxDB.UnitTesting
 
 			using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (fl, db, decim) VALUES (:fl, :db, :decim)", mconn))
 			{
+                const float floatValue = 2.3f;
+                const double doubleValue = 4.6;
+                const decimal decimalValue = 23.82m;
+
 				cmd.Parameters.Add(":fl", MaxDBType.Float);
 				cmd.Parameters.Add(":db", MaxDBType.Number);
 				cmd.Parameters.Add(":decim", MaxDBType.Number);
-				cmd.Parameters[0].Value = 2.3;
-				cmd.Parameters[1].Value = 4.6;
-				cmd.Parameters[2].Value = 23.82;
+			    cmd.Parameters[0].Value = floatValue;
+			    cmd.Parameters[1].Value = doubleValue;
+			    cmd.Parameters[2].Value = decimalValue;
 				int count = cmd.ExecuteNonQuery();
 				Assert.AreEqual(1, count);
 
@@ -210,9 +214,9 @@ namespace MaxDB.UnitTesting
 					using (MaxDBDataReader reader = cmd.ExecuteReader())
 					{
 						reader.Read();
-						Assert.AreEqual(cmd.Parameters[0].Value, reader.GetFloat(0), "wrong float value");
-						Assert.AreEqual(cmd.Parameters[1].Value, reader.GetDouble(1), "wrong double value");
-						Assert.AreEqual(cmd.Parameters[2].Value, reader.GetDecimal(2), "wrong decimal value");
+                        Assert.IsTrue(Math.Abs(floatValue - reader.GetFloat(0)) <= float.Epsilon, "wrong float value");
+                        Assert.IsTrue(Math.Abs(doubleValue - reader.GetDouble(1)) <= double.Epsilon, "wrong double value");
+                        Assert.IsTrue(Math.Abs(decimalValue - reader.GetDecimal(2)) <= 1e-28m, "wrong decimal value");
 					}
 				}
 				catch (Exception ex)

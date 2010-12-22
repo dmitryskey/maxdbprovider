@@ -19,10 +19,7 @@ using System;
 using NUnit.Framework;
 using MaxDB.Data;
 using System.Data;
-using System.Data.Common;
-using System.Text;
 using System.Threading;
-using System.Diagnostics;
 
 namespace MaxDB.UnitTesting
 {
@@ -301,24 +298,26 @@ namespace MaxDB.UnitTesting
 			}
 		}
 
-		private MaxDBCommand mcmd;
+		private MaxDBCommand mCmd;
 
 		private void CancelQuery()
 		{
-			System.Threading.Thread.Sleep(100);
-			mcmd.Cancel();
+			Thread.Sleep(100);
+			mCmd.Cancel();
 		}
 
 		[Test]
 		public void TestCancel()
 		{
+            MaxDBConnectionStringBuilder mConnStrBuilder = new MaxDBConnectionStringBuilder(mconn.ConnectionString);
+
 			// we use db procedure in order to insert rows as fast as possible
 			string dbProc = "CREATE DBPROC InsertManyRows (IN cnt INTEGER) AS" +
 					"    VAR i INTEGER;" +
 					"TRY" +
 					"  SET i = 1; " +
 					"  WHILE $rc = 0 AND i <= cnt DO BEGIN" +
-					"      INSERT INTO SCOTT.TEST (id, name) VALUES (:i, '*');" +
+                    "      INSERT INTO " + mConnStrBuilder.UserId + ".TEST (id, name) VALUES (:i, '*');" +
 					"      SET i = i + 1;" +
 					"  END;" +
 					"CATCH" +
@@ -332,7 +331,9 @@ namespace MaxDB.UnitTesting
 			catch (MaxDBException ex)
 			{
 				if (ex.ErrorCode != -6006)
-					Assert.Fail(ex.Message);
+				{
+				    Assert.Fail(ex.Message);
+				}
 			}
 
 			try
@@ -344,14 +345,14 @@ namespace MaxDB.UnitTesting
 				Assert.Fail(ex.Message);
 			}
 
-			using (mcmd = new MaxDBCommand("UPDATE test SET name = '" + DateTime.Now.ToString() + "'", mconn))
+			using (mCmd = new MaxDBCommand("UPDATE test SET name = '" + DateTime.Now + "'", mconn))
 			{
-				Thread cancel_thread = new Thread(new ThreadStart(this.CancelQuery));
-				cancel_thread.Start();
+				Thread cancelThread = new Thread(new ThreadStart(this.CancelQuery));
+				cancelThread.Start();
 
 				try
 				{
-					mcmd.ExecuteNonQuery();
+					mCmd.ExecuteNonQuery();
 
 					Assert.Fail("Execution should not have finished.");
 				}
