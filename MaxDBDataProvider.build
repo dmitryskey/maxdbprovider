@@ -42,8 +42,8 @@
 		<property name="build.dir" value="."/>
 	</if>
 
-	<!-- builds the client on .Net Frameworks 1.1-->
-	<target name="net" depends="net-1.1 net-2.0">
+	<!-- builds the client on .Net Framework-->
+	<target name="net" depends="net-1.1 net-2.0 net-4.0">
 		<!--
 		<call target="Docs"/>
 		-->
@@ -65,6 +65,13 @@
 
 	<!-- builds the client on .Net Frameworks 2.0-->
 	<target name="net-2.0" depends="net-2.0-safe net-2.0-unsafe">
+		<!--
+		<call target="Docs"/>
+		-->
+	</target>
+
+	<!-- builds the client on .Net Frameworks 4.0-->
+	<target name="net-4.0" depends="net-4.0-safe net-4.0-unsafe">
 		<!--
 		<call target="Docs"/>
 		-->
@@ -158,11 +165,31 @@
 		<call target="provider"/>
 	</target>
 
+	<!-- target .Net 4.0 Safe-->
+	<target name="net-4.0-safe" description=".NET 2.0 safe target">
+		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
+		<property name="nunit-exe" value="${nunit-Net-2.0}"/>
+		<property name="framework" value="net-4.0"/>
+		<property name="defines" value="SAFE;NET20" />
+		<property name="unsafe" value="false"/>
+		<call target="provider"/>
+	</target>
+
 	<!-- target .Net 2.0 Unsafe-->
 	<target name="net-2.0-unsafe" description=".NET 2.0 unsafe target">
 		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
 		<property name="nunit-exe" value="${nunit-Net-2.0}"/>
 		<property name="framework" value="net-2.0"/>
+		<property name="defines" value="NET20" />
+		<property name="unsafe" value="true"/>
+		<call target="provider"/>
+	</target>
+
+	<!-- target .Net 4.0 Unsafe-->
+	<target name="net-4.0-unsafe" description=".NET 4.0 unsafe target">
+		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
+		<property name="nunit-exe" value="${nunit-Net-2.0}"/>
+		<property name="framework" value="net-4.0"/>
 		<property name="defines" value="NET20" />
 		<property name="unsafe" value="true"/>
 		<call target="provider"/>

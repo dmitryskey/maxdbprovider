@@ -1,322 +1,354 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2002-2003 SAP AG
+//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBCommand.cs" company="Dmitry S. Kataev">
+//     Copyright (C) 2005-2011 Dmitry S. Kataev
+//     Copyright (C) 2002-2003 SAP AG
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+//  This program is free software; you can redistribute it and/or
+//  modify it under the terms of the GNU General Public License
+//  as published by the Free Software Foundation; either version 2
+//  of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System;
-using System.Collections;
+//  You should have received a copy of the GNU General Public License
+//  along with this program; if not, write to the Free Software
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data.MaxDBProtocol
 {
 #if SAFE
+    using System.Collections;
 
-	#region "Least-Recently-Used cache class"
+    #region "Least-Recently-Used cache class"
 
-	/// <summary>
-	/// Least-Recently-Used cache class
-	/// </summary>
-	internal class LeastRecentlyUsedCache
-	{
-		/// <summary>
-		/// double list class for internal purposes
-		/// </summary>
-		private class DoubleList
-		{
-			private DoubleList mPrevLink, mNextLink;
-			private object objData;
+    /// <summary>
+    /// Least-Recently-Used cache class
+    /// </summary>
+    internal class LeastRecentlyUsedCache
+    {
+        private Hashtable lookup;
+        private Association lruTop;
+        private Association lruBottom;
+        private int currentSize;
+        private int maxSize;
 
-			/// <summary>
-			/// class costructor
-			/// </summary>
-			/// <param name="data">list element</param>
-			public DoubleList(object data)
-			{
-				objData = data;
-			}
+        public LeastRecentlyUsedCache(int cacheSize)
+        {
+            this.maxSize = cacheSize;
+            this.Clear();
+        }
 
-			/// <summary>
-			/// Gets a list element
-			/// </summary>
-			public object Data
-			{
-				get
-				{
-					return objData;
-				}
-			}
+        public object this[object key]
+        {
+            get
+            {
+                object result = null;
 
-			public DoubleList Prev
-			{
-				get
-				{
-					return mPrevLink;
-				}
-			}
+                Association entry = (Association)this.lookup[key];
+                if (entry != null)
+                {
+                    result = entry.Data;
+                    this.MoveToTop(entry);
+                }
 
-			public void Remove()
-			{
-				if (mPrevLink != null)
-					mPrevLink.mNextLink = mNextLink;
+                return result;
+            }
 
-				if (mNextLink != null)
-					mNextLink.mPrevLink = mPrevLink;
+            set
+            {
+                Association newEntry = new Association(key, value);
 
-				mPrevLink = null;
-				mNextLink = null;
-			}
+                this.lookup[key] = newEntry;
+                if (this.lruTop != null)
+                {
+                    this.lruTop.Prepend(newEntry);
+                }
 
-			public void Prepend(DoubleList newHead)
-			{
-				newHead.mNextLink = this;
-				mPrevLink = newHead;
-			}
-		}
+                this.lruTop = newEntry;
+                if (this.lruBottom == null)
+                {
+                    this.lruBottom = newEntry;
+                }
 
-		private class Association : DoubleList
-		{
-			object objKey;
+                this.currentSize++;
+                if (this.currentSize > this.maxSize)
+                {
+                    this.RemoveLast();
+                }
+            }
+        }
 
-			public Association(object key, object val)
-				: base(val)
-			{
-				objKey = key;
-			}
+        public void Clear()
+        {
+            this.currentSize = 0;
+            this.lookup = new Hashtable(this.maxSize);
+            this.lruTop = null;
+            this.lruBottom = null;
+        }
 
-			public object Key
-			{
-				get
-				{
-					return objKey;
-				}
-			}
-		}
+        public object[] ClearAll()
+        {
+            object[] result = new object[this.lookup.Count];
+            this.lookup.Values.CopyTo(result, 0);
+            this.Clear();
+            return result;
+        }
 
-		private Hashtable lookup;
-		private Association lruTop;
-		private Association lruBottom;
-		private int currentSize;
-		private int maxSize;
+        private void RemoveLast()
+        {
+            Association toDelete = this.lruBottom;
 
-		public LeastRecentlyUsedCache(int cacheSize)
-		{
-			maxSize = cacheSize;
-			Clear();
-		}
+            this.lruBottom = (Association)toDelete.Prev;
+            this.lookup.Remove(toDelete.Key);
+            this.currentSize--;
+        }
 
-		public void Clear()
-		{
-			currentSize = 0;
-			lookup = new Hashtable(this.maxSize);
-			lruTop = null;
-			lruBottom = null;
-		}
+        private void MoveToTop(Association entry)
+        {
+            if (entry == this.lruTop)
+            {
+                return;
+            }
 
-		public object this[object key]
-		{
-			get
-			{
-				object result = null;
-				Association entry;
+            if (entry == this.lruBottom)
+            {
+                this.lruBottom = (Association)entry.Prev;
+            }
 
-				entry = (Association)lookup[key];
-				if (entry != null)
-				{
-					result = entry.Data;
-					MoveToTop(entry);
-				}
-				return result;
-			}
-			set
-			{
-				Association newEntry = new Association(key, value);
+            entry.Remove();
+            this.lruTop.Prepend(entry);
+            this.lruTop = entry;
+        }
 
-				lookup[key] = newEntry;
-				if (lruTop != null)
-					lruTop.Prepend(newEntry);
+        private class Association : DoubleList
+        {
+            readonly private object objKey;
 
-				lruTop = newEntry;
-				if (lruBottom == null)
-					lruBottom = newEntry;
+            public Association(object key, object val)
+                : base(val)
+            {
+                this.objKey = key;
+            }
 
-				currentSize++;
-				if (currentSize > maxSize)
-					RemoveLast();
-			}
-		}
+            public object Key
+            {
+                get
+                {
+                    return this.objKey;
+                }
+            }
+        }
 
-		private void MoveToTop(Association entry)
-		{
-			if (entry == lruTop)
-				return;
+        /// <summary>
+        /// double list class for internal purposes
+        /// </summary>
+        private class DoubleList
+        {
+            private DoubleList mPrevLink, mNextLink;
+            private object objData;
 
-			if (entry == lruBottom)
-				lruBottom = (Association)entry.Prev;
-			entry.Remove();
-			lruTop.Prepend(entry);
-			lruTop = entry;
-		}
+            /// <summary>
+            /// class costructor
+            /// </summary>
+            /// <param name="data">list element</param>
+            protected DoubleList(object data)
+            {
+                this.objData = data;
+            }
 
-		private void RemoveLast()
-		{
-			Association toDelete = lruBottom;
+            /// <summary>
+            /// Gets a list element
+            /// </summary>
+            public object Data
+            {
+                get
+                {
+                    return this.objData;
+                }
+            }
 
-			lruBottom = (Association)toDelete.Prev;
-			lookup.Remove(toDelete.Key);
-			currentSize--;
-		}
+            public DoubleList Prev
+            {
+                get
+                {
+                    return this.mPrevLink;
+                }
+            }
 
-		public object[] ClearAll()
-		{
-			object[] result = new object[lookup.Count];
-			lookup.Values.CopyTo(result, 0);
-			Clear();
-			return result;
-		}
-	}
+            public void Remove()
+            {
+                if (this.mPrevLink != null)
+                {
+                    this.mPrevLink.mNextLink = this.mNextLink;
+                }
 
-	#endregion
+                if (this.mNextLink != null)
+                {
+                    this.mNextLink.mPrevLink = this.mPrevLink;
+                }
 
-	#region "Cache information class"
+                this.mPrevLink = null;
+                this.mNextLink = null;
+            }
 
-	internal class CacheInfo
-	{
-		private string strName;
-		private int iHits;
-		private int iMisses;
+            public void Prepend(DoubleList newHead)
+            {
+                newHead.mNextLink = this;
+                this.mPrevLink = newHead;
+            }
+        }
+    }
 
-		public CacheInfo(string name)
-		{
-			strName = name;
-		}
+    #endregion
 
-		public override string ToString()
-		{
-			return strName + ": " + iHits + " hits, " + iMisses + " misses, " + Hitrate + "%";
-		}
+    #region "Cache information class"
 
-		public void AddHit()
-		{
-			iHits++;
-		}
+    internal class CacheInfo
+    {
+        private string strName;
+        private int iHits;
+        private int iMisses;
 
-		public void AddMiss()
-		{
-			iMisses++;
-		}
+        public CacheInfo(string name)
+        {
+            this.strName = name;
+        }
 
-		private double Hitrate
-		{
-			get
-			{
-				long all = iHits + iMisses;
-				return (double)iHits / (double)all * 100.0;
-			}
-		}
-	}
+        private double Hitrate
+        {
+            get
+            {
+                long all = this.iHits + this.iMisses;
+                return (double)this.iHits / (double)all * 100.0;
+            }
+        }
 
-	#endregion
+        public override string ToString()
+        {
+            return this.strName + ": " + this.iHits + " hits, " + this.iMisses + " misses, " + this.Hitrate + "%";
+        }
 
-	#region "Parse information class"
+        public void AddHit()
+        {
+            this.iHits++;
+        }
 
-	internal class ParseInfoCache : LeastRecentlyUsedCache
-	{
-		const int iDefaultSize = 1000;
-		private const int iMaxFunctionCode = FunctionCode.Delete + 1;
-		private bool bKeepStats;
-		private bool[] bKindFilter;
-		private CacheInfo[] ciStats;
+        public void AddMiss()
+        {
+            this.iMisses++;
+        }
+    }
 
-		public ParseInfoCache(string cache, int cacheSize)
-			: base(cacheSize > 0 ? cacheSize : iDefaultSize)
-		{
-			string kindDecl = cache;
+    #endregion
 
-			bKindFilter = new bool[iMaxFunctionCode];
-			if (kindDecl.IndexOf('?') >= 0)
-			{
-				bKeepStats = true;
-				ciStats = new CacheInfo[iMaxFunctionCode];
-				ciStats[FunctionCode.Nil] = new CacheInfo("other");
-				ciStats[FunctionCode.Insert] = new CacheInfo("insert");
-				ciStats[FunctionCode.Select] = new CacheInfo("select");
-				ciStats[FunctionCode.Update] = new CacheInfo("update");
-				ciStats[FunctionCode.Delete] = new CacheInfo("delete");
-			}
+    #region "Parse information class"
 
-			if (kindDecl.IndexOf("all") >= 0)
-				for (int i = 0; i < iMaxFunctionCode; ++i)
-					bKindFilter[i] = true;
-			else
-			{
-				if (kindDecl.IndexOf("i") >= 0)
-					bKindFilter[FunctionCode.Insert] = true;
-				if (kindDecl.IndexOf("u") >= 0)
-					bKindFilter[FunctionCode.Update] = true;
-				if (kindDecl.IndexOf("d") >= 0)
-					bKindFilter[FunctionCode.Delete] = true;
-				if (kindDecl.IndexOf("s") >= 0)
-					bKindFilter[FunctionCode.Select] = true;
-			}
-		}
+    internal class ParseInfoCache : LeastRecentlyUsedCache
+    {
+        private const int IDefaultSize = 1000;
+        private const int IMaxFunctionCode = FunctionCode.Delete + 1;
+        private readonly bool bKeepStats;
+        private readonly bool[] bKindFilter;
+        private readonly CacheInfo[] ciStats;
 
-		public MaxDBParseInfo FindParseInfo(string sqlCmd)
-		{
-			MaxDBParseInfo result = null;
+        public ParseInfoCache(string cache, int cacheSize)
+            : base(cacheSize > 0 ? cacheSize : IDefaultSize)
+        {
+            string kindDecl = cache;
 
-			result = (MaxDBParseInfo)this[sqlCmd];
-			if (bKeepStats && result != null)
-				ciStats[result.FuncCode].AddHit();
+            this.bKindFilter = new bool[IMaxFunctionCode];
+            if (kindDecl.IndexOf('?') >= 0)
+            {
+                this.bKeepStats = true;
+                this.ciStats = new CacheInfo[IMaxFunctionCode];
+                this.ciStats[FunctionCode.Nil] = new CacheInfo("other");
+                this.ciStats[FunctionCode.Insert] = new CacheInfo("insert");
+                this.ciStats[FunctionCode.Select] = new CacheInfo("select");
+                this.ciStats[FunctionCode.Update] = new CacheInfo("update");
+                this.ciStats[FunctionCode.Delete] = new CacheInfo("delete");
+            }
 
-			return result;
-		}
-		/**
-		 *
-		 */
-		public void AddParseInfo(MaxDBParseInfo parseinfo)
-		{
-			int functionCode = MapFunctionCode(parseinfo.FuncCode);
-			if (bKindFilter[functionCode])
-			{
-				this[parseinfo.SqlCommand] = parseinfo;
-				parseinfo.IsCached = true;
-				if (bKeepStats)
-					ciStats[functionCode].AddMiss();
-			}
-		}
+            if (kindDecl.IndexOf("all") >= 0)
+            {
+                for (int i = 0; i < IMaxFunctionCode; ++i)
+                {
+                    this.bKindFilter[i] = true;
+                }
+            }
+            else
+            {
+                if (kindDecl.IndexOf("i") >= 0)
+                {
+                    this.bKindFilter[FunctionCode.Insert] = true;
+                }
 
-		static private int MapFunctionCode(int functionCode)
-		{
-			switch (functionCode)
-			{
-				case FunctionCode.Insert:
-				case FunctionCode.Update:
-				case FunctionCode.Delete:
-				case FunctionCode.Select:
-					// keep the value
-					break;
-				default:
-					functionCode = FunctionCode.Nil;
-					break;
-			}
-			return functionCode;
-		}
-	}
+                if (kindDecl.IndexOf("u") >= 0)
+                {
+                    this.bKindFilter[FunctionCode.Update] = true;
+                }
 
-	#endregion
+                if (kindDecl.IndexOf("d") >= 0)
+                {
+                    this.bKindFilter[FunctionCode.Delete] = true;
+                }
+
+                if (kindDecl.IndexOf("s") >= 0)
+                {
+                    this.bKindFilter[FunctionCode.Select] = true;
+                }
+            }
+        }
+
+        public MaxDBParseInfo FindParseInfo(string sqlCmd)
+        {
+            MaxDBParseInfo result = (MaxDBParseInfo)this[sqlCmd];
+            if (this.bKeepStats && result != null)
+            {
+                this.ciStats[result.FuncCode].AddHit();
+            }
+
+            return result;
+        }
+
+        public void AddParseInfo(MaxDBParseInfo parseinfo)
+        {
+            int functionCode = MapFunctionCode(parseinfo.FuncCode);
+            if (this.bKindFilter[functionCode])
+            {
+                this[parseinfo.SqlCommand] = parseinfo;
+                parseinfo.IsCached = true;
+                if (this.bKeepStats)
+                {
+                    this.ciStats[functionCode].AddMiss();
+                }
+            }
+        }
+
+        private static int MapFunctionCode(int functionCode)
+        {
+            switch (functionCode)
+            {
+                case FunctionCode.Insert:
+                case FunctionCode.Update:
+                case FunctionCode.Delete:
+                case FunctionCode.Select:
+                    // keep the value
+                    break;
+                default:
+                    functionCode = FunctionCode.Nil;
+                    break;
+            }
+
+            return functionCode;
+        }
+    }
+
+    #endregion
 
 #endif // SAFE
 }
-
-
