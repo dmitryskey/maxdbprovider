@@ -143,13 +143,9 @@ namespace MaxDB.Data.Utilities
 
 	#region "ODBC Date/Time format converter"
 
-	internal sealed class ODBCConverter
+	internal class ODBCConverter
 	{
-		private ODBCConverter()
-		{
-		}
-
-		public static DateTime GetDateTime(OdbcDate dt_val)
+	    public static DateTime GetDateTime(OdbcDate dt_val)
 		{
 			return new DateTime(dt_val.year, dt_val.month, dt_val.day);
 		}
