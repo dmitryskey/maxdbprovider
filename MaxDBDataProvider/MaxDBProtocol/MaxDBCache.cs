@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------------------------
-// <copyright file="MaxDBCommand.cs" company="Dmitry S. Kataev">
+// <copyright file="MaxDBCache.cs" company="Dmitry S. Kataev">
 //     Copyright (C) 2005-2011 Dmitry S. Kataev
 //     Copyright (C) 2002-2003 SAP AG
 // </copyright>
@@ -27,22 +27,50 @@ namespace MaxDB.Data.MaxDBProtocol
     #region "Least-Recently-Used cache class"
 
     /// <summary>
-    /// Least-Recently-Used cache class
+    /// Least-Recently-Used cache class.
     /// </summary>
     internal class LeastRecentlyUsedCache
     {
+        /// <summary>
+        /// Lookup hash table.
+        /// </summary>
         private Hashtable lookup;
+
+        /// <summary>
+        /// Top cache element.
+        /// </summary>        
         private Association lruTop;
+
+        /// <summary>
+        /// Bottpm cache element.
+        /// </summary>
         private Association lruBottom;
+        
+        /// <summary>
+        /// Current cache size.
+        /// </summary>
         private int currentSize;
+
+        /// <summary>
+        /// Cache maximum size.
+        /// </summary>
         private int maxSize;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LeastRecentlyUsedCache"/> class.
+        /// </summary>
+        /// <param name="cacheSize">Cache size.</param>
         public LeastRecentlyUsedCache(int cacheSize)
         {
             this.maxSize = cacheSize;
             this.Clear();
         }
 
+        /// <summary>
+        /// Gets or sets cached object.
+        /// </summary>
+        /// <param name="key">Key value.</param>
+        /// <returns>Cached object.</returns>
         public object this[object key]
         {
             get
@@ -83,6 +111,9 @@ namespace MaxDB.Data.MaxDBProtocol
             }
         }
 
+        /// <summary>
+        /// Clear cache.
+        /// </summary>
         public void Clear()
         {
             this.currentSize = 0;
@@ -91,6 +122,10 @@ namespace MaxDB.Data.MaxDBProtocol
             this.lruBottom = null;
         }
 
+        /// <summary>
+        /// Clear cache and return all content.
+        /// </summary>
+        /// <returns>Object array.</returns>
         public object[] ClearAll()
         {
             object[] result = new object[this.lookup.Count];
@@ -99,6 +134,9 @@ namespace MaxDB.Data.MaxDBProtocol
             return result;
         }
 
+        /// <summary>
+        /// Delete last cache entry.
+        /// </summary>
         private void RemoveLast()
         {
             Association toDelete = this.lruBottom;
@@ -108,6 +146,10 @@ namespace MaxDB.Data.MaxDBProtocol
             this.currentSize--;
         }
 
+        /// <summary>
+        /// Move cache entry to the top of list.
+        /// </summary>
+        /// <param name="entry">Cache entry.</param>
         private void MoveToTop(Association entry)
         {
             if (entry == this.lruTop)
@@ -125,16 +167,29 @@ namespace MaxDB.Data.MaxDBProtocol
             this.lruTop = entry;
         }
 
+        /// <summary>
+        /// Cache element class with links.
+        /// </summary>
         private class Association : DoubleList
         {
-            readonly private object objKey;
+            /// <summary>
+            /// Current element key.
+            /// </summary>
+            private readonly object objKey;
 
-            public Association(object key, object val)
-                : base(val)
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Association"/> class.
+            /// </summary>
+            /// <param name="key">Key value.</param>
+            /// <param name="val">Element value.</param>
+            public Association(object key, object val) : base(val)
             {
                 this.objKey = key;
             }
 
+            /// <summary>
+            /// Gets the key value.
+            /// </summary>
             public object Key
             {
                 get
@@ -149,13 +204,20 @@ namespace MaxDB.Data.MaxDBProtocol
         /// </summary>
         private class DoubleList
         {
-            private DoubleList mPrevLink, mNextLink;
+            /// <summary>
+            /// Previous and next links.
+            /// </summary>
+            private DoubleList prevLink, nextLink;
+
+            /// <summary>
+            /// Object data.
+            /// </summary>
             private object objData;
 
             /// <summary>
-            /// class costructor
+            /// Initializes a new instance of the <see cref="DoubleList"/> class.
             /// </summary>
-            /// <param name="data">list element</param>
+            /// <param name="data">List element.</param>
             protected DoubleList(object data)
             {
                 this.objData = data;
@@ -172,34 +234,44 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
             }
 
+            /// <summary>
+            /// Gets the previous element.
+            /// </summary>
             public DoubleList Prev
             {
                 get
                 {
-                    return this.mPrevLink;
+                    return this.prevLink;
                 }
             }
 
+            /// <summary>
+            /// Remove the element from the list.
+            /// </summary>
             public void Remove()
             {
-                if (this.mPrevLink != null)
+                if (this.prevLink != null)
                 {
-                    this.mPrevLink.mNextLink = this.mNextLink;
+                    this.prevLink.nextLink = this.nextLink;
                 }
 
-                if (this.mNextLink != null)
+                if (this.nextLink != null)
                 {
-                    this.mNextLink.mPrevLink = this.mPrevLink;
+                    this.nextLink.prevLink = this.prevLink;
                 }
 
-                this.mPrevLink = null;
-                this.mNextLink = null;
+                this.prevLink = null;
+                this.nextLink = null;
             }
 
+            /// <summary>
+            /// Add element to the list.
+            /// </summary>
+            /// <param name="newHead">New element.</param>
             public void Prepend(DoubleList newHead)
             {
-                newHead.mNextLink = this;
-                this.mPrevLink = newHead;
+                newHead.nextLink = this;
+                this.prevLink = newHead;
             }
         }
     }
@@ -208,39 +280,70 @@ namespace MaxDB.Data.MaxDBProtocol
 
     #region "Cache information class"
 
+    /// <summary>
+    /// Cache info class.
+    /// </summary>
     internal class CacheInfo
     {
+        /// <summary>
+        /// Cache element name.
+        /// </summary>
         private string strName;
-        private int iHits;
-        private int iMisses;
 
+        /// <summary>
+        /// Hists counter.
+        /// </summary>
+        private int hits;
+
+        /// <summary>
+        /// Missed counter.
+        /// </summary>
+        private int misses;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CacheInfo"/> class.
+        /// </summary>
+        /// <param name="name">Cache element name.</param>
         public CacheInfo(string name)
         {
             this.strName = name;
         }
 
+        /// <summary>
+        /// Gets the hit rate.
+        /// </summary>
         private double Hitrate
         {
             get
             {
-                long all = this.iHits + this.iMisses;
-                return (double)this.iHits / (double)all * 100.0;
+                long all = this.hits + this.misses;
+                return (double)this.hits / (double)all * 100.0;
             }
         }
 
+        /// <summary>
+        /// String representation of the current cache info.
+        /// </summary>
+        /// <returns>String value.</returns>
         public override string ToString()
         {
-            return this.strName + ": " + this.iHits + " hits, " + this.iMisses + " misses, " + this.Hitrate + "%";
+            return this.strName + ": " + this.hits + " hits, " + this.misses + " misses, " + this.Hitrate + "%";
         }
 
+        /// <summary>
+        /// Increase cache hit counter.
+        /// </summary>
         public void AddHit()
         {
-            this.iHits++;
+            this.hits++;
         }
 
+        /// <summary>
+        /// Increase cache missing counter. 
+        /// </summary>
         public void AddMiss()
         {
-            this.iMisses++;
+            this.misses++;
         }
     }
 
@@ -248,87 +351,128 @@ namespace MaxDB.Data.MaxDBProtocol
 
     #region "Parse information class"
 
+    /// <summary>
+    /// Parse info cache.
+    /// </summary>
     internal class ParseInfoCache : LeastRecentlyUsedCache
     {
+        /// <summary>
+        /// Default parse info cache size.
+        /// </summary>
         private const int IDefaultSize = 1000;
-        private const int IMaxFunctionCode = FunctionCode.Delete + 1;
-        private readonly bool bKeepStats;
-        private readonly bool[] bKindFilter;
-        private readonly CacheInfo[] ciStats;
 
+        /// <summary>
+        /// Maximum function code.
+        /// </summary>
+        private const int IMaxFunctionCode = FunctionCode.Delete + 1;
+
+        /// <summary>
+        /// The flag indicating whether we keep statistic or not.
+        /// </summary>
+        private readonly bool keepStats;
+
+        /// <summary>
+        /// List of boolean values describing what kind of command is cached.
+        /// </summary>
+        private readonly bool[] kindFilter;
+
+        /// <summary>
+        /// Cache info statistic array.
+        /// </summary>
+        private readonly CacheInfo[] stats;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ParseInfoCache"/> class.
+        /// </summary>
+        /// <param name="cache">Cache name.</param>
+        /// <param name="cacheSize">Cache size.</param>
         public ParseInfoCache(string cache, int cacheSize)
             : base(cacheSize > 0 ? cacheSize : IDefaultSize)
         {
             string kindDecl = cache;
 
-            this.bKindFilter = new bool[IMaxFunctionCode];
+            this.kindFilter = new bool[IMaxFunctionCode];
             if (kindDecl.IndexOf('?') >= 0)
             {
-                this.bKeepStats = true;
-                this.ciStats = new CacheInfo[IMaxFunctionCode];
-                this.ciStats[FunctionCode.Nil] = new CacheInfo("other");
-                this.ciStats[FunctionCode.Insert] = new CacheInfo("insert");
-                this.ciStats[FunctionCode.Select] = new CacheInfo("select");
-                this.ciStats[FunctionCode.Update] = new CacheInfo("update");
-                this.ciStats[FunctionCode.Delete] = new CacheInfo("delete");
+                this.keepStats = true;
+                this.stats = new CacheInfo[IMaxFunctionCode];
+                this.stats[FunctionCode.Nil] = new CacheInfo("other");
+                this.stats[FunctionCode.Insert] = new CacheInfo("insert");
+                this.stats[FunctionCode.Select] = new CacheInfo("select");
+                this.stats[FunctionCode.Update] = new CacheInfo("update");
+                this.stats[FunctionCode.Delete] = new CacheInfo("delete");
             }
 
             if (kindDecl.IndexOf("all") >= 0)
             {
                 for (int i = 0; i < IMaxFunctionCode; ++i)
                 {
-                    this.bKindFilter[i] = true;
+                    this.kindFilter[i] = true;
                 }
             }
             else
             {
                 if (kindDecl.IndexOf("i") >= 0)
                 {
-                    this.bKindFilter[FunctionCode.Insert] = true;
+                    this.kindFilter[FunctionCode.Insert] = true;
                 }
 
                 if (kindDecl.IndexOf("u") >= 0)
                 {
-                    this.bKindFilter[FunctionCode.Update] = true;
+                    this.kindFilter[FunctionCode.Update] = true;
                 }
 
                 if (kindDecl.IndexOf("d") >= 0)
                 {
-                    this.bKindFilter[FunctionCode.Delete] = true;
+                    this.kindFilter[FunctionCode.Delete] = true;
                 }
 
                 if (kindDecl.IndexOf("s") >= 0)
                 {
-                    this.bKindFilter[FunctionCode.Select] = true;
+                    this.kindFilter[FunctionCode.Select] = true;
                 }
             }
         }
 
+        /// <summary>
+        /// Find parse info for SQL command.
+        /// </summary>
+        /// <param name="sqlCmd">SQL command.</param>
+        /// <returns>Parse info.</returns>
         public MaxDBParseInfo FindParseInfo(string sqlCmd)
         {
             MaxDBParseInfo result = (MaxDBParseInfo)this[sqlCmd];
-            if (this.bKeepStats && result != null)
+            if (this.keepStats && result != null)
             {
-                this.ciStats[result.FuncCode].AddHit();
+                this.stats[result.FuncCode].AddHit();
             }
 
             return result;
         }
 
+        /// <summary>
+        /// Add parse info to the cache.
+        /// </summary>
+        /// <param name="parseinfo">Parse infor.</param>
         public void AddParseInfo(MaxDBParseInfo parseinfo)
         {
             int functionCode = MapFunctionCode(parseinfo.FuncCode);
-            if (this.bKindFilter[functionCode])
+            if (this.kindFilter[functionCode])
             {
                 this[parseinfo.SqlCommand] = parseinfo;
                 parseinfo.IsCached = true;
-                if (this.bKeepStats)
+                if (this.keepStats)
                 {
-                    this.ciStats[functionCode].AddMiss();
+                    this.stats[functionCode].AddMiss();
                 }
             }
         }
 
+        /// <summary>
+        /// Replace all function codes except for Insert/Update/Delete/Select by null. 
+        /// </summary>
+        /// <param name="functionCode">Input function code.</param>
+        /// <returns>Mapped function code.</returns>
         private static int MapFunctionCode(int functionCode)
         {
             switch (functionCode)
