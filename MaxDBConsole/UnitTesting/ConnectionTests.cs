@@ -28,9 +28,7 @@ namespace MaxDB.UnitTesting
 	public class ConnectionTests : BaseTest
 	{
 		private string mconnStr;
-#if SAFE
 		private string mconnStrBadAddr;
-#endif // SAFE
 //		private string mconnStrSsl;
 		private string mconnStrBadLogin;
 		private string mconnStrBadPassword;
@@ -40,9 +38,7 @@ namespace MaxDB.UnitTesting
 		public void SetUp()
 		{
 			mconnStr = mAppSettings["ConnectionString"];
-#if SAFE
 			mconnStrBadAddr = mAppSettings["ConnectionStringBadAddr"];
-#endif // SAFE
 //			mconnStrSsl = mAppSettings["ConnectionStringSsl"];
 			mconnStrBadLogin = mAppSettings["ConnectionStringBadLogin"];
 			mconnStrBadPassword = mAppSettings["ConnectionStringBadPassword"];
@@ -69,7 +65,6 @@ namespace MaxDB.UnitTesting
 		}
 */
 
-#if SAFE
 		[Test]
 		public void TestConnectionTimeout()
 		{
@@ -87,7 +82,6 @@ namespace MaxDB.UnitTesting
 				}
 			}
 		}
-#endif // SAFE
 
 		[Test]
 		[ExpectedException(typeof(MaxDBException))]

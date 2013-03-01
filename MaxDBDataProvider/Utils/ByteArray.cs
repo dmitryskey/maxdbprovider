@@ -28,7 +28,6 @@ namespace MaxDB.Data.Utilities
 		protected byte[] byData; //data buffer
 		protected bool bSwapMode = Consts.IsLittleEndian; //is data array little-endian or big-endian
 
-#if SAFE
 		protected int iOffset; //data buffer offset
 
 		public ByteArray(byte[] data)
@@ -54,21 +53,10 @@ namespace MaxDB.Data.Utilities
 			byData = new byte[size];
 		}
 
-#else
-		public ByteArray(int size, bool swapMode)
-		{
-			byData = new byte[size];
-			bSwapMode = swapMode;
-		}
-#endif // !SAFE
-
-#if SAFE
-#if NET20
 		public ByteArray Clone()
 		{
 			return new ByteArray(byData, iOffset, bSwapMode);
 		}
-#endif // NET20
 
 		public ByteArray Clone(int offset)
 		{
@@ -107,7 +95,6 @@ namespace MaxDB.Data.Utilities
 				iOffset = value;
 			}
 		}
-#endif // SAFE
 
 		public byte[] GetArrayData()
 		{
@@ -116,9 +103,8 @@ namespace MaxDB.Data.Utilities
 
 		public byte[] ReadBytes(int offset, int len)
 		{
-#if SAFE
 			offset += iOffset;
-#endif // SAFE
+
 			byte[] res = new byte[len];
 			Array.Copy(byData, offset, res, 0, len);
 			return res;
@@ -126,39 +112,42 @@ namespace MaxDB.Data.Utilities
 
 		public void WriteBytes(byte[] values, int offset)
 		{
-			if (values == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+            if (values == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+            }
 
-#if SAFE
 			offset += iOffset;
-#endif // SAFE
 			values.CopyTo(byData, offset);
 		}
 
-#if SAFE
 		public void WriteBytes(byte[] values, int offset, int len)
 		{
 			offset += iOffset;
 			Array.Copy(values, 0, byData, offset, len);
 		}
-#endif // SAFE
 
 		public void WriteBytes(byte[] values, int offset, int len, byte[] filler)
 		{
-			if (values == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+            if (values == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+            }
 
-#if SAFE
 			offset += iOffset;
-#endif // SAFE
 
 			int copyLen = values.Length;
 			int fillLen = 0;
 
-			if (copyLen > len)
-				copyLen = len;
-			else if (copyLen < len)
-				fillLen = len - copyLen;
+            if (copyLen > len)
+            {
+                copyLen = len;
+            }
+            else if (copyLen < len)
+            {
+                fillLen = len - copyLen;
+            }
+
 			Array.Copy(values, 0, byData, offset, copyLen);
 
 			if (fillLen > 0)
@@ -178,7 +167,6 @@ namespace MaxDB.Data.Utilities
 			return;
 		}
 
-#if SAFE
 		public byte ReadByte(int offset)
 		{
 
@@ -294,8 +282,6 @@ namespace MaxDB.Data.Utilities
 			return encoding.GetString(byData, offset, len);
 		}
 
-#endif // SAFE
-
 		public void WriteAscii(string value, int offset)
 		{
 			WriteEncoding(Encoding.ASCII, value, offset);
@@ -308,60 +294,62 @@ namespace MaxDB.Data.Utilities
 
 		public string ReadUnicode(int offset, int len)
 		{
-#if SAFE
 			offset += iOffset;
-#endif // SAFE
-			if (bSwapMode)
-				return Encoding.Unicode.GetString(byData, offset, len);
-			else
-				return Encoding.BigEndianUnicode.GetString(byData, offset, len);
+
+            if (bSwapMode)
+            {
+                return Encoding.Unicode.GetString(byData, offset, len);
+            }
+            else
+            {
+                return Encoding.BigEndianUnicode.GetString(byData, offset, len);
+            }
 		}
 
 		public void WriteUnicode(string value, int offset)
 		{
-			if (value == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+            if (value == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+            }
 
 			WriteUnicode(value, offset, value.Length);
 		}
 
 		public void WriteUnicode(string value, int offset, int len)
 		{
-			if (value == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+            if (value == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value")); 
+            }
 
-			if (bSwapMode)
-				WriteBytes(Encoding.Unicode.GetBytes(value), offset, len * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
-			else
-				WriteBytes(Encoding.BigEndianUnicode.GetBytes(value), offset, len * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            if (bSwapMode)
+            {
+                WriteBytes(Encoding.Unicode.GetBytes(value), offset, len * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            }
+            else
+            {
+                WriteBytes(Encoding.BigEndianUnicode.GetBytes(value), offset, len * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            }
 		}
 
-#if !SAFE
-		public double ReadDouble(int offset)
-		{
-			return BitConverter.ToDouble(byData, offset);
-		}
-
-		public void WriteDouble(double val, int offset)
-		{
-			WriteBytes(BitConverter.GetBytes(val), offset);
-		}
-#endif // !SAFE
-
-#if SAFE
 		private void WriteValue(long value, int offset, int bytes)
 		{
 			offset += iOffset;
 
 			for (int i = 0; i < bytes; i++)
 			{
-				if (bSwapMode)
-					byData[i + offset] = (byte)(value & 0xFF);
-				else
-					byData[bytes - i - 1 + offset] = (byte)(value & 0xFF);
+                if (bSwapMode)
+                {
+                    byData[i + offset] = (byte)(value & 0xFF);
+                }
+                else
+                {
+                    byData[bytes - i - 1 + offset] = (byte)(value & 0xFF);
+                }
+
 				value >>= 8;
 			}
 		}
-#endif // SAFE
 	}
 }

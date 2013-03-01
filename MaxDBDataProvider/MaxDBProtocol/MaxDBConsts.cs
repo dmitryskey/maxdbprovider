@@ -573,13 +573,10 @@ namespace MaxDB.Data.MaxDBProtocol
 				reuse_upd_mselect_found
 			};
 
-#if SAFE
 		public static bool IsQuery(int code)
 		{
-			return (code == FunctionCode.Select || code == FunctionCode.Show ||
-				code == FunctionCode.DBProcWithResultSetExecute || code == FunctionCode.Explain);
+			return (code == FunctionCode.Select || code == FunctionCode.Show || code == FunctionCode.DBProcWithResultSetExecute || code == FunctionCode.Explain);
 		}
-#endif // SAFE
 	}
 
 	internal struct Ports
@@ -934,7 +931,6 @@ namespace MaxDB.Data.MaxDBProtocol
 		public const int FillBufSize = 1024;
 		public const string BlankChar = " ";
 
-#if SAFE
 		private static readonly byte[] byBlankBytes = InitializeBlankBytes;
 		public static byte[] BlankBytes
 		{
@@ -949,12 +945,14 @@ namespace MaxDB.Data.MaxDBProtocol
 			get
 			{
 				byte[] blanks = new byte[FillBufSize];
-				for (int i = 0; i < FillBufSize; i++)
-					blanks[i] = Encoding.ASCII.GetBytes(BlankChar)[0];
+                for (int i = 0; i < FillBufSize; i++)
+                {
+                    blanks[i] = Encoding.ASCII.GetBytes(BlankChar)[0];
+                }
+
 				return blanks;
 			}
 		}
-#endif // SAFE
 
 		private static readonly byte[] byBlankUnicodeBytes = InitializeBlankUnicodeBytes;
 		public static byte[] BlankUnicodeBytes
@@ -972,10 +970,14 @@ namespace MaxDB.Data.MaxDBProtocol
 				byte[] blanks = new byte[FillBufSize * iUnicodeWidth];
 				for (int i = 0; i < FillBufSize; i += UnicodeWidth)
 				{
-					if (IsLittleEndian)
-						Encoding.Unicode.GetBytes(BlankChar).CopyTo(blanks, i);
-					else
-						Encoding.BigEndianUnicode.GetBytes(BlankChar).CopyTo(blanks, i);
+                    if (IsLittleEndian)
+                    {
+                        Encoding.Unicode.GetBytes(BlankChar).CopyTo(blanks, i);
+                    }
+                    else
+                    {
+                        Encoding.BigEndianUnicode.GetBytes(BlankChar).CopyTo(blanks, i);
+                    }
 				}
 
 				return blanks;
@@ -986,7 +988,6 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 		}
 
-#if SAFE
 		// some constants
 		public const byte ASCIIClient = 0;
 		public const byte UnicodeSwapClient = 19;
@@ -1044,7 +1045,6 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			return ToHexString(array, offset, array.Length);
 		}
-#endif // SAFE
 
 		public static string ToHexString(byte[] array, int offset, int length)
 		{

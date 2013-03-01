@@ -49,7 +49,7 @@ namespace MaxDB.UnitTesting
 								"RETURNS CURSOR AS " +
 								"$CURSOR = 'TEST_CURSOR'; " +
 								"DECLARE :$CURSOR CURSOR FOR " +
-								"SELECT :val, :val*1000 FROM " + mSchema + ".DUAL;");
+								"SELECT :val, :val*1000 FROM DBA.DUAL;");
 
 				ClearTestTable();
 

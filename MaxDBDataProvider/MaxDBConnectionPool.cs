@@ -17,35 +17,26 @@
 using System;
 using System.Collections;
 using MaxDB.Data.MaxDBProtocol;
-#if SAFE
 using MaxDB.Data.Utilities;
-#endif //SAFE
 using System.Threading;
+using System.Collections.Generic;
 
 namespace MaxDB.Data
 {
 	internal class MaxDBConnectionPoolEntry
 	{
 		private readonly MaxDBConnectionStringBuilder mConnStrBuilder;
-#if SAFE
 		private readonly MaxDBLogger mLogger;
-#endif // SAFE
-		private ArrayList entryList = new ArrayList();
+        private List<MaxDBComm> entryList = new List<MaxDBComm>();
 		private int activeCount;
 
-#if SAFE
 		public MaxDBConnectionPoolEntry(MaxDBConnection conn, MaxDBLogger logger)
-#else
-		public MaxDBConnectionPoolEntry(MaxDBConnection conn)
-#endif // SAFE
 		{
 			mConnStrBuilder = conn.mConnStrBuilder;
 
 			entryList.Capacity = mConnStrBuilder.MinPoolSize;
 
-#if SAFE
 			mLogger = logger;
-#endif // SAFE
 
 			for (int i = 0; i < mConnStrBuilder.MinPoolSize; i++)
 			{
@@ -53,10 +44,10 @@ namespace MaxDB.Data
 			}
 		}
 
-		public MaxDBComm GetEntry()
+        public MaxDBComm GetEntry()
 		{
-			ArrayList newList = new ArrayList();
-			lock (entryList.SyncRoot)
+			List<MaxDBComm> newList = new List<MaxDBComm>();
+			lock (((ICollection)entryList).SyncRoot)
 			{
 				foreach (MaxDBComm comm in entryList)
 				{
@@ -64,11 +55,7 @@ namespace MaxDB.Data
 					if ((mConnStrBuilder.ConnectionLifetime > 0 && comm.openTime.AddSeconds(mConnStrBuilder.ConnectionLifetime) < DateTime.Now) ||
 						!conn.Ping(comm))
 					{
-#if SAFE
 						comm.Close(true, false);
-#else
-						comm.Close();
-#endif // SAFE
 						activeCount--;
 					}
 					else
@@ -77,26 +64,32 @@ namespace MaxDB.Data
 
 				entryList = newList;
 
-				for (int i = entryList.Count; i < mConnStrBuilder.MinPoolSize; i++)
-					entryList.Add(CreateEntry());
+                for (int i = entryList.Count; i < mConnStrBuilder.MinPoolSize; i++)
+                {
+                    entryList.Add(CreateEntry());
+                }
 			}
 
-			lock (entryList.SyncRoot)
+            lock (((ICollection)entryList).SyncRoot)
 			{
 				MaxDBComm comm = null;
 				do
 				{
 					if (entryList.Count > 0)
 					{
-						comm = (MaxDBComm)entryList[entryList.Count - 1];
+						comm = entryList[entryList.Count - 1];
 						entryList.RemoveAt(entryList.Count - 1);
 					}
 
-					if (comm == null && activeCount < mConnStrBuilder.MaxPoolSize)
-						comm = CreateEntry();
+                    if (comm == null && activeCount < mConnStrBuilder.MaxPoolSize)
+                    {
+                        comm = CreateEntry();
+                    }
 
-					if (comm == null)
-						Monitor.Wait(entryList);
+                    if (comm == null)
+                    {
+                        Monitor.Wait(entryList);
+                    }
 				}
 				while (comm == null);
 
@@ -106,11 +99,7 @@ namespace MaxDB.Data
 
 		private MaxDBComm CreateEntry()
 		{
-#if SAFE
             MaxDBComm comm = new MaxDBComm(mLogger);
-#else
-			MaxDBComm comm = new MaxDBComm();
-#endif //SAFE
             comm.mConnStrBuilder = mConnStrBuilder;
 
 			comm.Open(ConnectionArguments);
@@ -147,11 +136,7 @@ namespace MaxDB.Data
 	{
 		private static readonly Hashtable mPool = new Hashtable();
 
-#if SAFE
 		public static MaxDBComm GetPoolEntry(MaxDBConnection conn, MaxDBLogger logger)
-#else
-		public static MaxDBComm GetPoolEntry(MaxDBConnection conn)
-#endif // SAFE
 		{
 			string key = conn.mConnStrBuilder.ConnectionString;
 
@@ -165,11 +150,7 @@ namespace MaxDB.Data
                 }
                 else
                 {
-#if SAFE
                     poolEntry = new MaxDBConnectionPoolEntry(conn, logger);
-#else
-					poolEntry = new MaxDBConnectionPoolEntry(conn);
-#endif // SAFE
                     mPool[key] = poolEntry;
                 }
 

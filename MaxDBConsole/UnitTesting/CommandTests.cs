@@ -213,8 +213,10 @@ namespace MaxDB.UnitTesting
 			try
 			{
 				mconn.SqlMode = SqlMode.Oracle;
-				using (MaxDBCommand cmd = new MaxDBCommand("SELECT sysdate FROM DUAL", mconn))
-					Assert.IsTrue(DateTime.Now.Subtract(DateTime.Parse(cmd.ExecuteScalar().ToString())).TotalSeconds < 10, "Oracle returned bad time");
+                using (MaxDBCommand cmd = new MaxDBCommand("SELECT sysdate FROM DUAL", mconn))
+                {
+                    Assert.IsTrue(DateTime.Now.Subtract(DateTime.Parse(cmd.ExecuteScalar().ToString())).TotalSeconds < 10, "Oracle returned bad time");
+                }
 
 				using (MaxDBCommand cmd = new MaxDBCommand("SELECT sysdate FROM DUAL FOR UPDATE", mconn))
 				{

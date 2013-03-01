@@ -22,8 +22,6 @@ using System.Globalization;
 
 namespace MaxDB.Data.MaxDBProtocol
 {
-#if SAFE
-
 	#region "MaxDB Packet"
 
 	/// <summary>
@@ -621,7 +619,6 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 		}
 
-#if NET20
 		public static int ResultCountPartSize
 		{
 			get
@@ -642,7 +639,6 @@ namespace MaxDB.Data.MaxDBProtocol
 			AddNullData(iResultCountSize);
 			sPartArguments++;
 		}
-#endif // NET20
 
 		public byte SwitchSqlMode(byte newMode)
 		{
@@ -1679,6 +1675,4 @@ namespace MaxDB.Data.MaxDBProtocol
 	}
 
 	#endregion
-
-#endif // SAFE
 }

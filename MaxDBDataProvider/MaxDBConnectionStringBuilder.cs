@@ -29,13 +29,7 @@ namespace MaxDB.Data
 	/// Provides a simple way to create and manage the contents of connection strings used by the <see cref="MaxDBConnection"/> class.
 	/// This class cannot be inherited.
 	/// </summary>
-	public sealed class MaxDBConnectionStringBuilder :
-#if NET20
-		DbConnectionStringBuilder
-#else
-		IDictionary, ICollection
-#endif
-		, IEnumerable
+	public sealed class MaxDBConnectionStringBuilder : DbConnectionStringBuilder, IEnumerable
 	{
 		private Hashtable mKeyValuePairs = new Hashtable();
 		private bool bBrowsable = true;
@@ -59,11 +53,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// Gets or sets a value that indicates whether the <see cref="ConnectionString"/> property is visible in Visual Studio designers. 
 		/// </summary>
-#if NET20
 		public new bool BrowsableConnectionString
-#else
-		public bool BrowsableConnectionString
-#endif // NET20
 		{
 			get
 			{
@@ -81,14 +71,12 @@ namespace MaxDB.Data
 		/// <param name="builder">The <see cref="StringBuilder"/> to which to add the key/value pair.</param>
 		/// <param name="keyword">Key value.</param>
 		/// <param name="value">The value for the supplied key.</param>
-#if NET20
 		public static new void AppendKeyValuePair(StringBuilder builder, string keyword, string value)
-#else
-		public static void AppendKeyValuePair(StringBuilder builder, string keyword, string value)
-#endif // NET20
 		{
-			if (builder == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "builder"));
+            if (builder == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "builder"));
+            }
 
 			builder.Append(keyword).Append("=").Append(value).Append(";");
 		}
@@ -98,11 +86,7 @@ namespace MaxDB.Data
 		/// </summary>
 		/// <param name="keyword">Key value.</param>
 		/// <returns>true if an entry with the specified key was found and false otherwise.</returns>
-#if NET20
 		public override bool ShouldSerialize(string keyword)
-#else
-		public bool ShouldSerialize(string keyword)
-#endif
 		{
 			return mKeyValuePairs.ContainsKey(keyword);
 		}
@@ -122,11 +106,7 @@ namespace MaxDB.Data
 		/// <param name="keyword">The key of the item.</param>
 		/// <param name="value">The corresponding value.</param>
 		/// <returns>true if an entry with the specified key was found and false otherwise.</returns>
-#if NET20
 		public override bool TryGetValue(string keyword, out object value)
-#else
-		public bool TryGetValue(string keyword, out object value)
-#endif
 		{
 			if (mKeyValuePairs.ContainsKey(keyword))
 			{
@@ -192,11 +172,7 @@ namespace MaxDB.Data
 		/// <c>"Server=MyServer;Database=MyDB;User ID=MyLogin;Password=MyPassword;"</c>
 		/// </para>
 		/// </remarks>
-#if NET20
 		public new string ConnectionString
-#else
-		public string ConnectionString
-#endif
 		{
 			get
 			{
@@ -630,11 +606,7 @@ namespace MaxDB.Data
 		/// </summary>
 		/// <param name="key">The key of the item.</param>
 		/// <param name="value">The value for the specified key.</param>
-#if NET20
 		public new void Add(string key, object value)
-#else
-        public void Add(object key, object value)
-#endif
 		{
 			mKeyValuePairs[key] = value;
 		}
@@ -642,11 +614,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// Remove all key/value pairs. 
 		/// </summary>
-#if NET20
 		public override void Clear()
-#else
-		public void Clear()
-#endif // NET20
 		{
 			mKeyValuePairs.Clear();
 		}
@@ -673,11 +641,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// Gets a value indicating whether the collection is fixed-sized.
 		/// </summary>
-#if NET20
 		public override bool IsFixedSize
-#else
-		public bool IsFixedSize
-#endif // NET20
 		{
 			get
 			{
@@ -688,11 +652,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// Gets a value indicating whether the collection is read-only.
 		/// </summary>
-#if NET20
 		public new bool IsReadOnly
-#else
-		public bool IsReadOnly
-#endif // NET20
 		{
 			get
 			{
@@ -703,11 +663,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// The collection of keys. 
 		/// </summary>
-#if NET20
 		public override ICollection Keys
-#else
-		public ICollection Keys
-#endif // NET20
 		{
 			get
 			{
@@ -720,7 +676,6 @@ namespace MaxDB.Data
 		/// </summary>
 		/// <param name="keyword">The key of the item</param>
 		/// <returns>true if an entry with the specified key was found and false otherwise.</returns>
-#if NET20
 		public override bool Remove(string keyword)
 		{
 			if (Contains(keyword))
@@ -731,22 +686,11 @@ namespace MaxDB.Data
 			else
 				return false;
 		}
-#else
-		public void Remove(object keyword)
-		{
-			if (Contains(keyword))
-				mKeyValuePairs.Remove(keyword);
-		}
-#endif
 
 		/// <summary>
 		/// The collection of values.
 		/// </summary>
-#if NET20
 		public override ICollection Values
-#else
-        public ICollection Values
-#endif // NET20
 		{
 			get
 			{
@@ -759,11 +703,7 @@ namespace MaxDB.Data
 		/// </summary>
 		/// <param name="keyword">The key of the item.</param>
 		/// <returns>The value associated with the specified key.</returns>
-#if NET20
 		public override object this[string keyword]
-#else
-		public object this[object keyword]
-#endif // NET20
 		{
 			get
 			{
@@ -802,11 +742,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// Gets the number of items in the collection.
 		/// </summary>
-#if NET20
 		public override int Count
-#else
-        public int Count
-#endif
 		{
 			get
 			{

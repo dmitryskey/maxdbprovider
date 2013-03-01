@@ -22,37 +22,19 @@
 namespace MaxDB.Data
 {
     using System;
-#if SAFE
     using System.Collections;
-#if NET20
     using System.Collections.Generic;
-#endif // NET20
-#endif // SAFE
     using System.Data;
     using System.Data.Common;
     using System.Globalization;
-#if !SAFE
-    using System.Runtime.InteropServices;
-    using System.Security.Permissions;
-#endif // SAFE
     using System.Text;
     using MaxDBProtocol;
     using Utilities;
 
-
     /// <summary>
     /// Represents a SQL statement to execute against a MaxDB database. This class cannot be inherited.
     /// </summary>
-    public sealed class MaxDBCommand :
-#if NET20
-        DbCommand
-#else // NET20
-        IDbCommand, IDisposable
-#endif // NET20
-        , ICloneable
-#if SAFE
-        , ISqlParameterController
-#endif // SAFE
+    public sealed class MaxDBCommand : DbCommand, ICloneable, ISqlParameterController
     {
         private const int iMaxParseAgainCnt = 10;
         private MaxDBConnection dbConnection;
@@ -63,22 +45,13 @@ namespace MaxDB.Data
         private CommandType mCmdType = CommandType.Text;
         private bool bDesignTimeVisible;
 
-#if SAFE
         #region "Native implementation parameters"
 
-#if NET20
         private List<AbstractProcedurePutValue> lstInputProcedureLongs;
-#else
-        private ArrayList lstInputProcedureLongs;
-#endif // NET20
         private bool bSetWithInfo;
         private bool bHasRowCount;
 
-#if NET20
         private List<PutValue> lstInputLongs;
-#else
-        private ArrayList lstInputLongs;
-#endif // NET20
         private MaxDBDataReader mCurrentDataReader;
         private object[] objInputArgs;
         private string strCursorName;
@@ -89,13 +62,6 @@ namespace MaxDB.Data
 
         internal MaxDBParseInfo mParseInfo;
         #endregion
-#else
-        #region "SQLDBC Wrapper parameters"
-
-        internal IntPtr mStmt = IntPtr.Zero;
-
-        #endregion
-#endif // SAFE
 
         internal int iRowsAffected = -1;
 
@@ -121,14 +87,9 @@ namespace MaxDB.Data
         /// </summary>
         /// <param name="cmdText">The text of the query.</param>
         /// <param name="connection">A <see cref="MaxDBConnection"/> that represents the connection to an instance of MaxDB Server.</param>
-        public MaxDBCommand(string cmdText, MaxDBConnection connection)
-            : this(cmdText)
+        public MaxDBCommand(string cmdText, MaxDBConnection connection) : this(cmdText)
         {
             this.dbConnection = connection;
-
-#if !SAFE
-            RefreshStmtHandler();
-#endif
         }
 
         /// <summary>
@@ -138,13 +99,9 @@ namespace MaxDB.Data
         /// <param name="cmdText">The text of the query.</param>
         /// <param name="connection">A <see cref="MaxDBConnection"/> that represents the connection to an instance of MaxDB Server.</param>
         /// <param name="transaction">The <see cref="MaxDBTransaction"/> in which the <see cref="MaxDBCommand"/> executes.</param>
-        public MaxDBCommand(string cmdText, MaxDBConnection connection, MaxDBTransaction transaction)
-            : this(cmdText, connection)
+        public MaxDBCommand(string cmdText, MaxDBConnection connection, MaxDBTransaction transaction) : this(cmdText, connection)
         {
             this.dbTransaction = transaction;
-#if !SAFE
-            RefreshStmtHandler();
-#endif
         }
 
         /// <summary>
@@ -152,10 +109,7 @@ namespace MaxDB.Data
         /// </summary>
         internal void AssertOpen()
         {
-            if (this.dbConnection == null
-#if SAFE
-                || this.dbConnection.mComm == null
-#endif // SAFE
+            if (this.dbConnection == null || this.dbConnection.mComm == null
             )
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.OBJECTISCLOSED));
@@ -165,11 +119,7 @@ namespace MaxDB.Data
         /// <summary>
         /// Gets or sets a value indicating whether the command object should be visible in a Windows Forms Designer control.
         /// </summary>
-#if NET20
         public override bool DesignTimeVisible
-#else
-        public bool DesignTimeVisible
-#endif // NET20
         {
             get
             {
@@ -182,7 +132,6 @@ namespace MaxDB.Data
             }
         }
 
-#if SAFE && NET20
         internal int[] ExecuteBatch(MaxDBParameterCollection[] batchParams)
         {
             this.AssertOpen();
@@ -400,20 +349,7 @@ namespace MaxDB.Data
                 this.bCanceled = false;
             }
         }
-#endif // SAFE && NET20
 
-#if !SAFE && NET20
-        internal unsafe int[] ExecuteBatch(MaxDBParameterCollection[] batchParams)
-        {
-            Prepare();
-
-            BindAndExecute(mStmt, batchParams);
-
-            return new int[0];
-        }
-#endif // !SAFE && NET20
-
-#if SAFE
         #region "Methods to support native protocol"
 
         private MaxDBReplyPacket SendCommand(MaxDBRequestPacket requestPacket, string sqlCmd, int gcFlags, bool parseAgain)
@@ -1384,9 +1320,7 @@ namespace MaxDB.Data
             if (parseAgain)
             {
                 result = this.mParseInfo;
-#if NET20
                 result.MassParseID = null;
-#endif // NET20
             }
             else if (cache != null)
             {
@@ -1494,7 +1428,6 @@ namespace MaxDB.Data
             return result;
         }
 
-#if NET20 && SAFE
         internal void ParseMassCmd(bool parsegain)
         {
             MaxDBRequestPacket requestPacket = this.dbConnection.mComm.GetRequestPacket();
@@ -1506,7 +1439,6 @@ namespace MaxDB.Data
                 this.mParseInfo.MassParseID = replyPacket.ReadBytes(replyPacket.PartDataPos, 12);
             }
         }
-#endif // NET20 && SAFE
 
         private void ClearParameters()
         {
@@ -1530,12 +1462,7 @@ namespace MaxDB.Data
         private void HandleStreamsForExecute(DataPart dataPart, object[] args)
         {
             // get all putval objects
-            this.lstInputLongs = new
-#if NET20
-                List<PutValue>();
-#else
-                ArrayList();
-#endif
+            this.lstInputLongs = new List<PutValue>();
             for (int i = 0; i < this.mParseInfo.mParamInfos.Length; i++)
             {
                 object inarg = args[i];
@@ -1574,12 +1501,7 @@ namespace MaxDB.Data
 
         private void HandleProcedureStreamsForExecute()
         {
-            this.lstInputProcedureLongs = new
-#if NET20
-                List<AbstractProcedurePutValue>();
-#else
-                ArrayList();
-#endif
+            this.lstInputProcedureLongs = new List<AbstractProcedurePutValue>();
             for (int i = 0; i < this.mParseInfo.mParamInfos.Length; ++i)
             {
                 object arg = this.objInputArgs[i];
@@ -1748,879 +1670,6 @@ namespace MaxDB.Data
         }
 
         #endregion
-#else
-        #region "Unsafe methods"
-
-        private static unsafe int EvaluateBufferLegth(IntPtr meta, MaxDBParameterCollection[] parameters)
-        {
-            int bufferLength = 0;
-            int paramCount = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterCount(meta);
-
-            for (short i = 1; i <= paramCount; i++)
-            {
-                bool isInput = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterMode(meta, i) == SQLDBC_ParameterMode.In;
-
-                foreach (MaxDBParameterCollection paramArray in parameters)
-                {
-                    MaxDBParameter param = paramArray[i - 1];
-
-                    int valLength = 0;
-
-                    switch (param.dbType)
-                    {
-                        case MaxDBType.Boolean:
-                            if (isInput)
-                                valLength = sizeof(byte);
-                            else
-                                valLength = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, i) * sizeof(byte);
-                            break;
-                        case MaxDBType.CharA:
-                        case MaxDBType.StrA:
-                        case MaxDBType.VarCharA:
-                        case MaxDBType.CharE:
-                        case MaxDBType.StrE:
-                        case MaxDBType.VarCharE:
-                        case MaxDBType.LongA:
-                        case MaxDBType.LongE:
-                            if (isInput)
-                            {
-                                if (param.objInputValue != DBNull.Value)
-                                {
-                                    string strValue = param.objInputValue is char[] ?
-                                        new string((char[])param.objInputValue) : (string)param.objInputValue;
-                                    valLength = strValue.Length * sizeof(byte);
-                                }
-                                else
-                                    valLength = 0;
-                            }
-                            else
-                            {
-                                if (param.Size > 0)
-                                    valLength = param.Size;
-                                else
-                                    valLength = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, i) * sizeof(byte);
-                            }
-
-                            break;
-                        case MaxDBType.Unicode:
-                        case MaxDBType.StrUni:
-                        case MaxDBType.VarCharUni:
-                        case MaxDBType.LongUni:
-                            if (isInput)
-                            {
-                                if (param.objInputValue != DBNull.Value)
-                                {
-                                    string strValue = param.objInputValue is char[] ?
-                                        new string((char[])param.objInputValue) : (string)param.objInputValue;
-                                    valLength = strValue.Length * sizeof(char);
-                                }
-                                else
-                                    valLength = 0;
-                            }
-                            else
-                            {
-                                if (param.Size > 0)
-                                    valLength = param.Size;
-                                else
-                                    valLength = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, i) * sizeof(char);
-                            }
-
-                            break;
-                        case MaxDBType.CharB:
-                        case MaxDBType.StrB:
-                        case MaxDBType.VarCharB:
-                        case MaxDBType.LongB:
-                            if (isInput)
-                            {
-                                if (param.objInputValue != DBNull.Value)
-                                    valLength = ((byte[])param.objInputValue).Length * sizeof(byte);
-                                else
-                                    valLength = 0;
-                            }
-                            else
-                            {
-                                if (param.Size > 0)
-                                    valLength = param.Size;
-                                else
-                                    valLength = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, i) * sizeof(byte);
-                            }
-
-                            break;
-                        case MaxDBType.Date:
-                            if (isInput)
-                                valLength = sizeof(OdbcDate);
-                            else
-                                valLength = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, i) * sizeof(byte);
-
-                            break;
-                        case MaxDBType.Time:
-                            if (isInput)
-                                valLength = sizeof(OdbcTime);
-                            else
-                                valLength = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, i) * sizeof(byte);
-
-                            break;
-                        case MaxDBType.Timestamp:
-                            if (isInput)
-                                valLength = sizeof(OdbcTimeStamp);
-                            else
-                                valLength = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, i) * sizeof(byte);
-
-                            break;
-                        case MaxDBType.Fixed:
-                        case MaxDBType.Float:
-                        case MaxDBType.VFloat:
-                        case MaxDBType.Number:
-                        case MaxDBType.NoNumber:
-                            if (isInput)
-                                valLength = sizeof(double);
-                            else
-                                valLength = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, i);
-
-                            break;
-                        case MaxDBType.Integer:
-                            if (isInput)
-                                valLength = sizeof(int);
-                            else
-                                valLength = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, i) * sizeof(byte);
-
-                            break;
-                        case MaxDBType.SmallInt:
-                            if (isInput)
-                                valLength = sizeof(short);
-                            else
-                                valLength = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, i) * sizeof(byte);
-
-                            break;
-                    }
-
-                    bufferLength += valLength;
-                }
-            }
-
-            return bufferLength;
-        }
-
-        [SecurityPermissionAttribute(SecurityAction.Demand, SerializationFormatter = true)]
-        private static unsafe void FillInputParameters(IntPtr stmt, IntPtr meta, MaxDBParameterCollection[] parameters,
-            ByteArray paramArr, byte* bufferPtr, int* sizePtr, byte** addrPtr, int[][] valLen)
-        {
-            int paramCount = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterCount(meta);
-            int paramLen = parameters.Length;
-
-            if (paramCount == 0 || paramLen == 0)
-                return;
-
-            int bufferOffset = 0;
-            int paramSize;
-
-            for (short i = 0; i < paramCount; i++)
-            {
-                valLen[i] = new int[paramLen];
-
-                bool isInput = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterMode(meta, (short)(i + 1)) == SQLDBC_ParameterMode.In;
-                bool isInputOutput = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterMode(meta, (short)(i + 1)) == SQLDBC_ParameterMode.InOut;
-
-                MaxDBParameter param;
-                int paramOffset = 0;
-                paramSize = 0;
-
-                switch (parameters[0][i].dbType)
-                {
-                    case MaxDBType.Boolean:
-                        for (int k = 0; k < paramLen; k++)
-                        {
-                            param = parameters[k][i];
-                            if (isInput)
-                            {
-                                if (param.objInputValue != DBNull.Value)
-                                    sizePtr[i * paramLen + k] = sizeof(bool);
-                                else
-                                    sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_NULL_DATA;
-                                paramSize = valLen[i][k] = sizeof(bool);
-                            }
-                            else
-                            {
-                                sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, (short)(i + 1)) * sizeof(byte);
-                                paramSize = valLen[i][k] = sizePtr[i * paramLen + k];
-                            }
-
-                            if ((isInput || isInputOutput) && param.objInputValue != DBNull.Value)
-                                Marshal.WriteByte(new IntPtr(bufferPtr + bufferOffset + paramOffset), (byte)((bool)param.objInputValue ? 1 : 0));
-
-                            addrPtr[i * paramLen + k] = bufferPtr + bufferOffset + paramOffset;
-
-                            paramOffset += valLen[i][k];
-                        }
-
-                        if (UnsafeNativeMethods.SQLDBC_PreparedStatement_bindParameterAddr(stmt, (short)(i + 1), SQLDBC_HostType.SQLDBC_HOSTTYPE_UINT1,
-                            addrPtr + i * paramLen, sizePtr + i * paramLen, paramSize, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK)
-                            MaxDBException.ThrowException(
-                                MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                                UnsafeNativeMethods.SQLDBC_PreparedStatement_getError(stmt));
-                        break;
-                    case MaxDBType.CharA:
-                    case MaxDBType.StrA:
-                    case MaxDBType.VarCharA:
-                    case MaxDBType.CharE:
-                    case MaxDBType.StrE:
-                    case MaxDBType.VarCharE:
-                    case MaxDBType.LongA:
-                    case MaxDBType.LongE:
-                        for (int k = 0; k < paramLen; k++)
-                        {
-                            param = parameters[k][i];
-                            string strValue = string.Empty;
-
-                            if (param.objInputValue != DBNull.Value)
-                                strValue = param.objInputValue is char[] ? new string((char[])param.objInputValue) : (string)param.objInputValue;
-                            if (isInput)
-                            {
-                                if (param.objInputValue != DBNull.Value)
-                                {
-                                    sizePtr[i * paramLen + k] = strValue.Length * sizeof(byte);
-                                    valLen[i][k] = sizePtr[i * paramLen + k];
-                                }
-                                else
-                                    sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_NULL_DATA;
-                            }
-                            else
-                            {
-                                if (param.Size > 0)
-                                    sizePtr[i * paramLen + k] = param.Size;
-                                else
-                                    sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, (short)(i + 1)) * sizeof(byte);
-
-                                paramSize = valLen[i][k] = sizePtr[i * paramLen + k];
-                            }
-
-                            if (paramSize > 0 && strValue != null && strValue.Length > paramSize)
-                                strValue = strValue.Substring(0, paramSize);
-
-                            if ((isInput || isInputOutput) && param.objInputValue != DBNull.Value)
-                                paramArr.WriteAscii(strValue, bufferOffset + paramOffset);
-
-                            if (isInputOutput && param.objInputValue != DBNull.Value)
-                                sizePtr[i * paramLen + k] = strValue.Length;
-
-                            addrPtr[i * paramLen + k] = bufferPtr + bufferOffset + paramOffset;
-
-                            paramOffset += valLen[i][k];
-                        }
-
-                        if (UnsafeNativeMethods.SQLDBC_PreparedStatement_bindParameterAddr(stmt, (short)(i + 1), SQLDBC_HostType.SQLDBC_HOSTTYPE_ASCII,
-                            addrPtr + i * paramLen, sizePtr + i * paramLen, paramSize, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK)
-                            MaxDBException.ThrowException(
-                                MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                                UnsafeNativeMethods.SQLDBC_PreparedStatement_getError(stmt));
-                        break;
-                    case MaxDBType.Unicode:
-                    case MaxDBType.StrUni:
-                    case MaxDBType.VarCharUni:
-                    case MaxDBType.LongUni:
-                        for (int k = 0; k < paramLen; k++)
-                        {
-                            param = parameters[k][i];
-
-                            string strValue = string.Empty;
-
-                            if (param.objInputValue != DBNull.Value)
-                                strValue = param.objInputValue is char[] ? new string((char[])param.objInputValue) : (string)param.objInputValue;
-
-                            if (isInput)
-                            {
-                                if (param.objInputValue != DBNull.Value)
-                                {
-                                    sizePtr[i * paramLen + k] = strValue.Length * sizeof(char);
-                                    paramSize = valLen[i][k] = sizePtr[i * paramLen + k];
-                                }
-                                else
-                                    sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_NULL_DATA;
-                            }
-                            else
-                            {
-                                if (param.Size > 0)
-                                    sizePtr[i * paramLen + k] = param.Size;
-                                else
-                                    sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, (short)(i + 1)) * sizeof(char);
-                                paramSize = valLen[i][k] = sizePtr[i * paramLen + k];
-                            }
-
-                            if (paramSize > 0 && strValue != null && strValue.Length > paramSize)
-                                strValue = strValue.Substring(0, paramSize);
-
-                            if ((isInput || isInputOutput) && param.objInputValue != DBNull.Value)
-                                paramArr.WriteUnicode(strValue, bufferOffset + paramOffset);
-
-                            if (isInputOutput && param.objInputValue != DBNull.Value)
-                                sizePtr[i * paramLen + k] = strValue.Length * sizeof(char);
-
-                            addrPtr[i * paramLen + k] = bufferPtr + bufferOffset + paramOffset;
-
-                            paramOffset += valLen[i][k];
-                        }
-
-                        if (UnsafeNativeMethods.SQLDBC_PreparedStatement_bindParameterAddr(stmt, (short)(i + 1),
-                            BitConverter.IsLittleEndian ? SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2_SWAPPED : SQLDBC_HostType.SQLDBC_HOSTTYPE_UCS2,
-                            addrPtr + i * paramLen, sizePtr + i * paramLen, paramSize, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK)
-                            MaxDBException.ThrowException(
-                                MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                                UnsafeNativeMethods.SQLDBC_PreparedStatement_getError(stmt));
-                        break;
-                    case MaxDBType.CharB:
-                    case MaxDBType.StrB:
-                    case MaxDBType.VarCharB:
-                    case MaxDBType.LongB:
-                        for (int k = 0; k < paramLen; k++)
-                        {
-                            param = parameters[k][i];
-                            if (isInput)
-                            {
-                                if (param.objInputValue != DBNull.Value)
-                                {
-                                    sizePtr[i * paramLen + k] = ((byte[])param.objInputValue).Length * sizeof(byte);
-
-                                    valLen[i][k] = sizePtr[i * paramLen + k];
-                                }
-                                else
-                                    sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_NULL_DATA;
-                            }
-                            else
-                            {
-                                if (param.Size > 0)
-                                    sizePtr[i * paramLen + k] = param.Size;
-                                else
-                                    sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, (short)(i + 1)) * sizeof(byte);
-                                paramSize = valLen[i][k] = sizePtr[i * paramLen + k];
-                            }
-
-                            if ((isInput || isInputOutput) && param.objInputValue != DBNull.Value)
-                            {
-                                byte[] paramValue = (byte[])param.objInputValue;
-                                Marshal.Copy(paramValue, 0, new IntPtr(bufferPtr + bufferOffset + paramOffset), paramValue.Length);
-                            }
-
-                            if (isInputOutput && param.objInputValue != DBNull.Value)
-                                sizePtr[i * paramLen + k] = ((byte[])param.objInputValue).Length * sizeof(byte);
-
-                            addrPtr[i * paramLen + k] = bufferPtr + bufferOffset + paramOffset;
-
-                            paramOffset += valLen[i][k];
-                        }
-
-                        if (UnsafeNativeMethods.SQLDBC_PreparedStatement_bindParameterAddr(stmt, (short)(i + 1), SQLDBC_HostType.SQLDBC_HOSTTYPE_BINARY,
-                            addrPtr + i * paramLen, sizePtr + i * paramLen, paramSize, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK)
-                            MaxDBException.ThrowException(
-                                MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                                UnsafeNativeMethods.SQLDBC_PreparedStatement_getError(stmt));
-                        break;
-                    case MaxDBType.Date:
-                        for (int k = 0; k < paramLen; k++)
-                        {
-                            param = parameters[k][i];
-                            if (isInput)
-                            {
-                                if (param.objInputValue != DBNull.Value)
-                                    sizePtr[i * paramLen + k] = sizeof(OdbcDate);
-                                else
-                                    sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_NULL_DATA;
-
-                                paramSize = valLen[i][k] = sizeof(OdbcDate);
-                            }
-                            else
-                            {
-                                sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, (short)(i + 1)) * sizeof(byte);
-                                paramSize = valLen[i][k] = sizePtr[i * paramLen + k];
-                            }
-
-                            if ((isInput || isInputOutput) && param.objInputValue != DBNull.Value)
-                            {
-                                DateTime dt = (DateTime)param.objInputValue;
-                                // ODBC date format
-                                OdbcDate dtOdbc = new OdbcDate();
-                                dtOdbc.year = (short)(dt.Year % 0x10000);
-                                dtOdbc.month = (ushort)(dt.Month % 0x10000);
-                                dtOdbc.day = (ushort)(dt.Day % 0x10000);
-
-                                Marshal.StructureToPtr(dtOdbc, new IntPtr(bufferPtr + bufferOffset + paramOffset), false);
-                            }
-
-                            addrPtr[i * paramLen + k] = bufferPtr + bufferOffset + paramOffset;
-
-                            paramOffset += valLen[i][k];
-                        }
-
-                        if (UnsafeNativeMethods.SQLDBC_PreparedStatement_bindParameterAddr(stmt, (short)(i + 1), SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCDATE,
-                            addrPtr + i * paramLen, sizePtr + i * paramLen, paramSize, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK)
-                            MaxDBException.ThrowException(
-                                MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                                UnsafeNativeMethods.SQLDBC_PreparedStatement_getError(stmt));
-
-                        break;
-                    case MaxDBType.Time:
-                        for (int k = 0; k < paramLen; k++)
-                        {
-                            param = parameters[k][i];
-                            if (isInput)
-                            {
-                                if (param.objInputValue != DBNull.Value)
-                                    sizePtr[i * paramLen + k] = sizeof(OdbcTime);
-                                else
-                                    sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_NULL_DATA;
-
-                                paramSize = valLen[i][k] = sizeof(OdbcTime);
-                            }
-                            else
-                            {
-                                sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, (short)(i + 1)) * sizeof(byte);
-                                paramSize = valLen[i][k] = sizePtr[i * paramLen + k];
-                            }
-
-                            if ((isInput || isInputOutput) && param.objInputValue != DBNull.Value)
-                            {
-                                //ODBC time format
-                                OdbcTime tm_odbc = new OdbcTime();
-
-                                if (param.objInputValue is DateTime)
-                                {
-                                    DateTime tm = (DateTime)param.objInputValue;
-
-                                    tm_odbc.hour = (ushort)(tm.Hour % 0x10000);
-                                    tm_odbc.minute = (ushort)(tm.Minute % 0x10000);
-                                    tm_odbc.second = (ushort)(tm.Second % 0x10000);
-                                }
-                                else
-                                {
-                                    TimeSpan ts = (TimeSpan)param.objInputValue;
-
-                                    tm_odbc.hour = (ushort)(ts.Hours % 0x10000);
-                                    tm_odbc.minute = (ushort)(ts.Minutes % 0x10000);
-                                    tm_odbc.second = (ushort)(ts.Seconds % 0x10000);
-                                }
-
-                                Marshal.StructureToPtr(tm_odbc, new IntPtr(bufferPtr + bufferOffset + paramOffset), false);
-                            }
-
-                            addrPtr[i * paramLen + k] = bufferPtr + bufferOffset + paramOffset;
-
-                            paramOffset += valLen[i][k];
-                        }
-
-                        if (UnsafeNativeMethods.SQLDBC_PreparedStatement_bindParameterAddr(stmt, (short)(i + 1), SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIME,
-                            addrPtr + i * paramLen, sizePtr + i * paramLen, paramSize, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK)
-                            MaxDBException.ThrowException(
-                                MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                                UnsafeNativeMethods.SQLDBC_PreparedStatement_getError(stmt));
-                        break;
-                    case MaxDBType.Timestamp:
-                        for (int k = 0; k < paramLen; k++)
-                        {
-                            param = parameters[k][i];
-                            if (isInput)
-                            {
-                                if (param.objInputValue != DBNull.Value)
-                                    sizePtr[i * paramLen + k] = sizeof(OdbcTimeStamp);
-                                else
-                                    sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_NULL_DATA;
-
-                                paramSize = valLen[i][k] = sizeof(OdbcTimeStamp);
-                            }
-                            else
-                            {
-                                sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, (short)(i + 1)) * sizeof(byte);
-                                paramSize = valLen[i][k] = sizePtr[i * paramLen + k];
-                            }
-
-                            if ((isInput || isInputOutput) && param.objInputValue != DBNull.Value)
-                            {
-                                DateTime ts = (DateTime)param.objInputValue;
-                                //ODBC timestamp format
-                                OdbcTimeStamp ts_odbc = new OdbcTimeStamp();
-                                ts_odbc.year = (short)(ts.Year % 0x10000);
-                                ts_odbc.month = (ushort)(ts.Month % 0x10000);
-                                ts_odbc.day = (ushort)(ts.Day % 0x10000);
-                                ts_odbc.hour = (ushort)(ts.Hour % 0x10000);
-                                ts_odbc.minute = (ushort)(ts.Minute % 0x10000);
-                                ts_odbc.second = (ushort)(ts.Second % 0x10000);
-                                ts_odbc.fraction = (uint)(((ts.Ticks % TimeSpan.TicksPerSecond) / (TimeSpan.TicksPerMillisecond / 1000)) * 1000);
-
-                                Marshal.StructureToPtr(ts_odbc, new IntPtr(bufferPtr + bufferOffset + paramOffset), false);
-                            }
-
-                            addrPtr[i * paramLen + k] = bufferPtr + bufferOffset + paramOffset;
-
-                            paramOffset += valLen[i][k];
-                        }
-
-                        if (UnsafeNativeMethods.SQLDBC_PreparedStatement_bindParameterAddr(stmt, (short)(i + 1), SQLDBC_HostType.SQLDBC_HOSTTYPE_ODBCTIMESTAMP,
-                            addrPtr + i * paramLen, sizePtr + i * paramLen, paramSize, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK)
-                            MaxDBException.ThrowException(
-                                MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                                UnsafeNativeMethods.SQLDBC_PreparedStatement_getError(stmt));
-                        break;
-                    case MaxDBType.Fixed:
-                    case MaxDBType.Float:
-                    case MaxDBType.VFloat:
-                    case MaxDBType.Number:
-                    case MaxDBType.NoNumber:
-                        for (int k = 0; k < paramLen; k++)
-                        {
-                            param = parameters[k][i];
-                            if (isInput)
-                            {
-                                if (param.objInputValue != DBNull.Value)
-                                    sizePtr[i * paramLen + k] = sizeof(double);
-                                else
-                                    sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_NULL_DATA;
-
-                                paramSize = valLen[i][k] = sizeof(double);
-                            }
-                            else
-                            {
-                                sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, (short)(i + 1)) * sizeof(byte);
-                                paramSize = valLen[i][k] = sizePtr[i * paramLen + k];
-                            }
-
-                            if ((isInput || isInputOutput) && param.objInputValue != DBNull.Value)
-                                paramArr.WriteDouble((double)param.objInputValue, bufferOffset + paramOffset);
-
-                            addrPtr[i * paramLen + k] = bufferPtr + bufferOffset + paramOffset;
-
-                            paramOffset += valLen[i][k];
-                        }
-
-                        if (UnsafeNativeMethods.SQLDBC_PreparedStatement_bindParameterAddr(stmt, (short)(i + 1), SQLDBC_HostType.SQLDBC_HOSTTYPE_DOUBLE,
-                            addrPtr + i * paramLen, sizePtr + i * paramLen, paramSize, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK)
-                            MaxDBException.ThrowException(
-                                MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                                UnsafeNativeMethods.SQLDBC_PreparedStatement_getError(stmt));
-                        break;
-                    case MaxDBType.Integer:
-                        for (int k = 0; k < paramLen; k++)
-                        {
-                            param = parameters[k][i];
-                            if (isInput)
-                            {
-                                if (param.objInputValue != DBNull.Value)
-                                    sizePtr[i * paramLen + k] = sizeof(int);
-                                else
-                                    sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_NULL_DATA;
-
-                                paramSize = valLen[i][k] = sizeof(int);
-                            }
-                            else
-                            {
-                                sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, (short)(i + 1)) * sizeof(byte);
-                                paramSize = valLen[i][k] = sizePtr[i * paramLen + k];
-                            }
-
-                            if ((isInput || isInputOutput) && param.objInputValue != DBNull.Value)
-                                Marshal.WriteInt32(new IntPtr(bufferPtr + bufferOffset + paramOffset), (int)param.objInputValue);
-
-                            addrPtr[i * paramLen + k] = bufferPtr + bufferOffset + paramOffset;
-
-                            paramOffset += valLen[i][k];
-                        }
-
-                        if (UnsafeNativeMethods.SQLDBC_PreparedStatement_bindParameterAddr(stmt, (short)(i + 1), SQLDBC_HostType.SQLDBC_HOSTTYPE_INT4,
-                            addrPtr + i * paramLen, sizePtr + i * paramLen, paramSize, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK)
-                            MaxDBException.ThrowException(
-                                MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                                UnsafeNativeMethods.SQLDBC_PreparedStatement_getError(stmt));
-                        break;
-                    case MaxDBType.SmallInt:
-                        for (int k = 0; k < paramLen; k++)
-                        {
-                            param = parameters[k][i];
-                            if (isInput)
-                            {
-                                if (param.objInputValue != DBNull.Value)
-                                    sizePtr[i * paramLen + k] = sizeof(short);
-                                else
-                                    sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_NULL_DATA;
-
-                                paramSize = valLen[i][k] = sizeof(short);
-                            }
-                            else
-                            {
-                                sizePtr[i * paramLen + k] = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterLength(meta, (short)(i + 1)) * sizeof(byte);
-                                paramSize = valLen[i][k] = sizePtr[i * paramLen + k];
-                            }
-
-                            if ((isInput || isInputOutput) && param.objInputValue != DBNull.Value)
-                                Marshal.WriteInt16(new IntPtr(bufferPtr + bufferOffset + paramOffset), (short)param.objInputValue);
-
-                            addrPtr[i * paramLen + k] = bufferPtr + bufferOffset + paramOffset;
-
-                            paramOffset += valLen[i][k];
-                        }
-
-                        if (UnsafeNativeMethods.SQLDBC_PreparedStatement_bindParameterAddr(stmt, (short)(i + 1), SQLDBC_HostType.SQLDBC_HOSTTYPE_INT2,
-                            addrPtr + i * paramLen, sizePtr + i * paramLen, paramSize, SQLDBC_BOOL.SQLDBC_FALSE) != SQLDBC_Retcode.SQLDBC_OK)
-                            MaxDBException.ThrowException(
-                                MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                                UnsafeNativeMethods.SQLDBC_PreparedStatement_getError(stmt));
-                        break;
-                }
-
-                bufferOffset += paramOffset;
-            }
-        }
-
-        [SecurityPermissionAttribute(SecurityAction.Demand, SerializationFormatter = true)]
-        private static unsafe void FillOutputParameters(IntPtr meta, MaxDBParameterCollection[] parameters,
-            ByteArray paramArr, byte* bufferPtr, int[] valSize, int[][] valLen)
-        {
-            int paramCount = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterCount(meta);
-            int paramLen = parameters.Length;
-            int bufferOffset = 0;
-
-            for (short i = 0; i < paramCount; i++)
-            {
-                bool isOutput = (
-                    UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterMode(meta, (short)(i + 1)) == SQLDBC_ParameterMode.InOut ||
-                    UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterMode(meta, (short)(i + 1)) == SQLDBC_ParameterMode.Out);
-
-                for (int k = 0; k < paramLen; k++)
-                {
-                    MaxDBParameter param = parameters[k][i];
-                    int valLength = valLen[i][k];
-
-                    switch (param.dbType)
-                    {
-                        case MaxDBType.Boolean:
-                            if (isOutput)
-                            {
-                                if (valSize[i * paramLen + k] != UnsafeNativeMethods.SQLDBC_NULL_DATA)
-                                    param.objValue = (Marshal.ReadByte(new IntPtr(bufferPtr + bufferOffset)) == 1);
-                                else
-                                    param.objValue = DBNull.Value;
-                            }
-                            bufferOffset += valLength;
-                            break;
-                        case MaxDBType.CharA:
-                        case MaxDBType.StrA:
-                        case MaxDBType.VarCharA:
-                        case MaxDBType.LongA:
-                        case MaxDBType.CharE:
-                        case MaxDBType.StrE:
-                        case MaxDBType.VarCharE:
-                        case MaxDBType.LongE:
-                            if (isOutput)
-                            {
-                                if (valSize[i * paramLen + k] != UnsafeNativeMethods.SQLDBC_NULL_DATA)
-                                    param.objValue = Marshal.PtrToStringAnsi(new IntPtr(bufferPtr + bufferOffset), valSize[i * paramLen + k]);
-                                else
-                                    param.objValue = DBNull.Value;
-                            }
-
-                            bufferOffset += valLength;
-                            break;
-                        case MaxDBType.Unicode:
-                        case MaxDBType.StrUni:
-                        case MaxDBType.VarCharUni:
-                        case MaxDBType.LongUni:
-                            if (isOutput)
-                            {
-                                //??? LONG ASCII parameter contains extra zeros
-                                if (valSize[i * paramLen + k] != UnsafeNativeMethods.SQLDBC_NULL_DATA)
-                                    param.objValue = paramArr.ReadUnicode(bufferOffset, valSize[i * paramLen + k]).Replace("\0", string.Empty);
-                                else
-                                    param.objValue = DBNull.Value;
-                            }
-
-                            bufferOffset += valLength;
-                            break;
-                        case MaxDBType.Date:
-                            //ODBC date format
-                            if (isOutput)
-                            {
-                                if (valSize[i * paramLen + k] != UnsafeNativeMethods.SQLDBC_NULL_DATA)
-                                    param.objValue = ODBCConverter.GetDateTime(
-                                        (OdbcDate)Marshal.PtrToStructure(new IntPtr(bufferPtr + bufferOffset), typeof(OdbcDate)));
-                                else
-                                    param.objValue = DBNull.Value;
-                            }
-
-                            bufferOffset += valLength;
-                            break;
-                        case MaxDBType.Time:
-                            //ODBC time format
-                            if (isOutput)
-                            {
-                                if (valSize[i * paramLen + k] != UnsafeNativeMethods.SQLDBC_NULL_DATA)
-                                    param.objValue = ODBCConverter.GetDateTime(
-                                        (OdbcTime)Marshal.PtrToStructure(new IntPtr(bufferPtr + bufferOffset), typeof(OdbcTime)));
-                                else
-                                    param.objValue = DBNull.Value;
-                            }
-                            bufferOffset += valLength;
-                            break;
-                        case MaxDBType.Timestamp:
-                            //ODBC timestamp format
-                            if (isOutput)
-                            {
-                                if (valSize[i * paramLen + k] != UnsafeNativeMethods.SQLDBC_NULL_DATA)
-                                    param.objValue = ODBCConverter.GetDateTime(
-                                        (OdbcTimeStamp)Marshal.PtrToStructure(new IntPtr(bufferPtr + bufferOffset), typeof(OdbcTimeStamp)));
-                                else
-                                    param.objValue = DBNull.Value;
-                            }
-                            bufferOffset += valLength;
-                            break;
-                        case MaxDBType.Fixed:
-                        case MaxDBType.Float:
-                        case MaxDBType.VFloat:
-                        case MaxDBType.Number:
-                        case MaxDBType.NoNumber:
-                            if (isOutput)
-                            {
-                                if (valSize[i * paramLen + k] != UnsafeNativeMethods.SQLDBC_NULL_DATA)
-                                    param.objValue = paramArr.ReadDouble(bufferOffset);
-                                else
-                                    param.objValue = DBNull.Value;
-                            }
-                            bufferOffset += valLength;
-                            break;
-                        case MaxDBType.Integer:
-                            if (isOutput)
-                            {
-                                if (valSize[i * paramLen + k] != UnsafeNativeMethods.SQLDBC_NULL_DATA)
-                                    param.objValue = Marshal.ReadInt32(new IntPtr(bufferPtr + bufferOffset));
-                                else
-                                    param.objValue = DBNull.Value;
-                            }
-                            bufferOffset += valLength;
-                            break;
-                        case MaxDBType.SmallInt:
-                            if (isOutput)
-                            {
-                                if (valSize[i * paramLen + k] != UnsafeNativeMethods.SQLDBC_NULL_DATA)
-                                    param.objValue = Marshal.ReadInt16(new IntPtr(bufferPtr + bufferOffset));
-                                else
-                                    param.objValue = DBNull.Value;
-                            }
-                            bufferOffset += valLength;
-                            break;
-                        case MaxDBType.CharB:
-                        case MaxDBType.StrB:
-                        case MaxDBType.VarCharB:
-                        case MaxDBType.LongB:
-                        default:
-                            if (isOutput)
-                            {
-                                if (valSize[i * paramLen + k] != UnsafeNativeMethods.SQLDBC_NULL_DATA)
-                                    param.objValue = paramArr.ReadBytes(bufferOffset, valSize[i * paramLen + k]);
-                                else
-                                    param.objValue = DBNull.Value;
-                            }
-
-                            bufferOffset += valLength;
-                            break;
-                    }
-                }
-            }
-        }
-
-        private static unsafe void BindAndExecute(IntPtr stmt, MaxDBParameterCollection[] parameters)
-        {
-            IntPtr meta = UnsafeNativeMethods.SQLDBC_PreparedStatement_getParameterMetaData(stmt);
-            if (meta == IntPtr.Zero)
-                return;
-
-            int paramCount = UnsafeNativeMethods.SQLDBC_ParameterMetaData_getParameterCount(meta);
-
-            // +1 byte to avoid zero-length array
-            ByteArray paramArr = new ByteArray(EvaluateBufferLegth(meta, parameters) + 1, BitConverter.IsLittleEndian);
-
-            UnsafeNativeMethods.SQLDBC_PreparedStatement_setBatchSize(stmt, (uint)parameters.Length);
-
-            int[] valSize = new int[paramCount * parameters.Length];
-            int[][] valLen = new int[paramCount][];
-            byte*[] valAddr = new byte*[paramCount * parameters.Length];
-
-            SQLDBC_Retcode rc;
-
-            if (paramCount > 0)
-                fixed (int* sizePtr = valSize)
-                fixed (byte** addrPtr = valAddr)
-                fixed (byte* bufferPtr = paramArr.GetArrayData())
-                {
-                    FillInputParameters(stmt, meta, parameters, paramArr, bufferPtr, sizePtr, addrPtr, valLen);
-
-                    rc = UnsafeNativeMethods.SQLDBC_PreparedStatement_executeASCII(stmt);
-
-                    if (rc == SQLDBC_Retcode.SQLDBC_OK)
-                        FillOutputParameters(meta, parameters, paramArr, bufferPtr, valSize, valLen);
-                }
-            else
-                rc = UnsafeNativeMethods.SQLDBC_PreparedStatement_executeASCII(stmt);
-
-            if (rc == SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-                throw new MaxDBException(
-                    MaxDBMessages.Extract(MaxDBError.EXEC_FAILED) + ": " +
-                    MaxDBMessages.Extract(MaxDBError.PARAMETER_TRUNC));
-
-            if (rc != SQLDBC_Retcode.SQLDBC_OK && rc != SQLDBC_Retcode.SQLDBC_NO_DATA_FOUND)
-                MaxDBException.ThrowException(
-                    MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                    UnsafeNativeMethods.SQLDBC_PreparedStatement_getError(stmt));
-        }
-
-        internal unsafe string UpdTableName
-        {
-            get
-            {
-                if (this.dbConnection.mTableNames[CommandText] == null)
-                {
-                    byte[] buffer = new byte[1];
-                    int bufferSize = 0;
-                    SQLDBC_Retcode rc;
-
-                    fixed (byte* bufferPtr = buffer)
-                    {
-                        rc = UnsafeNativeMethods.SQLDBC_Statement_getTableName(mStmt, (IntPtr)bufferPtr, SQLDBC_StringEncodingType.Ascii, bufferSize, &bufferSize);
-                        if (rc != SQLDBC_Retcode.SQLDBC_DATA_TRUNC)
-                            MaxDBException.ThrowException(
-                                MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                                UnsafeNativeMethods.SQLDBC_Statement_getError(mStmt));
-                    }
-
-                    bufferSize++;//increase buffer for the last zero
-
-                    buffer = new byte[bufferSize];
-                    fixed (byte* bufferPtr = buffer)
-                    {
-                        rc = UnsafeNativeMethods.SQLDBC_Statement_getTableName(mStmt, (IntPtr)bufferPtr, SQLDBC_StringEncodingType.Ascii, bufferSize, &bufferSize);
-                        if (rc != SQLDBC_Retcode.SQLDBC_OK)
-                            MaxDBException.ThrowException(
-                                MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                                UnsafeNativeMethods.SQLDBC_Statement_getError(mStmt));
-                    }
-
-                    this.dbConnection.mTableNames[CommandText] = bufferSize > 1 ? Encoding.ASCII.GetString(buffer, 0, bufferSize - 1) : null;//skip last zero
-                }
-
-                return (string)this.dbConnection.mTableNames[CommandText];
-            }
-        }
-
-        private void RefreshStmtHandler()
-        {
-            ReleaseStmtHandler();
-            if (this.dbConnection != null)
-                mStmt = UnsafeNativeMethods.SQLDBC_Connection_createPreparedStatement(this.dbConnection.mComm.mConnectionHandler);
-        }
-
-        internal void ReleaseStmtHandler()
-        {
-            if (mStmt != IntPtr.Zero)
-                UnsafeNativeMethods.SQLDBC_Connection_releasePreparedStatement(this.dbConnection.mComm.mConnectionHandler, mStmt);
-            mStmt = IntPtr.Zero;
-        }
-
-        #endregion
-#endif // SAFE
 
         #region ICloneable Members
 
@@ -2642,29 +1691,17 @@ namespace MaxDB.Data
         /// <summary>
         /// Attempts to cancel the execution of a <b>MaxDBCommand</b>.
         /// </summary>
-#if NET20
         public override void Cancel()
-#else
-        public void Cancel()
-#endif // NET20
         {
-#if SAFE
             this.AssertOpen();
             this.bCanceled = true;
             this.dbConnection.mComm.Cancel(this);
-#else
-            UnsafeNativeMethods.SQLDBC_Connection_cancel(this.dbConnection.mComm.mConnectionHandler);
-#endif // SAFE
         }
 
         /// <summary>
         /// Gets or sets the SQL statement to execute at the data source.
         /// </summary>
-#if NET20
         public override string CommandText
-#else
-        public string CommandText
-#endif // NET20
         {
             get
             {
@@ -2674,20 +1711,13 @@ namespace MaxDB.Data
             set
             {
                 this.strCmdText = value;
-#if !SAFE
-                this.RefreshStmtHandler();
-#endif
             }
         }
 
         /// <summary>
         /// Gets or sets the wait time before terminating the attempt to execute a command and generating an error.
         /// </summary>
-#if NET20
         public override int CommandTimeout
-#else
-        public int CommandTimeout
-#endif // NET20
         {
             get
             {
@@ -2703,11 +1733,7 @@ namespace MaxDB.Data
         /// <summary>
         /// Gets or sets a value indicating how the <see cref="CommandText"/> property is to be interpreted.
         /// </summary>
-#if NET20
         public override CommandType CommandType
-#else
-        public CommandType CommandType
-#endif // NET20
         {
             get
             {
@@ -2723,11 +1749,7 @@ namespace MaxDB.Data
         /// <summary>
         /// This method is intended for internal use and can not to be called directly from your code.
         /// </summary>
-#if NET20
         protected override DbConnection DbConnection
-#else
-        IDbConnection IDbCommand.Connection
-#endif // NET20
         {
             get
             {
@@ -2743,11 +1765,7 @@ namespace MaxDB.Data
         /// <summary>
         /// Gets or sets the <see cref="MaxDBConnection"/> used by this instance of the <b>MaxDBCommand</b>.
         /// </summary>
-#if NET20
         public new MaxDBConnection Connection
-#else
-        public MaxDBConnection Connection
-#endif // NET20
         {
             get
             {
@@ -2761,28 +1779,14 @@ namespace MaxDB.Data
                     this.Transaction = null;
                 }
 
-#if !SAFE
-                if (mStmt != IntPtr.Zero)
-                    UnsafeNativeMethods.SQLDBC_Connection_releasePreparedStatement(this.dbConnection.mComm.mConnectionHandler, mStmt);
-#endif // !SAFE
-
                 this.dbConnection = value;
-
-#if !SAFE
-                if (this.dbConnection != null)
-                    mStmt = UnsafeNativeMethods.SQLDBC_Connection_createPreparedStatement(this.dbConnection.mComm.mConnectionHandler);
-#endif // !SAFE
             }
         }
 
         /// <summary>
         /// This method is intended for internal use and can not to be called directly from your code.
         /// </summary>
-#if NET20
         protected override DbParameter CreateDbParameter()
-#else
-        IDbDataParameter IDbCommand.CreateParameter()
-#endif // NET20
         {
             return this.CreateParameter();
         }
@@ -2791,11 +1795,7 @@ namespace MaxDB.Data
         /// Creates a new instance of a <see cref="MaxDBParameter"/> object.
         /// </summary>
         /// <returns>A new <see cref="MaxDBParameter"/> object.</returns>
-#if NET20
         public new MaxDBParameter CreateParameter()
-#else
-        public MaxDBParameter CreateParameter()
-#endif // NET20
         {
             return new MaxDBParameter();
         }
@@ -2813,11 +1813,7 @@ namespace MaxDB.Data
         /// of rows affected by the command.  For all other types of statements, the return
         /// value is -1.
         /// </remarks>
-#if NET20
         public override int ExecuteNonQuery()
-#else
-        public int ExecuteNonQuery()
-#endif // NET20
         {
             // Execute the command.
 
@@ -2825,7 +1821,7 @@ namespace MaxDB.Data
             this.AssertOpen();
 
             this.Prepare();
-#if SAFE
+
             if (this.mParseInfo != null && this.mParseInfo.IsSelect)
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLSTATEMENT_RESULTSET));
@@ -2833,19 +1829,8 @@ namespace MaxDB.Data
 
             this.Execute(CommandBehavior.Default);
             return this.bHasRowCount ? this.iRowsAffected : -1;
-#else
-            BindAndExecute(mStmt, new MaxDBParameterCollection[1] { dbParameters });
-
-            return UnsafeNativeMethods.SQLDBC_PreparedStatement_getRowsAffected(mStmt);
-#endif // SAFE
         }
 
-#if !NET20
-        IDataReader IDbCommand.ExecuteReader()
-        {
-            return this.ExecuteReader(CommandBehavior.Default);
-        }
-#endif // !NET20
         /// <summary>
         /// Sends the <see cref="CommandText"/> to the <see cref="MaxDBConnection"/> and builds a <see cref="MaxDBDataReader"/>.
         /// </summary>
@@ -2865,25 +1850,17 @@ namespace MaxDB.Data
         ///    <see cref="MaxDBDataReader.Close"/> method of the <see cref="MaxDBDataReader"/> is called.
         /// </para>
         /// </remarks>
-#if NET20
         public new MaxDBDataReader ExecuteReader()
-#else
-        public MaxDBDataReader ExecuteReader()
-#endif // NET20
         {
             return this.ExecuteReader(CommandBehavior.Default);
         }
 
-#if NET20
         /// <summary>
         /// This method is intended for internal use and can not to be called directly from your code.
         /// </summary>
         /// <param name="behavior">A <see cref="CommandBehavior"/> value.</param>
         /// <returns>A <see cref="DbDataReader"/> object.</returns>
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
-#else
-        IDataReader IDbCommand.ExecuteReader(CommandBehavior behavior)
-#endif // NET20
         {
             return this.ExecuteReader(behavior);
         }
@@ -2893,11 +1870,7 @@ namespace MaxDB.Data
         /// </summary>
         /// <param name="behavior">A <see cref="CommandBehavior"/> value.</param>
         /// <returns>A <see cref="MaxDBDataReader"/> object.</returns>
-#if NET20
         public new MaxDBDataReader ExecuteReader(CommandBehavior behavior)
-#else
-        public MaxDBDataReader ExecuteReader(CommandBehavior behavior)
-#endif // NET20
         {
             // Execute the command.
 
@@ -2905,7 +1878,7 @@ namespace MaxDB.Data
             this.AssertOpen();
 
             this.Prepare();
-#if SAFE
+
             this.Execute(behavior);
 
             if (this.mParseInfo.IsSelect)
@@ -2921,32 +1894,6 @@ namespace MaxDB.Data
             }
 
             return new MaxDBDataReader(this);
-#else
-            if ((behavior & CommandBehavior.SingleRow) != 0 || (behavior & CommandBehavior.SchemaOnly) != 0)
-                UnsafeNativeMethods.SQLDBC_Statement_setMaxRows(mStmt, 1);
-            else
-                UnsafeNativeMethods.SQLDBC_Statement_setMaxRows(mStmt, 0);
-
-            BindAndExecute(mStmt, new MaxDBParameterCollection[1] { dbParameters });
-
-            iRowsAffected = UnsafeNativeMethods.SQLDBC_PreparedStatement_getRowsAffected(mStmt);
-
-            if (UnsafeNativeMethods.SQLDBC_Statement_isQuery(mStmt) == SQLDBC_BOOL.SQLDBC_TRUE)
-            {
-                IntPtr result = UnsafeNativeMethods.SQLDBC_PreparedStatement_getResultSet(mStmt);
-                if (result == IntPtr.Zero)
-                    MaxDBException.ThrowException(
-                        MaxDBMessages.Extract(MaxDBError.SQLCOMMAND_NORESULTSET),
-                        UnsafeNativeMethods.SQLDBC_Statement_getError(mStmt));
-
-                return new MaxDBDataReader(result, this.dbConnection, this,
-                    (behavior & CommandBehavior.CloseConnection) != 0,
-                    (behavior & CommandBehavior.SchemaOnly) != 0
-                    );
-            }
-            else
-                return new MaxDBDataReader(this);
-#endif // SAFE
         }
 
         /// <summary>
@@ -2963,11 +1910,7 @@ namespace MaxDB.Data
         /// to generate the single value using the data returned by a <see cref="MaxDBDataReader"/>
         /// </para>
         /// </remarks>
-#if NET20
         public override object ExecuteScalar()
-#else
-        public object ExecuteScalar()
-#endif // NET20
         {
             IDataReader result = this.ExecuteReader(CommandBehavior.SingleResult);
             if (result.FieldCount > 0 && result.Read())
@@ -2978,7 +1921,6 @@ namespace MaxDB.Data
             return null;
         }
 
-#if NET20
         /// <summary>
         /// This method is intended for internal use and can not to be called directly from your code.
         /// </summary>
@@ -2989,24 +1931,11 @@ namespace MaxDB.Data
                 return this.Parameters;
             }
         }
-#else
-        IDataParameterCollection IDbCommand.Parameters
-        {
-            get
-            {
-                return this.Parameters;
-            }
-        }
-#endif // NET20
 
         /// <summary>
         /// Gets the <see cref="MaxDBParameterCollection"/>.
         /// </summary>
-#if NET20
         public new MaxDBParameterCollection Parameters
-#else
-        public MaxDBParameterCollection Parameters
-#endif // NET20
         {
             get
             {
@@ -3017,11 +1946,7 @@ namespace MaxDB.Data
         /// <summary>
         /// This property is intended for internal use and can not to be called directly from your code.
         /// </summary>
-#if NET20
         protected override DbTransaction DbTransaction
-#else
-        IDbTransaction IDbCommand.Transaction
-#endif // NET20
         {
             get
             {
@@ -3039,11 +1964,7 @@ namespace MaxDB.Data
         /// Consider additional steps to ensure that the transaction
         /// is compatible with the connection, because the two are usually linked.
         /// </summary>
-#if NET20
         public new MaxDBTransaction Transaction
-#else
-        public MaxDBTransaction Transaction
-#endif // NET20
         {
             get
             {
@@ -3061,11 +1982,7 @@ namespace MaxDB.Data
         /// when used by the <see cref="System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)"/> method 
         /// of the <see cref="System.Data.Common.DbDataAdapter"/>.
         /// </summary>
-#if NET20
         public override UpdateRowSource UpdatedRowSource
-#else
-        public UpdateRowSource UpdatedRowSource
-#endif // NET20
         {
             get
             {
@@ -3081,65 +1998,30 @@ namespace MaxDB.Data
         /// <summary>
         /// Creates a prepared version of the command on an instance of MaxDB Server.
         /// </summary>
-#if NET20
         public override void Prepare()
-#else
-        public void Prepare()
-#endif // NET20
         {
             if (this.mCmdType == CommandType.TableDirect)
             {
                 throw new NotSupportedException(MaxDBMessages.Extract(MaxDBError.TABLEDIRECT_UNSUPPORTED));
             }
 
-#if SAFE
             this.mParseInfo = this.DoParse(this.strCmdText, false);
-#else
-            UnsafeNativeMethods.SQLDBC_Connection_setSQLMode(this.dbConnection.mComm.mConnectionHandler, (byte)this.dbConnection.SqlMode);
-
-            SQLDBC_Retcode rc;
-
-            if (this.dbConnection.DatabaseEncoding is UnicodeEncoding)
-                rc = UnsafeNativeMethods.SQLDBC_PreparedStatement_prepareNTS(mStmt, strCmdText,
-                    Consts.IsLittleEndian ? SQLDBC_StringEncodingType.UCS2Swapped : SQLDBC_StringEncodingType.UCS2);
-            else
-                rc = UnsafeNativeMethods.SQLDBC_PreparedStatement_prepareASCII(mStmt, strCmdText);
-
-            if (rc != SQLDBC_Retcode.SQLDBC_OK)
-                MaxDBException.ThrowException(
-                    MaxDBMessages.Extract(MaxDBError.EXEC_FAILED),
-                    UnsafeNativeMethods.SQLDBC_PreparedStatement_getError(mStmt));
-#endif
         }
 
         #endregion
 
         #region IDisposable Members
 
-#if !NET20
-        void IDisposable.Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-#endif // NET20
-
         /// <summary>
         /// This method is intended for internal use and can not to be called directly from your code.
         /// </summary>
         /// <param name="disposing">The disposing flag.</param>
-#if NET20
         protected override void Dispose(bool disposing)
-#else
-        private void Dispose(bool disposing)
-#endif // NET20
         {
-#if NET20
             base.Dispose(disposing);
-#endif // NET20
+
             if (disposing)
             {
-#if SAFE
                 this.baReplyMemory = null;
                 if (this.dbConnection != null && (this.mParseInfo != null && !this.mParseInfo.IsCached))
                 {
@@ -3150,15 +2032,10 @@ namespace MaxDB.Data
 
                     this.dbConnection.mComm.DropParseID(this.mParseInfo.ParseID);
                     this.mParseInfo.SetParseIDAndSession(null, -1);
-#if NET20
                     this.dbConnection.mComm.DropParseID(this.mParseInfo.MassParseID);
                     this.mParseInfo.MassParseID = null;
-#endif // NET20
                     this.dbConnection = null;
                 }
-#else
-                ReleaseStmtHandler();
-#endif // SAFE
             }
         }
 

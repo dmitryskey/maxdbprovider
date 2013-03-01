@@ -23,13 +23,10 @@ using System.Text;
 using System.Collections;
 using System.Data;
 using System.Runtime.CompilerServices;
-#if NET20
 using System.Collections.Generic;
-#endif // NET20
 
 namespace MaxDB.Data.MaxDBProtocol
 {
-
 	/// <summary>
 	/// Summary description for MaxDBComm.
 	/// </summary>
@@ -38,7 +35,6 @@ namespace MaxDB.Data.MaxDBProtocol
 		public IsolationLevel mIsolationLevel = IsolationLevel.Unspecified;
 		public MaxDBConnectionStringBuilder mConnStrBuilder;
 		public DateTime openTime;
-#if SAFE
 
 		public IMaxDBSocket mSocket;
 		private MaxDBLogger mLogger;
@@ -51,13 +47,8 @@ namespace MaxDB.Data.MaxDBProtocol
 		private bool bSession;
 		private TimeSpan ts = new TimeSpan(1);
 
-#if NET20
 		public Stack<MaxDBRequestPacket> mPacketPool = new Stack<MaxDBRequestPacket>();
 		public Stack<MaxDBUnicodeRequestPacket> mUnicodePacketPool = new Stack<MaxDBUnicodeRequestPacket>();
-#else
-        public Stack mPacketPool = new Stack();
-        public Stack mUnicodePacketPool = new Stack();
-#endif // NET20
 		public Encoding mEncoding = Encoding.ASCII;
 		public int iKernelVersion; // Version without patch level, e.g. 70402 or 70600.
 
@@ -84,15 +75,6 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			try
 			{
-				//for (int i = 0; i < 2; i++)
-				//{
-				//    byte[] array = System.Text.Encoding.ASCII.GetBytes("GET / HTTP/1.0\r\nAccept: */*\r\nUser-Agent: Mentalis.org SecureSocket\r\nHost: 192.168.22.220\r\n\r\n");
-				//    mSocket.Stream.Write(array, 0, array.Length);
-				//    byte[] answer = new byte[1024];
-				//    mSocket.Stream.Read(answer, 0, 1024);
-				//    string sss = System.Text.Encoding.ASCII.GetString(answer);
-				//}
-
 				ConnectPacketData connData = new ConnectPacketData();
 				connData.DBName = dbname;
 				connData.Port = port;
@@ -412,10 +394,10 @@ namespace MaxDB.Data.MaxDBProtocol
 				}
 			}
 
-#if (NET20 || MONO) && SAFE
-			if (mConnStrBuilder.Encrypt && !isChallengeResponseSupported)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_CHALLENGERESPONSENOTSUPPORTED));
-#endif // (NET20 || MONO) && SAFE
+            if (mConnStrBuilder.Encrypt && !isChallengeResponseSupported)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_CHALLENGERESPONSENOTSUPPORTED));
+            }
 
 			/*
             * build connect statement
@@ -544,27 +526,25 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			if (mEncoding == Encoding.Unicode)
 			{
-				if (mUnicodePacketPool.Count == 0)
-					packet = new MaxDBUnicodeRequestPacket(new byte[HeaderOffset.END + iMaxCmdSize], Consts.AppID, Consts.AppVersion);
-				else
-					packet =
-#if NET20
- mUnicodePacketPool.Pop();
-#else
-                        (MaxDBUnicodeRequestPacket)mUnicodePacketPool.Pop();
-#endif // NET20
+                if (mUnicodePacketPool.Count == 0)
+                {
+                    packet = new MaxDBUnicodeRequestPacket(new byte[HeaderOffset.END + iMaxCmdSize], Consts.AppID, Consts.AppVersion);
+                }
+                else
+                {
+                    packet = mUnicodePacketPool.Pop();
+                }
 			}
 			else
 			{
-				if (mPacketPool.Count == 0)
-					packet = new MaxDBRequestPacket(new byte[HeaderOffset.END + iMaxCmdSize], Consts.AppID, Consts.AppVersion);
-				else
-					packet =
-#if NET20
- mPacketPool.Pop();
-#else
-                        (MaxDBRequestPacket)mPacketPool.Pop();
-#endif // NET20
+                if (mPacketPool.Count == 0)
+                {
+                    packet = new MaxDBRequestPacket(new byte[HeaderOffset.END + iMaxCmdSize], Consts.AppID, Consts.AppVersion);
+                }
+                else
+                {
+                    packet = mPacketPool.Pop();
+                }
 			}
 
 			packet.SwitchSqlMode((byte)mConnStrBuilder.Mode);
@@ -573,10 +553,14 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		internal void FreeRequestPacket(MaxDBRequestPacket requestPacket)
 		{
-			if (mEncoding == Encoding.Unicode)
-				mUnicodePacketPool.Push(requestPacket as MaxDBUnicodeRequestPacket);
-			else
-				mPacketPool.Push(requestPacket);
+            if (mEncoding == Encoding.Unicode)
+            {
+                mUnicodePacketPool.Push(requestPacket as MaxDBUnicodeRequestPacket);
+            }
+            else
+            {
+                mPacketPool.Push(requestPacket);
+            }
 		}
 
 		internal MaxDBReplyPacket Execute(ConnectArgs connArgs, MaxDBRequestPacket requestPacket, object execObj, int gcFlags)
@@ -591,17 +575,23 @@ namespace MaxDB.Data.MaxDBProtocol
 			MaxDBReplyPacket replyPacket = null;
 			int localWeakReturnCode = 0;
 
-			if (iSessionID >= 0)
-				if (gcFlags == GCMode.GC_ALLOWED)
-				{
-					if (mGarbageParseids != null && mGarbageParseids.IsPending)
-						mGarbageParseids.EmptyCan(requestPacket);
-				}
-				else
-				{
-					if (mGarbageParseids != null && mGarbageParseids.IsPending)
-						bNonRecyclingExecutions++;
-				}
+            if (iSessionID >= 0)
+            {
+                if (gcFlags == GCMode.GC_ALLOWED)
+                {
+                    if (mGarbageParseids != null && mGarbageParseids.IsPending)
+                    {
+                        mGarbageParseids.EmptyCan(requestPacket);
+                    }
+                }
+                else
+                {
+                    if (mGarbageParseids != null && mGarbageParseids.IsPending)
+                    {
+                        bNonRecyclingExecutions++;
+                    }
+                }
+            }
 
 			requestPacket.Close();
 
@@ -686,8 +676,11 @@ namespace MaxDB.Data.MaxDBProtocol
 			{
 				objExec = null;
 			}
-			if (!ignoreErrors && localWeakReturnCode != 0)
-				throw replyPacket.CreateException();
+            if (!ignoreErrors && localWeakReturnCode != 0)
+            {
+                throw replyPacket.CreateException();
+            }
+
 			return replyPacket;
 		}
 
@@ -769,78 +762,6 @@ namespace MaxDB.Data.MaxDBProtocol
 				return Consts.CursorPrefix + iCursorId++;
 			}
 		}
-#else
-		public IntPtr mEnviromentHandler = IntPtr.Zero;
-		public IntPtr mConnectionPropertiesHandler = IntPtr.Zero;
-		public IntPtr mConnectionHandler = IntPtr.Zero;
-
-		private unsafe IntPtr GetRuntimeHandler(ref byte[] errorText)
-		{
-			IntPtr mRuntimeHandler = IntPtr.Zero;
-
-			fixed (byte* errorPtr = errorText)
-				mRuntimeHandler = UnsafeNativeMethods.ClientRuntime_GetClientRuntime(errorPtr, errorText.Length);
-
-			return mRuntimeHandler;
-		}
-
-		public MaxDBComm()
-		{
-			byte[] errorText = new byte[256];
-			IntPtr mRuntimeHandler = GetRuntimeHandler(ref errorText);
-
-			if (mRuntimeHandler == IntPtr.Zero)
-				throw new MaxDBException(Encoding.ASCII.GetString(errorText));
-
-			mEnviromentHandler = UnsafeNativeMethods.SQLDBC_Environment_new_SQLDBC_Environment(mRuntimeHandler);
-		}
-
-		public void Open(ConnectArgs connArgs)
-		{
-			mConnectionHandler = UnsafeNativeMethods.SQLDBC_Environment_createConnection(mEnviromentHandler);
-
-			mConnectionPropertiesHandler = UnsafeNativeMethods.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
-
-			if (mConnStrBuilder.Timeout > 0)
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mConnectionPropertiesHandler, "TIMEOUT",
-					mConnStrBuilder.Timeout.ToString(CultureInfo.InvariantCulture));
-			if (mIsolationLevel != IsolationLevel.Unspecified)
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mConnectionPropertiesHandler, "ISOLATIONLEVEL",
-					MaxDBConnection.MapIsolationLevel(mIsolationLevel).ToString(CultureInfo.InvariantCulture));
-			if (mConnStrBuilder.SpaceOption)
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mConnectionPropertiesHandler, "SPACEOPTION", "1");
-			if (mConnStrBuilder.CacheSize > 0)
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mConnectionPropertiesHandler, "STATEMENTCACHESIZE",
-					mConnStrBuilder.CacheSize.ToString(CultureInfo.InvariantCulture));
-			if (mConnStrBuilder.CacheLimit > 0)
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mConnectionPropertiesHandler, "CACHELIMIT",
-					mConnStrBuilder.CacheLimit.ToString(CultureInfo.InvariantCulture));
-
-			UnsafeNativeMethods.SQLDBC_Connection_setSQLMode(mConnectionHandler, (byte)mConnStrBuilder.Mode);
-
-			if (UnsafeNativeMethods.SQLDBC_Connection_connectASCII(mConnectionHandler,
-				"maxdb:remote://" + connArgs.host + "/database/" + connArgs.dbname, connArgs.dbname,
-				connArgs.username, connArgs.password, mConnectionPropertiesHandler) != SQLDBC_Retcode.SQLDBC_OK)
-				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT_FAILED, connArgs.host, connArgs.port),
-					UnsafeNativeMethods.SQLDBC_Connection_getError(mConnectionHandler));
-
-			openTime = DateTime.Now;
-		}
-
-		public void Close()
-		{
-			if (mConnectionHandler != IntPtr.Zero)
-			{
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(mConnectionPropertiesHandler);
-				mConnectionPropertiesHandler = IntPtr.Zero;
-
-				UnsafeNativeMethods.SQLDBC_Connection_close(mConnectionHandler);
-
-				UnsafeNativeMethods.SQLDBC_Environment_releaseConnection(mEnviromentHandler, mConnectionHandler);
-				mConnectionHandler = IntPtr.Zero;
-			}
-		}
-#endif // SAFE
 
 		#region IDisposable Members
 
@@ -854,17 +775,10 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			if (disposing)
 			{
-#if SAFE
 				Close(true, false);
-#else
-				Close();
-				UnsafeNativeMethods.SQLDBC_Environment_delete_SQLDBC_Environment(mEnviromentHandler);
-				mEnviromentHandler = IntPtr.Zero;
-#endif // !SAFE
 			}
 		}
 
 		#endregion
-
 	}
 }

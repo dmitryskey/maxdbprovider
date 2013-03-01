@@ -20,16 +20,12 @@ using System.IO;
 using System.Data;
 using System.Text;
 using System.Collections;
-#if NET20
 using System.Collections.Generic;
-#endif // NET20
 using MaxDB.Data.Utilities;
 using System.Globalization;
 
 namespace MaxDB.Data.MaxDBProtocol
 {
-#if SAFE
-
 	#region "Put Value class"
 
 	internal class PutValue : IDisposable
@@ -964,13 +960,15 @@ namespace MaxDB.Data.MaxDBProtocol
 		//Moves the position inside the chunk by a relative offset.
 		public bool Move(int relativepos)
 		{
-			if (iCurrentOffset + relativepos < 0 || iCurrentOffset + relativepos >= iChunkSize)
-				return false;
-			else
-			{
-				UnsafeMove(relativepos);
-				return true;
-			}
+            if (iCurrentOffset + relativepos < 0 || iCurrentOffset + relativepos >= iChunkSize)
+            {
+                return false;
+            }
+            else
+            {
+                UnsafeMove(relativepos);
+                return true;
+            }
 		}
 
 		//	Moves the position inside the chunk by a relative offset, but unchecked.
@@ -1124,27 +1122,13 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	#region "Put Value class comparator"
 
-	internal class PutValueComparator :
-#if NET20
- IComparer<PutValue>
-#else
-    IComparer
-#endif
+	internal class PutValueComparator : IComparer<PutValue>
 	{
-#if NET20
 		public int Compare(PutValue x, PutValue y)
-#else
-		public int Compare(object x, object y)
-#endif
 		{
-			PutValue p1 = (PutValue)x;
-			PutValue p2 = (PutValue)y;
-
-			return p1.BufferPosition - p2.BufferPosition;
+			return x.BufferPosition - y.BufferPosition;
 		}
 	}
 
 	#endregion
-
-#endif // SAFE
 }

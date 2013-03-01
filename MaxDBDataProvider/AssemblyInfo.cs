@@ -57,8 +57,3 @@ using System.Runtime.CompilerServices;
 //   (*) Delay Signing is an advanced option - see the Microsoft .NET Framework
 //       documentation for more information on this.
 //
-#if !NET20
-[assembly: AssemblyDelaySign(false)]
-[assembly: AssemblyKeyFile("MaxDBDataProvider.snk")]
-[assembly: AssemblyKeyName("")]
-#endif // !NET20
