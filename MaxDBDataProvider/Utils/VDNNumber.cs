@@ -21,8 +21,6 @@ using MaxDB.Data.MaxDBProtocol;
 
 namespace MaxDB.Data.Utilities
 {
-#if SAFE
-
 	internal abstract class VDNNumber
 	{
 		private const int iZeroExpValue = 128;
@@ -447,6 +445,4 @@ namespace MaxDB.Data.Utilities
 			}
 		}
 	}
-
-#endif // SAFE
 }

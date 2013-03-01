@@ -17,10 +17,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
-#if NET20
 using System.Collections.Generic;
 using MaxDB.Data.MaxDBProtocol;
-#endif // NET20
 
 namespace MaxDB.Data
 {
@@ -63,7 +61,6 @@ namespace MaxDB.Data
 		private MaxDBCommand cmdUpdate;
 		private MaxDBCommand cmdDelete;
 
-#if NET20
 		private int batUpdateSize;
 		private MaxDBCommand batInsertCmd;
 		private MaxDBCommand batUpdateCmd;
@@ -72,7 +69,6 @@ namespace MaxDB.Data
 		private List<MaxDBParameterCollection> lstUpdateParams = new List<MaxDBParameterCollection>();
 		private List<MaxDBParameterCollection> lstDeleteParams = new List<MaxDBParameterCollection>();
 		private StatementType stCurrentType = StatementType.Select;
-#endif // NET20
 
 		static private readonly object EventRowUpdated = new object();
 		static private readonly object EventRowUpdating = new object();
@@ -154,15 +150,13 @@ namespace MaxDB.Data
 		/// <param name="value">The <see cref="RowUpdatingEventArgs"/> object.</param>
 		override protected void OnRowUpdating(RowUpdatingEventArgs value)
 		{
-#if NET20
 			stCurrentType = value.StatementType;
 			EventHandler<MaxDBRowUpdatingEventArgs> handler = (EventHandler<MaxDBRowUpdatingEventArgs>)Events[EventRowUpdating];
-#else
-			MaxDBRowUpdatingEventHandler handler = (MaxDBRowUpdatingEventHandler) Events[EventRowUpdating];
-#endif // NET20
 
-			if ((null != handler) && (value.GetType() == typeof(MaxDBRowUpdatingEventArgs)))
-				handler(this, (MaxDBRowUpdatingEventArgs)value);
+            if ((null != handler) && (value.GetType() == typeof(MaxDBRowUpdatingEventArgs)))
+            {
+                handler(this, (MaxDBRowUpdatingEventArgs)value);
+            }
 		}
 
 		/// <summary>
@@ -171,23 +165,17 @@ namespace MaxDB.Data
 		/// <param name="value">The <see cref="RowUpdatedEventArgs"/> object.</param>
 		override protected void OnRowUpdated(RowUpdatedEventArgs value)
 		{
-#if NET20
 			EventHandler<MaxDBRowUpdatedEventArgs> handler = (EventHandler<MaxDBRowUpdatedEventArgs>)Events[EventRowUpdated];
-#else
-			MaxDBRowUpdatedEventHandler handler = (MaxDBRowUpdatedEventHandler)Events[EventRowUpdated];
-#endif // NET20
-			if ((null != handler) && (value.GetType() == typeof(MaxDBRowUpdatedEventArgs)))
-				handler(this, (MaxDBRowUpdatedEventArgs)value);
+            if ((null != handler) && (value.GetType() == typeof(MaxDBRowUpdatedEventArgs)))
+            {
+                handler(this, (MaxDBRowUpdatedEventArgs)value);
+            }
 		}
 
 		/// <summary>
 		/// Occurs during Update before a command is executed against the data source. The attempt to update is made, so the event fires.
 		/// </summary>
-#if NET20
 		public event EventHandler<MaxDBRowUpdatingEventArgs> RowUpdating
-#else
-		public event MaxDBRowUpdatingEventHandler RowUpdating
-#endif // NET20
 		{
 			add
 			{
@@ -202,11 +190,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// Occurs during Update after a command is executed against the data source. The attempt to update is made, so the event fires.
 		/// </summary>
-#if NET20
 		public event EventHandler<MaxDBRowUpdatedEventArgs> RowUpdated
-#else
-		public event MaxDBRowUpdatedEventHandler RowUpdated
-#endif // NET20
 		{
 			add
 			{
@@ -245,11 +229,7 @@ namespace MaxDB.Data
 		/// depending on how you set the <see cref="MaxDBCommand.UpdatedRowSource"/> property of the <B>MaxDBCommand</B> object.
 		/// </note>
 		/// </remarks>
-#if NET20
 		public new MaxDBCommand UpdateCommand
-#else
-		public MaxDBCommand UpdateCommand
-#endif  // NET20
 		{
 			get
 			{
@@ -290,11 +270,7 @@ namespace MaxDB.Data
 		/// <see cref="DataSet"/>, and no exception is raised.
 		/// </para>
 		/// </remarks>
-#if NET20
 		public new MaxDBCommand SelectCommand
-#else
-		public MaxDBCommand SelectCommand
-#endif // NET20
 		{
 			get
 			{
@@ -339,11 +315,7 @@ namespace MaxDB.Data
 		/// to the previously created <B>MaxDBCommand</B> object.
 		/// </para>
 		/// </remarks>
-#if NET20
 		public new MaxDBCommand DeleteCommand
-#else
-		public MaxDBCommand DeleteCommand
-#endif // NET20
 		{
 			get
 			{
@@ -392,11 +364,7 @@ namespace MaxDB.Data
 		/// depending on how you set the <see cref="MaxDBCommand.UpdatedRowSource"/> property of the <B>MaxDBCommand</B> object.
 		/// </note>
 		/// </remarks>
-#if NET20
 		public new MaxDBCommand InsertCommand
-#else
-		public MaxDBCommand InsertCommand
-#endif // NET20
 		{
 			get
 			{
@@ -421,7 +389,6 @@ namespace MaxDB.Data
 		}
 		#endregion
 
-#if NET20
 		/// <summary>
 		/// Gets or sets a value that enables or disables batch processing support, and specifies the number of commands that can be executed in a batch. 
 		/// </summary>
@@ -522,20 +489,7 @@ namespace MaxDB.Data
 			}
 			return rowAffected;
 		}
-#endif // NET20
-
 	}
-
-#if !NET20
-	/// <summary>
-	/// Represents the method that will handle the <see cref="MaxDBDataAdapter.RowUpdating"/> event of a <b>MaxDBDataAdapter</b>.
-	/// </summary>
-	public delegate void MaxDBRowUpdatingEventHandler(object sender, MaxDBRowUpdatingEventArgs e);
-	/// <summary>
-	/// Represents the method that will handle the <see cref="MaxDBDataAdapter.RowUpdated"/> event of a <b>MaxDBDataAdapter</b>.
-	/// </summary>
-	public delegate void MaxDBRowUpdatedEventHandler(object sender, MaxDBRowUpdatedEventArgs e);
-#endif
 
 	/// <summary>
 	/// Provides data for the RowUpdating event. This class cannot be inherited.

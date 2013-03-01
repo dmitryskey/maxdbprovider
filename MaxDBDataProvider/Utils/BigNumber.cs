@@ -137,7 +137,6 @@ using System.Text;
 
 namespace MaxDB.Data.Utilities
 {
-#if SAFE
 	internal class BigInteger
 	{
 		// maximum length of the BigInteger in uint (4 bytes)
@@ -1589,5 +1588,4 @@ namespace MaxDB.Data.Utilities
 			return ToString().GetHashCode();
 		}
 	}
-#endif // SAFE
 }

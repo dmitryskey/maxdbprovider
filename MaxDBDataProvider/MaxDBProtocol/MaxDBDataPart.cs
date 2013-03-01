@@ -23,8 +23,6 @@ using MaxDB.Data.Utilities;
 
 namespace MaxDB.Data.MaxDBProtocol
 {
-#if SAFE
-
 	#region "DataPart class"
 
 	internal abstract class DataPart
@@ -32,10 +30,8 @@ namespace MaxDB.Data.MaxDBProtocol
 		private const int iMaxArgCount = Int16.MaxValue;
 		protected short sArgCount;
 		protected int iExtent;
-#if NET20
 		protected int iMassExtent;
 		internal ByteArray baData;
-#endif // NET20
 		internal ByteArray baOrigData;
 
 		internal MaxDBRequestPacket reqPacket;
@@ -69,9 +65,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		internal DataPart(ByteArray data, MaxDBRequestPacket packet)
 		{
-#if NET20
 			baData = data.Clone();
-#endif // NET20
 			baOrigData = data;
 			reqPacket = packet;
 		}
@@ -81,14 +75,9 @@ namespace MaxDB.Data.MaxDBProtocol
 		public virtual void Close()
 		{
 			baOrigData.WriteInt16(sArgCount, -PartHeaderOffset.Data + PartHeaderOffset.ArgCount);
-#if NET20
 			reqPacket.ClosePart(iMassExtent + iExtent, sArgCount);
-#else
-			reqPacket.ClosePart(iExtent, sArgCount);
-#endif // NET20
 		}
 
-#if NET20
 		public virtual void CloseArrayPart(short rows)
 		{
 			baData.WriteInt16(rows, -PartHeaderOffset.Data + PartHeaderOffset.ArgCount);
@@ -100,14 +89,10 @@ namespace MaxDB.Data.MaxDBProtocol
 			return (sArgCount < iMaxArgCount && (baOrigData.Length - baOrigData.Offset - iExtent) > (recordSize + reserve));
 		}
 
-#endif
-
 		public virtual bool HasRoomFor(int recordSize)
 		{
 			return (sArgCount < iMaxArgCount && (baOrigData.Length - baOrigData.Offset - iExtent) > recordSize);
 		}
-
-
 
 		public virtual void SetFirstPart()
 		{
@@ -119,14 +104,12 @@ namespace MaxDB.Data.MaxDBProtocol
 			reqPacket.AddPartAttr(PartAttributes.LastPacket_Ext);
 		}
 
-#if NET20
 		public void MoveRecordBase()
 		{
 			baOrigData.Offset += iExtent;
 			iMassExtent += iExtent;
 			iExtent = 0;
 		}
-#endif // NET20
 
 		public abstract void WriteDefineByte(byte value, int offset);
 
@@ -187,15 +170,13 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public virtual void MarkEmptyStream(ByteArray descriptionMark)
 		{
-			if (descriptionMark == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "descriptionMark"));
+            if (descriptionMark == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "descriptionMark"));
+            }
 
 			descriptionMark.WriteByte(LongDesc.LastData, LongDesc.ValMode);
-#if NET20
 			descriptionMark.WriteInt32(iMassExtent + iExtent + 1, LongDesc.ValPos);
-#else
-			descriptionMark.WriteInt32(iExtent + 1, LongDesc.ValPos);
-#endif // NET20
 			descriptionMark.WriteInt32(0, LongDesc.ValLen);
 		}
 
@@ -213,14 +194,20 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public virtual bool FillWithStream(Stream stream, ByteArray descriptionMark, PutValue putValue)
 		{
-			if (stream == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "stream"));
+            if (stream == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "stream"));
+            }
 
-			if (descriptionMark == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "descriptionMark"));
+            if (descriptionMark == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "descriptionMark"));
+            }
 
-			if (putValue == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "putValue"));
+            if (putValue == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "putValue"));
+            }
 
 			// not exact, but enough to prevent an overflow - adding this
 			// part to the packet may at most eat up 8 bytes more, if
@@ -232,6 +219,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				descriptionMark.WriteByte(LongDesc.NoData, LongDesc.ValMode);
 				return false;
 			}
+
 			int dataStart = iExtent;
 			int bytesRead;
 			byte[] readBuf = new byte[4096];
@@ -241,14 +229,16 @@ namespace MaxDB.Data.MaxDBProtocol
 				while (!streamExhausted && maxDataSize > 0)
 				{
 					bytesRead = stream.Read(readBuf, 0, Math.Min(maxDataSize, readBuf.Length));
-					if (bytesRead > 0)
-					{
-						baOrigData.WriteBytes(readBuf, iExtent, bytesRead);
-						iExtent += bytesRead;
-						maxDataSize -= bytesRead;
-					}
-					else
-						streamExhausted = true;
+                    if (bytesRead > 0)
+                    {
+                        baOrigData.WriteBytes(readBuf, iExtent, bytesRead);
+                        iExtent += bytesRead;
+                        maxDataSize -= bytesRead;
+                    }
+                    else
+                    {
+                        streamExhausted = true;
+                    }
 				}
 			}
 			catch (Exception ex)
@@ -257,16 +247,16 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 
 			// patch pos, length and kind
-			if (streamExhausted)
-				descriptionMark.WriteByte(LongDesc.LastData, LongDesc.ValMode);
-			else
-				descriptionMark.WriteByte(LongDesc.DataPart, LongDesc.ValMode);
+            if (streamExhausted)
+            {
+                descriptionMark.WriteByte(LongDesc.LastData, LongDesc.ValMode);
+            }
+            else
+            {
+                descriptionMark.WriteByte(LongDesc.DataPart, LongDesc.ValMode);
+            }
 
-#if NET20
 			descriptionMark.WriteInt32(iMassExtent + dataStart + 1, LongDesc.ValPos);
-#else
-			descriptionMark.WriteInt32(dataStart + 1, LongDesc.ValPos);
-#endif
 			descriptionMark.WriteInt32(iExtent - dataStart, LongDesc.ValLen);
 			putValue.MarkRequestedChunk(baOrigData.Clone(dataStart), iExtent - dataStart);
 			return streamExhausted;
@@ -274,14 +264,20 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public virtual bool FillWithReader(TextReader reader, ByteArray descriptionMark, PutValue putValue)
 		{
-			if (reader == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "reader"));
+            if (reader == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "reader"));
+            }
 
-			if (descriptionMark == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "descriptionMark"));
+            if (descriptionMark == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "descriptionMark"));
+            }
 
-			if (putValue == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "putValue"));
+            if (putValue == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "putValue"));
+            }
 
 			// not exact, but enough to prevent an overflow - adding this
 			// part to the packet may at most eat up 8 bytes more, if
@@ -318,16 +314,16 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 
 			// patch pos, length and kind
-			if (streamExhausted)
-				descriptionMark.WriteByte(LongDesc.LastData, LongDesc.ValMode);
-			else
-				descriptionMark.WriteByte(LongDesc.DataPart, LongDesc.ValMode);
+            if (streamExhausted)
+            {
+                descriptionMark.WriteByte(LongDesc.LastData, LongDesc.ValMode);
+            }
+            else
+            {
+                descriptionMark.WriteByte(LongDesc.DataPart, LongDesc.ValMode);
+            }
 
-#if NET20
 			descriptionMark.WriteInt32(iMassExtent + dataStart + 1, LongDesc.ValPos);
-#else
-			descriptionMark.WriteInt32(dataStart + 1, LongDesc.ValPos);
-#endif
 			descriptionMark.WriteInt32(iExtent - dataStart, LongDesc.ValLen);
 			putValue.MarkRequestedChunk(baOrigData.Clone(dataStart), iExtent - dataStart);
 			return streamExhausted;
@@ -760,6 +756,4 @@ namespace MaxDB.Data.MaxDBProtocol
 	}
 
 	#endregion
-
-#endif // SAFE
 }

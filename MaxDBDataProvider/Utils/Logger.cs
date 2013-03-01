@@ -72,7 +72,7 @@ namespace MaxDB.Data.Utilities
 		}
 	}
 
-	internal class MaxDBLogger : IDisposable
+	internal class MaxDBLogger
 	{
 		public const int
 			NumSize = 4,
@@ -84,35 +84,10 @@ namespace MaxDB.Data.Utilities
 		public const string Null = "NULL";
 
 		private MaxDBTraceSwitch mSwitcher = new MaxDBTraceSwitch("TraceLevel", "Trace Level");
-#if !SAFE
-		private IntPtr mProperties = IntPtr.Zero;
-		private string strLogName;
-		private MaxDBConnection dbConnection;
-#endif
 
 		public MaxDBLogger()
 		{
 		}
-
-#if !SAFE
-		public MaxDBLogger(MaxDBConnection conn)
-		{
-			if (mSwitcher.TraceSQL)
-			{
-				dbConnection = conn;
-
-				mProperties = UnsafeNativeMethods.SQLDBC_ConnectProperties_new_SQLDBC_ConnectProperties();
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "SQL", "1");
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "TIMESTAMP", "1");
-
-				strLogName = Path.GetTempPath() + "adonetlog.html";
-				UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "FILENAME", "\"" + strLogName + "\"");
-				if (mSwitcher.TraceFull)
-					UnsafeNativeMethods.SQLDBC_ConnectProperties_setProperty(mProperties, "PACKET", "1");
-				UnsafeNativeMethods.SQLDBC_Environment_setTraceOptions(dbConnection.mComm.mEnviromentHandler, mProperties);
-			}
-		}
-#endif
 
 		public bool TraceSQL
 		{
@@ -122,7 +97,6 @@ namespace MaxDB.Data.Utilities
 			}
 		}
 
-#if SAFE
 		public bool TraceFull
 		{
 			get
@@ -130,17 +104,15 @@ namespace MaxDB.Data.Utilities
 				return mSwitcher.TraceFull;
 			}
 		}
-#endif // SAFE
 
 		public void SqlTrace(DateTime dt, string msg)
 		{
-#if SAFE
-			if (mSwitcher.TraceSQL)
-				Trace.WriteLine(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " " + msg);
-#endif // SAFE
+            if (mSwitcher.TraceSQL)
+            {
+                Trace.WriteLine(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " " + msg);
+            }
 		}
 
-#if SAFE
 		public void SqlTraceParseInfo(DateTime dt, object objInfo)
 		{
 			MaxDBParseInfo parseInfo = (MaxDBParseInfo)objInfo;
@@ -206,9 +178,7 @@ namespace MaxDB.Data.Utilities
 		{
 			SqlTrace(dt, "I".PadRight(NumSize) + "T".PadRight(TypeSize) + "L".PadRight(LenSize) + "I".PadRight(InputSize) + "DATA");
 		}
-#endif // SAFE
 
-#if SAFE
 		private static void SqlTraceTransl(DBTechTranslator info)
 		{
 			Trace.Write(info.ColumnIndex.ToString(CultureInfo.InvariantCulture).PadRight(4));
@@ -216,61 +186,13 @@ namespace MaxDB.Data.Utilities
 			Trace.Write((info.PhysicalLength - 1).ToString(CultureInfo.InvariantCulture).PadRight(12));
 			Trace.Write(info.Precision.ToString(CultureInfo.InvariantCulture).PadRight(12));
 		}
-#endif // SAFE
 
 		public void Flush()
 		{
 			if (mSwitcher.TraceSQL)
 			{
-#if SAFE
 				Trace.Flush();
-#else
-
-				if (!File.Exists(strLogName))
-					return;
-				string tmpFile = Path.GetTempFileName();
-				File.Copy(strLogName, tmpFile, true);
-				StreamReader sr = new StreamReader(tmpFile);
-				string header = sr.ReadLine();
-				if (header != null)
-				{
-					string line;
-					do
-					{
-						line = sr.ReadLine();
-						if (line != null)
-							Trace.WriteLine(line);
-					}
-					while (line != null);
-				}
-				sr.Close();
-				File.Delete(tmpFile);
-
-				Trace.Flush();
-#endif // SAFE
 			}
 		}
-
-		#region IDisposable Members
-
-		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-#if !SAFE
-				Flush();
-				if (dbConnection != null && mSwitcher.TraceSQL && mProperties != IntPtr.Zero)
-					UnsafeNativeMethods.SQLDBC_ConnectProperties_delete_SQLDBC_ConnectProperties(mProperties);
-#endif // !SAFE
-			}
-		}
-
-		#endregion
 	}
 }

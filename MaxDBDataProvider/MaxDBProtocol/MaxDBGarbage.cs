@@ -21,8 +21,6 @@ using System.Runtime.CompilerServices;
 
 namespace MaxDB.Data.MaxDBProtocol
 {
-#if SAFE
-
 	internal class GarbageParseId
 	{
 		protected int iCanTrashOld = 20;
@@ -148,5 +146,4 @@ namespace MaxDB.Data.MaxDBProtocol
 			lstGarbage.Clear();
 		}
 	}
-#endif // SAFE
 }

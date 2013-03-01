@@ -25,13 +25,7 @@ namespace MaxDB.Data
 	/// Represents a parameter to a <see cref="MaxDBCommand"/>, and optionally, its mapping to <see cref="DataSet"/> columns. 
 	/// This class cannot be inherited.
 	/// </summary>
-	public sealed class MaxDBParameter :
-#if NET20
-		DbParameter,
-#else
-		IDbDataParameter, IDataParameter,
-#endif // NET20
- ICloneable
+	public sealed class MaxDBParameter : DbParameter, ICloneable
 	{
 		internal MaxDBType dbType = MaxDBType.VarCharA;
 		internal ParameterDirection mDirection = ParameterDirection.Input;
@@ -150,11 +144,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// Gets or sets the length of the <b>MaxDBParameter</b>. 
 		/// </summary>
-#if NET20
 		public override int Size
-#else
-		public int Size
-#endif // NET20
 		{
 			get
 			{
@@ -238,11 +228,7 @@ namespace MaxDB.Data
 		/// Gets or sets a value indicating whether the parameter is input-only, output-only, bidirectional, 
 		/// or a stored procedure return value parameter.
 		/// </summary>
-#if NET20
 		public override ParameterDirection Direction
-#else
-		public ParameterDirection Direction
-#endif // NET20
 		{
 			get
 			{
@@ -257,11 +243,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// Gets or sets the <see cref="DbType"/> of the parameter.
 		/// </summary>
-#if NET20
 		public override DbType DbType
-#else
-		public DbType DbType
-#endif // NET20
 		{
 			get
 			{
@@ -369,11 +351,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// Gets or sets the value of the parameter.
 		/// </summary>
-#if NET20
 		public override object Value
-#else
-		public object Value
-#endif // NET20
 		{
 			get
 			{
@@ -424,11 +402,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// Gets or sets a value indicating whether the parameter accepts null values.
 		/// </summary>
-#if NET20
 		public override bool IsNullable
-#else
-		public bool IsNullable
-#endif // NET20
 		{
 			get
 			{
@@ -444,11 +418,7 @@ namespace MaxDB.Data
 		/// Sets or gets a value which indicates whether the source column is nullable. This allows <see cref="MaxDBCommandBuilder"/> 
 		/// to correctly generate Update statements for nullable columns. 
 		/// </summary>
-#if NET20
 		public override bool SourceColumnNullMapping
-#else
-		public bool SourceColumnNullMapping 
-#endif // NET20
 		{
 			get
 			{
@@ -463,11 +433,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// Gets or sets the <see cref="DataRowVersion"/> to use when loading <see cref="Value"/>.
 		/// </summary>
-#if NET20
 		public override DataRowVersion SourceVersion
-#else
-		public DataRowVersion SourceVersion
-#endif // NET20
 		{
 			get
 			{
@@ -482,11 +448,7 @@ namespace MaxDB.Data
 		/// <summary>
 		/// Gets or sets the name of the <b>MaxDBParameter</b>.
 		/// </summary>
-#if NET20
 		public override string ParameterName
-#else
-		public string ParameterName
-#endif // NET20
 		{
 			get
 			{
@@ -502,11 +464,7 @@ namespace MaxDB.Data
 		/// Gets or sets the name of the source column that is mapped to the <see cref="DataSet"/> and used for loading or 
 		/// returning the <see cref="Value"/>.
 		/// </summary>
-#if NET20
 		public override string SourceColumn
-#else
-		public string SourceColumn
-#endif // NET20
 		{
 			get
 			{
@@ -548,7 +506,6 @@ namespace MaxDB.Data
 			}
 		}
 
-#if NET20
 		/// <summary>
 		/// Resets the type associated with this <b>MaxDBParameter</b>. 
 		/// </summary>
@@ -556,7 +513,6 @@ namespace MaxDB.Data
 		{
 			throw new NotImplementedException();
 		}
-#endif // NET20
 
 		#endregion
 	}

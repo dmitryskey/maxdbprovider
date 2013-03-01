@@ -21,7 +21,6 @@
 
 namespace MaxDB.Data.MaxDBProtocol
 {
-#if SAFE
     using System.Collections;
 
     #region "Least-Recently-Used cache class"
@@ -493,6 +492,4 @@ namespace MaxDB.Data.MaxDBProtocol
     }
 
     #endregion
-
-#endif // SAFE
 }

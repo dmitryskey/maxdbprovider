@@ -20,9 +20,7 @@ using System.Data;
 using System.Data.Common;
 using System.Text;
 using System.Collections;
-#if NET20
 using System.Collections.Generic;
-#endif
 using System.Runtime.CompilerServices;
 using MaxDB.Data.MaxDBProtocol;
 using MaxDB.Data.Utilities;
@@ -66,72 +64,13 @@ namespace MaxDB.Data
     /// <summary>
     /// Represents an open connection to a MaxDB database. This class cannot be inherited.
     /// </summary>
-    public sealed class MaxDBConnection :
-#if NET20
- DbConnection
-#else
-		IDbConnection, IDisposable
-#endif // NET20
+    public sealed class MaxDBConnection : DbConnection
     {
         internal MaxDBConnectionStringBuilder mConnStrBuilder;
         private string strConnection;
 
         internal ConnectArgs mConnArgs;
         internal MaxDBComm mComm;
-
-#if !SAFE
-        #region "SQLDBC Wrapper parameters"
-
-		//we cache table names extracted from SELECT ... FOR UPDATE statement
-		//SQLDBC library does not store it in its command cache!!!
-		//hash algorithm is equal to the SQLDBC counterpart
-
-#if NET20
-		private class TableNameHashCodeProvider : IEqualityComparer
-		{
-			bool IEqualityComparer.Equals(object x, object y)
-			{
-				return (string)x == (string)y;
-			}
-
-			int IEqualityComparer.GetHashCode(object obj)
-#else
-		private class TableNameHashCodeProvider : IHashCodeProvider
-		{
-			int IHashCodeProvider.GetHashCode(object obj)
-#endif // NET20
-			{
-				// the X31 hash formula is hash = (hash<<5) - hash + char(i) for i in 1 ... string length
-				// as it degenerates when the input are 0's, a little bit decoration is added
-				// to hash UTF8 data and UCS2 data equally. 
-				// also chars >= 128 are completely skipped.
-
-				string str = (string)obj;
-				if (str.Length > 0)
-				{
-					int result = 0;
-
-					foreach (char c in str)
-					{
-						byte[] b = BitConverter.GetBytes(c);
-						if (b[0] < 128 && b[1] == 0)
-							result = (result << 5) - result + b[0];
-					}
-					return result;
-				}
-				else
-					return 0;
-			}
-		}
-
-		internal Hashtable mTableNames = new Hashtable(new TableNameHashCodeProvider()
-#if !NET20
-			, new Comparer(System.Globalization.CultureInfo.InvariantCulture)
-#endif // !NET20
-);
-
-        #endregion
-#endif // !SAFE
 
         internal MaxDBLogger mLogger;
 
@@ -197,11 +136,7 @@ namespace MaxDB.Data
         {
             get
             {
-#if SAFE
                 return mComm.mEncoding;
-#else
-				return UnsafeNativeMethods.SQLDBC_Connection_isUnicodeDatabase(mComm.mConnectionHandler) == 1 ? Encoding.Unicode : Encoding.ASCII;
-#endif // SAFE
             }
         }
 
@@ -230,13 +165,11 @@ namespace MaxDB.Data
             get
             {
                 if (mComm == null || State != ConnectionState.Open)
+                {
                     throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_NOTOPENED));
+                }
 
-#if SAFE
                 return mComm.bAutoCommit;
-#else
-				return UnsafeNativeMethods.SQLDBC_Connection_getAutoCommit(mComm.mConnectionHandler) == SQLDBC_BOOL.SQLDBC_TRUE;
-#endif // SAFE
             }
             set
             {
@@ -248,31 +181,18 @@ namespace MaxDB.Data
                     mLogger.SqlTrace(DateTime.Now, "::SET AUTOCOMMIT " + (value ? "ON" : "OFF"));
                 //<<< SQL TRACE				
 
-#if SAFE
                 mComm.bAutoCommit = value;
-#else
-				UnsafeNativeMethods.SQLDBC_Connection_setAutoCommit(mComm.mConnectionHandler, value ? SQLDBC_BOOL.SQLDBC_TRUE : SQLDBC_BOOL.SQLDBC_FALSE);
-#endif // SAFE
             }
         }
 
         /// <summary>
         /// MaxDB server version (e.g. 7.6.34)
         /// </summary>
-#if NET20
         public override string ServerVersion
-#else
-		public string ServerVersion
-#endif // NET20
         {
             get
             {
-                int version =
-#if SAFE
-                    mComm.iKernelVersion;
-#else
-					UnsafeNativeMethods.SQLDBC_Connection_getKernelVersion(mComm.mConnectionHandler);
-#endif // SAFE
+                int version = mComm.iKernelVersion;
                 int correction_level = version % 100;
                 int minor_release = ((version - correction_level) % 10000) / 100;
                 int mayor_release = (version - minor_release * 100 - correction_level) / 10000;
@@ -286,12 +206,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				int version =
-#if SAFE
-					mComm.iKernelVersion;
-#else
-					UnsafeNativeMethods.SQLDBC_Connection_getKernelVersion(mComm.mConnectionHandler);
-#endif // SAFE
+				int version = mComm.iKernelVersion;
 				return version;
 			}
 		}
@@ -305,8 +220,11 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (userAsciiEncoding == null)
-					return Encoding.ASCII;
+                if (userAsciiEncoding == null)
+                {
+                    return Encoding.ASCII;
+                }
+
 				return userAsciiEncoding;
 			}
 			set 
@@ -334,7 +252,6 @@ namespace MaxDB.Data
 
         private void SetIsolationLevel(IsolationLevel level)
         {
-#if SAFE
             if (mComm.mIsolationLevel != level)
             {
                 AssertOpen();
@@ -353,14 +270,6 @@ namespace MaxDB.Data
 
                 mComm.mIsolationLevel = level;
             }
-#else
-			mComm.mIsolationLevel = level;
-
-			if (UnsafeNativeMethods.SQLDBC_Connection_setTransactionIsolation(mComm.mConnectionHandler, MapIsolationLevel(level))
-				!= SQLDBC_Retcode.SQLDBC_OK)
-				MaxDBException.ThrowException(MaxDBMessages.Extract(MaxDBError.CONNECTION_ISOLATIONLEVEL),
-					UnsafeNativeMethods.SQLDBC_Connection_getError(mComm.mConnectionHandler));
-#endif // SAFE
         }
 
         internal void AssertOpen()
@@ -369,25 +278,19 @@ namespace MaxDB.Data
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.OBJECTISCLOSED));
         }
 
-#if SAFE
         #region "Methods to support native protocol"
 
 
         #endregion
-#endif // SAFE
 
         #region IDbConnection Members
 
-#if NET20
         /// <summary>
         /// Initiate a local transaction with the specified isolation level.
         /// </summary>
         /// <param name="isolationLevel">Isolation level <see cref="IsolationLevel"/> under which the transaction should run.</param>
         /// <returns>A <see cref="DbTransaction"/> object.</returns>
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
-#else
-		IDbTransaction IDbConnection.BeginTransaction(IsolationLevel isolationLevel)
-#endif // NET20
         {
             return BeginTransaction(isolationLevel);
         }
@@ -397,32 +300,17 @@ namespace MaxDB.Data
         /// </summary>
         /// <param name="isolationLevel">Isolation level <see cref="IsolationLevel"/> under which the transaction should run.</param>
         /// <returns>A <see cref="MaxDBTransaction"/> object.</returns>
-#if NET20
         public new MaxDBTransaction BeginTransaction(IsolationLevel isolationLevel)
-#else
-		public MaxDBTransaction BeginTransaction(IsolationLevel isolationLevel)
-#endif // NET20
         {
             SetIsolationLevel(isolationLevel);
             return new MaxDBTransaction(this);
         }
 
-#if !NET20
-		IDbTransaction IDbConnection.BeginTransaction()
-		{
-			return BeginTransaction();
-		}
-#endif
-
         /// <summary>
         /// Initiate a local transaction 
         /// </summary>
         /// <returns>A <see cref="MaxDBTransaction"/> object.</returns>
-#if NET20
         public new MaxDBTransaction BeginTransaction()
-#else
-		public MaxDBTransaction BeginTransaction()
-#endif // NET20
         {
             return new MaxDBTransaction(this);
         }
@@ -432,11 +320,7 @@ namespace MaxDB.Data
         /// and not a property because the operation requires an expensive round trip.
         /// </summary>
         /// <param name="databaseName">Database name</param>
-#if NET20
         public override void ChangeDatabase(string databaseName)
-#else
-		public void ChangeDatabase(string databaseName)
-#endif // NET20
         {
             mConnArgs.dbname = databaseName;
         }
@@ -447,17 +331,15 @@ namespace MaxDB.Data
         /// being pooled, Close() will release it back to the pool.
         /// </summary>
         [MethodImpl(MethodImplOptions.Synchronized)]
-#if NET20
         public override void Close()
-#else
-		public void Close()
-#endif // NET20
         {
             if (State == ConnectionState.Open)
             {
                 //>>> SQL TRACE
                 if (mLogger.TraceSQL)
+                {
                     mLogger.SqlTrace(DateTime.Now, "::CLOSE CONNECTION");
+                }
                 //<<< SQL TRACE
 
                 mLogger.Flush();
@@ -465,14 +347,12 @@ namespace MaxDB.Data
                 if (mComm != null)
                 {
                     if (mConnStrBuilder.Pooling)
+                    {
                         MaxDBConnectionPool.ReleaseEntry(this);
+                    }
                     else
                     {
-#if SAFE
                         mComm.Close(true, true);
-#else
-						mComm.Close();
-#endif // SAFE
                         mComm.Dispose();
                     }
 
@@ -498,11 +378,7 @@ namespace MaxDB.Data
         /// If you do not specify a server, localhost is assumed.
         /// </para>
         /// </remarks>
-#if NET20
         public override string ConnectionString
-#else
-		public string ConnectionString
-#endif // NET20
         {
             get
             {
@@ -520,11 +396,7 @@ namespace MaxDB.Data
         /// Returns the connection time-out value set in the connection
         /// string. Zero indicates an indefinite time-out period.
         /// </summary>
-#if NET20
         public override int ConnectionTimeout
-#else
-		public int ConnectionTimeout
-#endif // NET20
         {
             get
             {
@@ -532,8 +404,6 @@ namespace MaxDB.Data
             }
         }
 
-
-#if NET20
         /// <summary>
         /// Creates and returns a <see cref="DbCommand"/> object associated with the <see cref="MaxDBConnection"/>.
         /// </summary>
@@ -542,26 +412,12 @@ namespace MaxDB.Data
         {
             return CreateCommand();
         }
-#else
-		/// <summary>
-		/// Creates and returns a <see cref="IDbCommand"/> object associated with the <see cref="MaxDBConnection"/>.
-		/// </summary>
-		/// <returns>A <see cref="IDbCommand"/> object.</returns>
-		IDbCommand IDbConnection.CreateCommand()
-		{
-			return CreateCommand();
-		}
-#endif // NET20
 
         /// <summary>
         /// Creates and returns a <see cref="MaxDBCommand"/> object associated with the <see cref="MaxDBConnection"/>.
         /// </summary>
         /// <returns>A <see cref="MaxDBCommand"/> object.</returns>
-#if NET20
         public new MaxDBCommand CreateCommand()
-#else
-		public MaxDBCommand CreateCommand()
-#endif // NET20
         {
             // Return a new instance of a command object.
             return new MaxDBCommand(string.Empty, this);
@@ -593,7 +449,6 @@ namespace MaxDB.Data
             }
         }
 
-#if NET20
         private DataTable ExecuteInternalQuery(string sql, string table, MaxDBParameterCollection parameters)
         {
             DataTable dt = new DataTable(table);
@@ -1265,16 +1120,11 @@ namespace MaxDB.Data
 
             return dt;
         }
-#endif // NET20
 
         /// <summary>
         /// Gets the name of the current database or the database to be used after a connection is opened.
         /// </summary>
-#if NET20
         public override string Database
-#else
-		public string Database
-#endif // NET20
         {
             get
             {
@@ -1285,11 +1135,7 @@ namespace MaxDB.Data
         /// <summary>
         /// Data source address or IP.
         /// </summary>
-#if NET20
         public override string DataSource
-#else
-		public string DataSource
-#endif // NET20
         {
             get
             {
@@ -1304,27 +1150,16 @@ namespace MaxDB.Data
         /// <para>The <see cref="MaxDBConnection"/> draws an open connection from the connection pool if one is available. 
         /// Otherwise, it establishes a new connection to an instance of MaxDB.</para>
         /// </remarks>
-#if NET20
         public override void Open()
-#else
-		public void Open()
-#endif // NET20
         {
             if (mConnStrBuilder.Pooling)
             {
-#if SAFE
                 mComm = MaxDBConnectionPool.GetPoolEntry(this, mLogger);
-#else
-				mComm = MaxDBConnectionPool.GetPoolEntry(this);
-#endif // SAFE
             }
             else
             {
-#if SAFE
                 mComm = new MaxDBComm(mLogger);
-#else
-				mComm = new MaxDBComm();
-#endif //SAFE
+
                 mComm.mConnStrBuilder = mConnStrBuilder;
 
                 mComm.Open(mConnArgs);
@@ -1334,23 +1169,11 @@ namespace MaxDB.Data
         /// <summary>
         /// Gets the current <see cref="ConnectionState"/> of the connection.
         /// </summary>
-#if NET20
         public override ConnectionState State
-#else
-		public ConnectionState State
-#endif // NET20
         {
             get
             {
-#if SAFE
                 return mComm != null && mComm.iSessionID >= 0 ? ConnectionState.Open : ConnectionState.Closed;
-#else
-				if (mComm != null && mComm.mConnectionHandler != IntPtr.Zero &&
-					UnsafeNativeMethods.SQLDBC_Connection_isConnected(mComm.mConnectionHandler) == SQLDBC_BOOL.SQLDBC_TRUE)
-					return ConnectionState.Open;
-				else
-					return ConnectionState.Closed;
-#endif // SAFE
             }
         }
 
@@ -1374,34 +1197,19 @@ namespace MaxDB.Data
 
         #region IDisposable Members
 
-#if !NET20
-		void IDisposable.Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-#endif // NET20
-
         /// <summary>
         /// This method is intended for internal use and can not to be called directly from your code.
         /// </summary>
         /// <param name="disposing">The disposing flag.</param>
-#if NET20
         protected override void Dispose(bool disposing)
-#else
-		private void Dispose(bool disposing)
-#endif // NET20
         {
-#if NET20
             base.Dispose(disposing);
-#endif // NET20
             if (disposing)
             {
                 if (State == ConnectionState.Open)
+                {
                     Close();
-
-                if (mLogger != null)
-                    ((IDisposable)mLogger).Dispose();
+                }
             }
         }
 

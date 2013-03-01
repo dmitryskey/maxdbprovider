@@ -23,8 +23,6 @@ using System.Globalization;
 
 namespace MaxDB.Data.Utilities
 {
-#if SAFE
-
 	#region "Sample HMACMD5 implementation"
 
 	internal class HMACMD5 : KeyedHashAlgorithm
@@ -105,6 +103,7 @@ namespace MaxDB.Data.Utilities
 			hashTwo.Initialize();
 			bHashing = false;
 		}
+
 		protected override void HashCore(byte[] rgb, int ib, int cb)
 		{
 			if (bHashing == false)
@@ -112,6 +111,7 @@ namespace MaxDB.Data.Utilities
 				hashOne.TransformBlock(rgbInner, 0, 64, rgbInner, 0);
 				bHashing = true;
 			}
+
 			hashOne.TransformBlock(rgb, ib, cb, rgb, ib);
 		}
 
@@ -122,6 +122,7 @@ namespace MaxDB.Data.Utilities
 				hashOne.TransformBlock(rgbInner, 0, 64, rgbInner, 0);
 				bHashing = true;
 			}
+
 			// Finalize the original hash.
 			hashOne.TransformFinalBlock(new byte[0], 0, 0);
 			// Write the outer array.
@@ -384,6 +385,4 @@ namespace MaxDB.Data.Utilities
 	}
 
 	#endregion
-
-#endif // SAFE
 }

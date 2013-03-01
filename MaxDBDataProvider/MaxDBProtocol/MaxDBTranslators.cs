@@ -24,8 +24,6 @@ using MaxDB.Data.Utilities;
 
 namespace MaxDB.Data.MaxDBProtocol
 {
-#if SAFE
-
     #region "DB Tech translator class"
 
     internal abstract class DBTechTranslator
@@ -3428,6 +3426,4 @@ namespace MaxDB.Data.MaxDBProtocol
     }
 
     #endregion
-
-#endif // SAFE
 }

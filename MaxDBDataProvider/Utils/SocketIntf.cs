@@ -21,23 +21,12 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Net;
 using System.Collections;
-
-#if !NET20 && !MONO && SAFE
-using Org.Mentalis.Security.Ssl;
-using Org.Mentalis.Security.Certificates;
-#endif
-#if NET20
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Authentication;
-#endif // NET20
-#if MONO
-using Mono.Security.Protocol.Tls;
-#endif
 
 namespace MaxDB.Data.Utilities
 {
-#if SAFE
 	/// <summary>
 	/// Interface to support tcp and ssl connection.
 	/// </summary>
@@ -66,12 +55,7 @@ namespace MaxDB.Data.Utilities
 			{
 				bool isConnected = false;
 
-				IPHostEntry entries =
-#if NET20
-					Dns.GetHostEntry(host);
-#else
-					Dns.GetHostByName(host);
-#endif
+				IPHostEntry entries = Dns.GetHostEntry(host);
 				foreach (IPAddress ipAddr in entries.AddressList)
 				{
 					sock.Blocking = false;
@@ -82,16 +66,22 @@ namespace MaxDB.Data.Utilities
 					catch (SocketException ex)
 					{
 						if (ex.ErrorCode != 10035 && ex.ErrorCode != 10036)
-							throw;
+                        {
+                            throw;
+                        }
 					}
 
 					isConnected = sock.Poll(timeout * 1000000, SelectMode.SelectWrite);
 					if (isConnected)
-						break;
+                    {
+                        break;
+                    }
 				}
 
 				if (!isConnected)
-					throw new MaxDBException();
+                {
+                    throw new MaxDBException();
+                }
 			}
 		}
 
@@ -136,7 +126,6 @@ namespace MaxDB.Data.Utilities
 			}
 		}
 
-#if NET20 || MONO
 		protected TcpClient Client
 		{
 			get
@@ -148,7 +137,6 @@ namespace MaxDB.Data.Utilities
 				mClient = value;
 			}
 		}
-#endif // NET20 || MONO
 
 		public int Timeout
 		{
@@ -215,130 +203,6 @@ namespace MaxDB.Data.Utilities
 		#endregion
 	}
 
-#if !NET20 && !MONO
-	internal class SslSocketClass : IMaxDBSocket, IDisposable
-	{
-		private string strHost;
-		private int iPort;
-		private int iTimeout;
-		private SecureSocket mSocket;
-		private SecureNetworkStream mStream;
-
-		public SslSocketClass(string host, int port, int timeout, bool checkSocket, string certificate) 
-		{
-			strHost = host;
-			iPort = port;
-			iTimeout = timeout;
-			
-			try
-			{
-				if (checkSocket && timeout > 0)
-					SocketClass.CheckConnection(host, port, timeout);
-
-				SecurityOptions options = new SecurityOptions(SecureProtocol.Tls1 | SecureProtocol.Ssl3);
-				options.Entity = ConnectionEnd.Client;
-				options.CommonName = certificate;
-				options.VerificationType = CredentialVerification.Auto;
-				options.Flags = SecurityFlags.Default;
-				options.AllowedAlgorithms = SslAlgorithms.SECURE_CIPHERS;
-
-				mSocket = new SecureSocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp, options);
-				mSocket.Connect(new IPEndPoint(Dns.Resolve(host).AddressList[0], port));
-				mStream = new SecureNetworkStream(mSocket, true);
-			}
-			catch(Exception ex)
-			{
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT_FAILED, strHost, iPort), ex);
-			}
-		}
-
-	#region SocketIntf Members
-
-		public virtual bool ReopenSocketAfterInfoPacket
-		{
-			get
-			{
-				return true;
-			}
-		}
-
-		public virtual bool DataAvailable
-		{
-			get
-			{
-				if (mStream != null)
-					return mStream.DataAvailable;
-				else
-					return false;
-			}
-		}
-
-		public int Timeout
-		{
-			get 
-			{ 
-				return iTimeout; 
-			}
-		}
-
-		public virtual Stream Stream
-		{
-			get
-			{
-				return mStream;
-			}
-		}
-
-		public string Host
-		{
-			get
-			{
-				return strHost;
-			}
-		}
-
-		public int Port
-		{
-			get
-			{
-				return iPort;
-			}
-		}
-
-		public virtual IMaxDBSocket Clone()
-		{
-			return new SocketClass(strHost, iPort, iTimeout, false);
-		}
-
-		public virtual void Close()
-		{
-			mStream.Close();
-			mStream = null;
-			mSocket = null;
-		}
-
-	#endregion
-
-	#region IDisposable Members
-
-		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
-				Close();
-		}
-
-	#endregion
-	}
-#endif
-
-#if NET20 && !MONO
-
 	internal class SslSocketClass : SocketClass, IMaxDBSocket
 	{
 		private SslStream mSslStream;
@@ -399,53 +263,6 @@ namespace MaxDB.Data.Utilities
 			Client = null;
 		}
 	}
-
-#endif // NET20 && !MONO
-
-#if MONO
-
-    internal class SslSocketClass : SocketClass, IMaxDBSocket
-    {
-        private SslClientStream mSslStream;
-        private string strCertificateName;
-
-        public SslSocketClass(string host, int port, int timeout, bool check_socket, string certificate)
-            : base(host, port, timeout, check_socket)
-        {
-            strCertificateName = certificate;
-            try
-            {
-                mSslStream = new SslClientStream(Client.GetStream(), host, true);
-            }
-            catch(Exception ex)
-            {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SSL_CERTIFICATE, ex.Message, ex));
-            }
-        }
-
-        public override Stream Stream
-        {
-            get
-            {
-                return mSslStream;
-            }
-        }
-
-        public override IMaxDBSocket Clone()
-        {
-            return new SslSocketClass(Host, Port, Timeout, false, strCertificateName);
-        }
-
-        public override void Close()
-        {
-            mSslStream.Close();
-            mSslStream = null;
-            Client.Close();
-            Client = null;
-        }
-    }
-
-#endif // MONO
 
 	#region "Join stream class reimplementation"
 
@@ -1012,5 +829,4 @@ namespace MaxDB.Data.Utilities
 		}
 	}
 	#endregion
-#endif // SAFE
 }

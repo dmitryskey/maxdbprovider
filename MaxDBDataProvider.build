@@ -1,13 +1,9 @@
 <project name="MaxDBDataProvider" default="net" xmlns="http://nant.sf.net/schemas/nant-0.84.win32.net-1.0.xsd">
 	<description>ADO.NET Provider for MaxDB</description>
 
-	<property name="nunit-Net-1.1" value="C:\Program Files (x86)\NUnit 2.5.9\bin\net-1.1" />
-	<property name="nunit-Net-2.0" value="C:\Program Files (x86)\NUnit 2.5.9\bin\net-2.0" />
-	<property name="nunit-Net-4.0" value="C:\Program Files (x86)\NUnit 2.5.9\bin\net-4.0" />
-	<property name="nunit-Mono-1.0" value="/usr/lib/mono/1.0" />
-	<property name="nunit-Mono-2.0" value="/usr/lib/mono/2.0" />
-	<property name="nunit-console-Mono-1.0" value="/root/Tests/1.0" />
-	<property name="nunit-console-Mono-2.0" value="/root/Tests/2.0" />
+	<property name="nunit" value="C:\Program Files (x86)\NUnit 2.6.2\bin" />
+	<property name="nunit-mono" value="/usr/lib/cli/nunit.framework-2.4" />
+	<property name="nunit-console-mono" value="/usr/lib/nunit" />
 
 	<property name="fxcop.executable" value="D:\Program Files\Microsoft FxCop 1.35\fxcopcmd.exe"/>
 
@@ -39,42 +35,14 @@
 	</if>
 
 	<!-- builds the client on .Net Framework-->
-	<target name="net" depends="net-1.1 net-2.0 net-4.0">
-		<!--
-		<call target="Docs"/>
-		-->
-	</target>
-
-	<!-- builds the client on .Net Frameworks 1.1-->
-	<target name="net-1.1" depends="net-1.1-safe net-1.1-unsafe">
-		<!--
-		<call target="Docs"/>
-		-->
-	</target>
-
-	<!-- builds the client on .Net Frameworks 2.0-->
-	<target name="net-2.0" depends="net-2.0-safe net-2.0-unsafe">
-		<!--
-		<call target="Docs"/>
-		-->
-	</target>
-
-	<!-- builds the client on .Net Frameworks 4.0-->
-	<target name="net-4.0" depends="net-4.0-safe net-4.0-unsafe">
-		<!--
-		<call target="Docs"/>
-		-->
-	</target>
-
-	<!-- builds the client for Mono Frameworks (obsolete 1.0 Profile)-->
-	<target name="mono-1.0" depends="mono-1.0-safe mono-1.0-unsafe">
+	<target name="net" depends="net-2.0 net-4.0">
 		<!--
 		<call target="Docs"/>
 		-->
 	</target>
 
 	<!-- builds the client for Mono Frameworks -->
-	<target name="mono-2.0" depends="mono-2.0-safe mono-2.0-unsafe">
+	<target name="mono" depends="mono-2.0">
 		<!--
 		<call target="Docs"/>
 		-->
@@ -83,18 +51,8 @@
 	<!-- provider target -->	
 	<target name="provider" description="MaxDB Data Provider target">
 		<property name="nant.settings.currentframework" value="${framework}"/>
-		<if test="${unsafe=='true'}">
-			<property name="outdir" value="bin/${framework}/unsafe/${buildType}"/>
-		</if>
+		<property name="outdir" value="bin/${framework}/${buildType}"/>
 
-		<if test="${unsafe=='false'}">
-			<property name="outdir" value="bin/${framework}/safe/${buildType}"/>
-		</if>
-
-		<if test="${unsafe=='false' and framework=='net-1.1'}">
-			<copy file="org.mentalis.security.dll" tofile="${outdir}/org.mentalis.security.dll" overwrite="true"/>
-		</if>
-		
 		<property name="keyfile" value=""/>
 		<if test="${framework=='net-2.0'}">
 			<property name="keyfile" value="/keyfile:MaxDBDataProvider.snk"/>
@@ -102,21 +60,17 @@
 		
 		<mkdir dir="${outdir}" failonerror="false"/>
 		<resgen input="MaxDBDataProvider/MaxDBMessages.resx" output="MaxDBDataProvider/MaxDBMessages.resources"/>
-		<csc output="${outdir}/MaxDB.Data.dll" target="library" unsafe="${unsafe}" doc="${outdir}/MaxDB.Data.xml"
-			define="${defines}" debug="${debug}" optimize="${opt}">
+		<csc output="${outdir}/MaxDB.Data.dll" target="library" doc="${outdir}/MaxDB.Data.xml" define="${defines}" debug="${debug}" optimize="${opt}">
 			<resources>
 				<include name="MaxDBDataProvider/MaxDBMessages.resources"/>
 			</resources>
 			<references>
 				<include name="System.Data.dll"/>
-				<include name="Mono.Security.dll"/>
-				<include name="org.mentalis.security.dll"/>		
 			</references>
 			<sources refid="Sources"/>
 			<arg value="${keyfile}"/>
 		</csc>
-		<csc output="${outdir}/MaxDB.Test.exe" target="exe" unsafe="true"
-			define="${defines}" debug="${debug}" optimize="${opt}">
+		<csc output="${outdir}/MaxDB.Test.exe" target="exe" define="${defines}" debug="${debug}" optimize="${opt}">
 			<sources>
 				<include name="MaxDBConsole/*.cs" />
 				<include name="MaxDBConsole/UnitTesting/*.cs" />
@@ -131,234 +85,54 @@
 		</csc>
 	</target>
 
-	<!-- target .Net 1.1 Safe-->
-	<target name="net-1.1-safe" description=".NET 1.1 safe target">
-		<property name="nunit-lib" value="${nunit-Net-1.1}/framework"/>
-		<property name="nunit-exe" value="${nunit-Net-1.1}"/>
-		<property name="framework" value="net-1.1"/>
-		<property name="defines" value="SAFE" />
-		<property name="unsafe" value="false"/>
-		<call target="provider"/>
-	</target>
-
-	<!-- target .Net 1.1 Unsafe-->
-	<target name="net-1.1-unsafe" description=".NET 1.1 unsafe target">
-		<property name="nunit-lib" value="${nunit-Net-1.1}/framework"/>
-		<property name="nunit-exe" value="${nunit-Net-1.1}"/>
-		<property name="framework" value="net-1.1"/>
-		<property name="defines" value="" />
-		<property name="unsafe" value="true"/>
-		<call target="provider"/>
-	</target>
-
-	<!-- target .Net 2.0 Safe-->
-	<target name="net-2.0-safe" description=".NET 2.0 safe target">
-		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
-		<property name="nunit-exe" value="${nunit-Net-2.0}"/>
+	<!-- target .Net 2.0 -->
+	<target name="net-2.0" description=".NET 2.0 target">
+		<property name="nunit-lib" value="${nunit}/framework"/>
+		<property name="nunit-exe" value="${nunit}"/>
 		<property name="framework" value="net-2.0"/>
-		<property name="defines" value="SAFE;NET20" />
-		<property name="unsafe" value="false"/>
 		<call target="provider"/>
 	</target>
 
-	<!-- target .Net 4.0 Safe-->
-	<target name="net-4.0-safe" description=".NET 2.0 safe target">
-		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
-		<property name="nunit-exe" value="${nunit-Net-2.0}"/>
+	<!-- target .Net 4.0 -->
+	<target name="net-4.0" description=".NET 2.4 target">
+		<property name="nunit-lib" value="${nunit}/framework"/>
+		<property name="nunit-exe" value="${nunit}"/>
 		<property name="framework" value="net-4.0"/>
-		<property name="defines" value="SAFE;NET20" />
-		<property name="unsafe" value="false"/>
 		<call target="provider"/>
 	</target>
 
-	<!-- target .Net 2.0 Unsafe-->
-	<target name="net-2.0-unsafe" description=".NET 2.0 unsafe target">
-		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
-		<property name="nunit-exe" value="${nunit-Net-2.0}"/>
-		<property name="framework" value="net-2.0"/>
-		<property name="defines" value="NET20" />
-		<property name="unsafe" value="true"/>
-		<call target="provider"/>
-	</target>
-
-	<!-- target .Net 4.0 Unsafe-->
-	<target name="net-4.0-unsafe" description=".NET 4.0 unsafe target">
-		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
-		<property name="nunit-exe" value="${nunit-Net-2.0}"/>
-		<property name="framework" value="net-4.0"/>
-		<property name="defines" value="NET20" />
-		<property name="unsafe" value="true"/>
-		<call target="provider"/>
-	</target>
-
-	<!-- target Mono 1.0 Safe-->
-	<target name="mono-1.0-safe" description="Mono 1.0 safe target">
-		<property name="nunit-lib" value="${nunit-Mono-1.0}"/>
-		<property name="nunit-exe" value="${nunit-console-Mono-1.0}"/>
-		<property name="framework" value="mono-1.0"/>
-		<property name="defines" value="SAFE;MONO" />
-		<property name="unsafe" value="false"/>
-		<call target="provider"/>
-	</target>
-
-	<!-- target Mono 1.0 Unsafe-->
-	<target name="mono-1.0-unsafe" description="Mono 1.0 unsafe target">
-		<property name="nunit-lib" value="${nunit-Mono-1.0}"/>
-		<property name="nunit-exe" value="${nunit-console-Mono-1.0}"/>
-		<property name="framework" value="mono-1.0"/>
-		<property name="defines" value="MONO" />
-		<property name="unsafe" value="true"/>
-		<call target="provider"/>
-	</target>
-
-	<!-- target Mono 2.0 Safe-->
-	<target name="mono-2.0-safe" description="Mono 2.0 safe target">
-		<property name="nunit-lib" value="${nunit-Mono-2.0}"/>
-		<property name="nunit-exe" value="${nunit-console-Mono-2.0}"/>
+	<!-- target Mono 2.0 -->
+	<target name="mono-2.0" description="Mono 2.0 target">
+		<property name="nunit-lib" value="${nunit-mono}"/>
+		<property name="nunit-exe" value="${nunit-console-mono}"/>
 		<property name="framework" value="mono-2.0"/>
-		<property name="defines" value="SAFE;NET20;MONO" />
-		<property name="unsafe" value="false"/>
-		<call target="provider"/>
-	</target>
-
-	<!-- target Mono 2.0 Unsafe-->
-	<target name="mono-2.0-unsafe" description="Mono 2.0 unsafe target">
-		<property name="nunit-lib" value="${nunit-Mono-2.0}"/>
-		<property name="nunit-exe" value="${nunit-console-Mono-2.0}"/>
-		<property name="framework" value="mono-2.0"/>
-		<property name="defines" value="NET20;MONO" />
-		<property name="unsafe" value="true"/>
 		<call target="provider"/>
 	</target>
 
 	<!-- FxCop targets -->
-	<target name="fxcop-all" depends="fxcop-net-1.1-safe, fxcop-net-1.1-unsafe, fxcop-net-2.0-safe, fxcop-net-2.0-unsafe" />
+	<target name="fxcop-all" depends="fxcop-net-2.0" />
 
-	<!-- target FxCop .Net 1.1 Safe-->
-	<target name="fxcop-net-1.1-safe" depends="net-1.1-safe">
-		<property name="framework" value="net-1.1"/>
-		<property name="defines" value="SAFE" />
-		<property name="unsafe" value="false"/>
-		<call target="fxcop"/>
-	</target>
-
-	<!-- target FxCop .Net 1.1 Unsafe-->
-	<target name="fxcop-net-1.1-unsafe" depends="net-1.1-unsafe">
-		<property name="framework" value="net-1.1"/>
-		<property name="defines" value=""/>
-		<property name="unsafe" value="true"/>
-		<call target="fxcop"/>
-	</target>
-
-	<!-- target FxCop .Net 2.0 Safe-->
-	<target name="fxcop-net-2.0-safe" depends="net-2.0-safe">
+	<!-- target FxCop .Net 2.0 -->
+	<target name="fxcop-net-2.0" depends="net-2.0">
 		<property name="framework" value="net-2.0"/>
-		<property name="defines" value="SAFE;NET20" />
-		<property name="unsafe" value="false"/>
-		<call target="fxcop"/>
-	</target>
-
-	<!-- target FxCop .Net 2.0 Unsafe-->
-	<target name="fxcop-net-2.0-unsafe" depends="net-2.0-unsafe">
-		<property name="framework" value="net-2.0"/>
-		<property name="defines" value="NET20" />
-		<property name="unsafe" value="true"/>
 		<call target="fxcop"/>
 	</target>
                  
 	<!-- testing targets -->
 	<target name="test-net">
-                <call target="test-net-safe"/>
-		<call target="test-net-unsafe"/>
+		<call target="test-net-2.0"/>
+		<call target="test-net-4.0"/>
 	</target>
 
-	<target name="test-net-safe">
-                <call target="test-net-1.1-safe"/>
-		<call target="test-net-2.0-safe"/>
-		<call target="test-net-4.0-safe"/>
-	</target>
-
-	<target name="test-net-unsafe">
-		<call target="test-net-1.1-unsafe"/>
-		<call target="test-net-2.0-unsafe"/>
-		<call target="test-net-4.0-unsafe"/>
-	</target>
-
-	<target name="tests-mono">
-                <call target="test-mono-1.0-safe"/>
-		<call target="test-mono-1.0-unsafe"/>
-
-		<call target="test-mono-2.0-safe"/>
-		<call target="test-mono-2.0-unsafe"/>
-	</target>
-	
-	<target name="test-net-1.1-safe" depends="net-1.1-safe">
-		<property name="nunit-lib" value="${nunit-Net-1.1}/framework"/>
-		<property name="framework" value="net-1.1"/>
-		<property name="unsafe" value="false"/>
-		<call target="testdb"/>
-	</target>
-
-	<target name="test-net-1.1-unsafe" depends="net-1.1-unsafe">
-		<property name="nunit-lib" value="${nunit-Net-1.1}/framework"/>
-		<property name="framework" value="net-1.1"/>
-		<property name="unsafe" value="true"/>
-		<call target="testdb"/>
-	</target>
-
-	<target name="test-net-2.0-safe" depends="net-2.0-safe">
+	<target name="test-net-2.0" depends="net-2.0">
 		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
 		<property name="framework" value="net-2.0"/>
-		<property name="unsafe" value="false"/>
 		<call target="testdb"/>
 	</target>
 
-	<target name="test-net-2.0-unsafe" depends="net-2.0-unsafe">
-		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
-		<property name="framework" value="net-2.0"/>
-		<property name="unsafe" value="true"/>
-		<call target="testdb"/>
-	</target>
-
-	<target name="test-net-4.0-safe" depends="net-4.0-safe">
+	<target name="test-net-4.0" depends="net-4.0">
 		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
 		<property name="framework" value="net-4.0"/>
-		<property name="unsafe" value="false"/>
-		<call target="testdb"/>
-	</target>
-
-	<target name="test-net-4.0-unsafe" depends="net-4.0-unsafe">
-		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
-		<property name="framework" value="net-4.0"/>
-		<property name="unsafe" value="true"/>
-		<call target="testdb"/>
-	</target>
-
-	<target name="test-mono-1.0-safe" depends="mono-1.0-safe">
-        	<property name="nunit" value="${nunit-Mono-1.0}"/>
-		<property name="framework" value="mono-1.0"/>
-		<property name="unsafe" value="false"/>
-		<call target="testdb"/>
-	</target>
-
-	<target name="test-mono-1.0-unsafe" depends="mono-1.0-unsafe">
-        	<property name="nunit" value="${nunit-Mono-1.0}"/>
-		<property name="framework" value="mono-1.0"/>
-		<property name="unsafe" value="true"/>
-		<call target="testdb"/>
-	</target>
-
-	<target name="test-mono-2.0-safe" depends="mono-2.0-safe">
-        	<property name="nunit" value="${nunit-Mono-2.0}"/>
-		<property name="framework" value="mono-2.0"/>
-		<property name="unsafe" value="false"/>
-		<call target="testdb"/>
-	</target>
-
-	<target name="test-mono-2.0-unsafe" depends="mono-2.0-unsafe">
-        	<property name="nunit" value="${nunit-Mono-2.0}"/>
-		<property name="framework" value="mono-2.0"/>
-		<property name="unsafe" value="true"/>
 		<call target="testdb"/>
 	</target>
 
@@ -368,15 +142,8 @@
 
 		<mkdir dir="results"/>
 
-		<if test="${unsafe=='true'}">
-			<property name="workdir" value="bin/${framework}/unsafe/${buildType}"/>
-			<property name="outfile" value="nunit-${framework}-unsafe-${buildType}.xml"/>
-		</if>
-
-		<if test="${unsafe=='false'}">
-			<property name="workdir" value="bin/${framework}/safe/${buildType}"/>
-			<property name="outfile" value="nunit-${framework}-safe-${buildType}.xml"/>
-		</if>
+		<property name="workdir" value="bin/${framework}/${buildType}"/>
+		<property name="outfile" value="nunit-${framework}-${buildType}.xml"/>
 
 		<property name="testfile" value="MaxDB.Test.exe"/>
 
@@ -389,15 +156,8 @@
 	<target name="fxcop" description="Runs FXCop">
 		<mkdir dir="results"/>
 
-		<if test="${unsafe=='true'}">
-			<property name="outdir" value="${framework}/unsafe/${buildType}"/>
-			<property name="outfile" value="FxCop-${framework}-unsafe-${buildType}.xml"/>
-		</if>
-
-		<if test="${unsafe=='false'}">
-			<property name="outdir" value="${framework}/safe/${buildType}"/>
-			<property name="outfile" value="FxCop-${framework}-safe-${buildType}.xml"/>
-		</if>
+		<property name="outdir" value="${framework}/${buildType}"/>
+		<property name="outfile" value="FxCop-${framework}-${buildType}.xml"/>
 
 		<exec program="${fxcop.executable}" 
 			commandline="/o:results/${outfile} /f:bin/${outdir}/MaxDB.Data.dll /s"

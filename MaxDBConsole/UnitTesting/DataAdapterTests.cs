@@ -206,18 +206,13 @@ namespace MaxDB.UnitTesting
 						DataTable dt = new DataTable();
 						da.Fill(dt);
 
-#if NET20
 						da.UpdateBatchSize = 0;
-#endif // NET20
 
 						DataRow dr;
 
 						for (int i = 0; i < rowCount; i++)
 						{
 							dr = dt.NewRow();
-#if MONO
-							dr["id"] = 0;
-#endif // MONO
 							dr["id2"] = i;
 							dt.Rows.Add(dr);
 						}
@@ -233,16 +228,11 @@ namespace MaxDB.UnitTesting
 							dt.Rows[i]["name"] = "Name " + i.ToString();
 
 						dr = dt.NewRow();
-#if MONO
-						dr["id"] = 0;
-#endif // MONO
 						dr["id2"] = rowCount + 1;
 						dr["name"] = "Name " + rowCount.ToString();
 						dt.Rows.Add(dr);
 
-#if NET20
 						da.UpdateBatchSize = rowCount / 15;
-#endif // NET20
 						da.Update(dt.GetChanges());
 						dt.AcceptChanges();
 

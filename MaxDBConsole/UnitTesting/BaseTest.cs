@@ -30,12 +30,7 @@ namespace MaxDB.UnitTesting
 	{
 		protected MaxDBConnection mconn;
 		protected StreamWriter msw;
-		protected NameValueCollection mAppSettings =
-#if NET20
-			System.Configuration.ConfigurationManager.AppSettings;
-#else
-			System.Configuration.ConfigurationSettings.AppSettings;
-#endif // NET20
+		protected NameValueCollection mAppSettings = System.Configuration.ConfigurationManager.AppSettings;
 
 		public BaseTest()
 		{

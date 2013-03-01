@@ -20,17 +20,13 @@ using System.Data;
 using System.Text;
 using System.IO;
 using System.Collections;
-#if NET20
 using System.Collections.Generic;
-#endif // NET20
 using System.Runtime.CompilerServices;
 using MaxDB.Data.Utilities;
 using System.Globalization;
 
 namespace MaxDB.Data.MaxDBProtocol
 {
-#if SAFE
-
 	#region "Parse information class"
 
 	internal class MaxDBParseInfo
@@ -43,9 +39,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		internal DBProcParameterInfo[] mProcParamInfos;
 		internal short sInputCount;
 
-#if NET20
 		private bool bIsMassCmd; // flag is set to true if command is a mass command
-#endif // NET20
 		private bool bIsSelect; // flag is set to true if command is a select command 
 		private bool bIsDBProc; // flag is set to true if command is a call dbproc command 
 		private bool bHasLongs; // flag is set to true if command handle long columns 
@@ -116,7 +110,6 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 		}
 
-#if NET20
 		public bool IsMassCmd
 		{
 			get
@@ -124,7 +117,6 @@ namespace MaxDB.Data.MaxDBProtocol
 				return bIsMassCmd;
 			}
 		}
-#endif // NET20
 
 		public bool HasLongs
 		{
@@ -410,7 +402,6 @@ namespace MaxDB.Data.MaxDBProtocol
 			mProcParamInfos = (DBProcParameterInfo[])parameterInfos.ToArray(typeof(DBProcParameterInfo));
 		}
 
-#if NET20
 		public byte[] MassParseID
 		{
 			get
@@ -433,7 +424,6 @@ namespace MaxDB.Data.MaxDBProtocol
 				}
 			}
 		}
-#endif // NET20
 
 		/**
 		 * Checks the validity. A parse info is valid if the session is the same as
@@ -740,11 +730,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		private int iType;
 		private string strSqlTypeName;
 		private string strBaseTypeName;
-#if NET20
 		private List<StructureElement> lstTypeElements;
-#else
-		private ArrayList lstTypeElements;
-#endif
 
 		/*
 		  Creates a new DB procedure parameter info.
@@ -757,31 +743,25 @@ namespace MaxDB.Data.MaxDBProtocol
 			if (string.Compare(datatype.Trim(), "ABAPTABLE", true, CultureInfo.InvariantCulture) == 0)
 			{
 				iType = ABAPTABLE;
-				lstTypeElements = new
-#if NET20
- List<StructureElement>();
-#else
-				ArrayList();
-#endif
+				lstTypeElements = new List<StructureElement>();
 			}
 			else if (string.Compare(datatype.Trim(), "STRUCTURE", true, CultureInfo.InvariantCulture) == 0)
 			{
 				iType = STRUCTURE;
-				lstTypeElements = new
-#if NET20
- List<StructureElement>();
-#else
-				ArrayList();
-#endif
+				lstTypeElements = new List<StructureElement>();
 			}
 		}
 
 		public void AddStructureElement(string typeName, string codeType, int length, int precision, int asciiOffset, int unicodeOffset)
 		{
-			if (lstTypeElements == null)
-				return;
-			else
-				lstTypeElements.Add(new StructureElement(typeName, codeType, length, precision, asciiOffset, unicodeOffset));
+            if (lstTypeElements == null)
+            {
+                return;
+            }
+            else
+            {
+                lstTypeElements.Add(new StructureElement(typeName, codeType, length, precision, asciiOffset, unicodeOffset));
+            }
 		}
 
 		public int MemberCount
@@ -824,13 +804,19 @@ namespace MaxDB.Data.MaxDBProtocol
 							StructureElement el = (StructureElement)lstTypeElements[0];
 							if (el.strTypeName.ToUpper(CultureInfo.InvariantCulture).Trim() == "CHAR")
 							{
-								if (el.strCodeType.ToUpper(CultureInfo.InvariantCulture).Trim() == "ASCII")
-									strSqlTypeName = "CHARACTER STREAM";
-								else if (el.strCodeType.ToUpper(CultureInfo.InvariantCulture).Trim() == "BYTE")
-									strSqlTypeName = "BYTE STREAM";
+                                if (el.strCodeType.ToUpper(CultureInfo.InvariantCulture).Trim() == "ASCII")
+                                {
+                                    strSqlTypeName = "CHARACTER STREAM";
+                                }
+                                else if (el.strCodeType.ToUpper(CultureInfo.InvariantCulture).Trim() == "BYTE")
+                                {
+                                    strSqlTypeName = "BYTE STREAM";
+                                }
 							}
-							else if (el.strTypeName.ToUpper(CultureInfo.InvariantCulture).Trim() == "WYDE")
-								strSqlTypeName = "CHARACTER STREAM";
+                            else if (el.strTypeName.ToUpper(CultureInfo.InvariantCulture).Trim() == "WYDE")
+                            {
+                                strSqlTypeName = "CHARACTER STREAM";
+                            }
 
 							typeBuffer.Append("STREAM(");
 						}
@@ -850,10 +836,12 @@ namespace MaxDB.Data.MaxDBProtocol
 							baseType.Append(", ");
 							typeBuffer.Append(", ");
 						}
+
 						StructureElement el = (StructureElement)lstTypeElements[i];
 						typeBuffer.Append(el.SqlTypeName);
 						baseType.Append(el.SqlTypeName);
 					}
+
 					typeBuffer.Append(close);
 					strSqlTypeName = typeBuffer.ToString();
 					strBaseTypeName = baseType.ToString();
@@ -1070,8 +1058,6 @@ namespace MaxDB.Data.MaxDBProtocol
 
 	#endregion
 
-#endif // SAFE
-
 	#region "General column information"
 
 	internal class GeneralColumnInfo
@@ -1099,7 +1085,6 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 		}
 
-#if SAFE
 		public static bool IsTextual(int columnType)
 		{
 			switch (columnType)
@@ -1118,7 +1103,6 @@ namespace MaxDB.Data.MaxDBProtocol
 					return false;
 			}
 		}
-#endif // SAFE
 
 		public static string GetTypeName(int columnType)
 		{

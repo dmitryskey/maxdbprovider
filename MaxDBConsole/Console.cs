@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using MaxDB.Data;
+using System.Collections.Generic;
 
 namespace MaxDB.Test
 {
@@ -13,21 +14,16 @@ namespace MaxDB.Test
 		/// The main entry point for the application.
 		/// </summary>
 		[STAThread]
-		static unsafe void Main(string[] args)
+		static void Main(string[] args)
 		{
 			//
 			// TODO: Add code to start application here
 			//
-			string connStr =
-#if NET20
-			System.Configuration.ConfigurationManager.AppSettings["ConnectionString"];
-#else
-			System.Configuration.ConfigurationSettings.AppSettings["ConnectionString"];
-#endif // NET20
+			string connStr = System.Configuration.ConfigurationManager.AppSettings["ConnectionString"];
 			MaxDBConnection maxdbconn = new MaxDBConnection(connStr);
 			maxdbconn.Open();
 
-			using (MaxDBCommand cmd = new MaxDBCommand("CREATE TABLE Test (id int NOT NULL, name VARCHAR(100))", maxdbconn))
+			using (MaxDBCommand cmd = new MaxDBCommand("CREATE TABLE Test (id int NOT NULL, name VARCHAR(2000))", maxdbconn))
 			{
 				cmd.ExecuteNonQuery();
 
