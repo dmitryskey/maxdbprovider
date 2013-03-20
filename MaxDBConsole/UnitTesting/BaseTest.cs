@@ -23,110 +23,110 @@ using System.Collections.Specialized;
 
 namespace MaxDB.UnitTesting
 {
-	/// <summary>
-	/// Summary description for BaseTest.
-	/// </summary>
-	public class BaseTest
-	{
-		protected MaxDBConnection mconn;
-		protected StreamWriter msw;
-		protected NameValueCollection mAppSettings = System.Configuration.ConfigurationManager.AppSettings;
+    /// <summary>
+    /// Summary description for BaseTest.
+    /// </summary>
+    public class BaseTest
+    {
+        protected MaxDBConnection mconn;
+        protected StreamWriter msw;
+        protected NameValueCollection mAppSettings = System.Configuration.ConfigurationManager.AppSettings;
 
-		public BaseTest()
-		{
-			if (mAppSettings["LogFileName"] != null)
-			{
-				msw = new StreamWriter(mAppSettings["LogFileName"]);
+        public BaseTest()
+        {
+            if (mAppSettings["LogFileName"] != null)
+            {
+                msw = new StreamWriter(mAppSettings["LogFileName"]);
 
-				Trace.Listeners.Clear();
-				Trace.Listeners.Add(new TextWriterTraceListener(msw));
-			}
-		}
+                Trace.Listeners.Clear();
+                Trace.Listeners.Add(new TextWriterTraceListener(msw));
+            }
+        }
 
-		protected void Init(string DDLQuery)
-		{
-			try
-			{
-				mconn = new MaxDBConnection(mAppSettings["ConnectionString"]);
-				mconn.Open();
-				mconn.AutoCommit = true;
+        protected void Init(string DDLQuery)
+        {
+            try
+            {
+                mconn = new MaxDBConnection(mAppSettings["ConnectionString"]);
+                mconn.Open();
+                mconn.AutoCommit = true;
 
-				DropTestTable();
+                DropTestTable();
 
-				(new MaxDBCommand(DDLQuery, mconn)).ExecuteNonQuery();
-			}
-			catch (Exception ex)
-			{
-				Assert.Fail(ex.Message);
-			}
-		}
+                (new MaxDBCommand(DDLQuery, mconn)).ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
+        }
 
-		protected void Close()
-		{
-			DropTestTable();
-			((IDisposable)mconn).Dispose();
-			if (msw != null) msw.Close();
-		}
+        protected void Close()
+        {
+            DropTestTable();
+            ((IDisposable)mconn).Dispose();
+            if (msw != null) msw.Close();
+        }
 
-		private void DropTestTable()
-		{
-			try
-			{
-				ExecuteNonQuery("EXISTS TABLE Test");
-				ExecuteNonQuery("DROP TABLE Test");
-			}
-			catch (MaxDBException ex)
-			{
-				if (ex.ErrorCode != -4004)
-					throw;
-			}
-		}
+        private void DropTestTable()
+        {
+            try
+            {
+                ExecuteNonQuery("EXISTS TABLE Test");
+                ExecuteNonQuery("DROP TABLE Test");
+            }
+            catch (MaxDBException ex)
+            {
+                if (ex.ErrorCode != -4004)
+                    throw;
+            }
+        }
 
-		protected void ClearTestTable()
-		{
-			ExecuteNonQuery("DELETE FROM Test");
-		}
+        protected void ClearTestTable()
+        {
+            ExecuteNonQuery("DELETE FROM Test");
+        }
 
-		protected void ExecuteNonQuery(string cmdSql)
-		{
-			using (MaxDBCommand cmd = new MaxDBCommand(cmdSql, mconn))
-				cmd.ExecuteNonQuery();
-		}
+        protected void ExecuteNonQuery(string cmdSql)
+        {
+            using (MaxDBCommand cmd = new MaxDBCommand(cmdSql, mconn))
+                cmd.ExecuteNonQuery();
+        }
 
-		protected void DropDbProcedure(string proc)
-		{
-			try
-			{
-				ExecuteNonQuery("DROP DBPROC " + proc);
-			}
-			catch (MaxDBException ex)
-			{
-				if (ex.ErrorCode != -4016)
-				{
-				    Assert.Fail(ex.Message);
-				}
-			}
-		}
+        protected void DropDbProcedure(string proc)
+        {
+            try
+            {
+                ExecuteNonQuery("DROP DBPROC " + proc);
+            }
+            catch (MaxDBException ex)
+            {
+                if (ex.ErrorCode != -4016)
+                {
+                    Assert.Fail(ex.Message);
+                }
+            }
+        }
 
-		protected void DropDbFunction(string func)
-		{
-			try
-			{
-				ExecuteNonQuery("DROP FUNCTION " + func);
-			}
-			catch (MaxDBException ex)
-			{
-				if (ex.ErrorCode != -4023) Assert.Fail(ex.Message);
-			}
-		}
+        protected void DropDbFunction(string func)
+        {
+            try
+            {
+                ExecuteNonQuery("DROP FUNCTION " + func);
+            }
+            catch (MaxDBException ex)
+            {
+                if (ex.ErrorCode != -4023) Assert.Fail(ex.Message);
+            }
+        }
 
-		protected byte[] CreateBlob(int size)
-		{
-			byte[] buf = new byte[size];
+        protected byte[] CreateBlob(int size)
+        {
+            byte[] buf = new byte[size];
 
-			Random r = new Random();
-			r.NextBytes(buf);
-			return buf;
-		}
-	}
+            Random r = new Random();
+            r.NextBytes(buf);
+            return buf;
+        }
+    }
 }

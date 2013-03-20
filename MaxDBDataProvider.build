@@ -17,7 +17,7 @@
 
 	<property name="debug" value="false" overwrite="false"/>
 	
-	<!-- we default to optimized release binaries -->
+	<!-- by default optimize release binaries -->
 	<property name="opt" value="true"/>
 	<property name="buildType" value="release"/>
 
