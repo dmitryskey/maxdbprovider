@@ -21,96 +21,96 @@ using MaxDB.Data;
 
 namespace MaxDB.UnitTesting
 {
-	/// <summary>
-	/// Summary description for ConnectionTests.
-	/// </summary>
-	[TestFixture()]
-	public class ConnectionTests : BaseTest
-	{
-		private string mconnStr;
-		private string mconnStrBadAddr;
-//		private string mconnStrSsl;
-		private string mconnStrBadLogin;
-		private string mconnStrBadPassword;
-		private string mconnStrBadDbName;
+    /// <summary>
+    /// Summary description for ConnectionTests.
+    /// </summary>
+    [TestFixture()]
+    public class ConnectionTests : BaseTest
+    {
+        private string mconnStr;
+        private string mconnStrBadAddr;
+        //		private string mconnStrSsl;
+        private string mconnStrBadLogin;
+        private string mconnStrBadPassword;
+        private string mconnStrBadDbName;
 
-		[TestFixtureSetUp]
-		public void SetUp()
-		{
-			mconnStr = mAppSettings["ConnectionString"];
-			mconnStrBadAddr = mAppSettings["ConnectionStringBadAddr"];
-//			mconnStrSsl = mAppSettings["ConnectionStringSsl"];
-			mconnStrBadLogin = mAppSettings["ConnectionStringBadLogin"];
-			mconnStrBadPassword = mAppSettings["ConnectionStringBadPassword"];
-			mconnStrBadDbName = mAppSettings["ConnectionStringBadDbName"];
-		}
+        [TestFixtureSetUp]
+        public void SetUp()
+        {
+            mconnStr = mAppSettings["ConnectionString"];
+            mconnStrBadAddr = mAppSettings["ConnectionStringBadAddr"];
+            //			mconnStrSsl = mAppSettings["ConnectionStringSsl"];
+            mconnStrBadLogin = mAppSettings["ConnectionStringBadLogin"];
+            mconnStrBadPassword = mAppSettings["ConnectionStringBadPassword"];
+            mconnStrBadDbName = mAppSettings["ConnectionStringBadDbName"];
+        }
 
-		[TestFixtureTearDown]
-		public void TearDown()
-		{
-			if (msw != null) msw.Close();
-		}
+        [TestFixtureTearDown]
+        public void TearDown()
+        {
+            if (msw != null) msw.Close();
+        }
 
-		[Test]
-		public void TestConnection()
-		{
-			TestConnectionByString(mconnStr);
-		}
+        [Test]
+        public void TestConnection()
+        {
+            TestConnectionByString(mconnStr);
+        }
 
-/*  
-		[Test] 
-		public void TestConnectionSsl()
-		{
-			TestConnectionByString(mconnStrSsl);
-		}
-*/
+        /*  
+                [Test] 
+                public void TestConnectionSsl()
+                {
+                    TestConnectionByString(mconnStrSsl);
+                }
+        */
 
-		[Test]
-		public void TestConnectionTimeout()
-		{
-			using (MaxDBConnection maxdbconn = new MaxDBConnection(mconnStrBadAddr))
-			{
-				DateTime start = DateTime.Now;
+        [Test]
+        public void TestConnectionTimeout()
+        {
+            using (MaxDBConnection maxdbconn = new MaxDBConnection(mconnStrBadAddr))
+            {
+                DateTime start = DateTime.Now;
 
-				try
-				{
-					maxdbconn.Open();
-				}
-				catch (MaxDBException)
-				{
-					Assert.IsTrue(DateTime.Now.Subtract(start).TotalSeconds <= maxdbconn.ConnectionTimeout + 2, "Timeout exceeded");
-				}
-			}
-		}
+                try
+                {
+                    maxdbconn.Open();
+                }
+                catch (MaxDBException)
+                {
+                    Assert.IsTrue(DateTime.Now.Subtract(start).TotalSeconds <= maxdbconn.ConnectionTimeout + 2, "Timeout exceeded");
+                }
+            }
+        }
 
-		[Test]
-		[ExpectedException(typeof(MaxDBException))]
-		public void TestConnectionBadLogin()
-		{
-			TestConnectionByString(mconnStrBadLogin);
-		}
+        [Test]
+        [ExpectedException(typeof(MaxDBException))]
+        public void TestConnectionBadLogin()
+        {
+            TestConnectionByString(mconnStrBadLogin);
+        }
 
-		[Test]
-		[ExpectedException(typeof(MaxDBException))]
-		public void TestConnectionBadPassword()
-		{
-			TestConnectionByString(mconnStrBadPassword);
-		}
+        [Test]
+        [ExpectedException(typeof(MaxDBException))]
+        public void TestConnectionBadPassword()
+        {
+            TestConnectionByString(mconnStrBadPassword);
+        }
 
-		[Test]
-		[ExpectedException(typeof(MaxDBException))]
-		public void TestConnectionBadDbName()
-		{
-			TestConnectionByString(mconnStrBadDbName);
-		}
+        [Test]
+        [ExpectedException(typeof(MaxDBException))]
+        public void TestConnectionBadDbName()
+        {
+            TestConnectionByString(mconnStrBadDbName);
+        }
 
-		private void TestConnectionByString(string connection)
-		{
-			using (MaxDBConnection maxdbconn = new MaxDBConnection(connection))
-			{
-				maxdbconn.Open();
-				maxdbconn.Close();
-			}
-		}
-	}
+        private void TestConnectionByString(string connection)
+        {
+            using (MaxDBConnection maxdbconn = new MaxDBConnection(connection))
+            {
+                maxdbconn.Open();
+                maxdbconn.Close();
+            }
+        }
+    }
 }
