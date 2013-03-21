@@ -191,7 +191,11 @@ namespace MaxDB.Data.MaxDBProtocol
         public virtual long GetBytes(ISqlParameterController controller, ByteArray mem, long fldOffset, byte[] buffer, int bufferoffset, int length)
         {
             byte[] bytes = GetBytes(controller, mem);
-            if (bytes == null) return 0;
+            if (bytes == null)
+            {
+                return 0;
+            }
+
             Array.Copy(bytes, fldOffset, buffer, bufferoffset, bytes.Length);
             return bytes.Length;
         }
@@ -259,7 +263,11 @@ namespace MaxDB.Data.MaxDBProtocol
         public virtual long GetChars(ISqlParameterController controller, ByteArray mem, long fldOffset, char[] buffer, int bufferoffset, int length)
         {
             string str = GetString(controller, mem);
-            if (str == null) return 0;
+            if (str == null)
+            {
+                return 0;
+            }
+
             char[] chars = str.Substring((int)fldOffset, length).ToCharArray();
             Array.Copy(chars, 0, buffer, bufferoffset, chars.Length);
             return chars.Length;
@@ -749,10 +757,13 @@ namespace MaxDB.Data.MaxDBProtocol
                 if (r != length)
                 {
                     if (r == -1)
+                    {
                         r = 0;
+                    }
+
                     byte[] ba2 = ba;
                     ba = new byte[r];
-                    Array.Copy(ba2, 0, ba, 0, r);
+                    Buffer.BlockCopy(ba2, 0, ba, 0, r);
                 }
                 return TransStringForInput(AsciiEncoding.GetString(ba));
             }
@@ -765,7 +776,9 @@ namespace MaxDB.Data.MaxDBProtocol
         public override object TransBinaryStreamForInput(Stream stream, int length)
         {
             if (length <= 0)
+            {
                 return null;
+            }
 
             try
             {
@@ -773,11 +786,16 @@ namespace MaxDB.Data.MaxDBProtocol
                 int r = stream.Read(ba, 0, length);
                 if (r != length)
                 {
-                    if (r == -1) r = 0;
+                    if (r == -1)
+                    {
+                        r = 0;
+                    }
+
                     byte[] ba2 = ba;
                     ba = new byte[r];
-                    Array.Copy(ba2, 0, ba, 0, r);
+                    Buffer.BlockCopy(ba2, 0, ba, 0, r);
                 }
+
                 return TransBytesForInput(ba);
             }
             catch (Exception ex)
@@ -1038,7 +1056,9 @@ namespace MaxDB.Data.MaxDBProtocol
         public override object TransBinaryStreamForInput(Stream stream, int length)
         {
             if (length <= 0)
+            {
                 return null;
+            }
 
             try
             {
@@ -1046,10 +1066,14 @@ namespace MaxDB.Data.MaxDBProtocol
                 int r = stream.Read(ba, 0, length);
                 if (r != length)
                 {
-                    if (r == -1) r = 0;
+                    if (r == -1)
+                    {
+                        r = 0;
+                    }
+
                     byte[] ba2 = ba;
                     ba = new byte[r];
-                    Array.Copy(ba2, 0, ba, 0, r);
+                    Buffer.BlockCopy(ba2, 0, ba, 0, r);
                 }
                 return TransBytesForInput(ba);
             }
@@ -2099,7 +2123,9 @@ namespace MaxDB.Data.MaxDBProtocol
         public override object TransCharacterStreamForInput(Stream stream, int length)
         {
             if (length <= 0)
+            {
                 return null;
+            }
 
             try
             {
@@ -2108,10 +2134,13 @@ namespace MaxDB.Data.MaxDBProtocol
                 if (r != length)
                 {
                     if (r == -1)
+                    {
                         r = 0;
+                    }
+
                     byte[] ba2 = ba;
                     ba = new byte[r];
-                    Array.Copy(ba2, 0, ba, 0, r);
+                    Buffer.BlockCopy(ba2, 0, ba, 0, r);
                 }
 
                 return TransStringForInput(bUnicode ? Encoding.Unicode.GetString(ba) : Encoding.ASCII.GetString(ba));
@@ -2125,7 +2154,9 @@ namespace MaxDB.Data.MaxDBProtocol
         public override object TransBinaryStreamForInput(Stream reader, int length)
         {
             if (length <= 0)
+            {
                 return null;
+            }
 
             try
             {
@@ -2134,7 +2165,10 @@ namespace MaxDB.Data.MaxDBProtocol
                 if (r != length)
                 {
                     if (r == -1)
+                    {
                         r = 0;
+                    }
+
                     byte[] ba2 = ba;
                     ba = new byte[r];
                     Array.Copy(ba2, 0, ba, 0, r);
@@ -2152,7 +2186,9 @@ namespace MaxDB.Data.MaxDBProtocol
             byte[] asBytes = GetBytes(null, mem);
 
             if (asBytes == null)
+            {
                 return null;
+            }
 
             return new MemoryStream(asBytes);
         }
@@ -2808,7 +2844,9 @@ namespace MaxDB.Data.MaxDBProtocol
 
             reader = GetCharacterStream(controller, mem, controller.ReplyData);
             if (reader == null)
+            {
                 return 0;
+            }
 
             try
             {
@@ -2819,7 +2857,9 @@ namespace MaxDB.Data.MaxDBProtocol
                 {
                     alreadyRead += charsRead;
                     if (charsRead < bufSize)
+                    {
                         break;
+                    }
                 }
 
                 alreadyRead = 0;
@@ -2828,7 +2868,9 @@ namespace MaxDB.Data.MaxDBProtocol
                     Array.Copy(buf, 0, buffer, bufferoffset + alreadyRead, charsRead);
                     alreadyRead += charsRead;
                     if (charsRead < bufSize)
+                    {
                         break;
+                    }
                 }
             }
             catch (StreamIOException streamExc)
@@ -2851,7 +2893,9 @@ namespace MaxDB.Data.MaxDBProtocol
 
             stream = GetBinaryStream(controller, mem, controller.ReplyData);
             if (stream == null)
+            {
                 return 0;
+            }
 
             try
             {
@@ -2868,10 +2912,12 @@ namespace MaxDB.Data.MaxDBProtocol
                 alreadyRead = 0;
                 while ((bytesRead = stream.Read(buf, 0, (int)(length - alreadyRead < bufSize ? length - alreadyRead : bufSize))) > 0)
                 {
-                    Array.Copy(buf, 0, buffer, bufferoffset + alreadyRead, bytesRead);
+                    Buffer.BlockCopy(buf, 0, buffer, bufferoffset + alreadyRead, bytesRead);
                     alreadyRead += bytesRead;
                     if (bytesRead < bufSize)
+                    {
                         break;
+                    }
                 }
             }
             catch (StreamIOException streamExc)
@@ -3077,7 +3123,9 @@ namespace MaxDB.Data.MaxDBProtocol
 
             reader = GetCharacterStream(controller, mem, controller.ReplyData);
             if (reader == null)
+            {
                 return 0;
+            }
 
             try
             {
@@ -3088,7 +3136,9 @@ namespace MaxDB.Data.MaxDBProtocol
                 {
                     alreadyRead += charsRead;
                     if (charsRead < bufSize)
+                    {
                         break;
+                    }
                 }
 
                 alreadyRead = 0;
@@ -3097,7 +3147,9 @@ namespace MaxDB.Data.MaxDBProtocol
                     Array.Copy(buf, 0, buffer, bufferoffset + alreadyRead, charsRead);
                     alreadyRead += charsRead;
                     if (charsRead < bufSize)
+                    {
                         break;
+                    }
                 }
             }
             catch (StreamIOException streamExc)
@@ -3120,7 +3172,9 @@ namespace MaxDB.Data.MaxDBProtocol
 
             stream = GetBinaryStream(controller, mem, controller.ReplyData);
             if (stream == null)
+            {
                 return 0;
+            }
 
             try
             {
@@ -3131,16 +3185,20 @@ namespace MaxDB.Data.MaxDBProtocol
                 {
                     alreadyRead += bytesRead;
                     if (bytesRead < bufSize)
+                    {
                         break;
+                    }
                 }
 
                 alreadyRead = 0;
                 while ((bytesRead = stream.Read(buf, 0, (int)(length - alreadyRead < bufSize ? length - alreadyRead : bufSize))) > 0)
                 {
-                    Array.Copy(buf, 0, buffer, bufferoffset + alreadyRead, bytesRead);
+                    Buffer.BlockCopy(buf, 0, buffer, bufferoffset + alreadyRead, bytesRead);
                     alreadyRead += bytesRead;
                     if (bytesRead < bufSize)
+                    {
                         break;
+                    }
                 }
             }
             catch (StreamIOException streamExc)

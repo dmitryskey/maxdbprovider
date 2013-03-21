@@ -635,7 +635,7 @@ namespace MaxDB.Data.MaxDBProtocol
 						// copy bytes in buffer
 						chunkSize = Math.Min(len, m_value.iItemsInBuffer);
 						chunk = m_value.bsStreamBuffer.ReadBytes(0, chunkSize);
-						Array.Copy(chunk, 0, b, off, chunkSize);
+                        Buffer.BlockCopy(chunk, 0, b, off, chunkSize);
 						len -= chunkSize;
 						off += chunkSize;
 						m_value.iItemsInBuffer -= chunkSize;

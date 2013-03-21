@@ -363,7 +363,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				return;
 			}
 
-			ArrayList parameterInfos = new ArrayList();
+            List<DBProcParameterInfo> parameterInfos = new List<DBProcParameterInfo>();
 			DBProcParameterInfo currentInfo = null;
 			int currentIndex = 0;
 			do
@@ -399,7 +399,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			}
 			while (rs.Read());
 			rs.Close();
-			mProcParamInfos = (DBProcParameterInfo[])parameterInfos.ToArray(typeof(DBProcParameterInfo));
+			mProcParamInfos = parameterInfos.ToArray();
 		}
 
 		public byte[] MassParseID
@@ -411,8 +411,10 @@ namespace MaxDB.Data.MaxDBProtocol
 			set
 			{
 				byMassParseId = value;
-				if (value == null)
-					return;
+                if (value == null)
+                {
+                    return;
+                }
 
 				for (int i = 0; i < FunctionCode.massCmdAppCodes.Length; i++)
 				{

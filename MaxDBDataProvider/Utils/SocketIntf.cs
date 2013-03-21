@@ -798,7 +798,7 @@ namespace MaxDB.Data.Utilities
 					break;
 
 				int copySize = Math.Min(count, iBufExtent - iBufPos);
-				Array.Copy(byBuffer, iBufPos, buffer, offset, copySize);
+                Buffer.BlockCopy(byBuffer, iBufPos, buffer, offset, copySize);
 				iBufPos += copySize;
 				offset += copySize;
 				count -= copySize;

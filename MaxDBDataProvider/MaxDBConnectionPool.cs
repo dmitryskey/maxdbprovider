@@ -52,14 +52,16 @@ namespace MaxDB.Data
 				foreach (MaxDBComm comm in entryList)
 				{
 					MaxDBConnection conn = new MaxDBConnection();
-					if ((mConnStrBuilder.ConnectionLifetime > 0 && comm.openTime.AddSeconds(mConnStrBuilder.ConnectionLifetime) < DateTime.Now) ||
-						!conn.Ping(comm))
-					{
-						comm.Close(true, false);
-						activeCount--;
-					}
-					else
-						newList.Add(comm);
+                    if ((mConnStrBuilder.ConnectionLifetime > 0 && comm.openTime.AddSeconds(mConnStrBuilder.ConnectionLifetime) < DateTime.Now) ||
+                        !conn.Ping(comm))
+                    {
+                        comm.Close(true, false);
+                        activeCount--;
+                    }
+                    else
+                    {
+                        newList.Add(comm);
+                    }
 				}
 
 				entryList = newList;
@@ -166,8 +168,11 @@ namespace MaxDB.Data
 				{
 					string key = conn.mConnStrBuilder.ConnectionString;
 					MaxDBConnectionPoolEntry poolEntry = (MaxDBConnectionPoolEntry)mPool[key];
-					if (poolEntry == null)
-						throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.POOL_NOT_FOUND, key));
+                    if (poolEntry == null)
+                    {
+                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.POOL_NOT_FOUND, key));
+                    }
+
 					poolEntry.ReleaseEntry(conn.mComm);
 				}
 			}

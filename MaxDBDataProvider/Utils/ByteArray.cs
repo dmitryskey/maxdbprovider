@@ -106,7 +106,7 @@ namespace MaxDB.Data.Utilities
 			offset += iOffset;
 
 			byte[] res = new byte[len];
-			Array.Copy(byData, offset, res, 0, len);
+            Buffer.BlockCopy(byData, offset, res, 0, len);
 			return res;
 		}
 
@@ -124,7 +124,7 @@ namespace MaxDB.Data.Utilities
 		public void WriteBytes(byte[] values, int offset, int len)
 		{
 			offset += iOffset;
-			Array.Copy(values, 0, byData, offset, len);
+            Buffer.BlockCopy(values, 0, byData, offset, len);
 		}
 
 		public void WriteBytes(byte[] values, int offset, int len, byte[] filler)
@@ -148,7 +148,7 @@ namespace MaxDB.Data.Utilities
                 fillLen = len - copyLen;
             }
 
-			Array.Copy(values, 0, byData, offset, copyLen);
+			Buffer.BlockCopy(values, 0, byData, offset, copyLen);
 
 			if (fillLen > 0)
 			{
@@ -158,7 +158,7 @@ namespace MaxDB.Data.Utilities
 				while (fillLen > 0)
 				{
 					chunkLen = Math.Min(fillLen, Consts.FillBufSize);
-					Array.Copy(filler, 0, byData, offset, chunkLen);
+                    Buffer.BlockCopy(filler, 0, byData, offset, chunkLen);
 					fillLen -= chunkLen;
 					offset += chunkLen;
 				}
@@ -183,15 +183,21 @@ namespace MaxDB.Data.Utilities
 		public ushort ReadUInt16(int offset)
 		{
 			offset += iOffset;
-			if (BitConverter.IsLittleEndian == bSwapMode)
-				return BitConverter.ToUInt16(byData, offset);
-			else
-			{
-				if (bSwapMode)
-					return (ushort)(byData[offset + 1] * 0x100 + byData[offset]);
-				else
-					return (ushort)(byData[offset] * 0x100 + byData[offset + 1]);
-			}
+            if (BitConverter.IsLittleEndian == bSwapMode)
+            {
+                return BitConverter.ToUInt16(byData, offset);
+            }
+            else
+            {
+                if (bSwapMode)
+                {
+                    return (ushort)(byData[offset + 1] * 0x100 + byData[offset]);
+                }
+                else
+                {
+                    return (ushort)(byData[offset] * 0x100 + byData[offset + 1]);
+                }
+            }
 		}
 
 
@@ -202,10 +208,14 @@ namespace MaxDB.Data.Utilities
 
 		public short ReadInt16(int offset)
 		{
-			if (BitConverter.IsLittleEndian == bSwapMode)
-				return BitConverter.ToInt16(byData, offset + iOffset);
-			else
-				return (short)ReadUInt16(offset);
+            if (BitConverter.IsLittleEndian == bSwapMode)
+            {
+                return BitConverter.ToInt16(byData, offset + iOffset);
+            }
+            else
+            {
+                return (short)ReadUInt16(offset);
+            }
 		}
 
 		public void WriteInt16(short value, int offset)
@@ -215,15 +225,21 @@ namespace MaxDB.Data.Utilities
 
 		public uint ReadUInt32(int offset)
 		{
-			if (BitConverter.IsLittleEndian == bSwapMode)
-				return BitConverter.ToUInt32(byData, offset + iOffset);
-			else
-			{
-				if (bSwapMode)
-					return (uint)(ReadUInt16(offset + 2) * 0x10000 + ReadUInt16(offset));
-				else
-					return (uint)(ReadUInt16(offset) * 0x10000 + ReadUInt16(offset + 2));
-			}
+            if (BitConverter.IsLittleEndian == bSwapMode)
+            {
+                return BitConverter.ToUInt32(byData, offset + iOffset);
+            }
+            else
+            {
+                if (bSwapMode)
+                {
+                    return (uint)(ReadUInt16(offset + 2) * 0x10000 + ReadUInt16(offset));
+                }
+                else
+                {
+                    return (uint)(ReadUInt16(offset) * 0x10000 + ReadUInt16(offset + 2));
+                }
+            }
 		}
 
 		public void WriteUInt32(uint value, int offset)
@@ -233,10 +249,14 @@ namespace MaxDB.Data.Utilities
 
 		public int ReadInt32(int offset)
 		{
-			if (BitConverter.IsLittleEndian == bSwapMode)
-				return BitConverter.ToInt32(byData, offset + iOffset);
-			else
-				return (int)ReadUInt32(offset);
+            if (BitConverter.IsLittleEndian == bSwapMode)
+            {
+                return BitConverter.ToInt32(byData, offset + iOffset);
+            }
+            else
+            {
+                return (int)ReadUInt32(offset);
+            }
 		}
 
 		public void WriteInt32(int value, int offset)
@@ -246,23 +266,33 @@ namespace MaxDB.Data.Utilities
 
 		public ulong ReadUInt64(int offset)
 		{
-			if (BitConverter.IsLittleEndian == bSwapMode)
-				return BitConverter.ToUInt64(byData, offset + iOffset);
-			else
-			{
-				if (bSwapMode)
-					return (ulong)(ReadUInt32(offset + 4) * 0x100000000 + ReadUInt32(offset));
-				else
-					return (ulong)(ReadUInt32(offset) * 0x100000000 + ReadUInt32(offset + 4));
-			}
+            if (BitConverter.IsLittleEndian == bSwapMode)
+            {
+                return BitConverter.ToUInt64(byData, offset + iOffset);
+            }
+            else
+            {
+                if (bSwapMode)
+                {
+                    return (ulong)(ReadUInt32(offset + 4) * 0x100000000 + ReadUInt32(offset));
+                }
+                else
+                {
+                    return (ulong)(ReadUInt32(offset) * 0x100000000 + ReadUInt32(offset + 4));
+                }
+            }
 		}
 
 		public long ReadInt64(int offset)
 		{
-			if (BitConverter.IsLittleEndian == bSwapMode)
-				return BitConverter.ToInt64(byData, offset + iOffset);
-			else
-				return (long)ReadUInt64(offset);
+            if (BitConverter.IsLittleEndian == bSwapMode)
+            {
+                return BitConverter.ToInt64(byData, offset + iOffset);
+            }
+            else
+            {
+                return (long)ReadUInt64(offset);
+            }
 		}
 
 		public void WriteInt64(long value, int offset)

@@ -710,10 +710,16 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public void DropParseID(byte[] pid)
 		{
-			if (pid == null)
-				return;
-			if (mGarbageParseids == null)
-				mGarbageParseids = new GarbageParseId(IsKernelFeatureSupported(Feature.MultipleDropParseid));
+            if (pid == null)
+            {
+                return;
+            }
+
+            if (mGarbageParseids == null)
+            {
+                mGarbageParseids = new GarbageParseId(IsKernelFeatureSupported(Feature.MultipleDropParseid));
+            }
+
 			mGarbageParseids.ThrowIntoGarbageCan(pid);
 		}
 
