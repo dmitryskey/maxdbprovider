@@ -42,33 +42,45 @@ namespace MaxDB.Data.Utilities
 				val = val.setScale(0);
 				scale = 0;
 			}
-			if (scale == 0)
-				res = ((BigInteger)val).ToString();
-			else
-			{
-				string unsignedIntVal = val.unscaledValue.Abs.ToString();
-				string prefix = (val < 0 ? "-0." : "0.");
-				int pointPos = unsignedIntVal.Length - scale;
-				if (pointPos == 0)
-					res = prefix + unsignedIntVal;
-				else if (pointPos > 0)
-				{
-					StringBuilder buf = new StringBuilder(unsignedIntVal);
-					buf.Insert(pointPos, '.');
-					if (val < 0)
-						buf.Insert(0, '-');
-					res = buf.ToString();
-				}
-				else
-				{
-					StringBuilder buf = new StringBuilder(3 - pointPos + unsignedIntVal.Length);
-					buf.Append(prefix);
-					for (int i = 0; i < -pointPos; i++)
-						buf.Append('0');
-					buf.Append(unsignedIntVal);
-					res = buf.ToString();
-				}
-			}
+
+            if (scale == 0)
+            {
+                res = ((BigInteger)val).ToString();
+            }
+            else
+            {
+                string unsignedIntVal = val.unscaledValue.Abs.ToString();
+                string prefix = (val < 0 ? "-0." : "0.");
+                int pointPos = unsignedIntVal.Length - scale;
+                if (pointPos == 0)
+                {
+                    res = prefix + unsignedIntVal;
+                }
+
+                else if (pointPos > 0)
+                {
+                    StringBuilder buf = new StringBuilder(unsignedIntVal);
+                    buf.Insert(pointPos, '.');
+                    if (val < 0)
+                    {
+                        buf.Insert(0, '-');
+                    }
+
+                    res = buf.ToString();
+                }
+                else
+                {
+                    StringBuilder buf = new StringBuilder(3 - pointPos + unsignedIntVal.Length);
+                    buf.Append(prefix);
+                    for (int i = 0; i < -pointPos; i++)
+                    {
+                        buf.Append('0');
+                    }
+
+                    buf.Append(unsignedIntVal);
+                    res = buf.ToString();
+                }
+            }
 			return res;
 		}
 
@@ -93,13 +105,17 @@ namespace MaxDB.Data.Utilities
 				isNegative = false;
 				firstDigit = 0;
 			}
-			while ((chars[firstDigit] == '0' || chars[firstDigit] == '.') && firstDigit < digitCount - 1)
-				firstDigit++;
+            while ((chars[firstDigit] == '0' || chars[firstDigit] == '.') && firstDigit < digitCount - 1)
+            {
+                firstDigit++;
+            }
 
 			exponent = chars.Length - firstDigit - scale;
 			digitCount = chars.Length - firstDigit;
-			if ((digitCount == 1) && (chars[firstDigit] == '0'))
-				return new byte[] { (byte)iZeroExpValue };
+            if ((digitCount == 1) && (chars[firstDigit] == '0'))
+            {
+                return new byte[] { (byte)iZeroExpValue };
+            }
 
 			if (exponent > 0 && scale > 0)
 			{
@@ -110,8 +126,10 @@ namespace MaxDB.Data.Utilities
 			}
 			if (digitCount > validDigits)
 			{
-				if (chars[firstDigit + validDigits] >= '5')
-					chars[firstDigit + validDigits]++;
+                if (chars[firstDigit + validDigits] >= '5')
+                {
+                    chars[firstDigit + validDigits]++;
+                }
 
 				digitCount = validDigits;
 			}

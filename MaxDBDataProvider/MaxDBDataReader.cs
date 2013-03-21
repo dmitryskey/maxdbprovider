@@ -652,7 +652,7 @@ namespace MaxDB.Data
 			if (dbConnection.mLogger.TraceSQL)
 			{
 				byte[] logs = new byte[Math.Min(MaxDBLogger.DataSize / 2, length)];
-				Array.Copy(buffer, bufferoffset, logs, 0, logs.Length);
+                Buffer.BlockCopy(buffer, bufferoffset, logs, 0, logs.Length);
 
 				LogValue(i + 1, transl, "BYTES", logs.Length, 0, Consts.ToHexString(logs) + (logs.Length < length ? "..." : ""));
 			}
@@ -702,7 +702,7 @@ namespace MaxDB.Data
 			if (dbConnection.mLogger.TraceSQL)
 			{
 				char[] logs = new char[Math.Min(MaxDBLogger.DataSize, length)];
-				Array.Copy(buffer, bufferoffset, logs, 0, logs.Length);
+                Buffer.BlockCopy(buffer, bufferoffset, logs, 0, logs.Length);
 
 				LogValue(i + 1, transl, "CHARS", logs.Length, 0, new string(logs) + (logs.Length < length ? "..." : ""));
 			}

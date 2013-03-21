@@ -690,7 +690,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			NewPart(PartKind.ResultCount);
 			byte[] fullNumber = VDNNumber.Long2Number(count);
 			byte[] countNumber = new byte[iResultCountSize];
-			Array.Copy(fullNumber, 0, countNumber, 0, fullNumber.Length);
+            Buffer.BlockCopy(fullNumber, 0, countNumber, 0, fullNumber.Length);
 			AddData(countNumber);
 			sPartArguments++;
 		}

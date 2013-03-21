@@ -192,9 +192,9 @@ namespace MaxDB.Data.Utilities
 			int serverkeyLen = serverkey.Length;
 			int clientkeyLen = clientkey.Length;
 			byte[] content = new byte[saltLen + serverkeyLen + clientkeyLen];
-			Array.Copy(salt, 0, content, 0, saltLen);
-			Array.Copy(serverkey, 0, content, saltLen, serverkeyLen);
-			Array.Copy(clientkey, 0, content, saltLen + serverkeyLen, clientkey.Length);
+            Buffer.BlockCopy(salt, 0, content, 0, saltLen);
+            Buffer.BlockCopy(serverkey, 0, content, saltLen, serverkeyLen);
+            Buffer.BlockCopy(clientkey, 0, content, saltLen + serverkeyLen, clientkey.Length);
 
 			byte[] shared_key = (new HMACMD5(client_verifier)).ComputeHash(content);
 
