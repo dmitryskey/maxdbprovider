@@ -125,13 +125,13 @@
 	</target>
 
 	<target name="test-net-2.0" depends="net-2.0">
-		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
+		<property name="nunit-lib" value="${nunit}/framework"/>
 		<property name="framework" value="net-2.0"/>
 		<call target="testdb"/>
 	</target>
 
 	<target name="test-net-4.0" depends="net-4.0">
-		<property name="nunit-lib" value="${nunit-Net-2.0}/framework"/>
+		<property name="nunit-lib" value="${nunit}/framework"/>
 		<property name="framework" value="net-4.0"/>
 		<call target="testdb"/>
 	</target>
@@ -148,8 +148,9 @@
 		<property name="testfile" value="MaxDB.Test.exe"/>
 
 		<copy file="MaxDBConsole/Configs/MaxDB.config" tofile="${workdir}/${testfile}.config" overwrite="true"/>
+		<copy file="${nunit-lib}/nunit.framework.dll" tofile="${workdir}/nunit.framework.dll" overwrite="true"/>
 
-		<exec program="${nunit-console}" commandline="/nologo /xml=../../../../results/${outfile} ${testfile}" failonerror="false" workingdir="${workdir}"/>
+		<exec program="${nunit-console}" commandline="/framework:${framework} /nologo /xml=../../../results/${outfile} ${testfile}" failonerror="false" workingdir="${workdir}"/>
 	</target>
 
 	<!-- Run fxcop on the current build -->	
