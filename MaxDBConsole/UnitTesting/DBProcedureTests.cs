@@ -43,8 +43,6 @@ namespace MaxDB.UnitTesting
             {
                 DropDbProcedure("spTest");
 
-                string mSchema = (new MaxDBConnectionStringBuilder(mconn.ConnectionString)).UserId;
-
                 ExecuteNonQuery("CREATE DBPROC spTest(IN val decimal(10,3)) " +
                                 "RETURNS CURSOR AS " +
                                 "$CURSOR = 'TEST_CURSOR'; " +
