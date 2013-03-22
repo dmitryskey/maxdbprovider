@@ -122,6 +122,10 @@
 		<call target="test-net-4.0"/>
 	</target>
 
+	<target name="test-mono">
+		<call target="test-mono-2.0"/>
+	</target>
+
 	<target name="test-net-2.0" depends="net-2.0">
 		<property name="nunit-lib" value="${nunit-framework-net}"/>
 		<property name="nunit-console" value="${nunit-net}/nunit-console.exe"/>
