@@ -1,9 +1,10 @@
 <project name="MaxDBDataProvider" default="net" xmlns="http://nant.sf.net/schemas/nant-0.84.win32.net-1.0.xsd">
 	<description>ADO.NET Provider for MaxDB</description>
 
-	<property name="nunit" value="C:\Program Files (x86)\NUnit 2.6.2\bin" />
-	<property name="nunit-mono" value="/usr/lib/cli/nunit.framework-2.4" />
-	<property name="nunit-console-mono" value="/usr/lib/nunit" />
+	<property name="nunit-framework-net" value="C:\Program Files (x86)\NUnit 2.6.2\bin\framework" />
+	<property name="nunit-net" value="C:\Program Files (x86)\NUnit 2.6.2\bin" />
+	<property name="nunit-framework-mono" value="/usr/lib/cli/nunit.framework-2.4" />
+	<property name="nunit-mono" value="/usr/lib/nunit" />
 
 	<property name="fxcop.executable" value="D:\Program Files\Microsoft FxCop 1.35\fxcopcmd.exe"/>
 
@@ -87,24 +88,21 @@
 
 	<!-- target .Net 2.0 -->
 	<target name="net-2.0" description=".NET 2.0 target">
-		<property name="nunit-lib" value="${nunit}/framework"/>
-		<property name="nunit-exe" value="${nunit}"/>
+		<property name="nunit-lib" value="${nunit-framework-net}"/>
 		<property name="framework" value="net-2.0"/>
 		<call target="provider"/>
 	</target>
 
 	<!-- target .Net 4.0 -->
 	<target name="net-4.0" description=".NET 2.4 target">
-		<property name="nunit-lib" value="${nunit}/framework"/>
-		<property name="nunit-exe" value="${nunit}"/>
+		<property name="nunit-lib" value="${nunit-framework-net}"/>
 		<property name="framework" value="net-4.0"/>
 		<call target="provider"/>
 	</target>
 
 	<!-- target Mono 2.0 -->
 	<target name="mono-2.0" description="Mono 2.0 target">
-		<property name="nunit-lib" value="${nunit-mono}"/>
-		<property name="nunit-exe" value="${nunit-console-mono}"/>
+		<property name="nunit-lib" value="${nunit-framework-mono}"/>
 		<property name="framework" value="mono-2.0"/>
 		<call target="provider"/>
 	</target>
@@ -125,21 +123,28 @@
 	</target>
 
 	<target name="test-net-2.0" depends="net-2.0">
-		<property name="nunit-lib" value="${nunit}/framework"/>
+		<property name="nunit-lib" value="${nunit-framework-net}"/>
+		<property name="nunit-console" value="${nunit-net}/nunit-console.exe"/>
 		<property name="framework" value="net-2.0"/>
 		<call target="testdb"/>
 	</target>
 
 	<target name="test-net-4.0" depends="net-4.0">
-		<property name="nunit-lib" value="${nunit}/framework"/>
+		<property name="nunit-lib" value="${nunit-framework-net}"/>
+		<property name="nunit-console" value="${nunit-net}/nunit-console.exe"/>
 		<property name="framework" value="net-4.0"/>
+		<call target="testdb"/>
+	</target>
+
+	<target name="test-mono-2.0" depends="mono-2.0">
+		<property name="nunit-lib" value="${nunit-framework-mono}"/>
+		<property name="nunit-console" value="${nunit-mono}/nunit-console.exe"/>
+		<property name="framework" value="mono-2.0"/>
 		<call target="testdb"/>
 	</target>
 
 	<!-- execute the test suite against a single database instance, possibly using coverage	-->
 	<target name="testdb" description="Target to test a database with all possible configurations">
-		<property name="nunit-console" value="${nunit-exe}/nunit-console.exe"/>
-
 		<mkdir dir="results"/>
 
 		<property name="workdir" value="bin/${framework}/${buildType}"/>
