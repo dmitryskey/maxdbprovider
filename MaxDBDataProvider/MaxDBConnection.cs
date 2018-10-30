@@ -1,5 +1,9 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2002-2003 SAP AG
+//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBConnection.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2002-2003 SAP AG
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -19,12 +23,11 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Text;
-using System.Collections;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using MaxDB.Data.MaxDBProtocol;
 using MaxDB.Data.Utilities;
 using System.Globalization;
+using System.Collections.Generic;
 
 namespace MaxDB.Data
 {
@@ -104,7 +107,9 @@ namespace MaxDB.Data
                 try
                 {
                     if (hostPort.Length > 1)
+                    {
                         mConnArgs.port = int.Parse(hostPort[1], CultureInfo.InvariantCulture);
+                    }
                 }
                 catch (IndexOutOfRangeException)
                 {
@@ -153,7 +158,9 @@ namespace MaxDB.Data
             {
                 mConnStrBuilder.Mode = value;
                 if (mComm != null)
+                {
                     mComm.mConnStrBuilder.Mode = value;
+                }
             }
         }
 
@@ -174,11 +181,15 @@ namespace MaxDB.Data
             set
             {
                 if (mComm == null || State != ConnectionState.Open)
+                {
                     throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_NOTOPENED));
+                }
 
                 //>>> SQL TRACE
                 if (mLogger.TraceSQL)
+                {
                     mLogger.SqlTrace(DateTime.Now, "::SET AUTOCOMMIT " + (value ? "ON" : "OFF"));
+                }
                 //<<< SQL TRACE				
 
                 mComm.bAutoCommit = value;
@@ -206,8 +217,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				int version = mComm.iKernelVersion;
-				return version;
+				return mComm.iKernelVersion;
 			}
 		}
 
@@ -220,12 +230,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-                if (userAsciiEncoding == null)
-                {
-                    return Encoding.ASCII;
-                }
-
-				return userAsciiEncoding;
+				return userAsciiEncoding ?? Encoding.ASCII;
 			}
 			set 
             { 
@@ -256,7 +261,7 @@ namespace MaxDB.Data
             {
                 AssertOpen();
                 string cmd = "SET ISOLATION LEVEL " + MapIsolationLevel(level).ToString(CultureInfo.InvariantCulture);
-                MaxDBRequestPacket requestPacket = mComm.GetRequestPacket();
+                var requestPacket = mComm.GetRequestPacket();
                 byte oldMode = requestPacket.SwitchSqlMode((byte)SqlMode.Internal);
                 requestPacket.InitDbsCommand(mComm.bAutoCommit, cmd);
                 try
@@ -275,7 +280,9 @@ namespace MaxDB.Data
         internal void AssertOpen()
         {
             if (State == ConnectionState.Closed)
+            {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.OBJECTISCLOSED));
+            }
         }
 
         #region "Methods to support native protocol"
@@ -425,15 +432,17 @@ namespace MaxDB.Data
 
         internal bool Ping(MaxDBComm communication)
         {
-            SqlMode oldMode = communication.mConnStrBuilder.Mode;
-            MaxDBComm oldComm = mComm;
+            var oldMode = communication.mConnStrBuilder.Mode;
+            var oldComm = mComm;
             mComm = communication;
             if (mComm.mConnStrBuilder.Mode != SqlMode.Internal)
                 mComm.mConnStrBuilder.Mode = SqlMode.Internal;
             try
             {
-                using (MaxDBCommand cmd = new MaxDBCommand("PING", this))
+                using (var cmd = new MaxDBCommand("PING", this))
+                {
                     cmd.ExecuteNonQuery();
+                }
 
                 return true;
             }
@@ -445,25 +454,34 @@ namespace MaxDB.Data
             {
                 mComm = oldComm;
                 if (oldMode != SqlMode.Internal)
+                {
                     communication.mConnStrBuilder.Mode = oldMode;
+                }
             }
         }
 
         private DataTable ExecuteInternalQuery(string sql, string table, MaxDBParameterCollection parameters)
         {
-            DataTable dt = new DataTable(table);
-            SqlMode oldMode = mComm.mConnStrBuilder.Mode;
+            var dt = new DataTable(table);
+            var oldMode = mComm.mConnStrBuilder.Mode;
             if (oldMode != SqlMode.Internal)
+            {
                 mComm.mConnStrBuilder.Mode = SqlMode.Internal;
+            }
 
             try
             {
-                using (MaxDBCommand cmd = new MaxDBCommand(sql, this))
+                using (var cmd = new MaxDBCommand(sql, this))
                 {
                     if (parameters != null)
-                        foreach (MaxDBParameter parameter in parameters)
+                    {
+                        foreach (var parameter in parameters)
+                        {
                             cmd.Parameters.Add(parameter);
-                    MaxDBDataAdapter da = new MaxDBDataAdapter();
+                        }
+                    }
+
+                    var da = new MaxDBDataAdapter();
                     da.SelectCommand = cmd;
                     da.Fill(dt);
                 }
@@ -471,7 +489,9 @@ namespace MaxDB.Data
             finally
             {
                 if (mComm.mConnStrBuilder.Mode != oldMode)
+                {
                     mComm.mConnStrBuilder.Mode = oldMode;
+                }
             }
 
             return dt;
@@ -509,7 +529,7 @@ namespace MaxDB.Data
         /// <returns>A <see cref="DataTable"/> that contains schema information.</returns>
         public override DataTable GetSchema(string collectionName, string[] restrictionValues)
         {
-            DataTable dt = new DataTable("SchemaTable");
+            var dt = new DataTable("SchemaTable");
             dt.Locale = CultureInfo.InvariantCulture;
 
             if (string.Compare(collectionName, "MetaDataCollections", true, CultureInfo.InvariantCulture) == 0)
@@ -568,15 +588,18 @@ namespace MaxDB.Data
                 string langSpecific = "\\u0080-\\uFFFF";
                 if (DatabaseEncoding != Encoding.Unicode)
                 {
-                    Encoding enc = UserAsciiEncoding;
+                    var enc = UserAsciiEncoding;
                     byte[] buf = new byte[1];
-                    StringBuilder sb = new StringBuilder();
+                    var sb = new StringBuilder();
                     for (byte b = 0x80; b < 0xFF; b++)
                     {
                         buf[0] = b;
                         if (char.IsLetter(enc.GetString(buf), 0))
+                        {
                             sb.Append("\\x").Append(b.ToString("x2", CultureInfo.InvariantCulture));
+                        }
                     }
+
                     langSpecific = sb.ToString();
                 }
 
@@ -692,7 +715,9 @@ namespace MaxDB.Data
 
                 DataTable formatTable = ExecuteInternalQuery("SELECT VALUE FROM DBA.DBPARAMETERS WHERE DESCRIPTION = 'DATE_TIME_FORMAT'", "DateTimeFormat");
                 if (formatTable.Rows.Count > 0)
+                {
                     DateTimeFormat = formatTable.Rows[0].ToString();
+                }
 
                 switch (DateTimeFormat)
                 {
@@ -777,7 +802,7 @@ namespace MaxDB.Data
             {
                 dt.Columns.Add(new DataColumn("ReservedWord", typeof(string)));
 
-                string[] keywords = new string[] { 
+                var keywords = new List<string> { 
 					"ABS", "ABSOLUTE", "ACOS", "ADDDATE", "ADDTIME", "ALL", "ALPHA", "ALTER", "ANY", "ASCII", "ASIN", 
 					"ATAN", "ATAN2", "AVG", "BINARY", "BIT", "BOOLEAN", "BYTE", "CASE", "CEIL", "CEILING", "CHAR", 
 					"CHARACTER", "CHECK", "CHR", "COLUMN", "CONCAT", "CONSTRAINT", "COS", "COSH", "COT", "COUNT", 
@@ -798,24 +823,30 @@ namespace MaxDB.Data
 					"TOIDENTIFIER", "TRANSACTION", "TRANSLATE", "TRIM", "TRUNC", "TRUNCATE", "UCASE", "UID", "UNICODE", "UNION", 
 					"UPDATE", "UPPER", "USER", "USERGROUP", "USING", "UTCDATE", "UTCDIFF", "VALUE", "VALUES", "VARCHAR", 
 					"VARGRAPHIC", "VARIANCE", "WEEK", "WEEKOFYEAR", "WHEN", "WHERE", "WITH", "YEAR", "ZONED" };
-                foreach (string keyword in keywords)
-                    dt.Rows.Add(keyword);
+
+                keywords.ForEach(keyword => dt.Rows.Add(keyword));
             }
 
             if (string.Compare(collectionName, "Catalogs", true, CultureInfo.InvariantCulture) == 0)
+            {
                 dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.CATALOGS", "Catalogs");
+            }
 
             if (string.Compare(collectionName, "Schemas", true, CultureInfo.InvariantCulture) == 0)
+            {
                 dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.SCHEMAS ORDER BY TABLE_SCHEM", "Schemas");
+            }
 
             if (string.Compare(collectionName, "TableTypes", true, CultureInfo.InvariantCulture) == 0)
+            {
                 dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.TABLETYPES ORDER BY TABLE_TYPE", "TableTypes");
+            }
 
             if (string.Compare(collectionName, "ForeignKeys", true, CultureInfo.InvariantCulture) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.CROSSREFERENCES WHERE 1=1 ";
 
-                MaxDBParameterCollection parameters = new MaxDBParameterCollection();
+                var parameters = new MaxDBParameterCollection();
                 if (restrictionValues != null && restrictionValues.Length > 0 && restrictionValues[0] != null)
                 {
                     sql += " AND PKTABLE_SCHEM = :PKTABLE_SCHEM ";
@@ -836,7 +867,7 @@ namespace MaxDB.Data
             {
                 string sql = "SELECT * FROM SYSJDBC.PRIMARYKEYS WHERE 1=1 ";
 
-                MaxDBParameterCollection parameters = new MaxDBParameterCollection();
+                var parameters = new MaxDBParameterCollection();
                 if (restrictionValues != null && restrictionValues.Length > 0 && restrictionValues[0] != null)
                 {
                     sql += " AND TABLE_SCHEM = :TABLE_SCHEM ";
@@ -856,7 +887,7 @@ namespace MaxDB.Data
             {
                 string sql = "SELECT * FROM SYSJDBC.PROCEDURES WHERE 1=1 ";
 
-                MaxDBParameterCollection parameters = new MaxDBParameterCollection();
+                var parameters = new MaxDBParameterCollection();
                 if (restrictionValues != null && restrictionValues.Length > 0 && restrictionValues[0] != null)
                 {
                     sql += " AND PROCEDURE_SCHEM LIKE :PROCEDURE_SCHEM ESCAPE '\\' ";
@@ -875,16 +906,20 @@ namespace MaxDB.Data
             }
 
             if (string.Compare(collectionName, "SuperTables", true, CultureInfo.InvariantCulture) == 0)
+            {
                 dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.SUPERTABLES", "SuperTables");
+            }
 
             if (string.Compare(collectionName, "SuperTypes", true, CultureInfo.InvariantCulture) == 0)
+            {
                 dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.SUPERTYPES", "SuperTypes");
+            }
 
             if (string.Compare(collectionName, "TablePrivileges", true, CultureInfo.InvariantCulture) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.TABLEPRIVILEGES WHERE 1=1 ";
 
-                MaxDBParameterCollection parameters = new MaxDBParameterCollection();
+                var parameters = new MaxDBParameterCollection();
                 if (restrictionValues != null && restrictionValues.Length > 0 && restrictionValues[0] != null)
                 {
                     sql += " AND TABLE_SCHEM LIKE :TABLE_SCHEM ESCAPE '\\' ";
@@ -903,13 +938,15 @@ namespace MaxDB.Data
             }
 
             if (string.Compare(collectionName, "VersionColumns", true, CultureInfo.InvariantCulture) == 0)
+            {
                 dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.VERSIONCOLUMNS", "VersionColumns");
+            }
 
             if (string.Compare(collectionName, "BestRowIdentifier", true, CultureInfo.InvariantCulture) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.BESTROWIDENTIFIER WHERE 1=1 ";
 
-                MaxDBParameterCollection parameters = new MaxDBParameterCollection();
+                var parameters = new MaxDBParameterCollection();
                 if (restrictionValues != null && restrictionValues.Length > 0 && restrictionValues[0] != null)
                 {
                     sql += " AND TABLE_SCHEM = :TABLE_SCHEM ";
@@ -937,13 +974,9 @@ namespace MaxDB.Data
                          string.Compare(restrictionValues[3].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
                          restrictionValues[3].Trim() == "1");
 
-                string sql = "SELECT * FROM SYSJDBC.";
-                if (approximate)
-                    sql += "APPROXINDEXINFO";
-                else
-                    sql += "INDEXINFO";
+                string sql = "SELECT * FROM SYSJDBC." + (approximate ? "APPROXINDEXINFO" : "INDEXINFO");
 
-                MaxDBParameterCollection parameters = new MaxDBParameterCollection();
+                var parameters = new MaxDBParameterCollection();
 
                 if (restrictionValues != null && restrictionValues.Length > 2)
                 {
@@ -951,7 +984,9 @@ namespace MaxDB.Data
                     parameters.Add(":NON_UNIQUE", !unique);
                 }
                 else
+                {
                     sql += " WHERE 1=1 ";
+                }
 
                 if (restrictionValues != null && restrictionValues.Length > 0 && restrictionValues[0] != null)
                 {
@@ -971,13 +1006,15 @@ namespace MaxDB.Data
             }
 
             if (string.Compare(collectionName, "UserDefinedTypes", true, CultureInfo.InvariantCulture) == 0)
+            {
                 dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.UDTS", "UserDefinedTypes");
+            }
 
             if (string.Compare(collectionName, "Attributes", true, CultureInfo.InvariantCulture) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.ATTRIBUTES WHERE 1=1 ";
 
-                MaxDBParameterCollection parameters = new MaxDBParameterCollection();
+                var parameters = new MaxDBParameterCollection();
                 if (restrictionValues != null && restrictionValues.Length > 0 && restrictionValues[0] != null)
                 {
                     sql += " AND SCOPE_SCHEMA LIKE :SCOPE_SCHEMA ESCAPE '\\' ";
@@ -997,7 +1034,7 @@ namespace MaxDB.Data
             {
                 string sql = "SELECT * FROM SYSJDBC.COLUMNPRIVILEGES WHERE 1=1 ";
 
-                MaxDBParameterCollection parameters = new MaxDBParameterCollection();
+                var parameters = new MaxDBParameterCollection();
                 if (restrictionValues != null && restrictionValues.Length > 0 && restrictionValues[0] != null)
                 {
                     sql += " AND TABLE_SCHEM = :TABLE_SCHEM ";
@@ -1023,7 +1060,7 @@ namespace MaxDB.Data
             {
                 string sql = "SELECT * FROM SYSJDBC.COLUMNS WHERE 1=1 ";
 
-                MaxDBParameterCollection parameters = new MaxDBParameterCollection();
+                var parameters = new MaxDBParameterCollection();
                 if (restrictionValues != null && restrictionValues.Length > 0 && restrictionValues[0] != null)
                 {
                     sql += " AND TABLE_SCHEM LIKE :TABLE_SCHEM ESCAPE '\\' ";
@@ -1051,7 +1088,7 @@ namespace MaxDB.Data
             {
                 string sql = "SELECT * FROM SYSJDBC.PROCEDURECOLUMNS WHERE 1=1 ";
 
-                MaxDBParameterCollection parameters = new MaxDBParameterCollection();
+                var parameters = new MaxDBParameterCollection();
                 if (restrictionValues != null && restrictionValues.Length > 0 && restrictionValues[0] != null)
                 {
                     sql += " AND PROCEDURE_SCHEM LIKE :PROCEDURE_SCHEM ESCAPE '\\' ";
@@ -1079,7 +1116,7 @@ namespace MaxDB.Data
             {
                 string sql = "SELECT * FROM SYSJDBC.TABLES WHERE 1=1 ";
 
-                MaxDBParameterCollection parameters = new MaxDBParameterCollection();
+                var parameters = new MaxDBParameterCollection();
                 if (restrictionValues != null && restrictionValues.Length > 0 && restrictionValues[0] != null)
                 {
                     sql += " AND TABLE_SCHEM LIKE :TABLE_SCHEM ESCAPE '\\' ";
@@ -1099,7 +1136,7 @@ namespace MaxDB.Data
             {
                 string sql = "SELECT * FROM SYSJDBC.CONSTRAINTS WHERE 1=1 ";
 
-                MaxDBParameterCollection parameters = new MaxDBParameterCollection();
+                var parameters = new MaxDBParameterCollection();
                 if (restrictionValues != null && restrictionValues.Length > 0 && restrictionValues[0] != null)
                 {
                     sql += " AND TABLE_SCHEM LIKE :TABLE_SCHEM ESCAPE '\\' ";

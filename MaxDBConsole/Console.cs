@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 using MaxDB.Data;
-using System.Collections.Generic;
 
 namespace MaxDB.Test
 {
@@ -20,10 +19,10 @@ namespace MaxDB.Test
 			// TODO: Add code to start application here
 			//
 			string connStr = System.Configuration.ConfigurationManager.AppSettings["ConnectionString"];
-			MaxDBConnection maxdbconn = new MaxDBConnection(connStr);
+			var maxdbconn = new MaxDBConnection(connStr);
 			maxdbconn.Open();
 
-			using (MaxDBCommand cmd = new MaxDBCommand("CREATE TABLE Test (id int NOT NULL, name VARCHAR(2000))", maxdbconn))
+			using (var cmd = new MaxDBCommand("CREATE TABLE Test (id int NOT NULL, name VARCHAR(2000))", maxdbconn))
 			{
 				cmd.ExecuteNonQuery();
 
@@ -32,16 +31,16 @@ namespace MaxDB.Test
 
                 cmd.CommandText = "SELECT * FROM Test";
 
-                using (MaxDBDataReader reader = cmd.ExecuteReader())
+                using (var reader = cmd.ExecuteReader())
                 {
                     reader.Read();
                     Console.WriteLine(reader.GetString(1));
                 }
 
-                MaxDBDataAdapter ta = new MaxDBDataAdapter();
+                var ta = new MaxDBDataAdapter();
                 ta.SelectCommand = new MaxDBCommand("CALL spTest(:val)", maxdbconn);
                 ta.SelectCommand.CommandType = CommandType.StoredProcedure;
-                MaxDBParameter p = ta.SelectCommand.Parameters.Add(":val", MaxDBType.Number);
+                var p = ta.SelectCommand.Parameters.Add(":val", MaxDBType.Number);
                 p.Precision = 10;
                 p.Scale = 3;
                 p.Value = 123.334;
@@ -61,7 +60,7 @@ namespace MaxDB.Test
 
 				cmd.CommandText = "SELECT * FROM Test";
 
-				using (MaxDBDataReader reader = cmd.ExecuteReader())
+				using (var reader = cmd.ExecuteReader())
 				{
 					reader.Read();
 					Console.WriteLine(reader.GetString(1));

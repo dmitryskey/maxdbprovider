@@ -1,5 +1,9 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2004-2005 MySQL AB
+//-----------------------------------------------------------------------------------------------
+// <copyright file="CommandTests.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2004-2005 MySQL AB
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -29,13 +33,13 @@ namespace MaxDB.UnitTesting
     [TestFixture()]
     public class CommandTests : BaseTest
     {
-        [TestFixtureSetUp]
+        [SetUp]
         public void SetUp()
         {
             Init("CREATE TABLE Test (id int NOT NULL, name VARCHAR(100))");
         }
 
-        [TestFixtureTearDown]
+        [TearDown]
         public void TearDown()
         {
             Close();
@@ -49,7 +53,7 @@ namespace MaxDB.UnitTesting
                 ClearTestTable();
 
                 // do the insert
-                using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (id, name) VALUES(10, 'Test')", mconn))
+                using (var cmd = new MaxDBCommand("INSERT INTO Test (id, name) VALUES(10, 'Test')", mconn))
                 {
                     int cnt = cmd.ExecuteNonQuery();
                     Assert.AreEqual(1, cnt, "Insert Count");
@@ -90,9 +94,9 @@ namespace MaxDB.UnitTesting
                 ExecuteNonQuery("INSERT INTO Test (id,name) VALUES(11, 'Test2')");
 
                 // do the update
-                using (MaxDBCommand cmd = new MaxDBCommand("UPDATE Test SET name='Test3' WHERE id = 10 OR id = 11", mconn))
+                using (var cmd = new MaxDBCommand("UPDATE Test SET name='Test3' WHERE id = 10 OR id = 11", mconn))
                 {
-                    MaxDBConnection c = (MaxDBConnection)cmd.Connection;
+                    var c = cmd.Connection;
                     Assert.AreEqual(mconn, c);
                     int cnt = cmd.ExecuteNonQuery();
                     Assert.AreEqual(2, cnt);
@@ -136,7 +140,7 @@ namespace MaxDB.UnitTesting
                 ExecuteNonQuery("INSERT INTO Test (id, name) VALUES(1, 'Test')");
                 ExecuteNonQuery("INSERT INTO Test (id, name) VALUES(2, 'Test2')");
 
-                using (MaxDBCommand cmd = new MaxDBCommand("DELETE FROM Test WHERE id = 1 or id = 2", mconn))
+                using (var cmd = new MaxDBCommand("DELETE FROM Test WHERE id = 1 or id = 2", mconn))
                 {
                     int delcnt = cmd.ExecuteNonQuery();
                     Assert.AreEqual(2, delcnt);
@@ -159,7 +163,7 @@ namespace MaxDB.UnitTesting
             {
                 ClearTestTable();
 
-                using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO test VALUES(1, :str)", mconn))
+                using (var cmd = new MaxDBCommand("INSERT INTO test VALUES(1, :str)", mconn))
                 {
                     cmd.Parameters.Add(":str", MaxDBType.VarCharA);
                     cmd.Parameters[0].Value = null;
@@ -167,7 +171,7 @@ namespace MaxDB.UnitTesting
 
                     cmd.CommandText = "SELECT * FROM test";
 
-                    using (MaxDBDataReader reader = cmd.ExecuteReader())
+                    using (var reader = cmd.ExecuteReader())
                     {
                         Assert.IsTrue(reader.Read(), "Read first row");
                         Assert.AreEqual(DBNull.Value, reader[1], "Check whether column is NULL or not");
@@ -187,12 +191,12 @@ namespace MaxDB.UnitTesting
             {
                 ClearTestTable();
 
-                using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES(1, 'Test')", mconn))
+                using (var cmd = new MaxDBCommand("INSERT INTO Test VALUES(1, 'Test')", mconn))
                 {
                     cmd.ExecuteNonQuery();
 
                     cmd.CommandText = "SELECT * FROM Test";
-                    using (MaxDBDataReader reader = cmd.ExecuteReader())
+                    using (var reader = cmd.ExecuteReader())
                     {
                         Assert.IsTrue(reader.Read(), "Read first row");
                         Assert.IsFalse(reader.Read(), "Only one row in the result set");
@@ -209,18 +213,18 @@ namespace MaxDB.UnitTesting
         [Test]
         public void TestOracleMode()
         {
-            SqlMode oldMode = mconn.SqlMode;
+            var oldMode = mconn.SqlMode;
             try
             {
                 mconn.SqlMode = SqlMode.Oracle;
-                using (MaxDBCommand cmd = new MaxDBCommand("SELECT sysdate FROM DUAL", mconn))
+                using (var cmd = new MaxDBCommand("SELECT sysdate FROM DUAL", mconn))
                 {
                     Assert.IsTrue(DateTime.Now.Subtract(DateTime.Parse(cmd.ExecuteScalar().ToString())).TotalSeconds < 10, "Oracle returned bad time " + cmd.ExecuteScalar().ToString());
                 }
 
-                using (MaxDBCommand cmd = new MaxDBCommand("SELECT sysdate FROM DUAL FOR UPDATE", mconn))
+                using (var cmd = new MaxDBCommand("SELECT sysdate FROM DUAL FOR UPDATE", mconn))
                 {
-                    MaxDBDataReader reader = cmd.ExecuteReader();
+                    var reader = cmd.ExecuteReader();
                     reader.GetSchemaTable();
                     reader.Close();
                 }
@@ -244,11 +248,11 @@ namespace MaxDB.UnitTesting
                 ClearTestTable();
                 mconn.AutoCommit = false;
 
-                using (MaxDBCommand cnt_cmd = new MaxDBCommand("SELECT count(*) FROM Test", mconn))
+                using (var cnt_cmd = new MaxDBCommand("SELECT count(*) FROM Test", mconn))
                 {
                     using (trans = mconn.BeginTransaction())
                     {
-                        using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES(1, 'Test1')", mconn, trans))
+                        using (var cmd = new MaxDBCommand("INSERT INTO Test VALUES(1, 'Test1')", mconn, trans))
                         {
                             cmd.ExecuteNonQuery();
                             trans.Commit();
@@ -258,7 +262,7 @@ namespace MaxDB.UnitTesting
 
                         trans = mconn.BeginTransaction();
 
-                        using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES(2, 'Test2')", mconn, trans))
+                        using (var cmd = new MaxDBCommand("INSERT INTO Test VALUES(2, 'Test2')", mconn, trans))
                         {
                             cmd.ExecuteNonQuery();
                             trans.Rollback();
@@ -270,7 +274,11 @@ namespace MaxDB.UnitTesting
             }
             catch (Exception ex)
             {
-                if (trans != null) trans.Rollback();
+                if (trans != null)
+                {
+                    trans.Rollback();
+                }
+
                 Assert.Fail(ex.Message);
             }
             finally
@@ -284,14 +292,16 @@ namespace MaxDB.UnitTesting
         {
             try
             {
-                using (MaxDBTransaction txn = mconn.BeginTransaction())
-                using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test WHERE id = :id", mconn, txn))
+                using (var txn = mconn.BeginTransaction())
                 {
-                    cmd.Parameters.Add(":test", 1);
+                    using (var cmd = new MaxDBCommand("SELECT * FROM Test WHERE id = :id", mconn, txn))
+                    {
+                        cmd.Parameters.Add(":test", 1);
 
-                    IDbCommand cmd2 = ((ICloneable)cmd).Clone() as IDbCommand;
-                    cmd2.ToString();
-                    txn.Rollback();
+                        var cmd2 = ((ICloneable)cmd).Clone() as IDbCommand;
+                        cmd2.ToString();
+                        txn.Rollback();
+                    }
                 }
             }
             catch (Exception ex)
@@ -311,7 +321,7 @@ namespace MaxDB.UnitTesting
         [Test]
         public void TestCancel()
         {
-            MaxDBConnectionStringBuilder mConnStrBuilder = new MaxDBConnectionStringBuilder(mconn.ConnectionString);
+            var mConnStrBuilder = new MaxDBConnectionStringBuilder(mconn.ConnectionString);
 
             // we use db procedure in order to insert rows as fast as possible
             string dbProc = "CREATE DBPROC InsertManyRows (IN cnt INTEGER) AS" +
@@ -349,7 +359,7 @@ namespace MaxDB.UnitTesting
 
             using (mCmd = new MaxDBCommand("UPDATE test SET name = '" + DateTime.Now + "'", mconn))
             {
-                Thread cancelThread = new Thread(new ThreadStart(this.CancelQuery));
+                var cancelThread = new Thread(new ThreadStart(this.CancelQuery));
                 cancelThread.Start();
 
                 try

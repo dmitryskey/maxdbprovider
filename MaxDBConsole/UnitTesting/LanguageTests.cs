@@ -1,5 +1,9 @@
-﻿//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2004-2005 MySQL AB
+﻿//-----------------------------------------------------------------------------------------------
+// <copyright file="LanguageTests.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2004-2005 MySQL AB
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -27,7 +31,7 @@ namespace MaxDB.UnitTesting
     [TestFixture()]
     public class LanguageTests : BaseTest
     {
-        [TestFixtureSetUp]
+        [SetUp]
         public void SetUp()
         {
             try
@@ -46,7 +50,7 @@ namespace MaxDB.UnitTesting
             }
         }
 
-        [TestFixtureTearDown]
+        [TearDown]
         public void TearDown()
         {
             Close();
@@ -56,7 +60,9 @@ namespace MaxDB.UnitTesting
         public void TestUnicodeStatement()
         {
             if (mconn.DatabaseEncoding != Encoding.Unicode)
+            {
                 Assert.Ignore("Non-unicode database");
+            }
 
             ClearTestTable();
 
@@ -70,37 +76,39 @@ namespace MaxDB.UnitTesting
             ExecuteNonQuery("INSERT INTO Test (name) VALUES ('þðüçöÝÞÐÜÇÖ')"); // Turkish
             ExecuteNonQuery("INSERT INTO Test (name) VALUES ('ฅๆษ')"); // Thai
 
-            using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
-            using (MaxDBDataReader reader = cmd.ExecuteReader())
+            using (var cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
             {
-                try
+                using (var reader = cmd.ExecuteReader())
                 {
-                    reader.Read();
-                    Assert.AreEqual("abcАБВ", reader.GetString(0), "wrong Russian string");
-                    reader.Read();
-                    Assert.AreEqual("兣冘凥凷冋", reader.GetString(0), "wrong simplified Chinese string");
-                    reader.Read();
-                    Assert.AreEqual("困巫忘否役", reader.GetString(0), "wrong traditional Chinese string");
-                    reader.Read();
-                    Assert.AreEqual("ئابةتثجح", reader.GetString(0), "wrong Arabian string");
-                    reader.Read();
-                    Assert.AreEqual("涯割晦叶角", reader.GetString(0), "wrong Japanese string");
-                    reader.Read();
-                    Assert.AreEqual("ברחפע", reader.GetString(0), "wrong Hebrew string");
-                    reader.Read();
-                    Assert.AreEqual("ψόβΩΞ", reader.GetString(0), "wrong Greek string");
-                    reader.Read();
-                    Assert.AreEqual("þðüçöÝÞÐÜÇÖ", reader.GetString(0), "wrong Turkish string");
-                    reader.Read();
-                    Assert.AreEqual("ฅๆษ", reader.GetString(0), "wrong Thai string");
-                }
-                catch (Exception ex)
-                {
-                    Assert.Fail(ex.Message);
-                }
-                finally
-                {
-                    if (reader != null) reader.Close();
+                    try
+                    {
+                        reader.Read();
+                        Assert.AreEqual("abcАБВ", reader.GetString(0), "wrong Russian string");
+                        reader.Read();
+                        Assert.AreEqual("兣冘凥凷冋", reader.GetString(0), "wrong simplified Chinese string");
+                        reader.Read();
+                        Assert.AreEqual("困巫忘否役", reader.GetString(0), "wrong traditional Chinese string");
+                        reader.Read();
+                        Assert.AreEqual("ئابةتثجح", reader.GetString(0), "wrong Arabian string");
+                        reader.Read();
+                        Assert.AreEqual("涯割晦叶角", reader.GetString(0), "wrong Japanese string");
+                        reader.Read();
+                        Assert.AreEqual("ברחפע", reader.GetString(0), "wrong Hebrew string");
+                        reader.Read();
+                        Assert.AreEqual("ψόβΩΞ", reader.GetString(0), "wrong Greek string");
+                        reader.Read();
+                        Assert.AreEqual("þðüçöÝÞÐÜÇÖ", reader.GetString(0), "wrong Turkish string");
+                        reader.Read();
+                        Assert.AreEqual("ฅๆษ", reader.GetString(0), "wrong Thai string");
+                    }
+                    catch (Exception ex)
+                    {
+                        Assert.Fail(ex.Message);
+                    }
+                    finally
+                    {
+                        if (reader != null) reader.Close();
+                    }
                 }
             }
         }
@@ -115,7 +123,7 @@ namespace MaxDB.UnitTesting
 
             ClearTestTable();
 
-            using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (name) VALUES (:a)", mconn))
+            using (var cmd = new MaxDBCommand("INSERT INTO Test (name) VALUES (:a)", mconn))
             {
                 cmd.Parameters.Add(new MaxDBParameter(":a", MaxDBType.VarCharUni));
 
@@ -147,37 +155,39 @@ namespace MaxDB.UnitTesting
                 cmd.ExecuteNonQuery();
             }
 
-            using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
-            using (MaxDBDataReader reader = cmd.ExecuteReader())
+            using (var cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
             {
-                try
+                using (var reader = cmd.ExecuteReader())
                 {
-                    reader.Read();
-                    Assert.AreEqual("abcАБВ", reader.GetString(0), "wrong Russian string");
-                    reader.Read();
-                    Assert.AreEqual("兣冘凥凷冋", reader.GetString(0), "wrong simplified Chinese string");
-                    reader.Read();
-                    Assert.AreEqual("困巫忘否役", reader.GetString(0), "wrong traditional Chinese string");
-                    reader.Read();
-                    Assert.AreEqual("ئابةتثجح", reader.GetString(0), "wrong Arabian string");
-                    reader.Read();
-                    Assert.AreEqual("涯割晦叶角", reader.GetString(0), "wrong Japanese string");
-                    reader.Read();
-                    Assert.AreEqual("ברחפע", reader.GetString(0), "wrong Hebrew string");
-                    reader.Read();
-                    Assert.AreEqual("ψόβΩΞ", reader.GetString(0), "wrong Greek string");
-                    reader.Read();
-                    Assert.AreEqual("þðüçöÝÞÐÜÇÖ", reader.GetString(0), "wrong Turkish string");
-                    reader.Read();
-                    Assert.AreEqual("ฅๆษ", reader.GetString(0), "wrong Thai string");
-                }
-                catch (Exception ex)
-                {
-                    Assert.Fail(ex.Message);
-                }
-                finally
-                {
-                    if (reader != null) reader.Close();
+                    try
+                    {
+                        reader.Read();
+                        Assert.AreEqual("abcАБВ", reader.GetString(0), "wrong Russian string");
+                        reader.Read();
+                        Assert.AreEqual("兣冘凥凷冋", reader.GetString(0), "wrong simplified Chinese string");
+                        reader.Read();
+                        Assert.AreEqual("困巫忘否役", reader.GetString(0), "wrong traditional Chinese string");
+                        reader.Read();
+                        Assert.AreEqual("ئابةتثجح", reader.GetString(0), "wrong Arabian string");
+                        reader.Read();
+                        Assert.AreEqual("涯割晦叶角", reader.GetString(0), "wrong Japanese string");
+                        reader.Read();
+                        Assert.AreEqual("ברחפע", reader.GetString(0), "wrong Hebrew string");
+                        reader.Read();
+                        Assert.AreEqual("ψόβΩΞ", reader.GetString(0), "wrong Greek string");
+                        reader.Read();
+                        Assert.AreEqual("þðüçöÝÞÐÜÇÖ", reader.GetString(0), "wrong Turkish string");
+                        reader.Read();
+                        Assert.AreEqual("ฅๆษ", reader.GetString(0), "wrong Thai string");
+                    }
+                    catch (Exception ex)
+                    {
+                        Assert.Fail(ex.Message);
+                    }
+                    finally
+                    {
+                        if (reader != null) reader.Close();
+                    }
                 }
             }
         }
@@ -185,15 +195,15 @@ namespace MaxDB.UnitTesting
         [Test]
         public void TestFloatNumbers()
         {
-            CultureInfo curCulture = Thread.CurrentThread.CurrentCulture;
-            CultureInfo curUICulture = Thread.CurrentThread.CurrentUICulture;
-            CultureInfo c = new CultureInfo("de-De");
+            var curCulture = Thread.CurrentThread.CurrentCulture;
+            var curUICulture = Thread.CurrentThread.CurrentUICulture;
+            var c = new CultureInfo("de-De");
             Thread.CurrentThread.CurrentCulture = c;
             Thread.CurrentThread.CurrentUICulture = c;
 
             ClearTestTable();
 
-            using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test (fl, db, decim) VALUES (:fl, :db, :decim)", mconn))
+            using (var cmd = new MaxDBCommand("INSERT INTO Test (fl, db, decim) VALUES (:fl, :db, :decim)", mconn))
             {
                 const float floatValue = 2.3f;
                 const double doubleValue = 4.6;
@@ -211,7 +221,7 @@ namespace MaxDB.UnitTesting
                 try
                 {
                     cmd.CommandText = "SELECT fl, db, decim FROM Test";
-                    using (MaxDBDataReader reader = cmd.ExecuteReader())
+                    using (var reader = cmd.ExecuteReader())
                     {
                         reader.Read();
                         Assert.IsTrue(Math.Abs(floatValue - reader.GetFloat(0)) <= float.Epsilon, "wrong float value");
@@ -230,7 +240,6 @@ namespace MaxDB.UnitTesting
                 }
             }
         }
-
     }
 }
 

@@ -1,4 +1,8 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBParameter.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -77,8 +81,10 @@ namespace MaxDB.Data
 		/// <param name="value">An <see cref="Object"/> that is the value of the <see cref="MaxDBParameter"/>.</param>
 		public MaxDBParameter(string parameterName, object value)
 		{
-			if (value == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+            if (value == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+            }
 
 			strParamName = parameterName;
 			dbType = InferType(Type.GetTypeCode(value.GetType()));
@@ -355,7 +361,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				return objValue == null ? DBNull.Value : objValue;
+				return objValue ?? DBNull.Value;
 			}
 			set
 			{

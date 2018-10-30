@@ -1,4 +1,4 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//	Copyright © 2005-2018 Dmitry S. Kataev
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -16,8 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.IO;
-using System.Configuration;
 using MaxDB.Data.MaxDBProtocol;
 using System.Globalization;
 
@@ -59,7 +57,7 @@ namespace MaxDB.Data.Utilities
 		{
 			get
 			{
-				return (Level != MaxDBTraceLevel.None);
+				return Level != MaxDBTraceLevel.None;
 			}
 		}
 
@@ -67,7 +65,7 @@ namespace MaxDB.Data.Utilities
 		{
 			get
 			{
-				return (Level == MaxDBTraceLevel.Full);
+				return Level == MaxDBTraceLevel.Full;
 			}
 		}
 	}
@@ -115,14 +113,14 @@ namespace MaxDB.Data.Utilities
 
 		public void SqlTraceParseInfo(DateTime dt, object objInfo)
 		{
-			MaxDBParseInfo parseInfo = (MaxDBParseInfo)objInfo;
+			var parseInfo = (MaxDBParseInfo)objInfo;
 			if (mSwitcher.TraceSQL)
 			{
 				if (parseInfo.ParamInfo != null && parseInfo.ParamInfo.Length > 0)
 				{
 					SqlTrace(dt, "PARAMETERS:");
 					SqlTrace(dt, "I   T              L    P   IO    N");
-					foreach (DBTechTranslator info in parseInfo.ParamInfo)
+					foreach (var info in parseInfo.ParamInfo)
 					{
 						Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
 
@@ -132,28 +130,40 @@ namespace MaxDB.Data.Utilities
 						{
 							if (!info.IsOutput)
 							{
-								if (info.IsInput)
-								{
-									if (info.IsOutput)
-										Trace.Write(" INOUT ");// ... two in one. We must reduce the overall number !!!
-									else
-										Trace.Write(" IN    ");
-								}
-								else
-									Trace.Write(" OUT   ");
+                                if (info.IsInput)
+                                {
+                                    if (info.IsOutput)
+                                    {
+                                        Trace.Write(" INOUT "); // ... two in one. We must reduce the overall number !!!
+                                    }
+                                    else
+                                    {
+                                        Trace.Write(" IN    ");
+                                    }
+                                }
+                                else
+                                {
+                                    Trace.Write(" OUT   ");
+                                }
 							}
 						}
 						else
 						{
-							if (info.IsInput)
-							{
-								if (info.IsOutput)
-									Trace.Write(" INOUT ");// ... two in one. We must reduce the overall number !!!
-								else
-									Trace.Write(" IN    ");
-							}
-							else
-								Trace.Write(" OUT   ");
+                            if (info.IsInput)
+                            {
+                                if (info.IsOutput)
+                                {
+                                    Trace.Write(" INOUT "); // ... two in one. We must reduce the overall number !!!
+                                }
+                                else
+                                {
+                                    Trace.Write(" IN    ");
+                                }
+                            }
+                            else
+                            {
+                                Trace.Write(" OUT   ");
+                            }
 						}
 
 						Trace.WriteLine(info.ColumnName);
@@ -164,7 +174,7 @@ namespace MaxDB.Data.Utilities
 				{
 					SqlTrace(dt, "COLUMNS:");
 					SqlTrace(dt, "I   T              L           P           N");
-					foreach (DBTechTranslator info in parseInfo.ColumnInfo)
+					foreach (var info in parseInfo.ColumnInfo)
 					{
 						Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
 						SqlTraceTransl(info);

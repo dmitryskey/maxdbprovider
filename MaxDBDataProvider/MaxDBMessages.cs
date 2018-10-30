@@ -1,5 +1,9 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2002-2003 SAP AG
+//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBMessages.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2002-2003 SAP AG
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -15,7 +19,6 @@
 //	along with this program; if not, write to the Free Software
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-using System;
 using System.Resources;
 using System.Text;
 using System.Globalization;
@@ -312,29 +315,30 @@ namespace MaxDB.Data
 			{
 				// retrieve text and format it
 				string msg = rm.GetString(key);
-				if (args != null)
-					return string.Format(CultureInfo.InvariantCulture, msg, args);
-				else
-					return msg;
+				return args != null ? string.Format(CultureInfo.InvariantCulture, msg, args) : msg;
 			}
 			catch (MissingManifestResourceException)
 			{
-				StringBuilder result = new StringBuilder("No message available for key ");
+				var result = new StringBuilder("No message available for key ");
 				result.Append(key);
-				// if arguments given append them
-				if (args == null || args.Length == 0)
-					result.Append(".");
-				else
-				{
-					result.Append(", arguments [");
-					for (int i = 0; i < args.Length - 1; i++)
-					{
-						result.Append(args[i].ToString());
-						result.Append(", ");
-					}
-					result.Append(args[args.Length - 1].ToString());
-					result.Append("].");
-				}
+
+                // if arguments given append them
+                if (args == null || args.Length == 0)
+                {
+                    result.Append(".");
+                }
+                else
+                {
+                    result.Append(", arguments [");
+                    for (int i = 0; i < args.Length - 1; i++)
+                    {
+                        result.Append(args[i].ToString());
+                        result.Append(", ");
+                    }
+
+                    result.Append(args[args.Length - 1].ToString());
+                    result.Append("].");
+                }
 
 				return result.ToString();
 			}

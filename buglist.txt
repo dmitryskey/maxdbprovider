@@ -1,4 +1,5 @@
-
+MaxDBConsole/bin
+MaxDBConsole/obj
 
 
  

@@ -13,7 +13,7 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("")]
-[assembly: AssemblyCopyright("Copyright (C) 2005-2006 Dmitry S. Kataev\r\nCopyright (C) 2002-2003 SAP AG")]
+[assembly: AssemblyCopyright("Copyright © 2005-2006 Dmitry S. Kataev\r\nCopyright © 2002-2003 SAP AG")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]

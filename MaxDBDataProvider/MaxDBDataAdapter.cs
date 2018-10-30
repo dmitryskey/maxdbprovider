@@ -1,4 +1,9 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBDataAdapter.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2002-2003 SAP AG
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -18,7 +23,6 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Collections.Generic;
-using MaxDB.Data.MaxDBProtocol;
 
 namespace MaxDB.Data
 {
@@ -151,9 +155,9 @@ namespace MaxDB.Data
 		override protected void OnRowUpdating(RowUpdatingEventArgs value)
 		{
 			stCurrentType = value.StatementType;
-			EventHandler<MaxDBRowUpdatingEventArgs> handler = (EventHandler<MaxDBRowUpdatingEventArgs>)Events[EventRowUpdating];
+			var handler = (EventHandler<MaxDBRowUpdatingEventArgs>)Events[EventRowUpdating];
 
-            if ((null != handler) && (value.GetType() == typeof(MaxDBRowUpdatingEventArgs)))
+            if (null != handler && value is MaxDBRowUpdatingEventArgs)
             {
                 handler(this, (MaxDBRowUpdatingEventArgs)value);
             }
@@ -165,8 +169,8 @@ namespace MaxDB.Data
 		/// <param name="value">The <see cref="RowUpdatedEventArgs"/> object.</param>
 		override protected void OnRowUpdated(RowUpdatedEventArgs value)
 		{
-			EventHandler<MaxDBRowUpdatedEventArgs> handler = (EventHandler<MaxDBRowUpdatedEventArgs>)Events[EventRowUpdated];
-            if ((null != handler) && (value.GetType() == typeof(MaxDBRowUpdatedEventArgs)))
+			var handler = (EventHandler<MaxDBRowUpdatedEventArgs>)Events[EventRowUpdated];
+            if (null != handler && value is MaxDBRowUpdatedEventArgs)
             {
                 handler(this, (MaxDBRowUpdatedEventArgs)value);
             }
@@ -416,12 +420,20 @@ namespace MaxDB.Data
 		/// </summary>
 		protected override void TerminateBatching()
 		{
-			if (batInsertCmd != null)
-				batInsertCmd.Cancel();
-			if (batUpdateCmd != null)
-				batUpdateCmd.Cancel();
-			if (batDeleteCmd != null)
-				batDeleteCmd.Cancel();
+            if (batInsertCmd != null)
+            {
+                batInsertCmd.Cancel();
+            }
+
+            if (batUpdateCmd != null)
+            {
+                batUpdateCmd.Cancel();
+            }
+
+            if (batDeleteCmd != null)
+            {
+                batDeleteCmd.Cancel();
+            }
 		}
 
 		/// <summary>
@@ -431,7 +443,7 @@ namespace MaxDB.Data
 		/// <returns>The number of commands in the batch before adding the IDbCommand.</returns>
 		protected override int AddToBatch(IDbCommand command)
 		{
-			MaxDBCommand addCommand = (MaxDBCommand)command;
+			var addCommand = (MaxDBCommand)command;
 			switch (stCurrentType)
 			{
 				case StatementType.Insert:
@@ -477,16 +489,19 @@ namespace MaxDB.Data
 				batInsertCmd.ExecuteBatch(lstInsertParams.ToArray());
 				rowAffected += batInsertCmd.iRowsAffected;
 			}
+
 			if (batUpdateCmd != null)
 			{
 				batUpdateCmd.ExecuteBatch(lstUpdateParams.ToArray());
 				rowAffected += batUpdateCmd.iRowsAffected;
 			}
+
 			if (batDeleteCmd != null)
 			{
 				batDeleteCmd.ExecuteBatch(lstDeleteParams.ToArray());
 				rowAffected += batDeleteCmd.iRowsAffected;
 			}
+
 			return rowAffected;
 		}
 	}

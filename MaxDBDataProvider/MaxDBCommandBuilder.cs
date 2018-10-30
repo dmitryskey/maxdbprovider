@@ -1,4 +1,8 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBCommandBuilder.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -19,7 +23,6 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Text;
-using MaxDB.Data.Utilities;
 using System.Globalization;
 
 namespace MaxDB.Data
@@ -37,7 +40,7 @@ namespace MaxDB.Data
 	/// <B>MaxDBCommandBuilder</B>.</para>
 	/// <para>The select statement must have "FOR UPDATE" suffix.</para>
 	/// </remarks>
-	[System.ComponentModel.DesignerCategory("Code")]
+	[DesignerCategory("Code")]
 	public sealed class MaxDBCommandBuilder : DbCommandBuilder
 	{
 		private string strPrefix = "'";
@@ -163,7 +166,7 @@ namespace MaxDB.Data
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SELECT_NULL));
             }
 
-			MaxDBDataReader dr = mAdapter.SelectCommand.ExecuteReader(CommandBehavior.SchemaOnly);
+			var dr = mAdapter.SelectCommand.ExecuteReader(CommandBehavior.SchemaOnly);
 			mSchema = dr.GetSchemaTable();
 
             if (mSchema.Rows.Count > 0 && !mSchema.Rows[0].IsNull("BaseTableName"))
@@ -194,8 +197,10 @@ namespace MaxDB.Data
 		/// <returns>Parameter name.</returns>
 		protected override string GetParameterName(int parameterOrdinal)
 		{
-			if (parameterOrdinal < 0 || parameterOrdinal >= mSchema.Rows.Count)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLINDEX_NOTFOUND));
+            if (parameterOrdinal < 0 || parameterOrdinal >= mSchema.Rows.Count)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLINDEX_NOTFOUND));
+            }
 
 			return mSchema.Rows[parameterOrdinal]["ColumnName"].ToString();
 		}
@@ -230,14 +235,14 @@ namespace MaxDB.Data
 
 		private MaxDBCommand CreateCommand()
 		{
-			MaxDBCommand cmd = new MaxDBCommand(string.Empty, mAdapter.SelectCommand.Connection, mAdapter.SelectCommand.Transaction);
+			var cmd = new MaxDBCommand(string.Empty, mAdapter.SelectCommand.Connection, mAdapter.SelectCommand.Transaction);
 			cmd.CommandTimeout = mAdapter.SelectCommand.CommandTimeout;
 			return cmd;
 		}
 
 		private MaxDBParameter CreateParameter(int index, DataRowVersion version)
 		{
-			DataRow row = mSchema.Rows[index];
+			var row = mSchema.Rows[index];
 			return new MaxDBParameter(
 				GetParameterName(index),
 				(MaxDBType)row["ProviderType"],
@@ -274,15 +279,19 @@ namespace MaxDB.Data
 		/// <returns>The <see cref="MaxDBCommand"/> object generated to handle delete operations.</returns>
 		public new MaxDBCommand GetDeleteCommand()
 		{
-			if (mSchema == null)
-				RefreshSchema();
+            if (mSchema == null)
+            {
+                RefreshSchema();
+            }
 
-			if (cmdDelete != null)
-				return cmdDelete;
+            if (cmdDelete != null)
+            {
+                return cmdDelete;
+            }
 
-			MaxDBCommand cmd = CreateCommand();
+			var cmd = CreateCommand();
 
-			StringBuilder whereStmt = new StringBuilder();
+			var whereStmt = new StringBuilder();
 
 			for (int i = 0; i < mSchema.Rows.Count; i++)
 			{
@@ -291,8 +300,10 @@ namespace MaxDB.Data
 
 				if ((bool)row["IsKeyColumn"])
 				{
-					if (whereStmt.Length > 0)
-						whereStmt.Append(" AND ");
+                    if (whereStmt.Length > 0)
+                    {
+                        whereStmt.Append(" AND ");
+                    }
 
 					whereStmt.Append(columnName + " = " + GetParameterPlaceholder(i));
 
@@ -301,8 +312,10 @@ namespace MaxDB.Data
 			}
 
 			cmd.CommandText = "DELETE FROM " + strBaseTable;
-			if (whereStmt.Length > 0)
-				cmd.CommandText += " WHERE " + whereStmt.ToString();
+            if (whereStmt.Length > 0)
+            {
+                cmd.CommandText += " WHERE " + whereStmt.ToString();
+            }
 
 			cmdDelete = cmd;
 			return cmdDelete;
@@ -331,16 +344,20 @@ namespace MaxDB.Data
 		/// <returns>The <see cref="MaxDBCommand"/> object generated to handle insert operations.</returns>
 		public new MaxDBCommand GetInsertCommand()
 		{
-			if (mSchema == null)
-				RefreshSchema();
+            if (mSchema == null)
+            {
+                RefreshSchema();
+            }
 
-			if (cmdInsert != null)
-				return cmdInsert;
+            if (cmdInsert != null)
+            {
+                return cmdInsert;
+            }
 
-			MaxDBCommand cmd = CreateCommand();
+			var cmd = CreateCommand();
 
-			StringBuilder columns = new StringBuilder();
-			StringBuilder markers = new StringBuilder();
+			var columns = new StringBuilder();
+			var markers = new StringBuilder();
 
 			for (int i = 0; i < mSchema.Rows.Count; i++)
 			{
@@ -391,18 +408,22 @@ namespace MaxDB.Data
 		/// <returns>The <see cref="MaxDBCommand"/> object generated to handle update operations.</returns>
 		public new MaxDBCommand GetUpdateCommand()
 		{
-			if (mSchema == null)
-				RefreshSchema();
+            if (mSchema == null)
+            {
+                RefreshSchema();
+            }
 
-			if (cmdUpdate != null)
-				return cmdUpdate;
+            if (cmdUpdate != null)
+            {
+                return cmdUpdate;
+            }
 
-			MaxDBCommand cmd = CreateCommand();
+			var cmd = CreateCommand();
 
-			StringBuilder setStmt = new StringBuilder();
-			MaxDBParameterCollection setParams = new MaxDBParameterCollection();
-			StringBuilder whereStmt = new StringBuilder();
-			MaxDBParameterCollection whereParams = new MaxDBParameterCollection();
+			var setStmt = new StringBuilder();
+			var setParams = new MaxDBParameterCollection();
+			var whereStmt = new StringBuilder();
+			var whereParams = new MaxDBParameterCollection();
 
 			for (int i = 0; i < mSchema.Rows.Count; i++)
 			{
@@ -411,16 +432,20 @@ namespace MaxDB.Data
 
 				if ((bool)row["IsKeyColumn"])
 				{
-					if (whereStmt.Length > 0)
-						whereStmt.Append(" AND ");
+                    if (whereStmt.Length > 0)
+                    {
+                        whereStmt.Append(" AND ");
+                    }
 
 					whereStmt.Append(columnName + " = " + GetParameterPlaceholder(i));
 					whereParams.Add(CreateParameter(i, DataRowVersion.Current));
 				}
 				else
 				{
-					if (setStmt.Length > 0)
-						setStmt.Append(", ");
+                    if (setStmt.Length > 0)
+                    {
+                        setStmt.Append(", ");
+                    }
 
 					setStmt.Append(columnName + " = " + GetParameterPlaceholder(i));
 					setParams.Add(CreateParameter(i, DataRowVersion.Current));
@@ -430,14 +455,18 @@ namespace MaxDB.Data
 			cmd.CommandType = CommandType.Text;
 			cmd.CommandText = "UPDATE " + strBaseTable + " SET " + setStmt.ToString();
 
-			foreach (MaxDBParameter param in setParams)
-				cmd.Parameters.Add(param);
+            foreach (MaxDBParameter param in setParams)
+            {
+                cmd.Parameters.Add(param);
+            }
 
 			if (whereStmt.Length > 0)
 			{
 				cmd.CommandText += " WHERE " + whereStmt.ToString();
-				foreach (MaxDBParameter param in whereParams)
-					cmd.Parameters.Add(param);
+                foreach (MaxDBParameter param in whereParams)
+                {
+                    cmd.Parameters.Add(param);
+                }
 			}
 
 			cmdUpdate = cmd;
@@ -446,11 +475,15 @@ namespace MaxDB.Data
 
 		private void OnRowUpdating(object sender, MaxDBRowUpdatingEventArgs args)
 		{
-			if (args.Status != UpdateStatus.Continue)
-				return;
+            if (args.Status != UpdateStatus.Continue)
+            {
+                return;
+            }
 
-			if (mSchema == null)
-				RefreshSchema();
+            if (mSchema == null)
+            {
+                RefreshSchema();
+            }
 
 			switch (args.StatementType)
 			{
@@ -469,10 +502,7 @@ namespace MaxDB.Data
 
 			foreach (MaxDBParameter param in args.Command.Parameters)
 			{
-				if (param.SourceVersion == DataRowVersion.Original)
-					param.Value = args.Row[param.SourceColumn, DataRowVersion.Original];
-				else
-					param.Value = args.Row[param.SourceColumn, DataRowVersion.Current];
+                param.Value = args.Row[param.SourceColumn, param.SourceVersion == DataRowVersion.Original ? DataRowVersion.Original : DataRowVersion.Current];
 			}
 		}
 	}

@@ -1,5 +1,9 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2004-2005 MySQL AB
+//-----------------------------------------------------------------------------------------------
+// <copyright file="DataAdapterTests.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2004-2005 MySQL AB
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -19,8 +23,6 @@ using System;
 using NUnit.Framework;
 using MaxDB.Data;
 using System.Data;
-using System.Data.Common;
-using System.Diagnostics;
 
 namespace MaxDB.UnitTesting
 {
@@ -30,13 +32,13 @@ namespace MaxDB.UnitTesting
     [TestFixture]
     public class DataAdapterTests : BaseTest
     {
-        [TestFixtureSetUp]
+        [SetUp]
         public void SetUp()
         {
             Init("CREATE TABLE Test (id INT NOT NULL DEFAULT SERIAL, id2 INT NOT NULL UNIQUE, name VARCHAR(100), dt DATE, tm TIME, ts TIMESTAMP, OriginalId INT, PRIMARY KEY(id, id2))");
         }
 
-        [TestFixtureTearDown]
+        [TearDown]
         public void TearDown()
         {
             Close();
@@ -49,7 +51,7 @@ namespace MaxDB.UnitTesting
             {
                 ClearTestTable();
 
-                MaxDBCommand cmd = new MaxDBCommand(string.Empty, mconn);
+                var cmd = new MaxDBCommand(string.Empty, mconn);
                 cmd.Parameters.Add(new MaxDBParameter(":now", MaxDBType.Date)).Value = DateTime.Now;
 
                 cmd.CommandText = "INSERT INTO Test (id2, name, dt) VALUES (1, 'Name 1', :now)";
@@ -59,7 +61,7 @@ namespace MaxDB.UnitTesting
                 cmd.CommandText = "INSERT INTO Test (id2, name, dt) VALUES (3, '', :now)";
                 cmd.ExecuteNonQuery();
 
-                using (MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT id, id2, name FROM Test", mconn))
+                using (var da = new MaxDBDataAdapter("SELECT id, id2, name FROM Test", mconn))
                 {
                     DataSet ds = new DataSet();
                     da.Fill(ds, "Test");
@@ -93,25 +95,25 @@ namespace MaxDB.UnitTesting
             {
                 ClearTestTable();
 
-                using (MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT * FROM Test FOR UPDATE", mconn))
+                using (var da = new MaxDBDataAdapter("SELECT * FROM Test FOR UPDATE", mconn))
                 {
-                    MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da);
+                    var cb = new MaxDBCommandBuilder(da);
                     cb.GetType(); //add this command since mcs compiler supposes that cb is never used
                     DataTable dt = new DataTable();
                     da.Fill(dt);
 
                     DataRow dr = dt.NewRow();
-#if MONO
-					dr["id"] = 0;
-#endif // MONO
+
                     dr["id2"] = 2;
                     dr["name"] = "TestName1";
                     dt.Rows.Add(dr);
 
                     int count = da.Update(dt);
 
-                    using (MaxDBCommand cmd = new MaxDBCommand("SELECT MAX(id) FROM Test", mconn))
+                    using (var cmd = new MaxDBCommand("SELECT MAX(id) FROM Test", mconn))
+                    {
                         dr["id"] = cmd.ExecuteScalar();
+                    }
 
                     // make sure our refresh of auto increment values worked
                     Assert.AreEqual(1, count, "At least one row should be inserted");
@@ -158,17 +160,15 @@ namespace MaxDB.UnitTesting
             try
             {
                 ClearTestTable();
-                using (MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT * FROM Test FOR UPDATE", mconn))
+                using (var da = new MaxDBDataAdapter("SELECT * FROM Test FOR UPDATE", mconn))
                 {
-                    MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da);
+                    var cb = new MaxDBCommandBuilder(da);
                     cb.GetType(); //add this command since mcs compiler supposes that cb is never used
                     DataTable dt = new DataTable();
                     da.Fill(dt);
 
                     DataRow row = dt.NewRow();
-#if MONO
-					row["id"] = 0;
-#endif // MONO
+
                     row["id2"] = 1;
                     row["name"] = "Test";
                     row["dt"] = DBNull.Value;
@@ -199,9 +199,9 @@ namespace MaxDB.UnitTesting
                 {
                     const int rowCount = 1000;
                     ClearTestTable();
-                    using (MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT * FROM Test FOR UPDATE", mconn))
+                    using (var da = new MaxDBDataAdapter("SELECT * FROM Test FOR UPDATE", mconn))
                     {
-                        MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da);
+                        var cb = new MaxDBCommandBuilder(da);
                         cb.GetType(); //add this command since mcs compiler supposes that cb is never used
                         DataTable dt = new DataTable();
                         da.Fill(dt);
@@ -242,7 +242,9 @@ namespace MaxDB.UnitTesting
                         Assert.AreEqual(rowCount + 1, dt.Rows.Count, "Table row count + 1");
 
                         for (int i = 0; i < rowCount + 1; i++)
+                        {
                             Assert.AreEqual(dt.Rows[i]["name"].ToString(), "Name " + i.ToString(), "Table row #" + (i + 1).ToString());
+                        }
 
                         trans.Commit();
                     }
@@ -251,7 +253,10 @@ namespace MaxDB.UnitTesting
             catch (Exception ex)
             {
                 if (trans != null)
+                {
                     trans.Rollback();
+                }
+
                 Assert.Fail(ex.Message);
             }
             finally

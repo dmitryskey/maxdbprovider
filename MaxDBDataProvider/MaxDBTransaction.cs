@@ -1,4 +1,4 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//	Copyright © 2005-2018 Dmitry S. Kataev
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -17,7 +17,6 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using MaxDB.Data.Utilities;
 
 namespace MaxDB.Data
 {
@@ -132,8 +131,10 @@ namespace MaxDB.Data
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
-			if (disposing && null != dbConnection)
-				Rollback();// implicitly rollback if transaction still valid
+            if (disposing && null != dbConnection)
+            {
+                Rollback(); // implicitly rollback if transaction still valid
+            }
 		}
 
 		#endregion

@@ -1,4 +1,9 @@
-﻿//	Copyright (C) 2005-2006 Dmitry S. Kataev
+﻿//-----------------------------------------------------------------------------------------------
+// <copyright file="DBProcedureTests.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2004-2005 MySQL AB
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -24,13 +29,13 @@ namespace MaxDB.UnitTesting
     [TestFixture()]
     public class DBProcedureTests : BaseTest
     {
-        [TestFixtureSetUp]
+        [SetUp]
         public void SetUp()
         {
             Init("CREATE TABLE Test (id int NOT NULL, name VARCHAR(100))");
         }
 
-        [TestFixtureTearDown]
+        [TearDown]
         public void TearDown()
         {
             Close();
@@ -47,20 +52,20 @@ namespace MaxDB.UnitTesting
                                 "RETURNS CURSOR AS " +
                                 "$CURSOR = 'TEST_CURSOR'; " +
                                 "DECLARE :$CURSOR CURSOR FOR " +
-                                "SELECT :val, :val*1000 FROM DBA.DUAL;");
+                                "SELECT :val, :val*1000 FROM DUAL;");
 
                 ClearTestTable();
 
                 //setup testing data
-                using (MaxDBCommand cmd = new MaxDBCommand("CALL spTest(:val)", mconn))
+                using (var cmd = new MaxDBCommand("CALL spTest(:val)", mconn))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
-                    MaxDBParameter p = cmd.Parameters.Add(":val", MaxDBType.Number);
+                    var p = cmd.Parameters.Add(":val", MaxDBType.Number);
                     p.Precision = 10;
                     p.Scale = 3;
                     p.Value = 123.334;
 
-                    using (MaxDBDataAdapter adapter = new MaxDBDataAdapter())
+                    using (var adapter = new MaxDBDataAdapter())
                     {
                         adapter.SelectCommand = cmd;
 
@@ -73,7 +78,7 @@ namespace MaxDB.UnitTesting
                         Assert.AreEqual((double)p.Value * 1000, Convert.ToDouble(dataSet.Tables[0].Rows[0].ItemArray[1]), "wrong decimal value of the second column");
                     }
 
-                    using (MaxDBDataReader reader = cmd.ExecuteReader())
+                    using (var reader = cmd.ExecuteReader())
                     {
                         Assert.IsTrue(reader.Read(), "data reader shouldn't be empty");
                         Assert.AreEqual(p.Value, reader.GetDecimal(0), "wrong decimal value of the first column");
@@ -103,7 +108,7 @@ namespace MaxDB.UnitTesting
 
                 ClearTestTable();
                 //setup testing data
-                using (MaxDBCommand cmd = new MaxDBCommand("CALL spTest(:value)", mconn))
+                using (var cmd = new MaxDBCommand("CALL spTest(:value)", mconn))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.Add(":value", 2);
@@ -112,7 +117,7 @@ namespace MaxDB.UnitTesting
                     cmd.CommandText = "SELECT * FROM Test";
                     cmd.CommandType = CommandType.Text;
 
-                    using (MaxDBDataReader reader = cmd.ExecuteReader())
+                    using (var reader = cmd.ExecuteReader())
                     {
                         Assert.IsTrue(reader.Read(), "data reader shouldn't be empty");
                         Assert.AreEqual(2, reader.GetInt32(0), "wrong integer value of the first column");
@@ -139,7 +144,7 @@ namespace MaxDB.UnitTesting
                 ExecuteNonQuery("CREATE DBPROC spTest(OUT charVal VARCHAR(10), OUT intVal INT, OUT dateVal TIMESTAMP, OUT floatVal FLOAT) AS " +
                     "charVal='42'; intVal=33; dateVal='2004-06-05 07:58:09'; floatVal = 1.2;");
 
-                using (MaxDBCommand cmd = new MaxDBCommand("CALL spTest(:charVal, :intVal, :dateVal, :floatVal)", mconn))
+                using (var cmd = new MaxDBCommand("CALL spTest(:charVal, :intVal, :dateVal, :floatVal)", mconn))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.Add(new MaxDBParameter(":charVal", MaxDBType.VarCharA));
@@ -179,7 +184,7 @@ namespace MaxDB.UnitTesting
                 ExecuteNonQuery("CREATE DBPROC spTest(INOUT strVal VARCHAR(50), INOUT numVal INTEGER, OUT outVal INTEGER) AS " +
                     "strVal = strVal || 'ending'; numVal = numVal * 2; outVal = 99;");
 
-                using (MaxDBCommand cmd = new MaxDBCommand("CALL spTest(:strVal, :numVal, :outVal)", mconn))
+                using (var cmd = new MaxDBCommand("CALL spTest(:strVal, :numVal, :outVal)", mconn))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     //cmd.Parameters.Add(":strVal", "beginning");
@@ -211,7 +216,7 @@ namespace MaxDB.UnitTesting
 
                 ExecuteNonQuery("CREATE FUNCTION fnTest(valuein VARCHAR) RETURNS VARCHAR AS RETURN valuein;");
 
-                using (MaxDBCommand cmd = new MaxDBCommand("SELECT fnTest(:valuein) FROM DUAL", mconn))
+                using (var cmd = new MaxDBCommand("SELECT fnTest(:valuein) FROM DUAL", mconn))
                 {
                     cmd.Parameters.Add(":valuein", "Test");
                     Assert.AreEqual(cmd.Parameters[0].Value, cmd.ExecuteScalar().ToString().Trim(), "wrong function result");

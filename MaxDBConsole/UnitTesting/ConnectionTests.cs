@@ -1,5 +1,9 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2004-2005 MySQL AB
+//-----------------------------------------------------------------------------------------------
+// <copyright file="ConnectionTests.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2004-2005 MySQL AB
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -29,26 +33,27 @@ namespace MaxDB.UnitTesting
     {
         private string mconnStr;
         private string mconnStrBadAddr;
-        //		private string mconnStrSsl;
         private string mconnStrBadLogin;
         private string mconnStrBadPassword;
         private string mconnStrBadDbName;
 
-        [TestFixtureSetUp]
+        [SetUp]
         public void SetUp()
         {
             mconnStr = mAppSettings["ConnectionString"];
             mconnStrBadAddr = mAppSettings["ConnectionStringBadAddr"];
-            //			mconnStrSsl = mAppSettings["ConnectionStringSsl"];
             mconnStrBadLogin = mAppSettings["ConnectionStringBadLogin"];
             mconnStrBadPassword = mAppSettings["ConnectionStringBadPassword"];
             mconnStrBadDbName = mAppSettings["ConnectionStringBadDbName"];
         }
 
-        [TestFixtureTearDown]
+        [TearDown]
         public void TearDown()
         {
-            if (msw != null) msw.Close();
+            if (msw != null)
+            {
+                msw.Close();
+            }
         }
 
         [Test]
@@ -57,18 +62,10 @@ namespace MaxDB.UnitTesting
             TestConnectionByString(mconnStr);
         }
 
-        /*  
-                [Test] 
-                public void TestConnectionSsl()
-                {
-                    TestConnectionByString(mconnStrSsl);
-                }
-        */
-
         [Test]
         public void TestConnectionTimeout()
         {
-            using (MaxDBConnection maxdbconn = new MaxDBConnection(mconnStrBadAddr))
+            using (var maxdbconn = new MaxDBConnection(mconnStrBadAddr))
             {
                 DateTime start = DateTime.Now;
 
@@ -84,29 +81,26 @@ namespace MaxDB.UnitTesting
         }
 
         [Test]
-        [ExpectedException(typeof(MaxDBException))]
         public void TestConnectionBadLogin()
         {
-            TestConnectionByString(mconnStrBadLogin);
+            Assert.Throws(typeof(MaxDBException), () => TestConnectionByString(mconnStrBadLogin));
         }
 
         [Test]
-        [ExpectedException(typeof(MaxDBException))]
         public void TestConnectionBadPassword()
         {
-            TestConnectionByString(mconnStrBadPassword);
+            Assert.Throws(typeof(MaxDBException), () => TestConnectionByString(mconnStrBadPassword));
         }
 
         [Test]
-        [ExpectedException(typeof(MaxDBException))]
         public void TestConnectionBadDbName()
         {
-            TestConnectionByString(mconnStrBadDbName);
+            Assert.Throws(typeof(MaxDBException), () => TestConnectionByString(mconnStrBadDbName));
         }
 
         private void TestConnectionByString(string connection)
         {
-            using (MaxDBConnection maxdbconn = new MaxDBConnection(connection))
+            using (var maxdbconn = new MaxDBConnection(connection))
             {
                 maxdbconn.Open();
                 maxdbconn.Close();

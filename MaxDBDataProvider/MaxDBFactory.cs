@@ -1,5 +1,9 @@
-﻿//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2002-2003 SAP AG
+﻿//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBFactory.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2002-2003 SAP AG
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -15,9 +19,6 @@
 //	along with this program; if not, write to the Free Software
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Data.Common;
 
 namespace MaxDB.Data

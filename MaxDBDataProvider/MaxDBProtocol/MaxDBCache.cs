@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------------------------
 // <copyright file="MaxDBCache.cs" company="Dmitry S. Kataev">
-//     Copyright (C) 2005-2011 Dmitry S. Kataev
-//     Copyright (C) 2002-2003 SAP AG
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2002-2003 SAP AG
 // </copyright>
 //-----------------------------------------------------------------------------------------------
 //
@@ -76,7 +76,7 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 object result = null;
 
-                Association entry = (Association)this.lookup[key];
+                var entry = (Association)this.lookup[key];
                 if (entry != null)
                 {
                     result = entry.Data;
@@ -88,7 +88,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
             set
             {
-                Association newEntry = new Association(key, value);
+                var newEntry = new Association(key, value);
 
                 this.lookup[key] = newEntry;
                 if (this.lruTop != null)
@@ -138,7 +138,7 @@ namespace MaxDB.Data.MaxDBProtocol
         /// </summary>
         private void RemoveLast()
         {
-            Association toDelete = this.lruBottom;
+            var toDelete = this.lruBottom;
 
             this.lruBottom = (Association)toDelete.Prev;
             this.lookup.Remove(toDelete.Key);

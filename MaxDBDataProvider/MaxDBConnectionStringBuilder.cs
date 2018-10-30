@@ -1,4 +1,9 @@
-﻿//	Copyright (C) 2005-2006 Dmitry S. Kataev
+﻿//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBConnectionStringBuilder.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2002-2003 SAP AG
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -16,8 +21,6 @@
 
 using System;
 using System.Text;
-using System.ComponentModel;
-using System.Reflection;
 using System.Collections;
 using MaxDB.Data.MaxDBProtocol;
 using System.Data.Common;
@@ -176,117 +179,135 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				StringBuilder builder = new StringBuilder();
-				SortedList keys = new SortedList(mKeyValuePairs);
+				var builder = new StringBuilder();
+				var keys = new SortedList(mKeyValuePairs);
 
-				foreach (string key in keys.Keys)
-					builder.Append(key).Append("=").Append(mKeyValuePairs[key]).Append(";");
+                foreach (string key in keys.Keys)
+                {
+                    builder.Append(key).Append("=").Append(mKeyValuePairs[key]).Append(";");
+                }
 
 				return builder.ToString();
 			}
 			set
 			{
 				bool isModeSet = false;
-				if (value == null)
-					return;
+                if (value == null)
+                {
+                    return;
+                }
+
 				string[] paramArr = value.Split(';');
 				foreach (string param in paramArr)
 				{
-					if (param.Split('=').Length > 1)
-						switch (param.Split('=')[0].Trim().ToUpper(CultureInfo.InvariantCulture))
-						{
-							case ConnectionStringParams.DATA_SOURCE:
-							case "SERVER":
-							case "ADDRESS":
-							case "ADDR":
-							case "NETWORK ADDRESS":
-								mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] = param.Split('=')[1].Trim();
-								break;
-							case ConnectionStringParams.INITIAL_CATALOG:
-							case "DATABASE":
-								mKeyValuePairs[ConnectionStringParams.INITIAL_CATALOG] = param.Split('=')[1].Trim();
-								break;
-							case ConnectionStringParams.USER_ID:
-							case "LOGIN":
-								mKeyValuePairs[ConnectionStringParams.USER_ID] = param.Split('=')[1].Trim();
-								break;
-							case ConnectionStringParams.PASSWORD:
-							case "PWD":
-								mKeyValuePairs[ConnectionStringParams.PASSWORD] = param.Split('=')[1].Trim();
-								break;
-							case ConnectionStringParams.TIMEOUT:
-								ParseIntParameter(ConnectionStringParams.TIMEOUT, param);
-								break;
-							case ConnectionStringParams.SPACE_OPTION:
-								if (string.Compare(param.Split('=')[1].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
-									string.Compare(param.Split('=')[1].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
-									param.Split('=')[1].Trim() == "1")
-									mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] = true;
-								break;
-							case ConnectionStringParams.CACHE:
-								mKeyValuePairs[ConnectionStringParams.CACHE] = param.Split('=')[1].Trim();
-								break;
-							case ConnectionStringParams.CACHE_LIMIT:
-								ParseIntParameter(ConnectionStringParams.CACHE_LIMIT, param);
-								break;
-							case ConnectionStringParams.CACHE_SIZE:
-								ParseIntParameter(ConnectionStringParams.CACHE_SIZE, param);
-								break;
-							case ConnectionStringParams.ENCRYPT:
-								if (string.Compare(param.Split('=')[1].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
-									string.Compare(param.Split('=')[1].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
-									param.Split('=')[1].Trim() == "1")
-									mKeyValuePairs[ConnectionStringParams.ENCRYPT] = true;
-								break;
-							case ConnectionStringParams.MODE:
-								isModeSet = true;
-								string mode = param.Split('=')[1].Trim();
-								if (string.Compare(mode, SqlModeName.Value[(byte)SqlMode.Ansi], true, CultureInfo.InvariantCulture) == 0)
-								{
-									mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Ansi;
-									break;
-								}
-								if (string.Compare(mode, SqlModeName.Value[(byte)SqlMode.Db2], true, CultureInfo.InvariantCulture) == 0)
-								{
-									mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Db2;
-									break;
-								}
-								if (string.Compare(mode, SqlModeName.Value[(byte)SqlMode.Oracle], true, CultureInfo.InvariantCulture) == 0)
-								{
-									mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Oracle;
-									break;
-								}
-								if (string.Compare(mode, SqlModeName.Value[(byte)SqlMode.SapR3], true, CultureInfo.InvariantCulture) == 0)
-								{
-									mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.SapR3;
-									break;
-								}
-								mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Internal;
-								break;
-							case ConnectionStringParams.SSL_CERTIFICATE:
-								mKeyValuePairs[ConnectionStringParams.SSL_CERTIFICATE] = param.Split('=')[1].Trim();
-								break;
-							case ConnectionStringParams.POOLING:
-								ParseBoolParameter(ConnectionStringParams.POOLING, param);
-								break;
-							case ConnectionStringParams.CONNECTION_LIFETIME:
-							case "LOAD BALANCE TIMEOUT":
-								ParseIntParameter(ConnectionStringParams.CONNECTION_LIFETIME, param);
-								break;
-							case ConnectionStringParams.MIN_POOL_SIZE:
-								ParseIntParameter(ConnectionStringParams.MIN_POOL_SIZE, param);
-								break;
-							case ConnectionStringParams.MAX_POOL_SIZE:
-								ParseIntParameter(ConnectionStringParams.MAX_POOL_SIZE, param);
-								break;
-							case ConnectionStringParams.CODE_PAGE:
-								ParseIntParameter(ConnectionStringParams.CODE_PAGE, param);
-								break;
-						}
+                    if (param.Split('=').Length > 1)
+                    {
+                        switch (param.Split('=')[0].Trim().ToUpper(CultureInfo.InvariantCulture))
+                        {
+                            case ConnectionStringParams.DATA_SOURCE:
+                            case "SERVER":
+                            case "ADDRESS":
+                            case "ADDR":
+                            case "NETWORK ADDRESS":
+                                mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] = param.Split('=')[1].Trim();
+                                break;
+                            case ConnectionStringParams.INITIAL_CATALOG:
+                            case "DATABASE":
+                                mKeyValuePairs[ConnectionStringParams.INITIAL_CATALOG] = param.Split('=')[1].Trim();
+                                break;
+                            case ConnectionStringParams.USER_ID:
+                            case "LOGIN":
+                                mKeyValuePairs[ConnectionStringParams.USER_ID] = param.Split('=')[1].Trim();
+                                break;
+                            case ConnectionStringParams.PASSWORD:
+                            case "PWD":
+                                mKeyValuePairs[ConnectionStringParams.PASSWORD] = param.Split('=')[1].Trim();
+                                break;
+                            case ConnectionStringParams.TIMEOUT:
+                                ParseIntParameter(ConnectionStringParams.TIMEOUT, param);
+                                break;
+                            case ConnectionStringParams.SPACE_OPTION:
+                                if (string.Compare(param.Split('=')[1].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
+                                    string.Compare(param.Split('=')[1].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
+                                    param.Split('=')[1].Trim() == "1")
+                                {
+                                    mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] = true;
+                                }
+
+                                break;
+                            case ConnectionStringParams.CACHE:
+                                mKeyValuePairs[ConnectionStringParams.CACHE] = param.Split('=')[1].Trim();
+                                break;
+                            case ConnectionStringParams.CACHE_LIMIT:
+                                ParseIntParameter(ConnectionStringParams.CACHE_LIMIT, param);
+                                break;
+                            case ConnectionStringParams.CACHE_SIZE:
+                                ParseIntParameter(ConnectionStringParams.CACHE_SIZE, param);
+                                break;
+                            case ConnectionStringParams.ENCRYPT:
+                                if (string.Compare(param.Split('=')[1].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
+                                    string.Compare(param.Split('=')[1].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
+                                    param.Split('=')[1].Trim() == "1")
+                                {
+                                    mKeyValuePairs[ConnectionStringParams.ENCRYPT] = true;
+                                }
+                                break;
+                            case ConnectionStringParams.MODE:
+                                isModeSet = true;
+                                string mode = param.Split('=')[1].Trim();
+                                if (string.Compare(mode, SqlModeName.Value[(byte)SqlMode.Ansi], true, CultureInfo.InvariantCulture) == 0)
+                                {
+                                    mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Ansi;
+                                    break;
+                                }
+
+                                if (string.Compare(mode, SqlModeName.Value[(byte)SqlMode.Db2], true, CultureInfo.InvariantCulture) == 0)
+                                {
+                                    mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Db2;
+                                    break;
+                                }
+
+                                if (string.Compare(mode, SqlModeName.Value[(byte)SqlMode.Oracle], true, CultureInfo.InvariantCulture) == 0)
+                                {
+                                    mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Oracle;
+                                    break;
+                                }
+
+                                if (string.Compare(mode, SqlModeName.Value[(byte)SqlMode.SapR3], true, CultureInfo.InvariantCulture) == 0)
+                                {
+                                    mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.SapR3;
+                                    break;
+                                }
+
+                                mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Internal;
+                                break;
+                            case ConnectionStringParams.SSL_CERTIFICATE:
+                                mKeyValuePairs[ConnectionStringParams.SSL_CERTIFICATE] = param.Split('=')[1].Trim();
+                                break;
+                            case ConnectionStringParams.POOLING:
+                                ParseBoolParameter(ConnectionStringParams.POOLING, param);
+                                break;
+                            case ConnectionStringParams.CONNECTION_LIFETIME:
+                            case "LOAD BALANCE TIMEOUT":
+                                ParseIntParameter(ConnectionStringParams.CONNECTION_LIFETIME, param);
+                                break;
+                            case ConnectionStringParams.MIN_POOL_SIZE:
+                                ParseIntParameter(ConnectionStringParams.MIN_POOL_SIZE, param);
+                                break;
+                            case ConnectionStringParams.MAX_POOL_SIZE:
+                                ParseIntParameter(ConnectionStringParams.MAX_POOL_SIZE, param);
+                                break;
+                            case ConnectionStringParams.CODE_PAGE:
+                                ParseIntParameter(ConnectionStringParams.CODE_PAGE, param);
+                                break;
+                        }
+                    }
 				}
 
-				if (!isModeSet)
-					Mode = SqlMode.Internal;
+                if (!isModeSet)
+                {
+                    Mode = SqlMode.Internal;
+                }
 			}
 		}
 
@@ -303,10 +324,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] != null)
-					return (string)mKeyValuePairs[ConnectionStringParams.DATA_SOURCE];
-				else
-					return "localhost";
+                return mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] as string ?? "localhost";
 			}
 			set
 			{
@@ -366,10 +384,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mKeyValuePairs[ConnectionStringParams.TIMEOUT] != null)
-					return (int)mKeyValuePairs[ConnectionStringParams.TIMEOUT];
-				else
-					return 0;
+                return mKeyValuePairs[ConnectionStringParams.TIMEOUT] != null ? (int)mKeyValuePairs[ConnectionStringParams.TIMEOUT] : 0;
 			}
 			set
 			{
@@ -384,10 +399,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mKeyValuePairs[ConnectionStringParams.MODE] != null)
-					return (SqlMode)mKeyValuePairs[ConnectionStringParams.MODE];
-				else
-					return SqlMode.Internal;
+                return mKeyValuePairs[ConnectionStringParams.MODE] != null ? (SqlMode)mKeyValuePairs[ConnectionStringParams.MODE] : SqlMode.Internal;
 			}
 			set
 			{
@@ -402,10 +414,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] != null)
-					return (bool)mKeyValuePairs[ConnectionStringParams.SPACE_OPTION];
-				else
-					return false;
+                return mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] != null ? (bool)mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] : false;
 			}
 			set
 			{
@@ -420,10 +429,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mKeyValuePairs[ConnectionStringParams.ENCRYPT] != null)
-					return (bool)mKeyValuePairs[ConnectionStringParams.ENCRYPT];
-				else
-					return false;
+                return mKeyValuePairs[ConnectionStringParams.ENCRYPT] != null ? (bool)mKeyValuePairs[ConnectionStringParams.ENCRYPT] : false;
 			}
 			set
 			{
@@ -461,10 +467,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mKeyValuePairs[ConnectionStringParams.CACHE] != null)
-					return (string)mKeyValuePairs[ConnectionStringParams.CACHE];
-				else
-					return "all";
+                return mKeyValuePairs[ConnectionStringParams.CACHE] as string ?? "all";
 			}
 			set
 			{
@@ -479,10 +482,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] != null)
-					return (int)mKeyValuePairs[ConnectionStringParams.CACHE_SIZE];
-				else
-					return 0;
+                return mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] != null ? (int)mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] : 0;
 			}
 			set
 			{
@@ -497,10 +497,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] != null)
-					return (int)mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT];
-				else
-					return 0;
+                return mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] != null ? (int)mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] : 0;
 			}
 			set
 			{
@@ -515,10 +512,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mKeyValuePairs[ConnectionStringParams.POOLING] != null)
-					return (bool)mKeyValuePairs[ConnectionStringParams.POOLING];
-				else
-					return true;
+                return mKeyValuePairs[ConnectionStringParams.POOLING] != null ? (bool)mKeyValuePairs[ConnectionStringParams.POOLING] : true;
 			}
 			set
 			{
@@ -534,10 +528,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mKeyValuePairs[ConnectionStringParams.CONNECTION_LIFETIME] != null)
-					return (int)mKeyValuePairs[ConnectionStringParams.CONNECTION_LIFETIME];
-				else
-					return 0;
+                return mKeyValuePairs[ConnectionStringParams.CONNECTION_LIFETIME] != null ? (int)mKeyValuePairs[ConnectionStringParams.CONNECTION_LIFETIME] : 0;
 			}
 			set
 			{
@@ -552,10 +543,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mKeyValuePairs[ConnectionStringParams.MIN_POOL_SIZE] != null)
-					return (int)mKeyValuePairs[ConnectionStringParams.MIN_POOL_SIZE];
-				else
-					return 0;
+                return mKeyValuePairs[ConnectionStringParams.MIN_POOL_SIZE] != null ? (int)mKeyValuePairs[ConnectionStringParams.MIN_POOL_SIZE] : 0;
 			}
 			set
 			{
@@ -570,10 +558,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE] != null)
-					return (int)mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE];
-				else
-					return 100;
+                return mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE] != null ? (int)mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE] : 100;
 			}
 			set
 			{
@@ -588,10 +573,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mKeyValuePairs[ConnectionStringParams.CODE_PAGE] != null)
-					return (int)mKeyValuePairs[ConnectionStringParams.CODE_PAGE];
-				else
-					return 1252;
+                return mKeyValuePairs[ConnectionStringParams.CODE_PAGE] != null ? (int)mKeyValuePairs[ConnectionStringParams.CODE_PAGE] : 1252;
 			}
 			set
 			{

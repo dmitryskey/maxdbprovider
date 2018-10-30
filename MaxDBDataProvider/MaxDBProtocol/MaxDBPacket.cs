@@ -1,5 +1,5 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2002-2003 SAP AG
+//	Copyright © 2005-2006 Dmitry S. Kataev
+//	Copyright © 2002-2003 SAP AG
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -107,10 +107,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		protected static int AlignSize(int value)
 		{
-			if (value % Consts.AlignValue != 0)
-				return value + (Consts.AlignValue - value % Consts.AlignValue);
-			else
-				return value;
+            return value + (value % Consts.AlignValue != 0 ? (Consts.AlignValue - value % Consts.AlignValue) : 0);
 		}
 
 		#region "Segment operations"
@@ -141,24 +138,21 @@ namespace MaxDB.Data.MaxDBProtocol
 			int partofs = 0;
 			for (int i = 0; i < pc; i++)
 			{
-				if (i == 0)
-					partofs = iPartIndices[i] = iSegmentOffset + SegmentHeaderOffset.Part;
-				else
-				{
-					int partlen = ReadInt32(partofs + PartHeaderOffset.BufLen);
-					partofs = iPartIndices[i] = partofs + AlignSize(partlen + PartHeaderOffset.Data);
-				}
+                if (i == 0)
+                {
+                    partofs = iPartIndices[i] = iSegmentOffset + SegmentHeaderOffset.Part;
+                }
+                else
+                {
+                    int partlen = ReadInt32(partofs + PartHeaderOffset.BufLen);
+                    partofs = iPartIndices[i] = partofs + AlignSize(partlen + PartHeaderOffset.Data);
+                }
 			}
 		}
 
 		public int FirstSegment()
 		{
-			int result;
-
-			if (SegmentCount > 0)
-				result = PacketHeaderOffset.Segment;
-			else
-				result = -1;
+			int result = SegmentCount > 0 ? PacketHeaderOffset.Segment : -1;
 
 			iSegmentOffset = result;
 			iCurrentSegment = 1;
@@ -168,8 +162,11 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public int NextSegment()
 		{
-			if (SegmentCount <= iCurrentSegment++)
-				return -1;
+            if (SegmentCount <= iCurrentSegment++)
+            {
+                return -1;
+            }
+
 			iSegmentOffset += SegmentLength;
 			ClearPartCache();
 			return iSegmentOffset;
@@ -177,7 +174,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public string DumpSegment(DateTime dt)
 		{
-			StringBuilder dump = new StringBuilder();
+			var dump = new StringBuilder();
 
 			dump.Append("   ").Append(ReadByte(iSegmentOffset + SegmentHeaderOffset.SegmKind).ToString(CultureInfo.InvariantCulture));
 			dump.Append(" Segment ").Append(ReadInt16(iSegmentOffset + SegmentHeaderOffset.OwnIndex).ToString(CultureInfo.InvariantCulture));
@@ -325,10 +322,14 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				if (iCachedPartCount == int.MinValue)
-					return iCachedPartCount = ReadInt16(iSegmentOffset + SegmentHeaderOffset.NoOfParts);
-				else
-					return iCachedPartCount;
+                if (iCachedPartCount == int.MinValue)
+                {
+                    return iCachedPartCount = ReadInt16(iSegmentOffset + SegmentHeaderOffset.NoOfParts);
+                }
+                else
+                {
+                    return iCachedPartCount;
+                }
 			}
 		}
 
@@ -339,18 +340,20 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public string DumpPart(DateTime dt)
 		{
-			StringBuilder dump = new StringBuilder();
+			var dump = new StringBuilder();
 
 			string partkindname = "Unknown Part " + PartType.ToString(CultureInfo.InvariantCulture);
-			if (PartType < PartKind.Name.Length)
-				partkindname = PartKind.Name[PartType] + " Part";
+            if (PartType < PartKind.Name.Length)
+            {
+                partkindname = PartKind.Name[PartType] + " Part";
+            }
 
 			dump.Append("        ").Append(partkindname).Append(" ");
 			dump.Append(PartArgsCount.ToString(CultureInfo.InvariantCulture)).Append(" Arguments (");
 			dump.Append(PartLength.ToString(CultureInfo.InvariantCulture)).Append(" of ");
 			dump.Append(PartSize.ToString(CultureInfo.InvariantCulture)).Append(") (Segment at ");
-			dump.Append(PartSegmentOffset.ToString(CultureInfo.InvariantCulture)).Append(")\n").Append(dt.ToString(
-				Consts.TimeStampFormat, CultureInfo.InvariantCulture));
+			dump.Append(PartSegmentOffset.ToString(CultureInfo.InvariantCulture)).Append(")\n")
+                .Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
 
 			byte[] data = ReadBytes(PartDataPos, PartLength);
 
@@ -360,16 +363,17 @@ namespace MaxDB.Data.MaxDBProtocol
 
 				int tailLen = Math.Min(0x10, 0x10 - ((i + 1) * 0x10 - data.Length));
 
-				for (int k = 0; k < tailLen; k++)
-					dump.Append(data[i * 0x10 + k].ToString("x2", CultureInfo.InvariantCulture)).Append(" ");
+                for (int k = 0; k < tailLen; k++)
+                {
+                    dump.Append(data[i * 0x10 + k].ToString("x2", CultureInfo.InvariantCulture)).Append(" ");
+                }
 
 				dump.Append("  |".PadLeft((0x10 - tailLen + 1) * 3));
 				string dumpStr = Encoding.ASCII.GetString(data, i * 0x10, tailLen).PadRight(0x10);
-				foreach (char ch in dumpStr)
-					if (!char.IsControl(ch))
-						dump.Append(ch);
-					else
-						dump.Append("?");
+                foreach (char ch in dumpStr)
+                {
+                    dump.Append(!char.IsControl(ch) ? ch : '?');
+                }
 
 				dump.Append("|\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
 			}
@@ -439,8 +443,10 @@ namespace MaxDB.Data.MaxDBProtocol
 			WriteInt32(packetData.MaxDataLen, HeaderOffset.END + ConnectPacketOffset.MaxDataLen);
 			WriteInt32(packetData.PacketSize, HeaderOffset.END + ConnectPacketOffset.PacketSize);
 			WriteInt32(packetData.MinReplySize, HeaderOffset.END + ConnectPacketOffset.MinReplySize);
-			if (packetData.DBName.Length > ConnectPacketOffset.DBNameSize)
-				packetData.DBName = packetData.DBName.Substring(0, ConnectPacketOffset.DBNameSize);
+            if (packetData.DBName.Length > ConnectPacketOffset.DBNameSize)
+            {
+                packetData.DBName = packetData.DBName.Substring(0, ConnectPacketOffset.DBNameSize);
+            }
 			WriteAscii(packetData.DBName.PadRight(ConnectPacketOffset.DBNameSize), HeaderOffset.END + ConnectPacketOffset.ServerDB);
 			WriteAscii("        ", HeaderOffset.END + ConnectPacketOffset.ClientDB);
 			// fill out variable part
@@ -466,7 +472,11 @@ namespace MaxDB.Data.MaxDBProtocol
 		public void FillPacketLength()
 		{
 			const int packetMinLen = ConnectPacketOffset.MinSize;
-			if (iCurrentPos < packetMinLen) iCurrentPos = packetMinLen;
+            if (iCurrentPos < packetMinLen)
+            {
+                iCurrentPos = packetMinLen;
+            }
+
 			WriteUInt16((ushort)(iCurrentPos - HeaderOffset.END), HeaderOffset.END + ConnectPacketOffset.ConnectLength);
 		}
 
@@ -475,8 +485,11 @@ namespace MaxDB.Data.MaxDBProtocol
 			int currentLength = PacketLength;
 			int requiredLength = ConnectPacketOffset.MinSize - HeaderOffset.END;
 
-			if (currentLength < requiredLength)
-				iCurrentPos += requiredLength - currentLength;
+            if (currentLength < requiredLength)
+            {
+                iCurrentPos += requiredLength - currentLength;
+            }
+
 			WriteUInt16((ushort)(iCurrentPos - HeaderOffset.END), ConnectPacketOffset.ConnectLength);
 		}
 
@@ -517,8 +530,11 @@ namespace MaxDB.Data.MaxDBProtocol
 			get
 			{
 				string dbname = ReadAscii(HeaderOffset.END + ConnectPacketOffset.ClientDB, 8);
-				if (dbname.IndexOf("\0") >= 0)
-					dbname = dbname.Substring(0, dbname.IndexOf("\0"));
+                if (dbname.IndexOf("\0") >= 0)
+                {
+                    dbname = dbname.Substring(0, dbname.IndexOf("\0"));
+                }
+
 				return dbname;
 			}
 		}
@@ -532,13 +548,21 @@ namespace MaxDB.Data.MaxDBProtocol
 				{
 					byte len = ReadByte(pos);
 
-					if (len == 0)
-						break;
+                    if (len == 0)
+                    {
+                        break;
+                    }
 
-					if (ReadByte(pos + 1) == ArgType.AUTH_ALLOW)
-						foreach (string authParam in Encoding.ASCII.GetString(byData, pos + 2, len - 3).Split(','))
-							if (string.Compare(authParam, Crypt.ScramMD5Name, true, CultureInfo.InvariantCulture) == 0)
-								return true;
+                    if (ReadByte(pos + 1) == ArgType.AUTH_ALLOW)
+                    {
+                        foreach (string authParam in Encoding.ASCII.GetString(byData, pos + 2, len - 3).Split(','))
+                        {
+                            if (string.Compare(authParam, Crypt.ScramMD5Name, true, CultureInfo.InvariantCulture) == 0)
+                            {
+                                return true;
+                            }
+                        }
+                    }
 
 					pos += len;
 				}
@@ -551,7 +575,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				return (ReadByte(HeaderOffset.END + ConnectPacketOffset.MessCode + 1) == SwapMode.Swapped);
+				return ReadByte(HeaderOffset.END + ConnectPacketOffset.MessCode + 1) == SwapMode.Swapped;
 			}
 		}
 	}
@@ -575,8 +599,10 @@ namespace MaxDB.Data.MaxDBProtocol
 		protected MaxDBRequestPacket(byte[] data, byte clientEncoding, string appID, string appVersion)
 			: base(data, HeaderOffset.END)
 		{
-			if (data == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            if (data == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            }
 
 			WriteByte(clientEncoding, PacketHeaderOffset.MessCode);
 			WriteByte(Consts.IsLittleEndian ? SwapMode.Swapped : SwapMode.NotSwapped, PacketHeaderOffset.MessSwap);
@@ -649,8 +675,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public void AddData(byte[] data)
 		{
-			if (data == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            if (data == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            }
 
 			WriteByte(0, DataPos);
 			WriteBytes(data, DataPos + 1);
@@ -659,8 +687,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public void AddBytes(byte[] data)
 		{
-			if (data == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            if (data == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            }
 
 			WriteBytes(data, DataPos);
 			iPartLength += data.Length;
@@ -668,8 +698,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public virtual void AddDataString(string data)
 		{
-			if (data == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            if (data == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            }
 
 			WriteByte(Consts.DefinedAscii, DataPos);
 			WriteBytes(Encoding.ASCII.GetBytes(data), DataPos + 1, data.Length, Consts.BlankBytes);
@@ -678,8 +710,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public virtual void AddString(string data)
 		{
-			if (data == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            if (data == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            }
 
 			WriteBytes(Encoding.ASCII.GetBytes(data), DataPos, data.Length, Consts.BlankBytes);
 			iPartLength += data.Length;
@@ -697,22 +731,30 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public bool DropParseId(byte[] parseId, bool reset)
 		{
-			if (parseId == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "pid"));
+            if (parseId == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "pid"));
+            }
 
-			if (reset)
-				Reset();
-			else
-			{
-				if (iSegmentOffset != -1)
-					CloseSegment();
+            if (reset)
+            {
+                Reset();
+            }
+            else
+            {
+                if (iSegmentOffset != -1)
+                {
+                    CloseSegment();
+                }
 
-				int remainingSpace = Length - iLength - SegmentHeaderOffset.Part - PartHeaderOffset.Data
-					- iReplyReserve - Consts.ReserveForReply - strDropCmd.Length
-					- SegmentHeaderOffset.Part - PartHeaderOffset.Data - parseId.Length;
-				if (remainingSpace <= 0 || sSegments >= iMaxNumberOfSegment)
-					return false;
-			}
+                int remainingSpace = Length - iLength - SegmentHeaderOffset.Part - PartHeaderOffset.Data
+                    - iReplyReserve - Consts.ReserveForReply - strDropCmd.Length
+                    - SegmentHeaderOffset.Part - PartHeaderOffset.Data - parseId.Length;
+                if (remainingSpace <= 0 || sSegments >= iMaxNumberOfSegment)
+                {
+                    return false;
+                }
+            }
 
 			NewSegment(CmdMessType.Dbs, false, false);
 			NewPart(PartKind.Command);
@@ -726,13 +768,18 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public bool DropParseIdAddToParseIdPart(byte[] parseId)
 		{
-			if (parseId == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "pid"));
+            if (parseId == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "pid"));
+            }
 
 			int remainingSpace = Length - iLength - SegmentHeaderOffset.Part - PartHeaderOffset.Data
 				- iReplyReserve - Consts.ReserveForReply - iPartLength - parseId.Length;
-			if (remainingSpace <= 0)
-				return false;
+            if (remainingSpace <= 0)
+            {
+                return false;
+            }
+
 			AddBytes(parseId);
 			sPartArguments++;
 			return true;
@@ -776,16 +823,21 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public bool InitDbsCommand(string command, bool reset, bool autoCommit, bool unicode)
 		{
-			if (command == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "command"));
+            if (command == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "command"));
+            }
 
 			if (!reset)
 			{
 				CloseSegment();
-				if (byData.Length - HeaderOffset.END - iLength - SegmentHeaderOffset.Part - PartHeaderOffset.Data
-					- iReplyReserve - Consts.ReserveForReply < command.Length || sSegments >= iMaxNumberOfSegment)
-					return false;
+                if (byData.Length - HeaderOffset.END - iLength - SegmentHeaderOffset.Part - PartHeaderOffset.Data
+                    - iReplyReserve - Consts.ReserveForReply < command.Length || sSegments >= iMaxNumberOfSegment)
+                {
+                    return false;
+                }
 			}
+
 			InitDbs(reset, autoCommit);
 			if (unicode)
 			{
@@ -797,6 +849,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				WriteAscii(command, DataPos);
 				iPartLength += command.Length;
 			}
+
 			sPartArguments = 1;
 			return true;
 		}
@@ -816,8 +869,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public void InitDbs(bool reset, bool autoCommit)
 		{
-			if (reset)
-				Reset();
+            if (reset)
+            {
+                Reset();
+            }
 
 			NewSegment(CmdMessType.Dbs, autoCommit, false);
 			NewPart(PartKind.Command);
@@ -826,8 +881,11 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public void InitParse(bool reset, bool parseAgain)
 		{
-			if (reset)
-				Reset();
+            if (reset)
+            {
+                Reset();
+            }
+
 			NewSegment(CmdMessType.Parse, false, parseAgain);
 			NewPart(PartKind.Command);
 			return;
@@ -890,10 +948,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public DataPart NewDataPart(bool varData)
 		{
-			if (varData)
-				return NewVarDataPart();
-			else
-				return NewDataPart();
+            return varData ? NewVarDataPart() : NewDataPart();
 		}
 
 		private DataPart NewDataPart()
@@ -935,7 +990,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public void AddClientProofPart(byte[] clientProof)
 		{
-			DataPartVariable data = NewVarDataPart();
+			var data = NewVarDataPart();
 			data.AddRow(2);
 			data.WriteBytes(Encoding.ASCII.GetBytes(Crypt.ScramMD5Name), data.Extent);
 			data.AddArg(data.Extent, 0);
@@ -953,8 +1008,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public void AddFeatureRequestPart(byte[] features)
 		{
-			if (features == null)
-				return;
+            if (features == null)
+            {
+                return;
+            }
 
 			if (features.Length > 0)
 			{
@@ -967,20 +1024,22 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public void AddParseIdPart(byte[] parseId)
 		{
-			if (parseId != null)
-			{
-				NewPart(PartKind.ParseId);
-				AddBytes(parseId);
-				sPartArguments = 1;
-				ClosePart();
-			}
-			else
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INTERNAL_INVALIDPARSEID));
+            if (parseId != null)
+            {
+                NewPart(PartKind.ParseId);
+                AddBytes(parseId);
+                sPartArguments = 1;
+                ClosePart();
+            }
+            else
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INTERNAL_INVALIDPARSEID));
+            }
 		}
 
 		public void AddCursorPart(string cursorName)
 		{
-			if ((cursorName != null) && (cursorName.Length != 0))
+			if (cursorName != null && cursorName.Length != 0)
 			{
 				NewPart(PartKind.ResultTableName);
 				AddString(cursorName);
@@ -996,8 +1055,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public void ClosePart(int extent, short args)
 		{
-			if (iPartOffset == -1)
-				return;
+            if (iPartOffset == -1)
+            {
+                return;
+            }
 
 			WriteInt32(extent, iPartOffset + PartHeaderOffset.BufLen);
 			WriteInt16(args, iPartOffset + PartHeaderOffset.ArgCount);
@@ -1041,8 +1102,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		private void CloseSegment()
 		{
-			if (iSegmentOffset == -1)
-				return;
+            if (iSegmentOffset == -1)
+            {
+                return;
+            }
 
 			ClosePart();
 			WriteInt32(iSegmentLength, iSegmentOffset + SegmentHeaderOffset.Len);
@@ -1063,33 +1126,46 @@ namespace MaxDB.Data.MaxDBProtocol
 	internal class MaxDBUnicodeRequestPacket : MaxDBRequestPacket
 	{
 		public MaxDBUnicodeRequestPacket(byte[] data, string appID, string appVersion)
-			:
-			base(data, Consts.IsLittleEndian ? Consts.UnicodeSwapClient : Consts.UnicodeClient, appID, appVersion)
+			: base(data, Consts.IsLittleEndian ? Consts.UnicodeSwapClient : Consts.UnicodeClient, appID, appVersion)
 		{
 		}
 
 		public override void AddDataString(string data)
 		{
-			if (data == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            if (data == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            }
 
 			WriteByte(Consts.DefinedUnicode, DataPos);
-			if (Consts.IsLittleEndian)
-				WriteBytes(Encoding.Unicode.GetBytes(data), DataPos + 1, data.Length * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
-			else
-				WriteBytes(Encoding.BigEndianUnicode.GetBytes(data), DataPos + 1, data.Length * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            if (Consts.IsLittleEndian)
+            {
+                WriteBytes(Encoding.Unicode.GetBytes(data), DataPos + 1, data.Length * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            }
+            else
+            {
+                WriteBytes(Encoding.BigEndianUnicode.GetBytes(data), DataPos + 1, data.Length * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            }
+
 			iPartLength += data.Length * Consts.UnicodeWidth + 1;
 		}
 
 		public override void AddString(string data)
 		{
-			if (data == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            if (data == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+            }
 
-			if (Consts.IsLittleEndian)
-				WriteBytes(Encoding.Unicode.GetBytes(data), DataPos, data.Length * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
-			else
-				WriteBytes(Encoding.BigEndianUnicode.GetBytes(data), DataPos, data.Length * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            if (Consts.IsLittleEndian)
+            {
+                WriteBytes(Encoding.Unicode.GetBytes(data), DataPos, data.Length * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            }
+            else
+            {
+                WriteBytes(Encoding.BigEndianUnicode.GetBytes(data), DataPos, data.Length * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
+            }
+
 			iPartLength += data.Length * Consts.UnicodeWidth;
 		}
 
@@ -1128,9 +1204,12 @@ namespace MaxDB.Data.MaxDBProtocol
 			{
 				NextPart();
 				--partsLeft;
-				if (PartType == requestedKind)
-					return PartPos;
+                if (PartType == requestedKind)
+                {
+                    return PartPos;
+                }
 			}
+
 			throw new PartNotFoundException();
 		}
 
@@ -1187,6 +1266,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				try
 				{
 					FindPart(PartKind.SessionInfoReturned);
+
 					//offset 2200 is taken from order interface manual
 					return int.Parse(ReadAscii(PartDataPos + 2200, 1), CultureInfo.InvariantCulture);
 				}
@@ -1204,6 +1284,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				try
 				{
 					FindPart(PartKind.SessionInfoReturned);
+
 					//offset 2202 is taken from order interface manual
 					return int.Parse(ReadAscii(PartDataPos + 2201, 2), CultureInfo.InvariantCulture);
 				}
@@ -1221,6 +1302,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				try
 				{
 					FindPart(PartKind.SessionInfoReturned);
+
 					//offset 2204 is taken from order interface manual
 					return int.Parse(ReadAscii(PartDataPos + 2203, 2), CultureInfo.InvariantCulture);
 				}
@@ -1248,6 +1330,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				result[i] = ReadAscii(pos + 1, nameLen);
 				pos += nameLen + 1;
 			}
+
 			return result;
 		}
 
@@ -1268,12 +1351,14 @@ namespace MaxDB.Data.MaxDBProtocol
 			columnCount = PartArgsCount;
 			result = new DBTechTranslator[columnCount];
 			pos = PartDataPos;
-			// byte[] info;
+
 			for (int i = 0; i < columnCount; ++i)
 			{
 				DBProcParameterInfo info = null;
-				if (procParameters != null && procParameters.Length > i)
-					info = procParameters[i];
+                if (procParameters != null && procParameters.Length > i)
+                {
+                    info = procParameters[i];
+                }
 
 				mode = ReadByte(pos + ParamInfo.ModeOffset);
 				ioType = ReadByte(pos + ParamInfo.IOTypeOffset);
@@ -1281,15 +1366,20 @@ namespace MaxDB.Data.MaxDBProtocol
 				frac = ReadByte(pos + ParamInfo.FracOffset);
 				len = ReadInt16(pos + ParamInfo.LengthOffset);
 				ioLen = ReadInt16(pos + ParamInfo.InOutLenOffset);
-				if (isVardata && mode == ParamInfo.Input)
-					bufpos = ReadInt16(pos + ParamInfo.ParamNoOffset);
-				else
-					bufpos = ReadInt32(pos + ParamInfo.BufPosOffset);
+                if (isVardata && mode == ParamInfo.Input)
+                {
+                    bufpos = ReadInt16(pos + ParamInfo.ParamNoOffset);
+                }
+                else
+                {
+                    bufpos = ReadInt32(pos + ParamInfo.BufPosOffset);
+                }
 
 				result[i] = GetTranslator(mode, ioType, dataType, frac, len, ioLen, bufpos, spaceoption, isDBProcedure, info);
 
 				pos += ParamInfo.END;
 			}
+
 			return result;
 		}
 
@@ -1302,15 +1392,16 @@ namespace MaxDB.Data.MaxDBProtocol
 				case DataType.CHE:
 				case DataType.VARCHARA:
 				case DataType.VARCHARE:
-					if (spaceoption)
-						return new SpaceOptionStringTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-					else
-						return new StringTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    return spaceoption ? new SpaceOptionStringTranslator(mode, ioType, dataType, len, ioLen, bufpos) : new StringTranslator(mode, ioType, dataType, len, ioLen, bufpos);
 				case DataType.CHB:
-					if (procParamInfo != null && procParamInfo.ElementType == DBProcParameterInfo.STRUCTURE)
-						return new StructureTranslator(mode, ioType, dataType, len, ioLen, bufpos, false);
-					else
-						return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    if (procParamInfo != null && procParamInfo.ElementType == DBProcParameterInfo.STRUCTURE)
+                    {
+                        return new StructureTranslator(mode, ioType, dataType, len, ioLen, bufpos, false);
+                    }
+                    else
+                    {
+                        return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
 				case DataType.VARCHARB:
 					return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
 				case DataType.BOOLEAN:
@@ -1331,28 +1422,38 @@ namespace MaxDB.Data.MaxDBProtocol
 				case DataType.STRE:
 				case DataType.LONGA:
 				case DataType.LONGE:
-					if (isDBProcedure)
-						return new ProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-					else
-						return new ASCIIStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    if (isDBProcedure)
+                    {
+                        return new ProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
+                    else
+                    {
+                        return new ASCIIStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
 				case DataType.STRB:
 				case DataType.LONGB:
-					if (isDBProcedure)
-						return new ProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-					else
-						return new BinaryStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    if (isDBProcedure)
+                    {
+                        return new ProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
+                    else
+                    {
+                        return new BinaryStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
 				case DataType.UNICODE:
 				case DataType.VARCHARUNI:
-					if (spaceoption)
-						return new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
-					else
-						return new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
+                    return spaceoption ? new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode) :
+                        new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
 				case DataType.LONGUNI:
 				case DataType.STRUNI:
-					if (isDBProcedure)
-						return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-					else
-						return new UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    if (isDBProcedure)
+                    {
+                        return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
+                    else
+                    {
+                        return new UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
 				default:
 					return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
 			}
@@ -1394,24 +1495,26 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public int ResultCount(bool positionedAtPart)
 		{
-			if (iCachedResultCount == int.MinValue)
-			{
-				if (!positionedAtPart)
-				{
-					try
-					{
-						FindPart(PartKind.ResultCount);
-					}
-					catch (PartNotFoundException)
-					{
-						return iCachedResultCount--;
-					}
-				}
+            if (iCachedResultCount == int.MinValue)
+            {
+                if (!positionedAtPart)
+                {
+                    try
+                    {
+                        FindPart(PartKind.ResultCount);
+                    }
+                    catch (PartNotFoundException)
+                    {
+                        return iCachedResultCount--;
+                    }
+                }
 
-				return iCachedResultCount = VDNNumber.Number2Int(ReadDataBytes(iPartOffset + PartHeaderOffset.Data, PartLength));
-			}
-			else
-				return iCachedResultCount;
+                return iCachedResultCount = VDNNumber.Number2Int(ReadDataBytes(iPartOffset + PartHeaderOffset.Data, PartLength));
+            }
+            else
+            {
+                return iCachedResultCount;
+            }
 		}
 
 		public int SessionID
@@ -1521,8 +1624,10 @@ namespace MaxDB.Data.MaxDBProtocol
 			string errmsg = ErrorMsg;
 			int errorPos = ErrorPos;
 
-			if (rc == -8000)
-				errmsg = MaxDBMessages.Extract(MaxDBError.COMMRESTARTREQUIRED);
+            if (rc == -8000)
+            {
+                errmsg = MaxDBMessages.Extract(MaxDBError.COMMRESTARTREQUIRED);
+            }
 
 			return new MaxDBException(errmsg, state, rc, errorPos);
 		}
@@ -1532,8 +1637,10 @@ namespace MaxDB.Data.MaxDBProtocol
 			int defByte;
 
 			defByte = ReadByte(pos);
-			if (defByte == 0xff)
-				return null;
+            if (defByte == 0xFF)
+            {
+                return null;
+            }
 
 			return ReadBytes(pos + 1, len - 1);
 		}
@@ -1545,8 +1652,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public byte[][] ParseLongDescriptors()
 		{
-			if (!ExistsPart(PartKind.LongData))
-				return null;
+            if (!ExistsPart(PartKind.LongData))
+            {
+                return null;
+            }
 
 			int argCount = PartArgsCount;
 			byte[][] result = new byte[argCount][];
@@ -1555,6 +1664,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				int pos = (i * (LongDesc.Size + 1)) + 1;
 				result[i] = ReadBytes(PartDataPos + pos, LongDesc.Size);
 			}
+
 			return result;
 		}
 	}
@@ -1588,6 +1698,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				result[i] = ReadUnicode(pos + 1, nameLen);
 				pos += nameLen + 1;
 			}
+
 			return result;
 		}
 
@@ -1616,15 +1727,17 @@ namespace MaxDB.Data.MaxDBProtocol
 				case DataType.CHE:
 				case DataType.VARCHARA:
 				case DataType.VARCHARE:
-					if (spaceoption)
-						return new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
-					else
-						return new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
+                    return spaceoption ? new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode) :
+                        new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
 				case DataType.CHB:
-					if (procParamInfo != null && procParamInfo.ElementType == DBProcParameterInfo.STRUCTURE)
-						return new StructureTranslator(mode, ioType, dataType, len, ioLen, bufpos, false);
-					else
-						return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    if (procParamInfo != null && procParamInfo.ElementType == DBProcParameterInfo.STRUCTURE)
+                    {
+                        return new StructureTranslator(mode, ioType, dataType, len, ioLen, bufpos, false);
+                    }
+                    else
+                    {
+                        return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
 				case DataType.VARCHARB:
 					return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
 				case DataType.BOOLEAN:
@@ -1645,28 +1758,38 @@ namespace MaxDB.Data.MaxDBProtocol
 				case DataType.STRE:
 				case DataType.LONGA:
 				case DataType.LONGE:
-					if (isDBProcedure)
-						return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-					else
-						return new UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    if (isDBProcedure)
+                    {
+                        return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
+                    else
+                    {
+                        return new UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
 				case DataType.STRB:
 				case DataType.LONGB:
-					if (isDBProcedure)
-						return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-					else
-						return new BinaryStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    if (isDBProcedure)
+                    {
+                        return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
+                    else
+                    {
+                        return new BinaryStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
 				case DataType.UNICODE:
 				case DataType.VARCHARUNI:
-					if (spaceoption)
-						return new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
-					else
-						return new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
+                    return spaceoption ? new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode) :
+                        new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, bSwapMode);
 				case DataType.LONGUNI:
 				case DataType.STRUNI:
-					if (isDBProcedure)
-						return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-					else
-						return new UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    if (isDBProcedure)
+                    {
+                        return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
+                    else
+                    {
+                        return new UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    }
 				default:
 					return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
 			}

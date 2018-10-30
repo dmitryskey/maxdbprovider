@@ -1,4 +1,9 @@
-﻿//	Copyright (C) 2005-2006 Dmitry S. Kataev
+﻿//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBConnectionPool.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2002-2003 SAP AG
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -46,14 +51,13 @@ namespace MaxDB.Data
 
         public MaxDBComm GetEntry()
 		{
-			List<MaxDBComm> newList = new List<MaxDBComm>();
+			var newList = new List<MaxDBComm>();
 			lock (((ICollection)entryList).SyncRoot)
 			{
-				foreach (MaxDBComm comm in entryList)
+				foreach (var comm in entryList)
 				{
-					MaxDBConnection conn = new MaxDBConnection();
-                    if ((mConnStrBuilder.ConnectionLifetime > 0 && comm.openTime.AddSeconds(mConnStrBuilder.ConnectionLifetime) < DateTime.Now) ||
-                        !conn.Ping(comm))
+					var conn = new MaxDBConnection();
+                    if ((mConnStrBuilder.ConnectionLifetime > 0 && comm.openTime.AddSeconds(mConnStrBuilder.ConnectionLifetime) < DateTime.Now) || !conn.Ping(comm))
                     {
                         comm.Close(true, false);
                         activeCount--;
@@ -101,7 +105,7 @@ namespace MaxDB.Data
 
 		private MaxDBComm CreateEntry()
 		{
-            MaxDBComm comm = new MaxDBComm(mLogger);
+            var comm = new MaxDBComm(mLogger);
             comm.mConnStrBuilder = mConnStrBuilder;
 
 			comm.Open(ConnectionArguments);
@@ -122,7 +126,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				ConnectArgs connArgs = new ConnectArgs();
+				var connArgs = new ConnectArgs();
 
 				connArgs.host = mConnStrBuilder.DataSource;
 				connArgs.dbname = mConnStrBuilder.InitialCatalog;
@@ -167,7 +171,7 @@ namespace MaxDB.Data
 				if (conn != null && conn.mComm != null)
 				{
 					string key = conn.mConnStrBuilder.ConnectionString;
-					MaxDBConnectionPoolEntry poolEntry = (MaxDBConnectionPoolEntry)mPool[key];
+					var poolEntry = (MaxDBConnectionPoolEntry)mPool[key];
                     if (poolEntry == null)
                     {
                         throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.POOL_NOT_FOUND, key));
@@ -198,7 +202,7 @@ namespace MaxDB.Data
 				{
 					foreach (string key in mPool.Keys)
 					{
-						MaxDBConnectionPoolEntry poolEntry = (MaxDBConnectionPoolEntry)mPool[key];
+						var poolEntry = (MaxDBConnectionPoolEntry)mPool[key];
 						poolEntry.GetEntry().Dispose();
 						mPool.Remove(key);
 						break;

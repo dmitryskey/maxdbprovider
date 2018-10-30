@@ -1,5 +1,9 @@
-﻿//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2004-2005 MySQL AB
+﻿//-----------------------------------------------------------------------------------------------
+// <copyright file="StressTests.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2004-2005 MySQL AB
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -16,9 +20,6 @@
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 using System;
-using System.Collections;
-using System.Text;
-using MaxDB.UnitTesting;
 using NUnit.Framework;
 using MaxDB.Data;
 using System.Security.Cryptography;
@@ -29,13 +30,13 @@ namespace MaxDB.UnitTesting
     [TestFixture]
     public class StressTests : BaseTest
     {
-        [TestFixtureSetUp]
+        [SetUp]
         public void SetUp()
         {
             Init("CREATE TABLE Test (id INT NOT NULL, name varchar(100), blob1 LONG BYTE, text1 LONG ASCII, PRIMARY KEY(id))");
         }
 
-        [TestFixtureTearDown]
+        [TearDown]
         public void TearDown()
         {
             Close();
@@ -51,7 +52,7 @@ namespace MaxDB.UnitTesting
 
             ClearTestTable();
 
-            using (MaxDBCommand cmd = new MaxDBCommand("INSERT INTO Test VALUES (:id, NULL, :blob, NULL)", mconn))
+            using (var cmd = new MaxDBCommand("INSERT INTO Test VALUES (:id, NULL, :blob, NULL)", mconn))
             {
                 cmd.Parameters.Add(new MaxDBParameter(":id", 1));
                 cmd.Parameters.Add(new MaxDBParameter(":blob", dataIn));
@@ -68,13 +69,13 @@ namespace MaxDB.UnitTesting
                 cmd.Parameters[1].Value = dataIn2;
                 cmd.ExecuteNonQuery();
 
-                SHA1 sha = new SHA1CryptoServiceProvider();
+                var sha = new SHA1CryptoServiceProvider();
 
                 cmd.CommandText = "SELECT blob1 FROM Test";
 
                 try
                 {
-                    using (MaxDBDataReader reader = cmd.ExecuteReader())
+                    using (var reader = cmd.ExecuteReader())
                     {
                         reader.Read();
                         byte[] dataOut = new byte[len];
@@ -92,15 +93,21 @@ namespace MaxDB.UnitTesting
                         bool isEqual = true;
 
                         for (int i = 0; i < hashIn.Length; i++)
+                        {
                             if (hashIn[i] != hashOut[i])
                             {
                                 isEqual = false;
                                 break;
                             }
+                        }
 
                         if (!isEqual)
+                        {
                             for (int i = 0; i < len; i++)
+                            {
                                 Assert.AreEqual(dataIn2[i], dataOut[i], "wrong blob value at position " + i.ToString());
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -119,7 +126,7 @@ namespace MaxDB.UnitTesting
 
             ClearTestTable();
 
-            using (MaxDBDataAdapter da = new MaxDBDataAdapter())
+            using (var da = new MaxDBDataAdapter())
             {
                 da.InsertCommand = new MaxDBCommand("INSERT INTO Test (id, name) VALUES (:id, 'test')", mconn);
                 da.InsertCommand.Parameters.Add(new MaxDBParameter(":id", MaxDBType.Integer, "id"));
@@ -137,13 +144,13 @@ namespace MaxDB.UnitTesting
                 da.Update(dt);
             }
 
-            using (MaxDBCommand cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
+            using (var cmd = new MaxDBCommand("SELECT * FROM Test", mconn))
             {
                 int i2 = 0;
 
                 try
                 {
-                    using (MaxDBDataReader reader = cmd.ExecuteReader())
+                    using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
                         {

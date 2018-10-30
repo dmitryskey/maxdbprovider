@@ -1,5 +1,9 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2002-2003 SAP AG
+//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBDataReader.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2002-2003 SAP AG
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -25,8 +29,6 @@ using System.Collections;
 using System.Collections.Generic;
 using MaxDB.Data.MaxDBProtocol;
 using MaxDB.Data.Utilities;
-using System.Security.Permissions;
-using System.Runtime.InteropServices;
 
 namespace MaxDB.Data
 {
@@ -130,27 +132,29 @@ namespace MaxDB.Data
 		{
 			if (!RowsInResultSetKnown)
 			{
-				// If this is the one and only chunk, yes then we
-				// have only the records in this chunk.
-				if (mCurrentChunk.IsLast && mCurrentChunk.IsFirst)
-				{
-					iRowsInResultSet = mCurrentChunk.Size;
-					mCurrentChunk.RowsInResultSet = iRowsInResultSet;
-				}
-				// otherwise, we may have navigated through it from start ...
-				else if (mCurrentChunk.IsLast && mCurrentChunk.IsForward)
-				{
-					iRowsInResultSet = mCurrentChunk.End;
-					mCurrentChunk.RowsInResultSet = iRowsInResultSet;
-				}
-				// ... or from end
-				else if (mCurrentChunk.IsFirst && !mCurrentChunk.IsForward)
-				{
-					iRowsInResultSet = -mCurrentChunk.Start;
-					mCurrentChunk.RowsInResultSet = iRowsInResultSet;
-				}
-				else if (mCurrentChunk.IsForward)
-					iLargestKnownAbsPos = Math.Max(iLargestKnownAbsPos, mCurrentChunk.End);
+                // If this is the one and only chunk, yes then we
+                // have only the records in this chunk.
+                if (mCurrentChunk.IsLast && mCurrentChunk.IsFirst)
+                {
+                    iRowsInResultSet = mCurrentChunk.Size;
+                    mCurrentChunk.RowsInResultSet = iRowsInResultSet;
+                }
+                // otherwise, we may have navigated through it from start ...
+                else if (mCurrentChunk.IsLast && mCurrentChunk.IsForward)
+                {
+                    iRowsInResultSet = mCurrentChunk.End;
+                    mCurrentChunk.RowsInResultSet = iRowsInResultSet;
+                }
+                // ... or from end
+                else if (mCurrentChunk.IsFirst && !mCurrentChunk.IsForward)
+                {
+                    iRowsInResultSet = -mCurrentChunk.Start;
+                    mCurrentChunk.RowsInResultSet = iRowsInResultSet;
+                }
+                else if (mCurrentChunk.IsForward)
+                {
+                    iLargestKnownAbsPos = Math.Max(iLargestKnownAbsPos, mCurrentChunk.End);
+                }
 			}
 		}
 
@@ -254,29 +258,34 @@ namespace MaxDB.Data
 			// if we are outside, ...
 			if (mPositionState == PositionType.BEFORE_FIRST)
 			{
-				// ... check whether we still have it
-				if (mPositionStateOfChunk == PositionType.INSIDE && mCurrentChunk.ContainsRow(1))
-				{
-					mCurrentChunk.setRow(1);
-					mPositionState = PositionType.INSIDE;
-					result = true;
-				}
-				else
-					result = FetchFirst();
+                // ... check whether we still have it
+                if (mPositionStateOfChunk == PositionType.INSIDE && mCurrentChunk.ContainsRow(1))
+                {
+                    mCurrentChunk.setRow(1);
+                    mPositionState = PositionType.INSIDE;
+                    result = true;
+                }
+                else
+                {
+                    result = FetchFirst();
+                }
 			}
 			else if (mPositionState == PositionType.INSIDE)
 			{
-				if (mCurrentChunk.Move(1))
-					result = true;
-				else
-				{
-					if (mCurrentChunk.IsLast)
-					{
-						mPositionState = PositionType.AFTER_LAST;
-						return false;
-					}
-					result = FetchNextChunk();
-				}
+                if (mCurrentChunk.Move(1))
+                {
+                    result = true;
+                }
+                else
+                {
+                    if (mCurrentChunk.IsLast)
+                    {
+                        mPositionState = PositionType.AFTER_LAST;
+                        return false;
+                    }
+
+                    result = FetchNextChunk();
+                }
 			}
 
 			return result;
@@ -288,9 +297,9 @@ namespace MaxDB.Data
 		/// <returns>The DataTable object with column metadata.</returns>
 		public override DataTable GetSchemaTable()
 		{
-			DataTable schema = new DataTable("SchemaTable");
+			var schema = new DataTable("SchemaTable");
 			schema.Locale = CultureInfo.InvariantCulture;
-			DataTable dtMetaData = new DataTable();
+			var dtMetaData = new DataTable();
 			dtMetaData.Locale = CultureInfo.InvariantCulture;
 			dtMetaData.Columns.Add(new DataColumn("COLUMNNAME", typeof(string)));
 			dtMetaData.Columns.Add(new DataColumn("MODE", typeof(string)));
@@ -298,7 +307,7 @@ namespace MaxDB.Data
 			dtMetaData.Columns.Add(new DataColumn("TYPE", typeof(string)));
 			string user = null, table = null;
 
-			DataColumn dcID = new DataColumn("id", typeof(int));
+			var dcID = new DataColumn("id", typeof(int));
 			dcID.AutoIncrement = true;
 			dcID.AutoIncrementSeed = 1;
 			schema.Columns.Add(dcID);
@@ -328,12 +337,12 @@ namespace MaxDB.Data
 					user = schemaName[0].Replace("\"", string.Empty);
 					table = schemaName[1].Replace("\"", string.Empty);
 
-					SqlMode oldMode = dbConnection.SqlMode;
+					var oldMode = dbConnection.SqlMode;
 					dbConnection.SqlMode = SqlMode.Internal;
 
 					try
 					{
-						using (MaxDBCommand cmdColumns = new MaxDBCommand(
+						using (var cmdColumns = new MaxDBCommand(
 								   "SELECT A.COLUMNNAME, A.MODE, A.DEFAULT, B.TYPE FROM DOMAIN.COLUMNS A " +
 								   "LEFT OUTER JOIN DOMAIN.INDEXCOLUMNS B " +
 								   "ON A.OWNER = B.OWNER AND A.TABLENAME = B.TABLENAME AND A.COLUMNNAME = B.COLUMNNAME " +
@@ -341,10 +350,14 @@ namespace MaxDB.Data
 						{
 							cmdColumns.Parameters.Add("OWNER", MaxDBType.VarCharA).Value = user;
 							cmdColumns.Parameters.Add("TABLENAME", MaxDBType.VarCharA).Value = table;
-							using (MaxDBDataReader reader = cmdColumns.ExecuteReader())
-								while (reader.Read())
-									dtMetaData.Rows.Add(new object[]{
-										reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3)});
+                            using (var reader = cmdColumns.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    dtMetaData.Rows.Add(new object[]{
+                                        reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3)});
+                                }
+                            }
 						}
 					}
 					finally
@@ -356,7 +369,7 @@ namespace MaxDB.Data
 
 			for (int cnt = 0; cnt < FieldCount; cnt++)
 			{
-				DBTechTranslator info = mFetchInfo.GetColumnInfo(cnt);
+				var info = mFetchInfo.GetColumnInfo(cnt);
 				row = schema.NewRow();
 
 				row["ColumnName"] = info.ColumnName;
@@ -375,13 +388,15 @@ namespace MaxDB.Data
 					row["BaseSchemaName"] = user;
 					row["BaseTableName"] = table;
 
-					foreach (DataRow columnRow in dtMetaData.Rows)
-						if (!columnRow.IsNull(0) && string.Compare(columnRow[0].ToString().Trim(), row["ColumnName"].ToString().Trim(), true, CultureInfo.InvariantCulture) == 0)
-						{
-							row["IsKeyColumn"] = (!columnRow.IsNull(1) && columnRow[1].ToString() == "KEY");
-							row["IsAutoIncrement"] = (!columnRow.IsNull(2) && columnRow[2].ToString().StartsWith("DEFAULT SERIAL"));
-							row["IsUnique"] = (!columnRow.IsNull(3) && columnRow[3].ToString() == "UNIQUE");
-						}
+                    foreach (DataRow columnRow in dtMetaData.Rows)
+                    {
+                        if (!columnRow.IsNull(0) && string.Compare(columnRow[0].ToString().Trim(), row["ColumnName"].ToString().Trim(), true, CultureInfo.InvariantCulture) == 0)
+                        {
+                            row["IsKeyColumn"] = !columnRow.IsNull(1) && columnRow[1].ToString() == "KEY";
+                            row["IsAutoIncrement"] = !columnRow.IsNull(2) && columnRow[2].ToString().StartsWith("DEFAULT SERIAL");
+                            row["IsUnique"] = !columnRow.IsNull(3) && columnRow[3].ToString() == "UNIQUE";
+                        }
+                    }
 				}
 
 				schema.Rows.Add(row);
@@ -474,7 +489,7 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			DBTechTranslator transl = FindColumnInfo(i);
+			var transl = FindColumnInfo(i);
 			object obj_value = transl.IsDBNull(CurrentRecord) ? DBNull.Value : transl.GetValue(this, CurrentRecord);
 
 			//>>> SQL TRACE
@@ -483,8 +498,7 @@ namespace MaxDB.Data
                 if (obj_value != DBNull.Value)
                 {
                     string str_value = obj_value.ToString();
-                    LogValue(i + 1, transl, "OBJECT", 0, 1,
-                        (str_value.Length <= MaxDBLogger.DataSize ? str_value : str_value.Substring(0, MaxDBLogger.DataSize) + "..."));
+                    LogValue(i + 1, transl, "OBJECT", 0, 1, str_value.Length <= MaxDBLogger.DataSize ? str_value : str_value.Substring(0, MaxDBLogger.DataSize) + "...");
                 }
                 else
                 {
@@ -504,11 +518,16 @@ namespace MaxDB.Data
 		/// <returns>The number of the stored values.</returns>
 		public override int GetValues(object[] values)
 		{
-			if (values == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+            if (values == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+            }
 
-			for (int i = 0; i < Math.Min(FieldCount, values.Length); i++)
-				values[i] = GetValue(i);
+            for (int i = 0; i < Math.Min(FieldCount, values.Length); i++)
+            {
+                values[i] = GetValue(i);
+            }
+
 			return Math.Min(FieldCount, values.Length);
 		}
 
@@ -566,7 +585,7 @@ namespace MaxDB.Data
 			DateTime dt = DateTime.Now;
 			dbConnection.mLogger.SqlTrace(dt, "GET " + type + " VALUE:");
 			dbConnection.mLogger.SqlTraceDataHeader(dt);
-			StringBuilder sb = new StringBuilder();
+			var sb = new StringBuilder();
 			sb.Append(i.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.NumSize));
 			sb.Append(transl.ColumnTypeName.PadRight(MaxDBLogger.TypeSize));
 			sb.Append((transl.PhysicalLength - minusLen).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
@@ -591,7 +610,7 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			DBTechTranslator transl = FindColumnInfo(i);
+			var transl = FindColumnInfo(i);
 			bool bool_value = transl.GetBoolean(CurrentRecord);
 
 			//>>> SQL TRACE
@@ -616,7 +635,7 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			DBTechTranslator transl = FindColumnInfo(i);
+			var transl = FindColumnInfo(i);
 			byte byte_value = transl.GetByte(this, CurrentRecord);
 
 			//>>> SQL TRACE
@@ -645,7 +664,7 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			DBTechTranslator transl = FindColumnInfo(i);
+			var transl = FindColumnInfo(i);
 			long result = transl.GetBytes(this, CurrentRecord, fieldOffset, buffer, bufferoffset, length);
 
 			//>>> SQL TRACE
@@ -668,9 +687,12 @@ namespace MaxDB.Data
 		/// <returns>The char value of the column.</returns>
 		public override char GetChar(int i)
 		{
-			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
-			if (i < 0 || i >= FieldCount)
-				throw new InvalidColumnException(i);
+            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+            if (i < 0 || i >= FieldCount)
+            {
+                throw new InvalidColumnException(i);
+            }
+
 			return GetString(i)[0];
 		}
 
@@ -695,7 +717,7 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			DBTechTranslator transl = FindColumnInfo(i);
+			var transl = FindColumnInfo(i);
 			long result = transl.GetChars(this, CurrentRecord, fieldoffset, buffer, bufferoffset, length);
 
 			//>>> SQL TRACE
@@ -736,7 +758,7 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			DBTechTranslator transl = FindColumnInfo(i);
+			var transl = FindColumnInfo(i);
 			short short_value = transl.GetInt16(CurrentRecord);
 
 			//>>> SQL TRACE
@@ -760,7 +782,7 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			DBTechTranslator transl = FindColumnInfo(i);
+			var transl = FindColumnInfo(i);
 			int int_value = transl.GetInt32(CurrentRecord);
 
 			//>>> SQL TRACE
@@ -784,7 +806,7 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			DBTechTranslator transl = FindColumnInfo(i);
+			var transl = FindColumnInfo(i);
 			long long_value = transl.GetInt64(CurrentRecord);
 
 			//>>> SQL TRACE
@@ -808,7 +830,7 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			DBTechTranslator transl = FindColumnInfo(i);
+			var transl = FindColumnInfo(i);
 			float float_value = transl.GetFloat(CurrentRecord);
 
 			//>>> SQL TRACE
@@ -832,7 +854,7 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			DBTechTranslator transl = FindColumnInfo(i);
+			var transl = FindColumnInfo(i);
 			double double_value = transl.GetDouble(CurrentRecord);
 
 			//>>> SQL TRACE
@@ -856,7 +878,7 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			DBTechTranslator transl = FindColumnInfo(i);
+			var transl = FindColumnInfo(i);
 			string str_value = transl.GetString(this, CurrentRecord);
 
 			//>>> SQL TRACE
@@ -888,7 +910,7 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			DBTechTranslator transl = FindColumnInfo(i);
+			var transl = FindColumnInfo(i);
 			decimal dec_value = transl.GetDecimal(CurrentRecord);
 
 			//>>> SQL TRACE
@@ -912,8 +934,8 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			DBTechTranslator transl = FindColumnInfo(i);
-			DateTime dt_value = transl.GetDateTime(CurrentRecord);
+			var transl = FindColumnInfo(i);
+			var dt_value = transl.GetDateTime(CurrentRecord);
 
 			//>>> SQL TRACE
 			if (dbConnection.mLogger.TraceSQL)
@@ -971,13 +993,15 @@ namespace MaxDB.Data
 
 		private void AssertNotClosed()
 		{
-			if (!bOpened)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.OBJECTISCLOSED));
+            if (!bOpened)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.OBJECTISCLOSED));
+            }
 		}
 
 		private void CloseOpenStreams()
 		{
-			foreach (Stream stream in lstOpenStreams)
+			foreach (var stream in lstOpenStreams)
 			{
 				try
 				{
@@ -988,6 +1012,7 @@ namespace MaxDB.Data
 					// ignore
 				}
 			}
+
 			lstOpenStreams.Clear();
 		}
 
@@ -1007,16 +1032,20 @@ namespace MaxDB.Data
 			}
 			catch (MaxDBException ex)
 			{
-				if (ex.ErrorCode == 100)
-				{
-					bEmpty = true;
-					mPositionState = PositionType.AFTER_LAST;
-					mCurrentChunk = null;
-				}
-				else
-					throw;
+                if (ex.ErrorCode == 100)
+                {
+                    bEmpty = true;
+                    mPositionState = PositionType.AFTER_LAST;
+                    mCurrentChunk = null;
+                }
+                else
+                {
+                    throw;
+                }
+
 				return false;
 			}
+
 			SetCurrentChunk(new FetchChunk(dbConnection,
 				FetchType.FIRST,		// fetch first is forward
 				1,						// absolute start position
@@ -1024,6 +1053,7 @@ namespace MaxDB.Data
 				mFetchInfo.RecordSize,	// the size for data part navigation
 				iMaxRows,				// how many rows to fetch
 				iRowsInResultSet));
+
 			return true;
 		}
 
@@ -1035,17 +1065,18 @@ namespace MaxDB.Data
 			//int usedFetchSize = this.fetchSize;
 			int usedOffset = 1;
 
-			if (mCurrentChunk.IsForward)
-				if (iModifiedKernelPos != 0)
-					usedOffset += mCurrentChunk.End - iModifiedKernelPos;
-				else
-				{
-					// if an update destroyed the cursor position, we have to honor this ...
-					if (iModifiedKernelPos == 0)
-						usedOffset += mCurrentChunk.End - mCurrentChunk.KernelPos;
-					else
-						usedOffset += mCurrentChunk.End - iModifiedKernelPos;
-				}
+            if (mCurrentChunk.IsForward)
+            {
+                if (iModifiedKernelPos != 0)
+                {
+                    usedOffset += mCurrentChunk.End - iModifiedKernelPos;
+                }
+                else
+                {
+                    // if an update destroyed the cursor position, we have to honor this ...
+                    usedOffset += mCurrentChunk.End - (iModifiedKernelPos == 0 ? mCurrentChunk.KernelPos : iModifiedKernelPos);
+                }
+            }
 
 			try
 			{
@@ -1066,6 +1097,7 @@ namespace MaxDB.Data
 				}
 				throw;
 			}
+
 			SetCurrentChunk(new FetchChunk(dbConnection,
 				FetchType.RELATIVE_UP,
 				mCurrentChunk.End + 1,
@@ -1073,6 +1105,7 @@ namespace MaxDB.Data
 				mFetchInfo.RecordSize,
 				iMaxRows,
 				iRowsInResultSet));
+
 			return true;
 		}
 
@@ -1080,10 +1113,16 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				if (mPositionState == PositionType.BEFORE_FIRST)
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSET_BEFOREFIRST));
-				if (mPositionState == PositionType.AFTER_LAST)
-					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSET_AFTERLAST));
+                if (mPositionState == PositionType.BEFORE_FIRST)
+                {
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSET_BEFOREFIRST));
+                }
+
+                if (mPositionState == PositionType.AFTER_LAST)
+                {
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSET_AFTERLAST));
+                }
+
 				return mCurrentChunk.CurrentRecord;
 			}
 		}

@@ -1,5 +1,5 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2002-2003 SAP AG
+//	Copyright © 2005-2018 Dmitry S. Kataev
+//	Copyright © 2002-2003 SAP AG
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -16,11 +16,9 @@
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 using System;
-using System.Net.Sockets;
 using MaxDB.Data.Utilities;
 using System.Globalization;
 using System.Text;
-using System.Collections;
 using System.Data;
 using System.Runtime.CompilerServices;
 using System.Collections.Generic;
@@ -75,17 +73,17 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			try
 			{
-				ConnectPacketData connData = new ConnectPacketData();
+				var connData = new ConnectPacketData();
 				connData.DBName = dbname;
 				connData.Port = port;
 				connData.MaxSegmentSize = 1024 * 32;
-				MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END + ConnectPacketOffset.END], connData);
+				var request = new MaxDBConnectPacket(new byte[HeaderOffset.END + ConnectPacketOffset.END], connData);
 				request.FillHeader(RSQLTypes.INFO_REQUEST, iSender);
 				request.FillPacketLength();
 				request.SetSendLength(request.PacketLength);
 				mSocket.Stream.Write(request.GetArrayData(), 0, request.PacketLength);
 
-				MaxDBConnectPacket reply = GetConnectReply();
+				var reply = GetConnectReply();
 				int returnCode = reply.ReturnCode;
 				if (returnCode != 0)
 				{
@@ -101,7 +99,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 				if (mSocket.ReopenSocketAfterInfoPacket)
 				{
-					IMaxDBSocket new_socket = mSocket.Clone();
+					var new_socket = mSocket.Clone();
 					Close(true, false);
 					mSocket = new_socket;
 				}
@@ -117,7 +115,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				connData.PacketSize = reply.PacketSize;
 				connData.MinReplySize = reply.MinReplySize;
 
-				MaxDBConnectPacket db_request = new MaxDBConnectPacket(new byte[HeaderOffset.END + reply.MaxDataLength], connData);
+				var db_request = new MaxDBConnectPacket(new byte[HeaderOffset.END + reply.MaxDataLength], connData);
 				db_request.FillHeader(RSQLTypes.USER_CONN_REQUEST, iSender);
 				db_request.FillPacketLength();
 				db_request.SetSendLength(db_request.PacketLength);
@@ -136,13 +134,17 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public void Reconnect()
 		{
-			IMaxDBSocket new_socket = mSocket.Clone();
+			var new_socket = mSocket.Clone();
 			Close(true, false);
 			mSocket = new_socket;
-			if (bSession)
-				Connect(strDbName, iPort);
-			else
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.ADMIN_RECONNECT, CommError.ErrorText[RTEReturnCodes.SQLTIMEOUT]));
+            if (bSession)
+            {
+                Connect(strDbName, iPort);
+            }
+            else
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.ADMIN_RECONNECT, CommError.ErrorText[RTEReturnCodes.SQLTIMEOUT]));
+            }
 		}
 
 		private MaxDBConnectPacket GetConnectReply()
@@ -150,15 +152,19 @@ namespace MaxDB.Data.MaxDBProtocol
 			byte[] replyBuffer = new byte[HeaderOffset.END + ConnectPacketOffset.END];
 
 			int len = mSocket.Stream.Read(replyBuffer, 0, replyBuffer.Length);
-			if (len <= HeaderOffset.END)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RECV_CONNECT));
+            if (len <= HeaderOffset.END)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RECV_CONNECT));
+            }
 
-			MaxDBConnectPacket replyPacket = new MaxDBConnectPacket(replyBuffer,
+			var replyPacket = new MaxDBConnectPacket(replyBuffer,
 				replyBuffer[HeaderOffset.END + ConnectPacketOffset.MessCode + 1] == SwapMode.Swapped);
 
 			int actLen = replyPacket.ActSendLength;
-			if (actLen < 0 || actLen > 500 * 1024)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.REPLY_GARBLED));
+            if (actLen < 0 || actLen > 500 * 1024)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.REPLY_GARBLED));
+            }
 
 			int bytesRead;
 
@@ -166,19 +172,25 @@ namespace MaxDB.Data.MaxDBProtocol
 			{
 				bytesRead = mSocket.Stream.Read(replyPacket.GetArrayData(), len, actLen - len);
 
-				if (bytesRead <= 0)
-					break;
+                if (bytesRead <= 0)
+                {
+                    break;
+                }
 
 				len += bytesRead;
 
 				if (!mSocket.DataAvailable) System.Threading.Thread.Sleep(ts); //wait for end of data
-			};
+			}
 
-			if (len < actLen)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.REPLY_GARBLED));
+            if (len < actLen)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.REPLY_GARBLED));
+            }
 
-			if (len > actLen)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CHUNKOVERFLOW, actLen, len, replyBuffer.Length));
+            if (len > actLen)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CHUNKOVERFLOW, actLen, len, replyBuffer.Length));
+            }
 
 			iSender = replyPacket.PacketSender;
 
@@ -204,12 +216,14 @@ namespace MaxDB.Data.MaxDBProtocol
 					}
 				}
 
-				MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END]);
+				var request = new MaxDBConnectPacket(new byte[HeaderOffset.END]);
 				request.FillHeader(RSQLTypes.USER_RELEASE_REQUEST, iSender);
 				request.SetSendLength(HeaderOffset.END);
 				mSocket.Stream.Write(request.GetArrayData(), 0, request.Length);
-				if (closeSocket)
-					mSocket.Close();
+                if (closeSocket)
+                {
+                    mSocket.Close();
+                }
 			}
 		}
 
@@ -219,12 +233,12 @@ namespace MaxDB.Data.MaxDBProtocol
 			{
 				if (mSocket != null && mSocket.Stream != null)
 				{
-					IMaxDBSocket cancel_socket = mSocket.Clone();
-					ConnectPacketData connData = new ConnectPacketData();
+					var cancel_socket = mSocket.Clone();
+					var connData = new ConnectPacketData();
 					connData.DBName = strDbName;
 					connData.Port = iPort;
 					connData.MaxSegmentSize = 1024 * 32;
-					MaxDBConnectPacket request = new MaxDBConnectPacket(new byte[HeaderOffset.END + ConnectPacketOffset.END], connData);
+					var request = new MaxDBConnectPacket(new byte[HeaderOffset.END + ConnectPacketOffset.END], connData);
 					request.FillHeader(RSQLTypes.USER_CANCEL_REQUEST, iSender);
 					request.WriteInt32(iSender, HeaderOffset.ReceiverRef);
 					request.SetSendLength(request.PacketLength);
@@ -242,7 +256,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public byte[] Execute(MaxDBRequestPacket userPacket, int len)
 		{
-			MaxDBPacket rawPacket = new MaxDBPacket(userPacket.GetArrayData(), 0, userPacket.Swapped);
+			var rawPacket = new MaxDBPacket(userPacket.GetArrayData(), 0, userPacket.Swapped);
 			rawPacket.FillHeader(RSQLTypes.USER_DATA_REQUEST, iSender);
 			rawPacket.SetSendLength(len + HeaderOffset.END);
 
@@ -251,20 +265,18 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			int headerLength = mSocket.Stream.Read(headerBuf, 0, headerBuf.Length);
 
-			if (headerLength != HeaderOffset.END)
-				throw new MaxDBCommunicationException(RTEReturnCodes.SQLRECEIVE_LINE_DOWN);
+            if (headerLength != HeaderOffset.END)
+            {
+                throw new MaxDBCommunicationException(RTEReturnCodes.SQLRECEIVE_LINE_DOWN);
+            }
 
-			// auto-detect header byte-order
-			//ulong littleEndianValue = headerBuf[0] + headerBuf[1] * 0x100UL +
-			//                headerBuf[2] * 0x10000UL + headerBuf[3] * 0x1000000UL;
-			//ulong bigEndianValue = headerBuf[0] * 0x1000000UL + headerBuf[1] * 0x10000UL +
-			//                headerBuf[2] * 0x100UL + headerBuf[3];
-			//MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf, littleEndianValue < bigEndianValue);
-			MaxDBConnectPacket header = new MaxDBConnectPacket(headerBuf, bIsServerLittleEndian);
+			var header = new MaxDBConnectPacket(headerBuf, bIsServerLittleEndian);
 
 			int returnCode = header.ReturnCode;
-			if (returnCode != 0)
-				throw new MaxDBCommunicationException(returnCode);
+            if (returnCode != 0)
+            {
+                throw new MaxDBCommunicationException(returnCode);
+            }
 
 			byte[] packetBuf = new byte[header.MaxSendLength - HeaderOffset.END];
 			int replyLen = HeaderOffset.END;
@@ -273,18 +285,28 @@ namespace MaxDB.Data.MaxDBProtocol
 			while (replyLen < header.ActSendLength)
 			{
 				bytesRead = mSocket.Stream.Read(packetBuf, replyLen - HeaderOffset.END, header.ActSendLength - replyLen);
-				if (bytesRead <= 0)
-					break;
+                if (bytesRead <= 0)
+                {
+                    break;
+                }
+
 				replyLen += bytesRead;
-				if (!mSocket.DataAvailable) System.Threading.Thread.Sleep(ts); //wait for the end of data
-			};
+                if (!mSocket.DataAvailable)
+                {
+                    System.Threading.Thread.Sleep(ts); // wait for the end of data
+                }
+			}
 
-			if (replyLen < header.ActSendLength)
-				throw new MaxDBCommunicationException(RTEReturnCodes.SQLRECEIVE_LINE_DOWN);
+            if (replyLen < header.ActSendLength)
+            {
+                throw new MaxDBCommunicationException(RTEReturnCodes.SQLRECEIVE_LINE_DOWN);
+            }
 
-			if (replyLen > header.ActSendLength)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CHUNKOVERFLOW,
-					header.ActSendLength, replyLen, packetBuf.Length + HeaderOffset.END));
+            if (replyLen > header.ActSendLength)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CHUNKOVERFLOW,
+                    header.ActSendLength, replyLen, packetBuf.Length + HeaderOffset.END));
+            }
 
 			return packetBuf;
 		}
@@ -301,10 +323,14 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		private static string StripString(string str)
 		{
-			if (!(str.StartsWith("\"") && str.EndsWith("\"")))
-				return str.ToUpper(CultureInfo.InvariantCulture);
-			else
-				return str.Substring(1, str.Length - 2);
+            if (!(str.StartsWith("\"") && str.EndsWith("\"")))
+            {
+                return str.ToUpper(CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                return str.Substring(1, str.Length - 2);
+            }
 		}
 
 		public void Open(ConnectArgs connArgs)
@@ -318,26 +344,38 @@ namespace MaxDB.Data.MaxDBProtocol
 			{
 				if (mConnStrBuilder.Encrypt)
 				{
-					if (connArgs.port == 0) connArgs.port = Ports.DefaultSecure;
+                    if (connArgs.port == 0)
+                    {
+                        connArgs.port = Ports.DefaultSecure;
+                    }
+
 					mSocket = new SslSocketClass(connArgs.host, connArgs.port, mConnStrBuilder.Timeout, true,
 						mConnStrBuilder.SslCertificateName != null ? mConnStrBuilder.SslCertificateName : connArgs.host);
 				}
 				else
 				{
-					if (connArgs.port == 0) connArgs.port = Ports.Default;
+                    if (connArgs.port == 0)
+                    {
+                        connArgs.port = Ports.Default;
+                    }
+
 					mSocket = new SocketClass(connArgs.host, connArgs.port, mConnStrBuilder.Timeout, true);
 				}
 			}
 
 			string username = connArgs.username;
-			if (username == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NOUSER));
+            if (username == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NOUSER));
+            }
 
 			username = StripString(username);
 
 			string password = connArgs.password;
-			if (password == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NOPASSWORD));
+            if (password == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.NOPASSWORD));
+            }
 
 			password = StripString(password);
 
@@ -363,7 +401,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			mUnicodePacketPool.Clear();
 			mPacketPool.Clear();
 			mEncoding = Encoding.ASCII;
-			MaxDBRequestPacket requestPacket = GetRequestPacket();
+			var requestPacket = GetRequestPacket();
 			Auth auth = null;
 			bool isChallengeResponseSupported = false;
 			if (bIsAuthAllowed)
@@ -372,25 +410,29 @@ namespace MaxDB.Data.MaxDBProtocol
 				{
 					auth = new Auth();
 					isChallengeResponseSupported = InitiateChallengeResponse(connArgs, requestPacket, username, auth);
-					if (password.Length > auth.MaxPasswordLength && auth.MaxPasswordLength > 0)
-						password = password.Substring(0, auth.MaxPasswordLength);
+                    if (password.Length > auth.MaxPasswordLength && auth.MaxPasswordLength > 0)
+                    {
+                        password = password.Substring(0, auth.MaxPasswordLength);
+                    }
 				}
 				catch (MaxDBException ex)
 				{
 					isChallengeResponseSupported = false;
-					if (ex.ErrorCode == -5015)
-					{
-						try
-						{
-							Reconnect();
-						}
-						catch (MaxDBException exc)
-						{
-							throw new MaxDBConnectionException(exc);
-						}
-					}
-					else
-						throw;
+                    if (ex.ErrorCode == -5015)
+                    {
+                        try
+                        {
+                            Reconnect();
+                        }
+                        catch (MaxDBException exc)
+                        {
+                            throw new MaxDBConnectionException(exc);
+                        }
+                    }
+                    else
+                    {
+                        throw;
+                    }
 				}
 			}
 
@@ -403,21 +445,32 @@ namespace MaxDB.Data.MaxDBProtocol
             * build connect statement
             */
 			connectCmd = "CONNECT " + connArgs.username + " IDENTIFIED BY :PW SQLMODE " + SqlModeName.Value[(byte)mConnStrBuilder.Mode];
-			if (mConnStrBuilder.Timeout > 0)
-				connectCmd += " TIMEOUT " + mConnStrBuilder.Timeout;
-			if (mIsolationLevel != IsolationLevel.Unspecified)
-				connectCmd += " ISOLATION LEVEL " + MaxDBConnection.MapIsolationLevel(mIsolationLevel).ToString(CultureInfo.InvariantCulture);
-			if (mConnStrBuilder.CacheLimit > 0)
-				connectCmd += " CACHELIMIT " + mConnStrBuilder.CacheLimit;
+            if (mConnStrBuilder.Timeout > 0)
+            {
+                connectCmd += " TIMEOUT " + mConnStrBuilder.Timeout;
+            }
+
+            if (mIsolationLevel != IsolationLevel.Unspecified)
+            {
+                connectCmd += " ISOLATION LEVEL " + MaxDBConnection.MapIsolationLevel(mIsolationLevel).ToString(CultureInfo.InvariantCulture);
+            }
+
+            if (mConnStrBuilder.CacheLimit > 0)
+            {
+                connectCmd += " CACHELIMIT " + mConnStrBuilder.CacheLimit;
+            }
+
 			if (mConnStrBuilder.SpaceOption)
 			{
 				connectCmd += " SPACE OPTION ";
 				SetKernelFeatureRequest(Feature.SpaceOption);
 			}
 
-			//>>> SQL TRACE
-			if (mLogger.TraceSQL)
-				mLogger.SqlTrace(currentDt, "CONNECT COMMAND: " + connectCmd);
+            //>>> SQL TRACE
+            if (mLogger.TraceSQL)
+            {
+                mLogger.SqlTrace(currentDt, "CONNECT COMMAND: " + connectCmd);
+            }
 			//<<< SQL TRACE
 
 			requestPacket.InitDbsCommand(false, connectCmd);
@@ -432,6 +485,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				{
 					throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INVALIDPASSWORD));
 				}
+
 				requestPacket.NewPart(PartKind.Data);
 				requestPacket.AddData(crypted);
 				requestPacket.AddDataString(TermID);
@@ -450,24 +504,32 @@ namespace MaxDB.Data.MaxDBProtocol
 			requestPacket.AddFeatureRequestPart(byKernelFeatures);
 
 			// execute
-			MaxDBReplyPacket replyPacket = Execute(connArgs, requestPacket, this, GCMode.GC_DELAYED);
+			var replyPacket = Execute(connArgs, requestPacket, this, GCMode.GC_DELAYED);
 			iSessionID = replyPacket.SessionID;
 			mEncoding = replyPacket.IsUnicode ? Encoding.Unicode : Encoding.ASCII;
 
 			iKernelVersion = 10000 * replyPacket.KernelMajorVersion + 100 * replyPacket.KernelMinorVersion + replyPacket.KernelCorrectionLevel;
 			byte[] featureReturn = replyPacket.Features;
 
-			if (featureReturn != null)
-				byKernelFeatures = featureReturn;
-			else
-				byDefFeatureSet.CopyTo(byKernelFeatures, 0);
+            if (featureReturn != null)
+            {
+                byKernelFeatures = featureReturn;
+            }
+            else
+            {
+                byDefFeatureSet.CopyTo(byKernelFeatures, 0);
+            }
 
-			if (mConnStrBuilder.Cache != null && mConnStrBuilder.Cache.Length > 0)
-				mParseCache = new ParseInfoCache(mConnStrBuilder.Cache, mConnStrBuilder.CacheSize);
+            if (mConnStrBuilder.Cache != null && mConnStrBuilder.Cache.Length > 0)
+            {
+                mParseCache = new ParseInfoCache(mConnStrBuilder.Cache, mConnStrBuilder.CacheSize);
+            }
 
-			//>>> SQL TRACE
-			if (mLogger.TraceSQL)
-				mLogger.SqlTrace(DateTime.Now, "SESSION ID: " + iSessionID);
+            //>>> SQL TRACE
+            if (mLogger.TraceSQL)
+            {
+                mLogger.SqlTrace(DateTime.Now, "SESSION ID: " + iSessionID);
+            }
 			//<<< SQL TRACE
 
 			openTime = DateTime.Now;
@@ -477,8 +539,11 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			lock (strSyncObj)
 			{
-				if (mParseCache != null)
-					mParseCache.Clear();
+                if (mParseCache != null)
+                {
+                    mParseCache.Clear();
+                }
+
 				mPacketPool.Clear();
 				mUnicodePacketPool.Clear();
 				bInReconnect = true;
@@ -495,6 +560,7 @@ namespace MaxDB.Data.MaxDBProtocol
 				{
 					bInReconnect = false;
 				}
+
 				throw new MaxDBTimeoutException();
 			}
 		}
@@ -511,7 +577,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			if (requestPacket.InitChallengeResponse(user, auth.ClientChallenge))
 			{
-				MaxDBReplyPacket replyPacket = Execute(connArgs, requestPacket, this, GCMode.GC_DELAYED);
+				var replyPacket = Execute(connArgs, requestPacket, this, GCMode.GC_DELAYED);
 				auth.ParseServerChallenge(replyPacket.VarDataPart);
 				return true;
 			}
@@ -618,10 +684,14 @@ namespace MaxDB.Data.MaxDBProtocol
 				//<<< PACKET TRACE
 
 				objExec = execObj;
-				if (mEncoding == Encoding.Unicode)
-					replyPacket = new MaxDBUnicodeReplyPacket(Execute(requestPacket, requestLen));
-				else
-					replyPacket = new MaxDBReplyPacket(Execute(requestPacket, requestLen));
+                if (mEncoding == Encoding.Unicode)
+                {
+                    replyPacket = new MaxDBUnicodeReplyPacket(Execute(requestPacket, requestLen));
+                }
+                else
+                {
+                    replyPacket = new MaxDBReplyPacket(Execute(requestPacket, requestLen));
+                }
 
 				//>>> PACKET TRACE
 				if (mLogger.TraceFull)
@@ -635,6 +705,7 @@ namespace MaxDB.Data.MaxDBProtocol
 						mLogger.SqlTrace(dt, replyPacket.DumpSegment(dt));
 						segm = replyPacket.NextSegment();
 					}
+
 					mLogger.SqlTrace(dt, "</PACKET>");
 				}
 				//<<< PACKET TRACE
@@ -642,11 +713,15 @@ namespace MaxDB.Data.MaxDBProtocol
 				// get return code
 				localWeakReturnCode = replyPacket.WeakReturnCode;
 
-				if (localWeakReturnCode != -8)
-					FreeRequestPacket(requestPacket);
+                if (localWeakReturnCode != -8)
+                {
+                    FreeRequestPacket(requestPacket);
+                }
 
-				if (!bAutoCommit && !isParse)
-					bInTransaction = true;
+                if (!bAutoCommit && !isParse)
+                {
+                    bInTransaction = true;
+                }
 
 				// if it is not completely forbidden, we will send the drop
 				if (gcFlags != GCMode.GC_NONE)
@@ -654,28 +729,34 @@ namespace MaxDB.Data.MaxDBProtocol
 					if (bNonRecyclingExecutions > 20 && localWeakReturnCode == 0)
 					{
 						bNonRecyclingExecutions = 0;
-						if (mGarbageParseids != null && mGarbageParseids.IsPending)
-							mGarbageParseids.EmptyCan(this, connArgs);
+                        if (mGarbageParseids != null && mGarbageParseids.IsPending)
+                        {
+                            mGarbageParseids.EmptyCan(this, connArgs);
+                        }
+
 						bNonRecyclingExecutions = 0;
 					}
 				}
 			}
 			catch (MaxDBException)
 			{
-				// if a reconnect is forbidden or we are in the process of a
-				// reconnect or we are in a (now rolled back) transaction
-				if (bInReconnect || bInTransaction)
-					throw;
-				else
-				{
-					TryReconnect(connArgs);
-					bInTransaction = false;
-				}
+                // if a reconnect is forbidden or we are in the process of a
+                // reconnect or we are in a (now rolled back) transaction
+                if (bInReconnect || bInTransaction)
+                {
+                    throw;
+                }
+                else
+                {
+                    TryReconnect(connArgs);
+                    bInTransaction = false;
+                }
 			}
 			finally
 			{
 				objExec = null;
 			}
+
             if (!ignoreErrors && localWeakReturnCode != 0)
             {
                 throw replyPacket.CreateException();
@@ -693,19 +774,22 @@ namespace MaxDB.Data.MaxDBProtocol
 				mLogger.SqlTrace(dt, "::CANCEL");
 				mLogger.SqlTrace(dt, "SESSION ID: " + iSessionID);
 			}
-			//<<< SQL TRACE
-			if (objExec == reqObj)
-				Cancel();
-			else
-			{
-				//>>> SQL TRACE
-				if (mLogger.TraceSQL)
-				{
-					mLogger.SqlTrace(dt, "RETURN     : 100");
-					mLogger.SqlTrace(dt, "MESSAGE    : No active command found.");
-				}
-				//<<< SQL TRACE
-			}
+            //<<< SQL TRACE
+
+            if (objExec == reqObj)
+            {
+                Cancel();
+            }
+            else
+            {
+                //>>> SQL TRACE
+                if (mLogger.TraceSQL)
+                {
+                    mLogger.SqlTrace(dt, "RETURN     : 100");
+                    mLogger.SqlTrace(dt, "MESSAGE    : No active command found.");
+                }
+                //<<< SQL TRACE
+            }
 		}
 
 		public void DropParseID(byte[] pid)
@@ -725,7 +809,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public void ExecuteSqlString(ConnectArgs connArgs, string cmd, int gcFlags)
 		{
-			MaxDBRequestPacket requestPacket = GetRequestPacket();
+			var requestPacket = GetRequestPacket();
 			requestPacket.InitDbs(bAutoCommit);
 			requestPacket.AddString(cmd);
 			try

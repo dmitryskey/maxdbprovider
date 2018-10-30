@@ -1,5 +1,5 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2002-2003 SAP AG
+//	Copyright © 2005-2018 Dmitry S. Kataev
+//	Copyright © 2002-2003 SAP AG
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -17,8 +17,6 @@
 
 using System;
 using System.IO;
-using System.Net.Sockets;
-using System.Text;
 using MaxDB.Data.Utilities;
 
 namespace MaxDB.Data.MaxDBProtocol
@@ -56,10 +54,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		{
 			get
 			{
-				if (baOrigData != null)
-					return baOrigData.Length;
-				else
-					return 0;
+                return baOrigData != null ? baOrigData.Length : 0;
 			}
 		}
 
@@ -298,14 +293,16 @@ namespace MaxDB.Data.MaxDBProtocol
 				while (!streamExhausted && maxDataSize > 0)
 				{
 					charsRead = reader.Read(readBuf, 0, Math.Min(maxDataSize, readBuf.Length));
-					if (charsRead > 0)
-					{
-						baOrigData.WriteUnicode(new string(readBuf, 0, charsRead), iExtent);
-						iExtent += charsRead * Consts.UnicodeWidth;
-						maxDataSize -= charsRead;
-					}
-					else
-						streamExhausted = true;
+                    if (charsRead > 0)
+                    {
+                        baOrigData.WriteUnicode(new string(readBuf, 0, charsRead), iExtent);
+                        iExtent += charsRead * Consts.UnicodeWidth;
+                        maxDataSize -= charsRead;
+                    }
+                    else
+                    {
+                        streamExhausted = true;
+                    }
 				}
 			}
 			catch (Exception ex)
@@ -367,8 +364,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public bool NextField()
 		{
-			if (iCurrentFieldCount >= iFieldCount)
-				return false;
+            if (iCurrentFieldCount >= iFieldCount)
+            {
+                return false;
+            }
 
 			iCurrentFieldCount++;
 			iExtent += iCurrentFieldLen;
@@ -407,10 +406,7 @@ namespace MaxDB.Data.MaxDBProtocol
 		public int ReadFieldLength(int offset)
 		{
 			int erg = baOrigData.ReadByte(offset);
-			if (erg <= 250)
-				return erg;
-			else
-				return baOrigData.ReadInt16(offset + 1);
+            return erg <= 250 ? erg : baOrigData.ReadInt16(offset + 1);
 		}
 
 		public int WriteFieldLength(int value, int offset)
@@ -430,14 +426,16 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public override void WriteDefineByte(byte value, int offset)
 		{
-			//vardata part has no define byte
+			// vardata part has no define byte
 			return;
 		}
 
 		public override void WriteBytes(byte[] value, int offset, int len)
 		{
-			if (value == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+            if (value == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+            }
 
 			iExtent += WriteFieldLength(len, iExtent);
 			baOrigData.WriteBytes(value, iExtent, len);
@@ -446,8 +444,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public override void WriteBytes(byte[] value, int offset)
 		{
-			if (value == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+            if (value == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+            }
 
 			WriteBytes(value, offset, value.Length);
 		}
@@ -557,15 +557,19 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public override bool FillWithProcedureReader(TextReader reader, short rowCount)
 		{
-			if (reader == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "reader"));
+            if (reader == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "reader"));
+            }
 
 			bool streamExhausted = false;
 			int maxDataSize = (MaxDataSize / 2) * 2;
 
 			int readBufSize = (4096 / 2) * 2;
-			if (readBufSize == 0)
-				readBufSize = 2;
+            if (readBufSize == 0)
+            {
+                readBufSize = 2;
+            }
 
 			char[] readBuf = new char[readBufSize];
 			int charsRead = 0;
@@ -586,6 +590,7 @@ namespace MaxDB.Data.MaxDBProtocol
 					{
 						throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STREAM_IOEXCEPTION, ioex.Message));
 					}
+
 					// if the stream is exhausted, we have to look whether it is wholly written.
 					if (currCharsRead == -1)
 					{
@@ -595,15 +600,18 @@ namespace MaxDB.Data.MaxDBProtocol
 					else
 					{
 						charsRead += currCharsRead;
-						// does it fit, then it is ok.
-						if (charsRead > 0)
-							charsToRead = 0;
-						else
-						{
-							// else advance in the buffer
-							charsToRead -= currCharsRead;
-							startPos += currCharsRead;
-						}
+
+                        // does it fit, then it is ok.
+                        if (charsRead > 0)
+                        {
+                            charsToRead = 0;
+                        }
+                        else
+                        {
+                            // else advance in the buffer
+                            charsToRead -= currCharsRead;
+                            startPos += currCharsRead;
+                        }
 					}
 				}
 
@@ -612,19 +620,25 @@ namespace MaxDB.Data.MaxDBProtocol
 				maxDataSize -= charsRead * Consts.UnicodeWidth;
 				bytesWritten += charsRead * Consts.UnicodeWidth;
 			}
+
 			// The number of arguments is the number of rows
 			sArgCount = (short)(bytesWritten / Consts.UnicodeWidth);
-			// the data must be marked as 'last part' in case it is a last part.
-			if (streamExhausted)
-				SetLastPart();
+
+            // the data must be marked as 'last part' in case it is a last part.
+            if (streamExhausted)
+            {
+                SetLastPart();
+            }
 
 			return streamExhausted;
 		}
 
 		public override bool FillWithOmsStream(Stream stream, bool asciiForUnicode)
 		{
-			if (stream == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "stream"));
+            if (stream == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "stream"));
+            }
 
 			// We have to:
 			// - read and write only multiples of 'rowSize'
@@ -635,8 +649,10 @@ namespace MaxDB.Data.MaxDBProtocol
 			int readBufSize = 4096;
 			byte[] readBuf = new byte[readBufSize];
 			byte[] expandbuf = null;
-			if (asciiForUnicode)
-				expandbuf = new byte[readBufSize * 2];
+            if (asciiForUnicode)
+            {
+                expandbuf = new byte[readBufSize * 2];
+            }
 
 			int bytesRead = 0;
 			int bytesWritten = 0;
@@ -656,8 +672,8 @@ namespace MaxDB.Data.MaxDBProtocol
 					{
 						throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STREAM_IOEXCEPTION, ioex.Message));
 					}
-					// if the stream is exhausted, we have to look
-					// whether it is wholly written.
+
+					// if the stream is exhausted, we have to look whether it is wholly written.
 					if (currBytesRead == -1)
 					{
 						bytesToRead = 0;
@@ -676,6 +692,7 @@ namespace MaxDB.Data.MaxDBProtocol
 						expandbuf[i * 2] = 0;
 						expandbuf[i * 2 + 1] = readBuf[i];
 					}
+
 					WriteBytes(expandbuf, iExtent, bytesRead * 2);
 					iExtent += bytesRead * 2;
 					maxDataSize -= bytesRead * 2;
@@ -689,24 +706,32 @@ namespace MaxDB.Data.MaxDBProtocol
 					bytesWritten += bytesRead;
 				}
 			}
+
 			// The number of arguments is the number of rows
 			sArgCount = (short)(bytesWritten / (asciiForUnicode ? 2 : 1));
-			// the data must be marked as 'last part' in case it is a last part.
-			if (streamExhausted)
-				SetLastPart();
+
+            // the data must be marked as 'last part' in case it is a last part.
+            if (streamExhausted)
+            {
+                SetLastPart();
+            }
 
 			return streamExhausted;
 		}
 
 		public override bool FillWithProcedureStream(Stream stream, short rowCount)
 		{
-			if (stream == null)
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "stream"));
+            if (stream == null)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "stream"));
+            }
 
 			bool streamExhausted = false;
 			int maxDataSize = MaxDataSize;
-			if (maxDataSize > short.MaxValue)
-				maxDataSize = short.MaxValue;
+            if (maxDataSize > short.MaxValue)
+            {
+                maxDataSize = short.MaxValue;
+            }
 
 			int rowsize = 1;
 			int bytesRead = 0;
@@ -729,6 +754,7 @@ namespace MaxDB.Data.MaxDBProtocol
 					{
 						throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STREAM_IOEXCEPTION, ioEx.Message));
 					}
+
 					if (currBytesRead == -1)
 					{
 						streamExhausted = true;
@@ -740,6 +766,7 @@ namespace MaxDB.Data.MaxDBProtocol
 						bytesToRead = 0;
 					}
 				}
+
 				WriteBytes(readBuffer, iExtent, bytesRead);
 				iExtent += bytesRead;
 				maxDataSize -= bytesRead;
@@ -748,8 +775,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
 			sArgCount = (short)(bytesWritten / rowsize);
 
-			if (streamExhausted)
-				SetLastPart();
+            if (streamExhausted)
+            {
+                SetLastPart();
+            }
 
 			return streamExhausted;
 		}

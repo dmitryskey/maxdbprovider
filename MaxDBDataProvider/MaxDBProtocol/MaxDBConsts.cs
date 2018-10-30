@@ -1,5 +1,5 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2002-2003 SAP AG
+//	Copyright © 2005-2018 Dmitry S. Kataev
+//	Copyright © 2002-2003 SAP AG
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -233,7 +233,7 @@ namespace MaxDB.Data.MaxDBProtocol
 			ProcservUpperBound = 59,
 			LastCmdMessType = 60;
 
-		public static readonly string[] Name = new string[] {   
+		public static readonly string[] Name = {   
                 "nil",
                 "cmd_lower_bound",
                 "dbs",
@@ -340,43 +340,43 @@ namespace MaxDB.Data.MaxDBProtocol
 			Feature = 34,
 			ClientId = 35;
 
-		public static readonly string[] Name = new string[]{
-										 "Nil",
-										 "ApplParameterDescription",
-										 "ColumnNames",
-										 "Command",
-										 "ConvTablesReturned",
-										 "Data",
-										 "ErrorText",
-										 "GetInfo",
-										 "ModulName",
-										 "Page",
-										 "Parsid",
-										 "ParsidOfSelect",
-										 "ResultCount",
-										 "ResultTableName",
-										 "ShortInfo",
-										 "UserInfoReturned",
-										 "Surrogate",
-										 "Bdinfo",
-										 "LongData",
-										 "TableName",
-										 "SessionInfoReturned",
-										 "OutputColsNoParameter",
-										 "Key",
-										 "Serial",
-										 "RelativePos",
-										 "AbapIStream",
-										 "AbapOStream",
-										 "AbapInfo",
-										 "CheckpointInfo",
-										 "Procid",
-										 "LongDemand",
-										 "MessageList",
-										 "VardataShortinfo",
-										 "Vardata",
-										 "Feature",
-										 "Clientid"};
+		public static readonly string[] Name ={
+			"Nil",
+			"ApplParameterDescription",
+			"ColumnNames",
+			"Command",
+			"ConvTablesReturned",
+			"Data",
+			"ErrorText",
+			"GetInfo",
+			"ModulName",
+			"Page",
+			"Parsid",
+			"ParsidOfSelect",
+			"ResultCount",
+			"ResultTableName",
+			"ShortInfo",
+			"UserInfoReturned",
+			"Surrogate",
+			"Bdinfo",
+			"LongData",
+			"TableName",
+			"SessionInfoReturned",
+			"OutputColsNoParameter",
+			"Key",
+			"Serial",
+			"RelativePos",
+			"AbapIStream",
+			"AbapOStream",
+			"AbapInfo",
+			"CheckpointInfo",
+			"Procid",
+			"LongDemand",
+			"MessageList",
+			"VardataShortinfo",
+			"Vardata",
+			"Feature",
+			"Clientid"};
 	}
 
 	internal struct Feature
@@ -562,16 +562,16 @@ namespace MaxDB.Data.MaxDBProtocol
 			reuse_upd_mselect_found = 117;
 
 		public static readonly int[] massCmdAppCodes = 
-			{
-				mfetch_found, 
-				mass_select_found, 
-				reuse_mass_select_found,
-				mass_command, 
-				mselect_found, 
-				for_upd_mselect_found,
-				reuse_mselect_found, 
-				reuse_upd_mselect_found
-			};
+		{
+			mfetch_found, 
+			mass_select_found, 
+			reuse_mass_select_found,
+			mass_command, 
+			mselect_found, 
+			for_upd_mselect_found,
+			reuse_mselect_found, 
+			reuse_upd_mselect_found
+		};
 
 		public static bool IsQuery(int code)
 		{
@@ -590,22 +590,22 @@ namespace MaxDB.Data.MaxDBProtocol
 	internal struct CommError
 	{
 		public static readonly string[] ErrorText = 
-			{
-				MaxDBMessages.Extract(MaxDBError.COMMOK),
-				MaxDBMessages.Extract(MaxDBError.COMMCONNECTDOWN),
-				MaxDBMessages.Extract(MaxDBError.COMMTASKLIMIT),
-				MaxDBMessages.Extract(MaxDBError.COMMTIMEOUT),
-				MaxDBMessages.Extract(MaxDBError.COMMCRASH),
-				MaxDBMessages.Extract(MaxDBError.COMMRESTARTREQUIRED),
-				MaxDBMessages.Extract(MaxDBError.COMMSHUTDOWN),
-				MaxDBMessages.Extract(MaxDBError.COMMSENDLINEDOWN),
-				MaxDBMessages.Extract(MaxDBError.COMMRECVLINEDOWN),
-				MaxDBMessages.Extract(MaxDBError.COMMPACKETLIMIT),
-				MaxDBMessages.Extract(MaxDBError.COMMRELEASED),
-				MaxDBMessages.Extract(MaxDBError.COMMWOULDBLOCK),
-				MaxDBMessages.Extract(MaxDBError.COMMUNKNOWNREQUEST),
-				MaxDBMessages.Extract(MaxDBError.COMMSERVERDBUNKNOWN)
-			};
+		{
+			MaxDBMessages.Extract(MaxDBError.COMMOK),
+			MaxDBMessages.Extract(MaxDBError.COMMCONNECTDOWN),
+			MaxDBMessages.Extract(MaxDBError.COMMTASKLIMIT),
+			MaxDBMessages.Extract(MaxDBError.COMMTIMEOUT),
+			MaxDBMessages.Extract(MaxDBError.COMMCRASH),
+			MaxDBMessages.Extract(MaxDBError.COMMRESTARTREQUIRED),
+			MaxDBMessages.Extract(MaxDBError.COMMSHUTDOWN),
+			MaxDBMessages.Extract(MaxDBError.COMMSENDLINEDOWN),
+			MaxDBMessages.Extract(MaxDBError.COMMRECVLINEDOWN),
+			MaxDBMessages.Extract(MaxDBError.COMMPACKETLIMIT),
+			MaxDBMessages.Extract(MaxDBError.COMMRELEASED),
+			MaxDBMessages.Extract(MaxDBError.COMMWOULDBLOCK),
+			MaxDBMessages.Extract(MaxDBError.COMMUNKNOWNREQUEST),
+			MaxDBMessages.Extract(MaxDBError.COMMSERVERDBUNKNOWN)
+		};
 	}
 
 	internal struct RTEReturnCodes
@@ -1048,16 +1048,20 @@ namespace MaxDB.Data.MaxDBProtocol
 
 		public static string ToHexString(byte[] array, int offset, int length)
 		{
-			if (array != null)
-			{
-				StringBuilder result = new StringBuilder((array.Length - offset) * 2);
-				for (int i = offset; i < array.Length && i < length; i++)
-					result.Append(array[i].ToString("X2", CultureInfo.InvariantCulture));
+            if (array != null)
+            {
+                var result = new StringBuilder((array.Length - offset) * 2);
+                for (int i = offset; i < array.Length && i < length; i++)
+                {
+                    result.Append(array[i].ToString("X2", CultureInfo.InvariantCulture));
+                }
 
-				return result.ToString();
-			}
-			else
-				return "NULL";
+                return result.ToString();
+            }
+            else
+            {
+                return "NULL";
+            }
 		}
 
 		public static string ToHexString(byte[] array)

@@ -1,4 +1,4 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//	Copyright © 2005-2018 Dmitry S. Kataev
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -200,7 +200,6 @@ namespace MaxDB.Data.Utilities
             }
 		}
 
-
 		public void WriteUInt16(ushort value, int offset)
 		{
 			WriteValue(value, offset, 2);
@@ -208,14 +207,7 @@ namespace MaxDB.Data.Utilities
 
 		public short ReadInt16(int offset)
 		{
-            if (BitConverter.IsLittleEndian == bSwapMode)
-            {
-                return BitConverter.ToInt16(byData, offset + iOffset);
-            }
-            else
-            {
-                return (short)ReadUInt16(offset);
-            }
+            return BitConverter.IsLittleEndian == bSwapMode ? BitConverter.ToInt16(byData, offset + iOffset) : (short)ReadUInt16(offset);
 		}
 
 		public void WriteInt16(short value, int offset)
@@ -225,21 +217,8 @@ namespace MaxDB.Data.Utilities
 
 		public uint ReadUInt32(int offset)
 		{
-            if (BitConverter.IsLittleEndian == bSwapMode)
-            {
-                return BitConverter.ToUInt32(byData, offset + iOffset);
-            }
-            else
-            {
-                if (bSwapMode)
-                {
-                    return (uint)(ReadUInt16(offset + 2) * 0x10000 + ReadUInt16(offset));
-                }
-                else
-                {
-                    return (uint)(ReadUInt16(offset) * 0x10000 + ReadUInt16(offset + 2));
-                }
-            }
+            return BitConverter.IsLittleEndian == bSwapMode ? BitConverter.ToUInt32(byData, offset + iOffset) : 
+                bSwapMode ? (uint)(ReadUInt16(offset + 2) * 0x10000 + ReadUInt16(offset)) : (uint)(ReadUInt16(offset) * 0x10000 + ReadUInt16(offset + 2));
 		}
 
 		public void WriteUInt32(uint value, int offset)
@@ -249,14 +228,7 @@ namespace MaxDB.Data.Utilities
 
 		public int ReadInt32(int offset)
 		{
-            if (BitConverter.IsLittleEndian == bSwapMode)
-            {
-                return BitConverter.ToInt32(byData, offset + iOffset);
-            }
-            else
-            {
-                return (int)ReadUInt32(offset);
-            }
+            return BitConverter.IsLittleEndian == bSwapMode ? BitConverter.ToInt32(byData, offset + iOffset) : (int)ReadUInt32(offset);
 		}
 
 		public void WriteInt32(int value, int offset)
@@ -266,33 +238,13 @@ namespace MaxDB.Data.Utilities
 
 		public ulong ReadUInt64(int offset)
 		{
-            if (BitConverter.IsLittleEndian == bSwapMode)
-            {
-                return BitConverter.ToUInt64(byData, offset + iOffset);
-            }
-            else
-            {
-                if (bSwapMode)
-                {
-                    return (ulong)(ReadUInt32(offset + 4) * 0x100000000 + ReadUInt32(offset));
-                }
-                else
-                {
-                    return (ulong)(ReadUInt32(offset) * 0x100000000 + ReadUInt32(offset + 4));
-                }
-            }
+            return BitConverter.IsLittleEndian == bSwapMode ? BitConverter.ToUInt64(byData, offset + iOffset) :
+                bSwapMode ? (ulong)(ReadUInt32(offset + 4) * 0x100000000 + ReadUInt32(offset)) : (ulong)(ReadUInt32(offset) * 0x100000000 + ReadUInt32(offset + 4));
 		}
 
 		public long ReadInt64(int offset)
 		{
-            if (BitConverter.IsLittleEndian == bSwapMode)
-            {
-                return BitConverter.ToInt64(byData, offset + iOffset);
-            }
-            else
-            {
-                return (long)ReadUInt64(offset);
-            }
+            return BitConverter.IsLittleEndian == bSwapMode ? BitConverter.ToInt64(byData, offset + iOffset) : (long)ReadUInt64(offset);
 		}
 
 		public void WriteInt64(long value, int offset)
@@ -326,14 +278,7 @@ namespace MaxDB.Data.Utilities
 		{
 			offset += iOffset;
 
-            if (bSwapMode)
-            {
-                return Encoding.Unicode.GetString(byData, offset, len);
-            }
-            else
-            {
-                return Encoding.BigEndianUnicode.GetString(byData, offset, len);
-            }
+            return bSwapMode ? Encoding.Unicode.GetString(byData, offset, len) : Encoding.BigEndianUnicode.GetString(byData, offset, len);
 		}
 
 		public void WriteUnicode(string value, int offset)

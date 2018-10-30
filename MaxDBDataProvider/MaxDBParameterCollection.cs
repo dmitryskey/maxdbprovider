@@ -1,4 +1,8 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBParameterCollection.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -52,7 +56,7 @@ namespace MaxDB.Data
 		/// <returns>true if the collection contains the <see cref="MaxDBParameter"/> object; otherwise, false.</returns>
 		public override bool Contains(string parameterName)
 		{
-			return (-1 != IndexOf(parameterName));
+			return -1 != IndexOf(parameterName);
 		}
 
 		/// <summary>
@@ -189,9 +193,13 @@ namespace MaxDB.Data
 		/// <returns>true if the collection contains the <see cref="MaxDBParameter"/> object and false otherwise.</returns>
 		public override bool Contains(object value)
 		{
-			foreach (MaxDBParameter param in mCollection)
-				if (param == value)
-					return true;
+            foreach (var param in mCollection)
+            {
+                if (param == value)
+                {
+                    return true;
+                }
+            }
 
 			return false;
 		}
@@ -202,7 +210,7 @@ namespace MaxDB.Data
 		/// <param name="index">The zero-based index of the parameter.</param>
 		public override void RemoveAt(int index)
 		{
-			List<MaxDBParameter> tmp_array = new List<MaxDBParameter>(mCollection);
+			var tmp_array = new List<MaxDBParameter>(mCollection);
 			tmp_array.RemoveAt(index);
 			mCollection = new MaxDBParameter[tmp_array.Count];
 			tmp_array.CopyTo(mCollection);
@@ -233,7 +241,7 @@ namespace MaxDB.Data
 		/// <param name="value"><see cref="MaxDBParameter"/> object to insert.</param>
 		public void Insert(int index, MaxDBParameter value)
 		{
-			List<MaxDBParameter> tmp_array = new List<MaxDBParameter>(mCollection);
+			var tmp_array = new List<MaxDBParameter>(mCollection);
 			tmp_array.Insert(index, (MaxDBParameter)value);
 			mCollection = new MaxDBParameter[tmp_array.Count];
 			tmp_array.CopyTo(mCollection);
@@ -286,9 +294,11 @@ namespace MaxDB.Data
 		/// <param name="value">The <see cref="MaxDBParameter"/> to remove</param>
 		public void Remove(MaxDBParameter value)
 		{
-			int index = ((IList)this).IndexOf(value);
-			if (index >= 0)
-				RemoveAt(index);
+			int index = this.IndexOf(value);
+            if (index >= 0)
+            {
+                RemoveAt(index);
+            }
 		}
 
 		object IList.this[int index]
@@ -314,7 +324,7 @@ namespace MaxDB.Data
 		{
 			get
 			{
-				return (MaxDBParameter)mCollection[index];
+				return mCollection[index];
 			}
 			set
 			{
@@ -336,7 +346,7 @@ namespace MaxDB.Data
 
             if (value.ParameterName != null)
             {
-                MaxDBParameter[] new_collection = new MaxDBParameter[mCollection.Length + 1];
+                var new_collection = new MaxDBParameter[mCollection.Length + 1];
                 mCollection.CopyTo(new_collection, 0);
                 new_collection[mCollection.Length] = value;
                 mCollection = new_collection;
@@ -504,9 +514,12 @@ namespace MaxDB.Data
 		/// <returns>The cloned <see cref="MaxDBParameterCollection"/> object.</returns>
 		public MaxDBParameterCollection Clone()
 		{
-			MaxDBParameterCollection clone = new MaxDBParameterCollection();
-			foreach (MaxDBParameter param in this)
-				clone.Add(((ICloneable)param).Clone());
+			var clone = new MaxDBParameterCollection();
+            foreach (var param in this)
+            {
+                clone.Add(((ICloneable)param).Clone());
+            }
+
 			return clone;
 		}
 

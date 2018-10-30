@@ -1,4 +1,8 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
+//-----------------------------------------------------------------------------------------------
+// <copyright file="BaseTest.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -64,8 +68,11 @@ namespace MaxDB.UnitTesting
         protected void Close()
         {
             DropTestTable();
-            ((IDisposable)mconn).Dispose();
-            if (msw != null) msw.Close();
+            mconn.Dispose();
+            if (msw != null)
+            {
+                msw.Close();
+            }
         }
 
         private void DropTestTable()
@@ -89,8 +96,10 @@ namespace MaxDB.UnitTesting
 
         protected void ExecuteNonQuery(string cmdSql)
         {
-            using (MaxDBCommand cmd = new MaxDBCommand(cmdSql, mconn))
+            using (var cmd = new MaxDBCommand(cmdSql, mconn))
+            {
                 cmd.ExecuteNonQuery();
+            }
         }
 
         protected void DropDbProcedure(string proc)
@@ -116,7 +125,10 @@ namespace MaxDB.UnitTesting
             }
             catch (MaxDBException ex)
             {
-                if (ex.ErrorCode != -4023) Assert.Fail(ex.Message);
+                if (ex.ErrorCode != -4023)
+                {
+                    Assert.Fail(ex.Message);
+                }
             }
         }
 
@@ -124,7 +136,7 @@ namespace MaxDB.UnitTesting
         {
             byte[] buf = new byte[size];
 
-            Random r = new Random();
+            var r = new Random();
             r.NextBytes(buf);
             return buf;
         }

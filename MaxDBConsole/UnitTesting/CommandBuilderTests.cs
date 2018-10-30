@@ -1,5 +1,9 @@
-//	Copyright (C) 2005-2006 Dmitry S. Kataev
-//	Copyright (C) 2004-2005 MySQL AB
+//-----------------------------------------------------------------------------------------------
+// <copyright file="CommandBuilderTests.cs" company="Dmitry S. Kataev">
+//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2004-2005 MySQL AB
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 //	This program is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU General Public License
@@ -16,8 +20,6 @@
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Data;
 using NUnit.Framework;
 using MaxDB.Data;
@@ -27,13 +29,13 @@ namespace MaxDB.UnitTesting
     [TestFixture]
     public class CommandBuilderTests : BaseTest
     {
-        [TestFixtureSetUp]
+        [SetUp]
         public void SetUp()
         {
             Init("CREATE TABLE Test (id INT NOT NULL DEFAULT SERIAL, id2 INT NOT NULL UNIQUE, name VARCHAR(100), tm TIME, PRIMARY KEY(id, id2))");
         }
 
-        [TestFixtureTearDown]
+        [TearDown]
         public void TearDown()
         {
             Close();
@@ -44,11 +46,11 @@ namespace MaxDB.UnitTesting
         {
             try
             {
-                using (MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT id, id2, name, tm FROM Test FOR UPDATE", mconn))
+                using (var da = new MaxDBDataAdapter("SELECT id, id2, name, tm FROM Test FOR UPDATE", mconn))
                 {
-                    MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da);
+                    var cb = new MaxDBCommandBuilder(da);
                     cb.GetType(); //add this command since mcs compiler supposes that cb is never used
-                    DataSet ds = new DataSet();
+                    var ds = new DataSet();
                     da.Fill(ds);
                     Assert.AreEqual(1, ds.Tables.Count, "At least one table should be filled");
 
@@ -67,15 +69,15 @@ namespace MaxDB.UnitTesting
         {
             try
             {
-                using (MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT id, id2, name, tm FROM Test FOR UPDATE", mconn))
+                using (var da = new MaxDBDataAdapter("SELECT id, id2, name, tm FROM Test FOR UPDATE", mconn))
                 {
-                    MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da);
+                    var cb = new MaxDBCommandBuilder(da);
                     cb.GetType(); //add this command since mcs compiler supposes that cb is never used
                     DataSet ds = new DataSet();
                     da.Fill(ds);
                     Assert.AreEqual(1, ds.Tables.Count, "At least one table should be filled");
 
-                    MaxDBParameterCollection collect = cb.GetInsertCommand().Parameters;
+                    var collect = cb.GetInsertCommand().Parameters;
 
                     Assert.AreEqual(3, collect.Count, "GetInsertCommand method returns command with wrong number of parameters");  // serial column is skipped
                     Assert.AreEqual("id2".ToUpper(), collect[0].ParameterName.ToUpper(), "First parameter");
@@ -97,9 +99,9 @@ namespace MaxDB.UnitTesting
         {
             try
             {
-                using (MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT id, id2, name, tm FROM Test FOR UPDATE", mconn))
+                using (var da = new MaxDBDataAdapter("SELECT id, id2, name, tm FROM Test FOR UPDATE", mconn))
                 {
-                    MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da);
+                    var cb = new MaxDBCommandBuilder(da);
                     cb.GetType(); //add this command since mcs compiler supposes that cb is never used
                     DataSet ds = new DataSet();
                     da.Fill(ds);
@@ -120,9 +122,9 @@ namespace MaxDB.UnitTesting
         {
             try
             {
-                using (MaxDBDataAdapter da = new MaxDBDataAdapter("SELECT id, id2, name, tm FROM Test FOR UPDATE", mconn))
+                using (var da = new MaxDBDataAdapter("SELECT id, id2, name, tm FROM Test FOR UPDATE", mconn))
                 {
-                    MaxDBCommandBuilder cb = new MaxDBCommandBuilder(da);
+                    var cb = new MaxDBCommandBuilder(da);
                     cb.GetType(); //add this command since mcs compiler supposes that cb is never used
                     DataSet ds = new DataSet();
                     da.Fill(ds);
