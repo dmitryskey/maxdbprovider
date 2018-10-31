@@ -23,7 +23,7 @@ using MaxDB.Data;
 using NUnit.Framework;
 using System.IO;
 using System.Diagnostics;
-using System.Collections.Specialized;
+using Microsoft.Extensions.Configuration;
 
 namespace MaxDB.UnitTesting
 {
@@ -34,13 +34,13 @@ namespace MaxDB.UnitTesting
     {
         protected MaxDBConnection mconn;
         protected StreamWriter msw;
-        protected NameValueCollection mAppSettings = System.Configuration.ConfigurationManager.AppSettings;
+        protected IConfiguration config = new ConfigurationBuilder().AddJsonFile("appsettings.json", true, true).Build();
 
         public BaseTest()
         {
-            if (mAppSettings["LogFileName"] != null)
+            if (config["LogFileName"] != null)
             {
-                msw = new StreamWriter(mAppSettings["LogFileName"]);
+                msw = new StreamWriter(config["LogFileName"]);
 
                 Trace.Listeners.Clear();
                 Trace.Listeners.Add(new TextWriterTraceListener(msw));
@@ -51,7 +51,7 @@ namespace MaxDB.UnitTesting
         {
             try
             {
-                mconn = new MaxDBConnection(mAppSettings["ConnectionString"]);
+                mconn = new MaxDBConnection(config["ConnectionString"]);
                 mconn.Open();
                 mconn.AutoCommit = true;
 
@@ -85,7 +85,9 @@ namespace MaxDB.UnitTesting
             catch (MaxDBException ex)
             {
                 if (ex.ErrorCode != -4004)
+                {
                     throw;
+                }
             }
         }
 

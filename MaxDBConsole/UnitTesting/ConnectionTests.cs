@@ -40,11 +40,11 @@ namespace MaxDB.UnitTesting
         [SetUp]
         public void SetUp()
         {
-            mconnStr = mAppSettings["ConnectionString"];
-            mconnStrBadAddr = mAppSettings["ConnectionStringBadAddr"];
-            mconnStrBadLogin = mAppSettings["ConnectionStringBadLogin"];
-            mconnStrBadPassword = mAppSettings["ConnectionStringBadPassword"];
-            mconnStrBadDbName = mAppSettings["ConnectionStringBadDbName"];
+            mconnStr = config["ConnectionString"];
+            mconnStrBadAddr = config["ConnectionStringBadAddr"];
+            mconnStrBadLogin = config["ConnectionStringBadLogin"];
+            mconnStrBadPassword = config["ConnectionStringBadPassword"];
+            mconnStrBadDbName = config["ConnectionStringBadDbName"];
         }
 
         [TearDown]
