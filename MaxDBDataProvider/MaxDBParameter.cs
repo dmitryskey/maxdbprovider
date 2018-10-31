@@ -37,8 +37,7 @@ namespace MaxDB.Data
 		private string strParamName;
 		private string strSourceColumn;
 		private int iSize;
-		private byte byPrecision, byScale;
-		private DataRowVersion mSourceVersion = DataRowVersion.Current;
+        private DataRowVersion mSourceVersion = DataRowVersion.Current;
 		internal object objValue;
 		internal object objInputValue;
 
@@ -482,40 +481,10 @@ namespace MaxDB.Data
 			}
 		}
 
-		/// <summary>
-		/// Gets or sets the maximum number of digits used to represent the <see cref="Value"/> property.
-		/// </summary>
-		public byte Precision
-		{
-			get
-			{
-				return byPrecision;
-			}
-			set
-			{
-				byPrecision = value;
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the number of decimal places to which <see cref="Value"/> is resolved.
-		/// </summary>
-		public byte Scale
-		{
-			get
-			{
-				return byScale;
-			}
-			set
-			{
-				byScale = value;
-			}
-		}
-
-		/// <summary>
-		/// Resets the type associated with this <b>MaxDBParameter</b>. 
-		/// </summary>
-		public override void ResetDbType()
+        /// <summary>
+        /// Resets the type associated with this <b>MaxDBParameter</b>. 
+        /// </summary>
+        public override void ResetDbType()
 		{
 			throw new NotImplementedException();
 		}

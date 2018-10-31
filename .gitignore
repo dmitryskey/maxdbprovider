@@ -3,4 +3,5 @@ MaxDBConsole/obj/
 MaxDBDataProvider/bin/
 MaxDBDataProvider/obj/
 packages/
-/.vs/MaxDBDataProvider/v14/*.suo
+.vs
+

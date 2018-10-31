@@ -130,6 +130,7 @@ namespace MaxDB.Data
             mConnArgs.password = mConnStrBuilder.Password;
             if (mConnStrBuilder.CodePage > 0)
             {
+                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
                 UserAsciiEncoding = Encoding.GetEncoding(mConnStrBuilder.CodePage);
             }
         }
