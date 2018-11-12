@@ -503,7 +503,7 @@ namespace MaxDB.Data
                     dataPart.Close();
                 }
 
-                // add a decribe order if command rturns a resultset
+                // add a decribe order if command returns a resultset
                 if (this.mParseInfo.IsSelect && this.mParseInfo.ColumnInfo == null && this.mParseInfo.FuncCode != FunctionCode.DBProcWithResultSetExecute)
                 {
                     requestPacket.InitDbsCommand("DESCRIBE ", false, false);
@@ -516,7 +516,7 @@ namespace MaxDB.Data
                     // if streams are in the command. Even sending it just behind
                     // as next packet is harmful. Same with INPUT LONG parameters of
                     // DB Procedures.
-                    replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, (this.lstInputProcedureLongs == null) ? GCMode.GC_ALLOWED : GCMode.GC_NONE);
+                    replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, this.lstInputProcedureLongs == null ? GCMode.GC_ALLOWED : GCMode.GC_NONE);
                 }
                 catch (MaxDBException ex)
                 {
@@ -1270,7 +1270,7 @@ namespace MaxDB.Data
 
             try
             {
-                reader = new MaxDBDataReader(this.dbConnection, new FetchInfo(this.dbConnection, this.strCursorName, infos, columnNames), this, ((behavior & CommandBehavior.SingleRow) != 0) ? 1 : 0, reply);
+                reader = new MaxDBDataReader(this.dbConnection, new FetchInfo(this.dbConnection, this.strCursorName, infos, columnNames), this, (behavior & CommandBehavior.SingleRow) != 0 ? 1 : 0, reply);
             }
             catch (MaxDBException ex)
             {

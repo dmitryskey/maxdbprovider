@@ -440,7 +440,7 @@ namespace MaxDB.Data.MaxDBProtocol
         /// <returns>Parse info.</returns>
         public MaxDBParseInfo FindParseInfo(string sqlCmd)
         {
-            MaxDBParseInfo result = (MaxDBParseInfo)this[sqlCmd];
+            var result = (MaxDBParseInfo)this[sqlCmd];
             if (this.keepStats && result != null)
             {
                 this.stats[result.FuncCode].AddHit();

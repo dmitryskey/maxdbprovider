@@ -22,6 +22,7 @@
 using System.Resources;
 using System.Text;
 using System.Globalization;
+using System.Collections.Generic;
 
 namespace MaxDB.Data
 {
@@ -285,34 +286,37 @@ namespace MaxDB.Data
 	{
 		private static ResourceManager rm = new ResourceManager("MaxDBMessages", typeof(MaxDBMessages).Assembly);
 
-		private MaxDBMessages()
+		public static string Extract(string key, object o1 = null, object o2 = null, object o3 = null)
 		{
-		}
+            var args = new List<object>();
 
-		public static string Extract(string key)
-		{
-			return Extract(key, null);
-		}
+            if (o1 != null)
+            {
+                args.Add(o1);
 
-		public static string Extract(string key, object o1)
-		{
-			return Extract(key, new object[] { o1 });
-		}
+                if (o2 != null)
+                {
+                    args.Add(o2);
 
-		public static string Extract(string key, object o1, object o2)
-		{
-			return Extract(key, new object[] { o1, o2 });
-		}
+                    if (o3 != null)
+                    {
+                        args.Add(o3);
+                    }
+                }
+            }
 
-		public static string Extract(string key, object o1, object o2, object o3)
-		{
-			return Extract(key, new object[] { o1, o2, o3 });
+            return Extract(key, args.ToArray());
 		}
 
 		public static string Extract(string key, object[] args)
 		{
 			try
 			{
+                if (string.IsNullOrWhiteSpace(key) || key == "0")
+                {
+                    return null;
+                }
+
 				// retrieve text and format it
 				string msg = rm.GetString(key);
 				return args != null ? string.Format(CultureInfo.InvariantCulture, msg, args) : msg;

@@ -34,8 +34,6 @@ namespace MaxDB.Data.MaxDBProtocol
         protected byte byMode;
         protected byte byIOType;
         protected byte byDataType;
-        private string strColumnName;
-        private int iColumnIndex;
 
         public const int iNullDefineByte = 1;
         public const int iSpecialNullValueDefineByte = 2;
@@ -85,14 +83,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public int ColumnIndex
         {
-            get
-            {
-                return iColumnIndex;
-            }
-            set
-            {
-                iColumnIndex = value;
-            }
+            get; set;
         }
 
         public string ColumnTypeName
@@ -129,14 +120,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public string ColumnName
         {
-            get
-            {
-                return strColumnName;
-            }
-            set
-            {
-                strColumnName = value;
-            }
+            get; set;
         }
 
         protected MaxDBConversionException CreateGetException(string requestedType)
@@ -393,7 +377,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (byteLength > iPhysicalLength - 1)
             {
-                throw new MaxDBValueOverflowException(iColumnIndex + 1);
+                throw new MaxDBValueOverflowException(ColumnIndex + 1);
             }
         }
 
