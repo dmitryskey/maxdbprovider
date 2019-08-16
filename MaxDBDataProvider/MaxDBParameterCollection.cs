@@ -38,33 +38,24 @@ namespace MaxDB.Data
 		#region "IDataParameterCollection implementation"
 
 		object IDataParameterCollection.this[string parameterName]
-		{
-			get
-			{
-				return this[IndexOf(parameterName)];
-			}
-			set
-			{
-				this[IndexOf(parameterName)] = (MaxDBParameter)value;
-			}
-		}
+        {
+            get => this[IndexOf(parameterName)];
+            set => this[IndexOf(parameterName)] = (MaxDBParameter)value;
+        }
 
-		/// <summary>
-		/// Gets a value indicating whether a MaxDBParameter exists in the collection.
-		/// </summary>
-		/// <param name="parameterName">The value of the <see cref="MaxDBParameter"/> object to find. </param>
-		/// <returns>true if the collection contains the <see cref="MaxDBParameter"/> object; otherwise, false.</returns>
-		public override bool Contains(string parameterName)
-		{
-			return -1 != IndexOf(parameterName);
-		}
+        /// <summary>
+        /// Gets a value indicating whether a MaxDBParameter exists in the collection.
+        /// </summary>
+        /// <param name="parameterName">The value of the <see cref="MaxDBParameter"/> object to find. </param>
+        /// <returns>true if the collection contains the <see cref="MaxDBParameter"/> object; otherwise, false.</returns>
+        public override bool Contains(string parameterName) => -1 != IndexOf(parameterName);
 
-		/// <summary>
-		/// Gets the location of a <see cref="MaxDBParameter"/> in the collection.
-		/// </summary>
-		/// <param name="parameterName">The <see cref="MaxDBParameter"/> object to locate. </param>
-		/// <returns>The zero-based location of the <see cref="MaxDBParameter"/> in the collection.</returns>
-		public override int IndexOf(string parameterName)
+        /// <summary>
+        /// Gets the location of a <see cref="MaxDBParameter"/> in the collection.
+        /// </summary>
+        /// <param name="parameterName">The <see cref="MaxDBParameter"/> object to locate. </param>
+        /// <returns>The zero-based location of the <see cref="MaxDBParameter"/> in the collection.</returns>
+        public override int IndexOf(string parameterName)
 		{
 			int index = 0;
 			foreach (MaxDBParameter item in this)
@@ -76,122 +67,88 @@ namespace MaxDB.Data
 
 				index++;
 			}
+
 			return -1;
 		}
 
-		/// <summary>
-		/// Removes the specified <see cref="MaxDBParameter"/> from the collection using a name.
-		/// </summary>
-		/// <param name="parameterName">The name of the parameter.</param>
-		public override void RemoveAt(string parameterName)
-		{
-			RemoveAt(IndexOf(parameterName));
-		}
+        /// <summary>
+        /// Removes the specified <see cref="MaxDBParameter"/> from the collection using a name.
+        /// </summary>
+        /// <param name="parameterName">The name of the parameter.</param>
+        public override void RemoveAt(string parameterName) => RemoveAt(IndexOf(parameterName));
 
-		private static int _cultureAwareCompare(string strA, string strB)
-		{
-			return CultureInfo.InvariantCulture.CompareInfo.Compare(strA, strB, CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase);
-		}
+        private static int _cultureAwareCompare(string strA, string strB) =>
+            CultureInfo.InvariantCulture.CompareInfo.Compare(strA, strB, CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase);
 
-		#endregion
+        #endregion
 
-		#region "ICollection implementation"
+        #region "ICollection implementation"
 
-		/// <summary>
-		/// Copy values to the one-dimensional array starting at the specified index of the target array.
-		/// </summary>
-		/// <param name="array">A target array.</param>
-		/// <param name="index">The index in the array at which to begin copying.</param>
-		public override void CopyTo(Array array, int index)
-		{
-			mCollection.CopyTo(array, index);
-		}
+        /// <summary>
+        /// Copy values to the one-dimensional array starting at the specified index of the target array.
+        /// </summary>
+        /// <param name="array">A target array.</param>
+        /// <param name="index">The index in the array at which to begin copying.</param>
+        public override void CopyTo(Array array, int index) => mCollection.CopyTo(array, index);
 
-		/// <summary>
-		/// Copy values to the one-dimensional <see cref="MaxDBParameter"/> array starting at the specified index of the target array.
-		/// </summary>
-		/// <param name="array">A target array.</param>
-		/// <param name="index">The index in the array at which to begin copying.</param>
-		public void CopyTo(MaxDBParameter[] array, int index)
-		{
-			mCollection.CopyTo(array, index);
-		}
+        /// <summary>
+        /// Copy values to the one-dimensional <see cref="MaxDBParameter"/> array starting at the specified index of the target array.
+        /// </summary>
+        /// <param name="array">A target array.</param>
+        /// <param name="index">The index in the array at which to begin copying.</param>
+        public void CopyTo(MaxDBParameter[] array, int index) => mCollection.CopyTo(array, index);
 
-		/// <summary>
-		/// Gets the number of <see cref="MaxDBParameter"/> objects in the collection.
-		/// </summary>
-		public override int Count
-		{
-			get
-			{
-				return mCollection.Length;
-			}
-		}
+        /// <summary>
+        /// Gets the number of <see cref="MaxDBParameter"/> objects in the collection.
+        /// </summary>
+        public override int Count => mCollection.Length;
 
-		/// <summary>
-		/// Gets a value indicating whether collection is synchronized.
-		/// </summary>
-		public override bool IsSynchronized
-		{
-			get
-			{
-				return mCollection.IsSynchronized;
-			}
-		}
+        /// <summary>
+        /// Gets a value indicating whether collection is synchronized.
+        /// </summary>
+        public override bool IsSynchronized => mCollection.IsSynchronized;
 
-		/// <summary>
-		/// Gets an object that can be used to synchronize access to the collection. 
-		/// </summary>
-		public override object SyncRoot
-		{
-			get
-			{
-				return mCollection.SyncRoot;
-			}
-		}
+        /// <summary>
+        /// Gets an object that can be used to synchronize access to the collection. 
+        /// </summary>
+        public override object SyncRoot => mCollection.SyncRoot;
 
-		#endregion
+        #endregion
 
-		#region "IEnumerable implementation"
+        #region "IEnumerable implementation"
 
-		/// <summary>
-		/// Returns an enumerator to support iterating through the collection. 
-		/// </summary>
-		/// <returns>An enumerator object.</returns>
-		public override IEnumerator GetEnumerator()
-		{
-			return mCollection.GetEnumerator();
-		}
+        /// <summary>
+        /// Returns an enumerator to support iterating through the collection. 
+        /// </summary>
+        /// <returns>An enumerator object.</returns>
+        public override IEnumerator GetEnumerator() => mCollection.GetEnumerator();
 
-		#endregion
+        #endregion
 
-		#region "IList implementation"
+        #region "IList implementation"
 
-		/// <summary>
-		/// Adds the specified <see cref="MaxDBParameter"/> object to the <see cref="MaxDBParameterCollection"/>.
-		/// </summary>
-		/// <param name="value">The <see cref="MaxDBParameter"/> to add to the collection.</param>
-		/// <returns>The index of the new <see cref="MaxDBParameter"/> object.</returns>
-		public override int Add(object value)
+        /// <summary>
+        /// Adds the specified <see cref="MaxDBParameter"/> object to the <see cref="MaxDBParameterCollection"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="MaxDBParameter"/> to add to the collection.</param>
+        /// <returns>The index of the new <see cref="MaxDBParameter"/> object.</returns>
+        public override int Add(object value)
 		{
 			Add((MaxDBParameter)value);
 			return mCollection.Length - 1;
 		}
 
-		/// <summary>
-		/// Removes all items from the collection.
-		/// </summary>
-		public override void Clear()
-		{
-			mCollection = new MaxDBParameter[0];
-		}
+        /// <summary>
+        /// Removes all items from the collection.
+        /// </summary>
+        public override void Clear() => mCollection = new MaxDBParameter[0];
 
-		/// <summary>
-		/// Gets a value indicating whether a <see cref="MaxDBParameter"/> exists in the collection.
-		/// </summary>
-		/// <param name="value">The value of the <see cref="MaxDBParameter"/> object to find.</param>
-		/// <returns>true if the collection contains the <see cref="MaxDBParameter"/> object and false otherwise.</returns>
-		public override bool Contains(object value)
+        /// <summary>
+        /// Gets a value indicating whether a <see cref="MaxDBParameter"/> exists in the collection.
+        /// </summary>
+        /// <param name="value">The value of the <see cref="MaxDBParameter"/> object to find.</param>
+        /// <returns>true if the collection contains the <see cref="MaxDBParameter"/> object and false otherwise.</returns>
+        public override bool Contains(object value)
 		{
             foreach (var param in mCollection)
             {

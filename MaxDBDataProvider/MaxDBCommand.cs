@@ -21,7 +21,6 @@
 namespace MaxDB.Data
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Data;
     using System.Data.Common;
@@ -37,7 +36,6 @@ namespace MaxDB.Data
     {
         private const int iMaxParseAgainCnt = 10;
         private MaxDBConnection dbConnection;
-        private MaxDBTransaction dbTransaction;
         private string strCmdText;
         private UpdateRowSource updatedRowSource = UpdateRowSource.None;
         private MaxDBParameterCollection dbParameters = new MaxDBParameterCollection();
@@ -74,10 +72,7 @@ namespace MaxDB.Data
         /// Initializes a new instance of the <see cref="MaxDBCommand"/> class with the text of the query.
         /// </summary>
         /// <param name="cmdText">The text of the query.</param>
-        public MaxDBCommand(string cmdText)
-        {
-            this.strCmdText = cmdText;
-        }
+        public MaxDBCommand(string cmdText) => this.strCmdText = cmdText;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MaxDBCommand"/> class 
@@ -85,10 +80,7 @@ namespace MaxDB.Data
         /// </summary>
         /// <param name="cmdText">The text of the query.</param>
         /// <param name="connection">A <see cref="MaxDBConnection"/> that represents the connection to an instance of MaxDB Server.</param>
-        public MaxDBCommand(string cmdText, MaxDBConnection connection) : this(cmdText)
-        {
-            this.dbConnection = connection;
-        }
+        public MaxDBCommand(string cmdText, MaxDBConnection connection) : this(cmdText) => this.dbConnection = connection;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MaxDBCommand"/> class with the text of the query, a <see cref="MaxDBConnection"/>, 
@@ -97,10 +89,7 @@ namespace MaxDB.Data
         /// <param name="cmdText">The text of the query.</param>
         /// <param name="connection">A <see cref="MaxDBConnection"/> that represents the connection to an instance of MaxDB Server.</param>
         /// <param name="transaction">The <see cref="MaxDBTransaction"/> in which the <see cref="MaxDBCommand"/> executes.</param>
-        public MaxDBCommand(string cmdText, MaxDBConnection connection, MaxDBTransaction transaction) : this(cmdText, connection)
-        {
-            this.dbTransaction = transaction;
-        }
+        public MaxDBCommand(string cmdText, MaxDBConnection connection, MaxDBTransaction transaction) : this(cmdText, connection) => this.Transaction = transaction;
 
         /// <summary>
         /// Validate whether current connection is opened or not.
@@ -118,15 +107,9 @@ namespace MaxDB.Data
         /// </summary>
         public override bool DesignTimeVisible
         {
-            get
-            {
-                return this.bDesignTimeVisible;
-            }
+            get => this.bDesignTimeVisible;
 
-            set
-            {
-                this.bDesignTimeVisible = value;
-            }
+            set => this.bDesignTimeVisible = value;
         }
 
         internal int[] ExecuteBatch(MaxDBParameterCollection[] batchParams)
@@ -141,15 +124,10 @@ namespace MaxDB.Data
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BATCHRESULTSET, new int[0]));
             }
 
-            if (this.mParseInfo != null && (this.mParseInfo.FuncCode == FunctionCode.DBProcExecute || this.mParseInfo.FuncCode == FunctionCode.DBProcWithResultSetExecute))
+            if (this.mParseInfo != null && (this.mParseInfo.FuncCode == FunctionCode.DBProcExecute || this.mParseInfo.FuncCode == FunctionCode.DBProcWithResultSetExecute) &&
+                Array.Exists(this.mParseInfo.mParamInfos, t => t.IsOutput))
             {
-                foreach (DBTechTranslator transl in this.mParseInfo.mParamInfos)
-                {
-                    if (transl.IsOutput)
-                    {
-                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BATCHPROCOUT, new int[0]));
-                    }
-                }
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BATCHPROCOUT, new int[0]));
             }
 
             if (batchParams == null)
@@ -199,13 +177,10 @@ namespace MaxDB.Data
 
                 if (this.mParseInfo != null && this.mParseInfo.mParamInfos.Length > 0)
                 {
-                    foreach (DBTechTranslator currentInfo in this.mParseInfo.mParamInfos)
+                    foreach (var currentInfo in Array.FindAll(this.mParseInfo.mParamInfos, i => i.IsInput))
                     {
-                        if (currentInfo.IsInput)
-                        {
-                            int currentFieldEnd = currentInfo.PhysicalLength + currentInfo.BufPos - 1;
-                            recordSize = Math.Max(recordSize, currentFieldEnd);
-                        }
+                        int currentFieldEnd = currentInfo.PhysicalLength + currentInfo.BufPos - 1;
+                        recordSize = Math.Max(recordSize, currentFieldEnd);
                     }
                 }
 
@@ -264,7 +239,7 @@ namespace MaxDB.Data
 
                             dataPart.MoveRecordBase();
                             inputCursor++;
-                        } 
+                        }
                         while (inputCursor < count && dataPart.HasRoomFor(recordSize, insertCountPartSize) && this.mParseInfo.IsMassCmd);
 
                         if (inputCursor == count)
@@ -365,8 +340,7 @@ namespace MaxDB.Data
                 requestPacket.SetWithInfo();
             }
 
-            var replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, false, true, this, gcFlags);
-            return replyPacket;
+            return this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, false, true, this, gcFlags);
         }
 
         private MaxDBReplyPacket SendSqlCommand(string sql, bool parseAgain)
@@ -1198,7 +1172,7 @@ namespace MaxDB.Data
                             ////<<< SQL TRACE
                             this.iRowsAffected = -1;
                             rowNotFound = true;
-                            if (!isQuery) 
+                            if (!isQuery)
                             {
                                 this.iRowsAffected = 0; // for any select update count must be -1
                             }
@@ -1399,9 +1373,9 @@ namespace MaxDB.Data
                             break;
                     }
                 }
-                
+
                 result.SetShortInfosAndColumnNames(shortInfos, columnNames);
-                
+
                 if (cache != null && !parseAgain)
                 {
                     cache.AddParseInfo(result);
@@ -1441,11 +1415,11 @@ namespace MaxDB.Data
             }
         }
 
-        private static void ResetPutValues(IList inpLongs)
+        private static void ResetPutValues(IList<PutValue> inpLongs)
         {
             if (inpLongs != null)
             {
-                foreach (PutValue putval in inpLongs)
+                foreach (var putval in inpLongs)
                 {
                     putval.Reset();
                 }
@@ -1644,21 +1618,9 @@ namespace MaxDB.Data
             }
         }
 
-        MaxDBConnection ISqlParameterController.Connection
-        {
-            get
-            {
-                return this.dbConnection;
-            }
-        }
+        MaxDBConnection ISqlParameterController.Connection => this.dbConnection;
 
-        ByteArray ISqlParameterController.ReplyData
-        {
-            get
-            {
-                return this.baReplyMemory;
-            }
-        }
+        ByteArray ISqlParameterController.ReplyData => this.baReplyMemory;
 
         #endregion
 
@@ -1666,7 +1628,7 @@ namespace MaxDB.Data
 
         object ICloneable.Clone()
         {
-            var clone = new MaxDBCommand(this.strCmdText, this.dbConnection, this.dbTransaction);
+            var clone = new MaxDBCommand(this.strCmdText, this.dbConnection, this.Transaction);
             foreach (var p in this.Parameters)
             {
                 clone.Parameters.Add((MaxDBParameter)(p as ICloneable).Clone());
@@ -1694,15 +1656,9 @@ namespace MaxDB.Data
         /// </summary>
         public override string CommandText
         {
-            get
-            {
-                return this.strCmdText;
-            }
+            get => this.strCmdText;
 
-            set
-            {
-                this.strCmdText = value;
-            }
+            set => this.strCmdText = value;
         }
 
         /// <summary>
@@ -1710,14 +1666,14 @@ namespace MaxDB.Data
         /// </summary>
         public override int CommandTimeout
         {
-            get
-            {
-                return 0;
-            }
+            get => 0;
 
             set
             {
-                if (value != 0) throw new NotSupportedException();
+                if (value != 0)
+                {
+                    throw new NotSupportedException();
+                }
             }
         }
 
@@ -1726,15 +1682,9 @@ namespace MaxDB.Data
         /// </summary>
         public override CommandType CommandType
         {
-            get
-            {
-                return this.mCmdType;
-            }
+            get => this.mCmdType;
 
-            set
-            {
-                this.mCmdType = value;
-            }
+            set => this.mCmdType = value;
         }
 
         /// <summary>
@@ -1742,15 +1692,9 @@ namespace MaxDB.Data
         /// </summary>
         protected override DbConnection DbConnection
         {
-            get
-            {
-                return this.Connection;
-            }
+            get => this.Connection;
 
-            set
-            {
-                this.Connection = (MaxDBConnection)value;
-            }
+            set => this.Connection = (MaxDBConnection)value;
         }
 
         /// <summary>
@@ -1758,10 +1702,7 @@ namespace MaxDB.Data
         /// </summary>
         public new MaxDBConnection Connection
         {
-            get
-            {
-                return this.dbConnection;
-            }
+            get => this.dbConnection;
 
             set
             {
@@ -1777,19 +1718,13 @@ namespace MaxDB.Data
         /// <summary>
         /// This method is intended for internal use and can not to be called directly from your code.
         /// </summary>
-        protected override DbParameter CreateDbParameter()
-        {
-            return this.CreateParameter();
-        }
+        protected override DbParameter CreateDbParameter() => this.CreateParameter();
 
         /// <summary>
         /// Creates a new instance of a <see cref="MaxDBParameter"/> object.
         /// </summary>
         /// <returns>A new <see cref="MaxDBParameter"/> object.</returns>
-        public new MaxDBParameter CreateParameter()
-        {
-            return new MaxDBParameter();
-        }
+        public new MaxDBParameter CreateParameter() => new MaxDBParameter();
 
         /// <summary>
         /// Executes a SQL statement against the connection and returns the number of rows affected.
@@ -1841,20 +1776,14 @@ namespace MaxDB.Data
         ///    <see cref="MaxDBDataReader.Close"/> method of the <see cref="MaxDBDataReader"/> is called.
         /// </para>
         /// </remarks>
-        public new MaxDBDataReader ExecuteReader()
-        {
-            return this.ExecuteReader(CommandBehavior.Default);
-        }
+        public new MaxDBDataReader ExecuteReader() => this.ExecuteReader(CommandBehavior.Default);
 
         /// <summary>
         /// This method is intended for internal use and can not to be called directly from your code.
         /// </summary>
         /// <param name="behavior">A <see cref="CommandBehavior"/> value.</param>
         /// <returns>A <see cref="DbDataReader"/> object.</returns>
-        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
-        {
-            return this.ExecuteReader(behavior);
-        }
+        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => this.ExecuteReader(behavior);
 
         /// <summary>
         /// Sends the <see cref="CommandText"/> to the <see cref="MaxDBConnection"/> and builds a <see cref="MaxDBDataReader"/>.
@@ -1915,39 +1844,21 @@ namespace MaxDB.Data
         /// <summary>
         /// This method is intended for internal use and can not to be called directly from your code.
         /// </summary>
-        protected override DbParameterCollection DbParameterCollection
-        {
-            get
-            {
-                return this.Parameters;
-            }
-        }
+        protected override DbParameterCollection DbParameterCollection => this.Parameters;
 
         /// <summary>
         /// Gets the <see cref="MaxDBParameterCollection"/>.
         /// </summary>
-        public new MaxDBParameterCollection Parameters
-        {
-            get
-            {
-                return this.dbParameters;
-            }
-        }
+        public new MaxDBParameterCollection Parameters => this.dbParameters;
 
         /// <summary>
         /// This property is intended for internal use and can not to be called directly from your code.
         /// </summary>
         protected override DbTransaction DbTransaction
         {
-            get
-            {
-                return this.Transaction;
-            }
+            get => this.Transaction;
 
-            set
-            {
-                this.Transaction = (MaxDBTransaction)value;
-            }
+            set => this.Transaction = (MaxDBTransaction)value;
         }
 
         /// <summary>
@@ -1955,18 +1866,7 @@ namespace MaxDB.Data
         /// Consider additional steps to ensure that the transaction
         /// is compatible with the connection, because the two are usually linked.
         /// </summary>
-        public new MaxDBTransaction Transaction
-        {
-            get
-            {
-                return this.dbTransaction;
-            }
-
-            set
-            {
-                this.dbTransaction = value;
-            }
-        }
+        public new MaxDBTransaction Transaction { get; set; }
 
         /// <summary>
         /// Gets or sets how command results are applied to the <see cref="DataRow"/>
@@ -1975,15 +1875,9 @@ namespace MaxDB.Data
         /// </summary>
         public override UpdateRowSource UpdatedRowSource
         {
-            get
-            {
-                return this.updatedRowSource;
-            }
+            get => this.updatedRowSource;
 
-            set
-            {
-                this.updatedRowSource = value;
-            }
+            set => this.updatedRowSource = value;
         }
 
         /// <summary>
@@ -2014,11 +1908,11 @@ namespace MaxDB.Data
             if (disposing)
             {
                 this.baReplyMemory = null;
-                if (this.dbConnection != null && (this.mParseInfo != null && !this.mParseInfo.IsCached))
+                if (this.dbConnection != null && this.mParseInfo != null && !this.mParseInfo.IsCached)
                 {
                     if (this.mCurrentDataReader != null)
                     {
-                        ((IDisposable)this.mCurrentDataReader).Dispose();
+                        mCurrentDataReader.Dispose();
                     }
 
                     this.dbConnection.mComm.DropParseID(this.mParseInfo.ParseID);

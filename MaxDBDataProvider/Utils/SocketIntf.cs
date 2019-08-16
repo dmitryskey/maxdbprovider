@@ -24,192 +24,140 @@ using System.Security.Authentication;
 
 namespace MaxDB.Data.Utilities
 {
-	/// <summary>
-	/// Interface to support tcp and ssl connection.
-	/// </summary>
-	internal interface IMaxDBSocket
-	{
-		bool ReopenSocketAfterInfoPacket { get;}
-		bool DataAvailable { get;}
-		Stream Stream { get;}
-		string Host { get;}
-		int Port { get;}
+    /// <summary>
+    /// Interface to support tcp and ssl connection.
+    /// </summary>
+    internal interface IMaxDBSocket
+    {
+        bool ReopenSocketAfterInfoPacket { get; }
+        bool DataAvailable { get; }
+        Stream Stream { get; }
+        string Host { get; }
+        int Port { get; }
 
-		IMaxDBSocket Clone();
-		void Close();
-	}
+        IMaxDBSocket Clone();
+        void Close();
+    }
 
-	internal class SocketClass : IMaxDBSocket, IDisposable
-	{
-		private string strHost;
-		private int iPort;
-		private int iTimeout;
-		private TcpClient mClient;
+    internal class SocketClass : IMaxDBSocket, IDisposable
+    {
+        public static void CheckConnection(string host, int port, int timeout)
+        {
+            using (var sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+            {
+                bool isConnected = false;
 
-		public static void CheckConnection(string host, int port, int timeout)
-		{
-			using (var sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
-			{
-				bool isConnected = false;
-
-				var entries = Dns.GetHostEntry(host);
-				foreach (var ipAddr in entries.AddressList)
-				{
-					sock.Blocking = false;
-					try
-					{
-						sock.Connect(new IPEndPoint(ipAddr, port));
-					}
-					catch (SocketException ex)
-					{
-						if (ex.ErrorCode != 10035 && ex.ErrorCode != 10036)
+                var entries = Dns.GetHostEntry(host);
+                foreach (var ipAddr in entries.AddressList)
+                {
+                    sock.Blocking = false;
+                    try
+                    {
+                        sock.Connect(new IPEndPoint(ipAddr, port));
+                    }
+                    catch (SocketException ex)
+                    {
+                        if (ex.ErrorCode != 10035 && ex.ErrorCode != 10036)
                         {
                             throw;
                         }
-					}
+                    }
 
-					isConnected = sock.Poll(timeout * 1000000, SelectMode.SelectWrite);
-					if (isConnected)
+                    isConnected = sock.Poll(timeout * 1000000, SelectMode.SelectWrite);
+                    if (isConnected)
                     {
                         break;
                     }
-				}
+                }
 
-				if (!isConnected)
+                if (!isConnected)
                 {
                     throw new MaxDBException();
                 }
-			}
-		}
+            }
+        }
 
-		public SocketClass(string host, int port, int timeout, bool checkSocket)
-		{
-			strHost = host;
-			iPort = port;
-			iTimeout = timeout;
+        public SocketClass(string host, int port, int timeout, bool checkSocket)
+        {
+            this.Host = host;
+            this.Port = port;
+            this.Timeout = timeout;
 
-			try
-			{
+            try
+            {
                 if (checkSocket && timeout > 0)
                 {
                     CheckConnection(host, port, timeout);
                 }
 
-				mClient = new TcpClient(host, port);
-				mClient.ReceiveTimeout = iTimeout * 1000;
-			}
-			catch (Exception ex)
-			{
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT_FAILED, strHost, iPort), ex);
-			}
-		}
-
-	#region SocketIntf Members
-
-		public virtual bool ReopenSocketAfterInfoPacket
-		{
-			get
-			{
-				return true;
-			}
-		}
-
-		public virtual bool DataAvailable
-		{
-			get
-			{
-				return mClient != null ? mClient.GetStream().DataAvailable : false;
-			}
-		}
-
-		protected TcpClient Client
-		{
-			get
-			{
-				return mClient;
-			}
-			set
-			{
-				mClient = value;
-			}
-		}
-
-		public int Timeout
-		{
-			get
-			{
-				return iTimeout;
-			}
-		}
-
-		public virtual Stream Stream
-		{
-			get
-			{
-				return mClient != null ? mClient.GetStream() : null;
-			}
-		}
-
-		public string Host
-		{
-			get
-			{
-				return strHost;
-			}
-		}
-
-		public int Port
-		{
-			get
-			{
-				return iPort;
-			}
-		}
-
-		public virtual IMaxDBSocket Clone()
-		{
-			return new SocketClass(strHost, iPort, iTimeout, false);
-		}
-
-		public virtual void Close()
-		{
-			mClient.Close();
-			mClient = null;
-		}
-
-		#endregion
-
-	#region IDisposable Members
-
-		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		private void Dispose(bool disposing)
-		{
-            if (disposing && mClient != null)
-            {
-                ((IDisposable)mClient).Dispose();
+                this.Client = new TcpClient(host, port)
+                {
+                    ReceiveTimeout = Timeout * 1000
+                };
             }
-		}
+            catch (Exception ex)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT_FAILED, Host, Port), ex);
+            }
+        }
 
-		#endregion
-	}
+        #region SocketIntf Members
 
-	internal class SslSocketClass : SocketClass, IMaxDBSocket
-	{
-		private SslStream mSslStream;
-		private string strCertificateError;
-		private string strCertificateName;
+        public virtual bool ReopenSocketAfterInfoPacket => true;
 
-		public SslSocketClass(string host, int port, int timeout, bool check_socket, string certificate)
-			: base(host, port, timeout, check_socket)
-		{
-			strCertificateName = certificate;
+        public virtual bool DataAvailable => this.Client != null ? this.Client.GetStream().DataAvailable : false;
+
+        protected TcpClient Client { get; set; }
+
+        public int Timeout { get; }
+
+        public virtual Stream Stream => this.Client?.GetStream();
+
+        public string Host { get; }
+
+        public int Port { get; }
+
+        public virtual IMaxDBSocket Clone() => new SocketClass(this.Host, this.Port, this.Timeout, false);
+
+        public virtual void Close()
+        {
+            this.Client.Close();
+            this.Client = null;
+        }
+
+        #endregion
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (disposing && Client != null)
+            {
+                ((IDisposable)Client).Dispose();
+            }
+        }
+
+        #endregion
+    }
+
+    internal class SslSocketClass : SocketClass, IMaxDBSocket
+    {
+        private SslStream mSslStream;
+        private string strCertificateError;
+        private readonly string strCertificateName;
+
+        public SslSocketClass(string host, int port, int timeout, bool check_socket, string certificate)
+            : base(host, port, timeout, check_socket)
+        {
+            strCertificateName = certificate;
             mSslStream = new SslStream(
-                Client.GetStream(),
+                this.Client.GetStream(),
                 false,
                 (sender, cert, chain, sslPolicyErrors) =>
                 {
@@ -228,77 +176,61 @@ namespace MaxDB.Data.Utilities
                 null
             );
 
-			try
-			{
-				mSslStream.AuthenticateAsClient(certificate);
-			}
-			catch (AuthenticationException ex)
-			{
-				throw new MaxDBException(strCertificateError + ". " + ex.Message);
-			}
-		}
-
-		public override Stream Stream
-		{
-			get
-			{
-				return mSslStream;
-			}
-		}
-
-		public override IMaxDBSocket Clone()
-		{
-			return new SslSocketClass(Host, Port, Timeout, false, strCertificateName);
-		}
-
-		public override void Close()
-		{
-			mSslStream.Close();
-			mSslStream = null;
-			Client.Close();
-			Client = null;
-		}
-	}
-
-	#region "Join stream class reimplementation"
-
-	internal class JoinStream : Stream
-	{
-		private Stream[] mStreams;
-		private Stream mCurrentStream;
-		private int mCurrentIndex = -1;
-
-		public JoinStream(Stream[] streams)
-		{
-			this.mStreams = streams;
-			NextStream();
-		}
-
-		protected void NextStream()
-		{
-			mCurrentIndex++;
-            if (mCurrentIndex >= mStreams.Length)
+            try
             {
-                mCurrentStream = null;
+                this.mSslStream.AuthenticateAsClient(certificate);
             }
-            else
+            catch (AuthenticationException ex)
             {
-                mCurrentStream = mStreams[mCurrentIndex];
+                throw new MaxDBException(strCertificateError + ". " + ex.Message);
             }
-		}
+        }
 
-		public override int Read(byte[] buffer, int offset, int count)
-		{
-			int result = 0;
-			int chunkLen;
+        public override Stream Stream => this.mSslStream;
 
-			while (mCurrentStream != null && count > 0)
-			{
-				chunkLen = mCurrentStream.Read(buffer, offset, count);
+        public override IMaxDBSocket Clone() => new SslSocketClass(Host, Port, Timeout, false, strCertificateName);
+
+        public override void Close()
+        {
+            this.mSslStream.Close();
+            this.mSslStream = null;
+            this.Client.Close();
+            this.Client = null;
+        }
+    }
+
+    #region "Join stream class reimplementation"
+
+    internal class JoinStream : Stream
+    {
+        private Stream[] mStreams;
+        private Stream mCurrentStream;
+        private int mCurrentIndex = -1;
+
+        public JoinStream(Stream[] streams)
+        {
+            this.mStreams = streams;
+            NextStream();
+        }
+
+        protected void NextStream()
+        {
+            this.mCurrentIndex++;
+            this.mCurrentStream = this.mCurrentIndex >= this.mStreams.Length ? null : this.mStreams[mCurrentIndex];
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int result = 0;
+            int chunkLen;
+
+            while (this.mCurrentStream != null && count > 0)
+            {
+                chunkLen = this.mCurrentStream.Read(buffer, offset, count);
 
                 if (chunkLen == 0)
                 {
-                    NextStream();
+                    this.NextStream();
                 }
                 else
                 {
@@ -306,156 +238,125 @@ namespace MaxDB.Data.Utilities
                     count -= chunkLen;
                     result += chunkLen;
                 }
-			}
+            }
 
             if (result == 0 && mCurrentStream == null)
+            {
                 result = -1;
+            }
 
             return result;
-		}
+        }
 
-		public override void Close()
-		{
-			for (int i = mCurrentIndex; i < mStreams.Length; i++)
-			{
-				try
-				{
-                    if (mStreams[i] != null)
-                    {
-                        mStreams[i].Close();
-                    }
-				}
-				catch (ObjectDisposedException)
-				{
-					// ignore
-				}
-			}
-		}
-
-		public override void Flush()
-		{
-			for (int i = mCurrentIndex; i < mStreams.Length; i++)
-			{
-                if (mStreams[i] != null)
+        public override void Close()
+        {
+            for (int i = this.mCurrentIndex; i < this.mStreams.Length; i++)
+            {
+                try
                 {
-                    mStreams[i].Flush();
+                    if (this.mStreams[i] != null)
+                    {
+                        this.mStreams[i].Close();
+                    }
                 }
-			}
-		}
+                catch (ObjectDisposedException)
+                {
+                    // ignore
+                }
+            }
+        }
 
-		public override long Length
-		{
-			get
-			{
-				long length = 0;
-				for (int i = mCurrentIndex; i < mStreams.Length; i++)
-				{
-					try
-					{
-                        if (mStreams[i] != null)
+        public override void Flush()
+        {
+            for (int i = this.mCurrentIndex; i < this.mStreams.Length; i++)
+            {
+                if (this.mStreams[i] != null)
+                {
+                    this.mStreams[i].Flush();
+                }
+            }
+        }
+
+        public override long Length
+        {
+            get
+            {
+                long length = 0;
+                for (int i = this.mCurrentIndex; i < this.mStreams.Length; i++)
+                {
+                    try
+                    {
+                        if (this.mStreams[i] != null)
                         {
-                            length += mStreams[i].Length;
+                            length += this.mStreams[i].Length;
                         }
-					}
-					catch (NotSupportedException)
-					{
-						// ignore
-					}
-					catch (ObjectDisposedException)
-					{
-						// ignore
-					}
-				}
+                    }
+                    catch (NotSupportedException)
+                    {
+                        // ignore
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // ignore
+                    }
+                }
 
-				return length;
-			}
-		}
+                return length;
+            }
+        }
 
-		public override bool CanRead
-		{
-			get
-			{
-				return true;
-			}
-		}
+        public override bool CanRead => true;
 
-		public override bool CanSeek
-		{
-			get
-			{
-				return false;
-			}
-		}
+        public override bool CanSeek => false;
 
-		public override bool CanWrite
-		{
-			get
-			{
-				return false;
-			}
-		}
+        public override bool CanWrite => false;
 
-		public override long Position
-		{
-			get
-			{
-				throw new NotSupportedException();
-			}
-			set
-			{
-				throw new NotSupportedException();
-			}
-		}
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
 
-		public override long Seek(long offset, SeekOrigin origin)
-		{
-			throw new NotSupportedException();
-		}
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 
-		public override void SetLength(long value)
-		{
-			throw new NotSupportedException();
-		}
+        public override void SetLength(long value) => throw new NotSupportedException();
 
-		public override void Write(byte[] buffer, int offset, int count)
-		{
-			throw new NotSupportedException();
-		}
-	}
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
 
-	#endregion
+    #endregion
 
-	#region "Join text reader class reimplemetation"
+    #region "Join text reader class reimplemetation"
 
-	internal class JoinTextReader : TextReader
-	{
-		protected TextReader[] mReaders;
-		protected TextReader mCurrentReader;
-		protected int iCurrentIndex = -1;
+    internal class JoinTextReader : TextReader
+    {
+        protected TextReader[] mReaders;
+        protected TextReader mCurrentReader;
+        protected int iCurrentIndex = -1;
 
-		public JoinTextReader(TextReader[] readers)
-		{
-			mReaders = readers;
-			NextReader();
-		}
+        public JoinTextReader(TextReader[] readers)
+        {
+            this.mReaders = readers;
+            this.NextReader();
+        }
 
-		protected void NextReader()
-		{
-			iCurrentIndex++;
-            mCurrentReader = iCurrentIndex >= mReaders.Length ? null : mReaders[iCurrentIndex];
-		}
+        protected void NextReader()
+        {
+            this.iCurrentIndex++;
+            this.mCurrentReader = this.iCurrentIndex >= this.mReaders.Length ? null : this.mReaders[iCurrentIndex];
+        }
 
-		public override int Read(char[] buffer, int index, int count)
-		{
-			int result = 0;
-			int chunkLen;
+        public override int Read(char[] buffer, int index, int count)
+        {
+            int result = 0;
+            int chunkLen;
 
-			while (mCurrentReader != null && count > 0)
-			{
-				chunkLen = mCurrentReader.Read(buffer, index, count);
+            while (this.mCurrentReader != null && count > 0)
+            {
+                chunkLen = this.mCurrentReader.Read(buffer, index, count);
                 if (chunkLen == -1)
                 {
-                    NextReader();
+                    this.NextReader();
                 }
                 else
                 {
@@ -463,72 +364,72 @@ namespace MaxDB.Data.Utilities
                     count -= chunkLen;
                     result += chunkLen;
                 }
-			}
+            }
 
-            if (result == 0 && mCurrentReader == null)
+            if (result == 0 && this.mCurrentReader == null)
             {
                 result = -1;
             }
 
-			return result;
-		}
+            return result;
+        }
 
-		public override int Read()
-		{
-			int result = 0;
-			while (mCurrentReader != null)
-			{
-				result = mCurrentReader.Read();
+        public override int Read()
+        {
+            int result = 0;
+            while (this.mCurrentReader != null)
+            {
+                result = this.mCurrentReader.Read();
                 if (result == -1)
                 {
-                    NextReader();
+                    this.NextReader();
                 }
-			}
+            }
 
-            if (mCurrentReader == null)
+            if (this.mCurrentReader == null)
             {
                 result = -1;
             }
 
-			return result;
-		}
+            return result;
+        }
 
-		public override void Close()
-		{
-			foreach (var reader in mReaders)
-			{
-				try
-				{
+        public override void Close()
+        {
+            foreach (var reader in this.mReaders)
+            {
+                try
+                {
                     if (reader != null)
                     {
                         reader.Close();
                     }
-				}
-				catch (ObjectDisposedException)
-				{
-					// ignore
-				}
-			}
-		}
-	}
-	#endregion
+                }
+                catch (ObjectDisposedException)
+                {
+                    // ignore
+                }
+            }
+        }
+    }
+    #endregion
 
-	#region "Stream filter class reimplementation"
+    #region "Stream filter class reimplementation"
 
-	internal class FilteredStream : Stream
-	{
-		private int iMaxLength;
-		private Stream mStream;
-		private int iReadlength;
+    internal class FilteredStream : Stream
+    {
+        private readonly int iMaxLength;
+        private Stream mStream;
+        private int iReadlength;
 
-		public FilteredStream(Stream stream, int length)
-		{
-			iMaxLength = length;
-			mStream = stream;
-		}
+        public FilteredStream(Stream stream, int length)
+        {
+            this.iMaxLength = length;
+            this.mStream = stream;
+        }
 
-		public override int Read(byte[] buffer, int offset, int count)
-		{
+        public override int Read(byte[] buffer, int offset, int count)
+        {
             if (buffer == null)
             {
                 throw new InvalidOperationException();
@@ -539,14 +440,14 @@ namespace MaxDB.Data.Utilities
                 throw new OverflowException();
             }
 
-            if (iReadlength >= iMaxLength)
+            if (this.iReadlength >= this.iMaxLength)
             {
                 return -1;
             }
 
-            if (iReadlength + count > iMaxLength)
+            if (this.iReadlength + count > this.iMaxLength)
             {
-                count = iMaxLength - iReadlength;
+                count = this.iMaxLength - this.iReadlength;
             }
 
             if (count <= 0)
@@ -554,99 +455,54 @@ namespace MaxDB.Data.Utilities
                 return 0;
             }
 
-			count = mStream.Read(buffer, offset, count);
-			iReadlength += count;
-			return count;
-		}
+            count = this.mStream.Read(buffer, offset, count);
+            this.iReadlength += count;
+            return count;
+        }
 
-		public override bool CanRead
-		{
-			get
-			{
-				return true;
-			}
-		}
+        public override bool CanRead => true;
 
-		public override bool CanSeek
-		{
-			get
-			{
-				return false;
-			}
-		}
+        public override bool CanSeek => false;
 
-		public override bool CanWrite
-		{
-			get
-			{
-				return false;
-			}
-		}
+        public override bool CanWrite => false;
 
-		public override long Position
-		{
-			get
-			{
-				throw new NotSupportedException();
-			}
-			set
-			{
-				throw new NotSupportedException();
-			}
-		}
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
 
-		public override long Seek(long offset, SeekOrigin origin)
-		{
-			throw new NotSupportedException();
-		}
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 
-		public override void SetLength(long value)
-		{
-			throw new NotSupportedException();
-		}
+        public override void SetLength(long value) => throw new NotSupportedException();
 
-		public override void Write(byte[] buffer, int offset, int count)
-		{
-			throw new NotSupportedException();
-		}
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 
-		public override void Flush()
-		{
-			mStream.Flush();
-		}
+        public override void Flush() => mStream.Flush();
 
-		public override long Length
-		{
-			get
-			{
-				return mStream.Length;
-			}
-		}
-	}
+        public override long Length => mStream.Length;
+    }
 
-	#endregion
+    #endregion
 
-	#region "Text reader filter class reimplementation"
+    #region "Text reader filter class reimplementation"
 
-	internal class TextReaderFilter : TextReader
-	{
-		private int iMaxLength;
-		private TextReader mStream;
-		private int iReadLength;
+    internal class TextReaderFilter : TextReader
+    {
+        private readonly int iMaxLength;
+        private readonly TextReader mStream;
+        private int iReadLength;
 
-		public TextReaderFilter(TextReader stream, int length)
-		{
-			iMaxLength = length;
-			mStream = stream;
-		}
+        public TextReaderFilter(TextReader stream, int length)
+        {
+            this.iMaxLength = length;
+            this.mStream = stream;
+        }
 
-		public override int Read()
-		{
-			return iMaxLength <= iReadLength++ ? -1 : mStream.Read();
-		}
+        public override int Read() => this.iMaxLength <= this.iReadLength++ ? -1 : this.mStream.Read();
 
-		public override int Read(char[] buffer, int index, int count)
-		{
+        public override int Read(char[] buffer, int index, int count)
+        {
             if (buffer == null)
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "buffer"));
@@ -657,14 +513,14 @@ namespace MaxDB.Data.Utilities
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INDEX_OUTOFRANGE, index));
             }
 
-            if (iReadLength >= iMaxLength)
+            if (this.iReadLength >= this.iMaxLength)
             {
                 return -1;
             }
 
-            if (iReadLength + count > iMaxLength)
+            if (this.iReadLength + count > this.iMaxLength)
             {
-                count = iMaxLength - iReadLength;
+                count = this.iMaxLength - this.iReadLength;
             }
 
             if (count <= 0)
@@ -672,208 +528,163 @@ namespace MaxDB.Data.Utilities
                 return 0;
             }
 
-			count = mStream.Read(buffer, index, count);
-			iReadLength += count;
-			return count;
-		}
+            count = this.mStream.Read(buffer, index, count);
+            this.iReadLength += count;
+            return count;
+        }
 
-		public override void Close()
-		{
-			mStream.Close();
-		}
-	}
+        public override void Close() => this.mStream.Close();
+    }
 
-	#endregion
+    #endregion
 
-	#region "Raw byte stream reader class implementation"
+    #region "Raw byte stream reader class implementation"
 
-	internal class RawByteReader : StreamReader
-	{
-		public RawByteReader(Stream stream)
-			: base(stream)
-		{
-		}
+    internal class RawByteReader : StreamReader
+    {
+        public RawByteReader(Stream stream)
+            : base(stream)
+        {
+        }
 
-		public override int Read(char[] buffer, int index, int count)
-		{
+        public override int Read(char[] buffer, int index, int count)
+        {
             if (buffer == null)
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "buffer"));
             }
 
-			try
-			{
-				byte[] bbuf = new byte[count];
-				int result = BaseStream.Read(bbuf, 0, count);
+            try
+            {
+                byte[] bbuf = new byte[count];
+                int result = BaseStream.Read(bbuf, 0, count);
 
                 if (result == -1)
                 {
                     return -1;
                 }
 
-				int off_i = index;
-				for (int i = 0; i < result; i++, off_i++)
-				{
-					int current = bbuf[i] & 0xFF;
-					buffer[off_i] = (char)current;
-				}
+                int off_i = index;
+                for (int i = 0; i < result; i++, off_i++)
+                {
+                    int current = bbuf[i] & 0xFF;
+                    buffer[off_i] = (char)current;
+                }
 
-				return result;
-			}
-			catch (Exception ex)
-			{
-				throw new IOException(ex.Message);
-			}
-		}
-	}
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new IOException(ex.Message);
+            }
+        }
+    }
 
-	#endregion
+    #endregion
 
-	#region "Stream class based on reader"
+    #region "Stream class based on reader"
 
-	internal class ReaderStream : Stream
-	{
-		private TextReader mReader;
-		private char[] chBuffer = new char[4096];
-		private byte[] byBuffer;
-		private int iBufPos;
-		private int iBufExtent;
-		private bool bAtEnd;
-		private bool bSevenBit;
+    internal class ReaderStream : Stream
+    {
+        private readonly TextReader mReader;
+        private readonly char[] chBuffer = new char[4096];
+        private byte[] byBuffer;
+        private int iBufPos;
+        private int iBufExtent;
+        private bool bAtEnd;
+        private readonly bool bSevenBit;
 
-		public ReaderStream(TextReader reader, bool sevenBit)
-		{
-			mReader = reader;
-			bSevenBit = sevenBit;
-		}
+        public ReaderStream(TextReader reader, bool sevenBit)
+        {
+            this.mReader = reader;
+            this.bSevenBit = sevenBit;
+        }
 
-		public override bool CanRead
-		{
-			get
-			{
-				return true;
-			}
-		}
+        public override bool CanRead => true;
 
-		public override bool CanSeek
-		{
-			get
-			{
-				return false;
-			}
-		}
+        public override bool CanSeek => false;
 
-		public override bool CanWrite
-		{
-			get
-			{
-				return false;
-			}
-		}
+        public override bool CanWrite => false;
 
-		public override long Length
-		{
-			get
-			{
-				return 0;
-			}
-		}
+        public override long Length => 0;
 
-		public override long Position
-		{
-			get
-			{
-				throw new NotSupportedException();
-			}
-			set
-			{
-				throw new NotSupportedException();
-			}
-		}
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
 
-		public override void Flush()
-		{
-			throw new NotSupportedException();
-		}
+        public override void Flush() => throw new NotSupportedException();
 
-		public override long Seek(long offset, SeekOrigin origin)
-		{
-			throw new NotSupportedException();
-		}
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 
-		public override void SetLength(long value)
-		{
-			throw new NotSupportedException();
-		}
+        public override void SetLength(long value) => throw new NotSupportedException();
 
-		public override void Write(byte[] buffer, int offset, int count)
-		{
-			throw new NotSupportedException();
-		}
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 
-		public override void Close()
-		{
-			iBufPos = 0;
-			iBufExtent = 0;
-			mReader.Close();
-		}
+        public override void Close()
+        {
+            this.iBufPos = 0;
+            this.iBufExtent = 0;
+            this.mReader.Close();
+        }
 
-		public override int ReadByte()
-		{
-			int result;
+        public override int ReadByte()
+        {
+            int result;
 
-            if (iBufPos >= iBufExtent)
+            if (this.iBufPos >= this.iBufExtent)
             {
                 FillBuffer();
             }
 
-			result = byBuffer[iBufPos];
-			iBufPos++;
-			return result;
-		}
+            result = this.byBuffer[iBufPos];
+            iBufPos++;
+            return result;
+        }
 
-		public override int Read(byte[] buffer, int offset, int count)
-		{
-			int bytesCopied = 0;
-			bool atEnd = false;
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int bytesCopied = 0;
+            bool atEnd = false;
 
-			while ((count > 0) && !atEnd)
-			{
-                if (iBufPos >= iBufExtent)
+            while (count > 0 && !atEnd)
+            {
+                if (this.iBufPos >= this.iBufExtent)
                 {
-                    FillBuffer();
+                    this.FillBuffer();
                 }
 
-                if (iBufPos >= iBufExtent)
+                if (this.iBufPos >= this.iBufExtent)
                 {
                     break;
                 }
 
-				int copySize = Math.Min(count, iBufExtent - iBufPos);
-                Buffer.BlockCopy(byBuffer, iBufPos, buffer, offset, copySize);
-				iBufPos += copySize;
-				offset += copySize;
-				count -= copySize;
-				bytesCopied += copySize;
-				atEnd = this.bAtEnd;
-			}
+                int copySize = Math.Min(count, this.iBufExtent - this.iBufPos);
+                Buffer.BlockCopy(byBuffer, this.iBufPos, buffer, offset, copySize);
+                this.iBufPos += copySize;
+                offset += copySize;
+                count -= copySize;
+                bytesCopied += copySize;
+                atEnd = this.bAtEnd;
+            }
 
             if (bytesCopied == 0)
             {
                 bytesCopied = -1;
             }
 
-			return bytesCopied;
-		}
+            return bytesCopied;
+        }
 
-		private void FillBuffer()
-		{
-			iBufPos = 0;
-			iBufExtent = 0;
-			int charsRead = mReader.Read(chBuffer, 0, chBuffer.Length);
-            if (charsRead < chBuffer.Length)
+        private void FillBuffer()
+        {
+            this.iBufPos = 0;
+            this.iBufExtent = 0;
+            int charsRead = this.mReader.Read(this.chBuffer, 0, this.chBuffer.Length);
+            if (charsRead < this.chBuffer.Length)
             {
-                bAtEnd = true;
+                this.bAtEnd = true;
             }
 
             if (charsRead < 0)
@@ -881,9 +692,9 @@ namespace MaxDB.Data.Utilities
                 return;
             }
 
-            byBuffer = bSevenBit ? Encoding.ASCII.GetBytes(chBuffer, 0, charsRead) : Encoding.GetEncoding(1252).GetBytes(chBuffer, 0, charsRead);
-			iBufExtent = byBuffer.Length;
-		}
-	}
-	#endregion
+            this.byBuffer = this.bSevenBit ? Encoding.ASCII.GetBytes(this.chBuffer, 0, charsRead) : Encoding.GetEncoding(1252).GetBytes(this.chBuffer, 0, charsRead);
+            this.iBufExtent = this.byBuffer.Length;
+        }
+    }
+    #endregion
 }

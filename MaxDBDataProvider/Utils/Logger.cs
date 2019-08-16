@@ -21,115 +21,91 @@ using System.Globalization;
 
 namespace MaxDB.Data.Utilities
 {
-	internal enum MaxDBTraceLevel
-	{
-		None = 0,
-		SqlOnly = 1,
-		Full = 2
-	}
+    internal enum MaxDBTraceLevel
+    {
+        None = 0,
+        SqlOnly = 1,
+        Full = 2
+    }
 
-	internal class MaxDBTraceSwitch : Switch
-	{
-		public MaxDBTraceSwitch(string displayName, string description)
-			: base(displayName, description)
-		{
-		}
+    internal class MaxDBTraceSwitch : Switch
+    {
+        public MaxDBTraceSwitch(string displayName, string description)
+            : base(displayName, description)
+        {
+        }
 
-		public MaxDBTraceLevel Level
-		{
-			get
-			{
-				switch (SwitchSetting)
-				{
-					case (int)MaxDBTraceLevel.None:
-						return MaxDBTraceLevel.None;
-					case (int)MaxDBTraceLevel.SqlOnly:
-						return MaxDBTraceLevel.SqlOnly;
-					case (int)MaxDBTraceLevel.Full:
-						return MaxDBTraceLevel.Full;
-					default:
-						return MaxDBTraceLevel.None;
-				}
-			}
-		}
+        public MaxDBTraceLevel Level
+        {
+            get
+            {
+                switch (SwitchSetting)
+                {
+                    case (int)MaxDBTraceLevel.None:
+                        return MaxDBTraceLevel.None;
+                    case (int)MaxDBTraceLevel.SqlOnly:
+                        return MaxDBTraceLevel.SqlOnly;
+                    case (int)MaxDBTraceLevel.Full:
+                        return MaxDBTraceLevel.Full;
+                    default:
+                        return MaxDBTraceLevel.None;
+                }
+            }
+        }
 
-		public bool TraceSQL
-		{
-			get
-			{
-				return Level != MaxDBTraceLevel.None;
-			}
-		}
+        public bool TraceSQL => Level != MaxDBTraceLevel.None;
 
-		public bool TraceFull
-		{
-			get
-			{
-				return Level == MaxDBTraceLevel.Full;
-			}
-		}
-	}
+        public bool TraceFull => Level == MaxDBTraceLevel.Full;
+    }
 
-	internal class MaxDBLogger
-	{
-		public const int
-			NumSize = 4,
-			TypeSize = 16,
-			LenSize = 10,
-			InputSize = 10,
-			DataSize = 256;
+    internal class MaxDBLogger
+    {
+        public const int
+            NumSize = 4,
+            TypeSize = 16,
+            LenSize = 10,
+            InputSize = 10,
+            DataSize = 256;
 
-		public const string Null = "NULL";
+        public const string Null = "NULL";
 
-		private MaxDBTraceSwitch mSwitcher = new MaxDBTraceSwitch("TraceLevel", "Trace Level");
+        private MaxDBTraceSwitch mSwitcher = new MaxDBTraceSwitch("TraceLevel", "Trace Level");
 
-		public MaxDBLogger()
-		{
-		}
+        public MaxDBLogger()
+        {
+        }
 
-		public bool TraceSQL
-		{
-			get
-			{
-				return mSwitcher.TraceSQL;
-			}
-		}
+        public bool TraceSQL => mSwitcher.TraceSQL;
 
-		public bool TraceFull
-		{
-			get
-			{
-				return mSwitcher.TraceFull;
-			}
-		}
+        public bool TraceFull => mSwitcher.TraceFull;
 
-		public void SqlTrace(DateTime dt, string msg)
-		{
+        public void SqlTrace(DateTime dt, string msg)
+        {
             if (mSwitcher.TraceSQL)
             {
                 Trace.WriteLine(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " " + msg);
             }
-		}
+        }
 
-		public void SqlTraceParseInfo(DateTime dt, object objInfo)
-		{
-			var parseInfo = (MaxDBParseInfo)objInfo;
-			if (mSwitcher.TraceSQL)
-			{
-				if (parseInfo.ParamInfo != null && parseInfo.ParamInfo.Length > 0)
-				{
-					SqlTrace(dt, "PARAMETERS:");
-					SqlTrace(dt, "I   T              L    P   IO    N");
-					foreach (var info in parseInfo.ParamInfo)
-					{
-						Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
+        public void SqlTraceParseInfo(DateTime dt, object objInfo)
+        {
+            var parseInfo = (MaxDBParseInfo)objInfo;
+            if (mSwitcher.TraceSQL)
+            {
+                if (parseInfo.ParamInfo != null && parseInfo.ParamInfo.Length > 0)
+                {
+                    SqlTrace(dt, "PARAMETERS:");
+                    SqlTrace(dt, "I   T              L    P   IO    N");
+                    foreach (var info in parseInfo.ParamInfo)
+                    {
+                        Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
 
-						SqlTraceTransl(info);
+                        SqlTraceTransl(info);
 
-						if (FunctionCode.IsQuery(parseInfo.FuncCode))
-						{
-							if (!info.IsOutput)
-							{
+                        if (FunctionCode.IsQuery(parseInfo.FuncCode))
+                        {
+                            if (!info.IsOutput)
+                            {
                                 if (info.IsInput)
                                 {
                                     if (info.IsOutput)
@@ -145,10 +121,10 @@ namespace MaxDB.Data.Utilities
                                 {
                                     Trace.Write(" OUT   ");
                                 }
-							}
-						}
-						else
-						{
+                            }
+                        }
+                        else
+                        {
                             if (info.IsInput)
                             {
                                 if (info.IsOutput)
@@ -164,45 +140,42 @@ namespace MaxDB.Data.Utilities
                             {
                                 Trace.Write(" OUT   ");
                             }
-						}
+                        }
 
-						Trace.WriteLine(info.ColumnName);
-					}
-				}
+                        Trace.WriteLine(info.ColumnName);
+                    }
+                }
 
-				if (parseInfo.ColumnInfo != null && parseInfo.ColumnInfo.Length > 0)
-				{
-					SqlTrace(dt, "COLUMNS:");
-					SqlTrace(dt, "I   T              L           P           N");
-					foreach (var info in parseInfo.ColumnInfo)
-					{
-						Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
-						SqlTraceTransl(info);
-						Trace.WriteLine(info.ColumnName);
-					}
-				}
-			}
-		}
+                if (parseInfo.ColumnInfo != null && parseInfo.ColumnInfo.Length > 0)
+                {
+                    SqlTrace(dt, "COLUMNS:");
+                    SqlTrace(dt, "I   T              L           P           N");
+                    foreach (var info in parseInfo.ColumnInfo)
+                    {
+                        Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
+                        SqlTraceTransl(info);
+                        Trace.WriteLine(info.ColumnName);
+                    }
+                }
+            }
+        }
 
-		public void SqlTraceDataHeader(DateTime dt)
-		{
-			SqlTrace(dt, "I".PadRight(NumSize) + "T".PadRight(TypeSize) + "L".PadRight(LenSize) + "I".PadRight(InputSize) + "DATA");
-		}
+        public void SqlTraceDataHeader(DateTime dt) => SqlTrace(dt, "I".PadRight(NumSize) + "T".PadRight(TypeSize) + "L".PadRight(LenSize) + "I".PadRight(InputSize) + "DATA");
 
-		private static void SqlTraceTransl(DBTechTranslator info)
-		{
-			Trace.Write(info.ColumnIndex.ToString(CultureInfo.InvariantCulture).PadRight(4));
-			Trace.Write(info.ColumnTypeName.PadRight(15));
-			Trace.Write((info.PhysicalLength - 1).ToString(CultureInfo.InvariantCulture).PadRight(12));
-			Trace.Write(info.Precision.ToString(CultureInfo.InvariantCulture).PadRight(12));
-		}
+        private static void SqlTraceTransl(DBTechTranslator info)
+        {
+            Trace.Write(info.ColumnIndex.ToString(CultureInfo.InvariantCulture).PadRight(4));
+            Trace.Write(info.ColumnTypeName.PadRight(15));
+            Trace.Write((info.PhysicalLength - 1).ToString(CultureInfo.InvariantCulture).PadRight(12));
+            Trace.Write(info.Precision.ToString(CultureInfo.InvariantCulture).PadRight(12));
+        }
 
-		public void Flush()
-		{
-			if (mSwitcher.TraceSQL)
-			{
-				Trace.Flush();
-			}
-		}
-	}
+        public void Flush()
+        {
+            if (mSwitcher.TraceSQL)
+            {
+                Trace.Flush();
+            }
+        }
+    }
 }

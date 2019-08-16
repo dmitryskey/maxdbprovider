@@ -44,7 +44,7 @@ namespace MaxDB.Data.MaxDBProtocol
         /// Bottpm cache element.
         /// </summary>
         private Association lruBottom;
-        
+
         /// <summary>
         /// Current cache size.
         /// </summary>
@@ -171,31 +171,18 @@ namespace MaxDB.Data.MaxDBProtocol
         /// </summary>
         private class Association : DoubleList
         {
-            /// <summary>
-            /// Current element key.
-            /// </summary>
-            private readonly object objKey;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="Association"/> class.
             /// </summary>
             /// <param name="key">Key value.</param>
             /// <param name="val">Element value.</param>
-            public Association(object key, object val) : base(val)
-            {
-                this.objKey = key;
-            }
+            public Association(object key, object val) : base(val) => this.Key = key;
 
             /// <summary>
             /// Gets the key value.
             /// </summary>
-            public object Key
-            {
-                get
-                {
-                    return this.objKey;
-                }
-            }
+            public object Key { get; }
         }
 
         /// <summary>
@@ -206,12 +193,7 @@ namespace MaxDB.Data.MaxDBProtocol
             /// <summary>
             /// Previous and next links.
             /// </summary>
-            private DoubleList prevLink, nextLink;
-
-            /// <summary>
-            /// Object data.
-            /// </summary>
-            private object objData;
+            private DoubleList nextLink;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="DoubleList"/> class.
@@ -219,47 +201,35 @@ namespace MaxDB.Data.MaxDBProtocol
             /// <param name="data">List element.</param>
             protected DoubleList(object data)
             {
-                this.objData = data;
+                this.Data = data;
             }
 
             /// <summary>
             /// Gets a list element
             /// </summary>
-            public object Data
-            {
-                get
-                {
-                    return this.objData;
-                }
-            }
+            public object Data { get; }
 
             /// <summary>
             /// Gets the previous element.
             /// </summary>
-            public DoubleList Prev
-            {
-                get
-                {
-                    return this.prevLink;
-                }
-            }
+            public DoubleList Prev { get; private set; }
 
             /// <summary>
             /// Remove the element from the list.
             /// </summary>
             public void Remove()
             {
-                if (this.prevLink != null)
+                if (this.Prev != null)
                 {
-                    this.prevLink.nextLink = this.nextLink;
+                    this.Prev.nextLink = this.nextLink;
                 }
 
                 if (this.nextLink != null)
                 {
-                    this.nextLink.prevLink = this.prevLink;
+                    this.nextLink.Prev = this.Prev;
                 }
 
-                this.prevLink = null;
+                this.Prev = null;
                 this.nextLink = null;
             }
 
@@ -270,7 +240,7 @@ namespace MaxDB.Data.MaxDBProtocol
             public void Prepend(DoubleList newHead)
             {
                 newHead.nextLink = this;
-                this.prevLink = newHead;
+                this.Prev = newHead;
             }
         }
     }
@@ -287,7 +257,7 @@ namespace MaxDB.Data.MaxDBProtocol
         /// <summary>
         /// Cache element name.
         /// </summary>
-        private string strName;
+        private readonly string strName;
 
         /// <summary>
         /// Hists counter.
@@ -303,47 +273,28 @@ namespace MaxDB.Data.MaxDBProtocol
         /// Initializes a new instance of the <see cref="CacheInfo"/> class.
         /// </summary>
         /// <param name="name">Cache element name.</param>
-        public CacheInfo(string name)
-        {
-            this.strName = name;
-        }
+        public CacheInfo(string name) => this.strName = name;
 
         /// <summary>
         /// Gets the hit rate.
         /// </summary>
-        private double Hitrate
-        {
-            get
-            {
-                long all = this.hits + this.misses;
-                return (double)this.hits / (double)all * 100.0;
-            }
-        }
+        private double Hitrate => this.hits / (this.hits + this.misses) * 100.0;
 
         /// <summary>
         /// String representation of the current cache info.
         /// </summary>
         /// <returns>String value.</returns>
-        public override string ToString()
-        {
-            return this.strName + ": " + this.hits + " hits, " + this.misses + " misses, " + this.Hitrate + "%";
-        }
+        public override string ToString() => this.strName + ": " + this.hits + " hits, " + this.misses + " misses, " + this.Hitrate + "%";
 
         /// <summary>
         /// Increase cache hit counter.
         /// </summary>
-        public void AddHit()
-        {
-            this.hits++;
-        }
+        public void AddHit() => this.hits++;
 
         /// <summary>
         /// Increase cache missing counter. 
         /// </summary>
-        public void AddMiss()
-        {
-            this.misses++;
-        }
+        public void AddMiss() => this.misses++;
     }
 
     #endregion

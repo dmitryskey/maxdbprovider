@@ -1256,7 +1256,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 result = VDNNumber.Number2BigDecimal(mem.ReadBytes(iBufferPosition, iPhysicalLength - 1));
                 if (!isFloatingPoint)
                 {
-                    result = result.setScale(frac);
+                    result = result.SetScale(frac);
                 }
 
                 return result;
@@ -1386,7 +1386,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public override object TransBigDecimalForInput(BigDecimal val)
         {
-            return val != null ? VDNNumber.BigDecimal2Number(val.setScale(frac)) : null;
+            return val != null ? VDNNumber.BigDecimal2Number(val.SetScale(frac)) : null;
         }
 
         public override object TransDoubleForInput(double val)
@@ -1396,7 +1396,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 var bigD = new BigDecimal(val);
                 if (byDataType == DataType.FIXED)
                 {
-                    bigD = bigD.setScale(frac);
+                    bigD = bigD.SetScale(frac);
                 }
 
                 return VDNNumber.BigDecimal2Number(bigD, 16);
@@ -1422,7 +1422,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 var bigD = new BigDecimal(val);
                 if (byDataType == DataType.FIXED)
                 {
-                    bigD = bigD.setScale(frac);
+                    bigD = bigD.SetScale(frac);
                 }
 
                 return VDNNumber.BigDecimal2Number(bigD, 14);

@@ -33,63 +33,42 @@ namespace MaxDB.Data
 		/// </summary>
 		public static readonly MaxDBFactory Instance;
 
-		static MaxDBFactory()
-		{
-			Instance = new MaxDBFactory();
-		}
+        static MaxDBFactory() => Instance = new MaxDBFactory();
 
         /// <summary>
         /// Returns MaxDB create command object.
         /// </summary>
         /// <returns>MaxDBCommand object instance.</returns>
-		public override DbCommand CreateCommand()
-		{
-			return new MaxDBCommand();
-		}
+		public override DbCommand CreateCommand() => new MaxDBCommand();
 
         /// <summary>
         /// Returns MaxDB command builder object.
         /// </summary>
         /// <returns>MaxDBCommandBuilder object instance.</returns>
-		public override DbCommandBuilder CreateCommandBuilder()
-		{
-			return new MaxDBCommandBuilder();
-		}
+		public override DbCommandBuilder CreateCommandBuilder() => new MaxDBCommandBuilder();
 
         /// <summary>
         /// Returns MaxDB connection object.
         /// </summary>
         /// <returns>MaxDBConnection object instance.</returns>
-		public override DbConnection CreateConnection()
-		{
-			return new MaxDBConnection();
-		}
+		public override DbConnection CreateConnection() => new MaxDBConnection();
 
         /// <summary>
         /// Returns MaxDB connection string builder object.
         /// </summary>
         /// <returns>MaxDBConnectionStringBuilder object instance.</returns>
-		public override DbConnectionStringBuilder CreateConnectionStringBuilder()
-		{
-			return new MaxDBConnectionStringBuilder();
-		}
+		public override DbConnectionStringBuilder CreateConnectionStringBuilder() => new MaxDBConnectionStringBuilder();
 
         /// <summary>
         /// Returns MaxDB data adapter object.
         /// </summary>
         /// <returns>MaxDBDataAdapter object instance.</returns>
-		public override DbDataAdapter CreateDataAdapter()
-		{
-			return new MaxDBDataAdapter();
-		}
+		public override DbDataAdapter CreateDataAdapter() => new MaxDBDataAdapter();
 
         /// <summary>
         /// Returns MaxDB parameter object.
         /// </summary>
         /// <returns>MaxDBParameter object instance.</returns>
-		public override DbParameter CreateParameter()
-		{
-			return new MaxDBParameter();
-		}
-	}
+		public override DbParameter CreateParameter() => new MaxDBParameter();
+    }
 }

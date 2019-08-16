@@ -20,32 +20,26 @@ using System.Runtime.CompilerServices;
 
 namespace MaxDB.Data.MaxDBProtocol
 {
-	internal class GarbageParseId
-	{
-		protected int iCanTrashOld = 20;
-		protected bool bObjPending;
-		protected bool bCurrentEmptyRun;
-		protected bool bCurrentEmptyRun2;
-		private List<byte[]> lstGarbage;
-		private bool bSupportsMultipleDropParseIDs;
+    internal class GarbageParseId
+    {
+        protected int iCanTrashOld = 20;
+        protected bool bObjPending;
+        protected bool bCurrentEmptyRun;
+        protected bool bCurrentEmptyRun2;
+        private List<byte[]> lstGarbage;
+        private readonly bool bSupportsMultipleDropParseIDs;
 
-		public GarbageParseId(bool supportMultipleDropParseIds)
-			: base()
-		{
-			bSupportsMultipleDropParseIDs = supportMultipleDropParseIds;
+        public GarbageParseId(bool supportMultipleDropParseIds)
+            : base()
+        {
+            bSupportsMultipleDropParseIDs = supportMultipleDropParseIds;
             lstGarbage = new List<byte[]>(iCanTrashOld);
-		}
+        }
 
-		public bool IsPending
-		{
-			get
-			{
-				return GarbageSize >= iCanTrashOld;
-			}
-		}
+        public bool IsPending => GarbageSize >= iCanTrashOld;
 
-		public void EmptyCan(MaxDBComm communication, ConnectArgs connArgs)
-		{
+        public void EmptyCan(MaxDBComm communication, ConnectArgs connArgs)
+        {
             if (communication == null)
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "communication"));
@@ -56,44 +50,35 @@ namespace MaxDB.Data.MaxDBProtocol
                 return;
             }
 
-			bCurrentEmptyRun = true;
+            bCurrentEmptyRun = true;
 
-			MaxDBRequestPacket requestPacket;
-			bObjPending = false;
-			while (GarbageSize > 0)
-			{
-				try
-				{
-					requestPacket = communication.GetRequestPacket();
-					requestPacket.Init(short.MaxValue);
-					EmptyCan(requestPacket);
-					communication.Execute(connArgs, requestPacket, this, GCMode.GC_NONE);
-				}
-				catch (MaxDBException)
-				{
-					// ignore 
-				}
-			}
+            MaxDBRequestPacket requestPacket;
+            bObjPending = false;
+            while (GarbageSize > 0)
+            {
+                try
+                {
+                    requestPacket = communication.GetRequestPacket();
+                    requestPacket.Init(short.MaxValue);
+                    EmptyCan(requestPacket);
+                    communication.Execute(connArgs, requestPacket, this, GCMode.GC_NONE);
+                }
+                catch (MaxDBException)
+                {
+                    // ignore 
+                }
+            }
 
-			bCurrentEmptyRun = false;
-		}
+            bCurrentEmptyRun = false;
+        }
 
-		public void ThrowIntoGarbageCan(byte[] obj)
-		{
-			lstGarbage.Add(obj);
-		}
+        public void ThrowIntoGarbageCan(byte[] obj) => lstGarbage.Add(obj);
 
-		protected int GarbageSize
-		{
-			get
-			{
-				return lstGarbage.Count;
-			}
-		}
+        protected int GarbageSize => lstGarbage.Count;
 
-		[MethodImpl(MethodImplOptions.Synchronized)]
-		public bool EmptyCan(MaxDBRequestPacket requestPacket)
-		{
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public bool EmptyCan(MaxDBRequestPacket requestPacket)
+        {
             if (requestPacket == null)
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "requestPacket"));
@@ -104,10 +89,10 @@ namespace MaxDB.Data.MaxDBProtocol
                 return false;
             }
 
-			bCurrentEmptyRun2 = true;
+            bCurrentEmptyRun2 = true;
 
-			bool packetActionFailed = false;
-			int sz = GarbageSize;
+            bool packetActionFailed = false;
+            int sz = GarbageSize;
 
             if (!bSupportsMultipleDropParseIDs)
             {
@@ -154,13 +139,10 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
             }
 
-			bCurrentEmptyRun2 = false;
-			return !packetActionFailed;
-		}
+            bCurrentEmptyRun2 = false;
+            return !packetActionFailed;
+        }
 
-		public void EmptyCan()
-		{
-			lstGarbage.Clear();
-		}
-	}
+        public void EmptyCan() => lstGarbage.Clear();
+    }
 }

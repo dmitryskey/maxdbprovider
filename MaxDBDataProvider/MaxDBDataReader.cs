@@ -32,106 +32,103 @@ using MaxDB.Data.Utilities;
 
 namespace MaxDB.Data
 {
-	/// <summary>
-	/// Provides a means of reading a forward-only stream of rows from a MaxDB database. This class cannot be inherited.
-	/// </summary>
-	/// <remarks>
-	/// <para>
-	/// To create a <B>MaxDBDataReader</B>, you must call the <see cref="MaxDBCommand.ExecuteReader()"/>
-	/// method of the <see cref="MaxDBCommand"/> object, rather than directly using a constructor.
-	/// </para>
-	/// <para>
-	/// While the <B>MaxDBDataReader</B> is in use, the associated <see cref="MaxDBConnection"/>
-	/// is busy serving the <B>MaxDBDataReader</B>, and no other operations can be performed 
-	/// on the <B>MaxDBConnection</B> other than closing it. This is the case until the 
-	/// <see cref="MaxDBDataReader.Close"/> method of the <B>MaxDBDataReader</B> is called.
-	/// </para>
-	/// </remarks>
-	public sealed class MaxDBDataReader : DbDataReader, ISqlParameterController
-	{
-		// The DataReader should always be open when returned to the user.
-		private bool bOpened = true;
-		internal bool bCloseConn;		        //close connection after data reader closing
-		internal bool bSchemaOnly;	            //return column information only
-		private MaxDBConnection dbConnection;	//connection handle
-		private MaxDBCommand cmdCommand;		//command handle
-		private string strUpdatedTableName;		// tablename used for updateable resultsets 
+    /// <summary>
+    /// Provides a means of reading a forward-only stream of rows from a MaxDB database. This class cannot be inherited.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// To create a <B>MaxDBDataReader</B>, you must call the <see cref="MaxDBCommand.ExecuteReader()"/>
+    /// method of the <see cref="MaxDBCommand"/> object, rather than directly using a constructor.
+    /// </para>
+    /// <para>
+    /// While the <B>MaxDBDataReader</B> is in use, the associated <see cref="MaxDBConnection"/>
+    /// is busy serving the <B>MaxDBDataReader</B>, and no other operations can be performed 
+    /// on the <B>MaxDBConnection</B> other than closing it. This is the case until the 
+    /// <see cref="MaxDBDataReader.Close"/> method of the <B>MaxDBDataReader</B> is called.
+    /// </para>
+    /// </remarks>
+    public sealed class MaxDBDataReader : DbDataReader, ISqlParameterController
+    {
+        // The DataReader should always be open when returned to the user.
+        private bool bOpened = true;
+        internal bool bCloseConn;               //close connection after data reader closing
+        internal bool bSchemaOnly;              //return column information only
+        private MaxDBConnection dbConnection;   //connection handle
+        private MaxDBCommand cmdCommand;        //command handle
+        private string strUpdatedTableName;     // tablename used for updateable resultsets 
 
-		private FetchInfo mFetchInfo;			        // The fetch details.
-		private FetchChunk mCurrentChunk;			    // The data of the last fetch operation.
-		private PositionType mPositionState;		    //the status of the position
-		private PositionType mPositionStateOfChunk;     // The status of the current chunk.
-		private bool bEmpty;                           // is this result set totally empty
-		// a vector of all streams that went outside.
-		private List<Stream> lstOpenStreams;
-		private int iRowsInResultSet;                  // the number of rows in this result set, or -1 if not known
-		private int iLargestKnownAbsPos;               // largest known absolute position to be inside.
-		private int iModifiedKernelPos;                // contains 0 if the kernel pos is not modified or the current kernel position.
-		internal int iMaxRows;				           //how many rows fetch
+        private FetchInfo mFetchInfo;                   // The fetch details.
+        private FetchChunk mCurrentChunk;               // The data of the last fetch operation.
+        private PositionType mPositionState;            //the status of the position
+        private PositionType mPositionStateOfChunk;     // The status of the current chunk.
+        private bool bEmpty;                           // is this result set totally empty
 
-		internal MaxDBDataReader()
-		{
-			bEmpty = true;
-		}
+        private List<Stream> lstOpenStreams;           // a vector of all streams that went outside.
+        private int iRowsInResultSet;                  // the number of rows in this result set, or -1 if not known
+        private int iLargestKnownAbsPos;               // largest known absolute position to be inside.
+        private int iModifiedKernelPos;                // contains 0 if the kernel pos is not modified or the current kernel position.
+        internal int iMaxRows;                         //how many rows fetch
 
-		internal MaxDBDataReader(MaxDBCommand cmd)
-		{
-			bEmpty = true;
-			dbConnection = cmd.Connection;
-			cmdCommand = cmd;
-		}
+        internal MaxDBDataReader() => bEmpty = true;
 
-		internal MaxDBDataReader(MaxDBConnection connection, FetchInfo fetchInfo, MaxDBCommand cmd, int maxRows, MaxDBReplyPacket reply)
-		{
-			dbConnection = connection;
-			mFetchInfo = fetchInfo;
+        internal MaxDBDataReader(MaxDBCommand cmd)
+        {
+            bEmpty = true;
+            dbConnection = cmd.Connection;
+            cmdCommand = cmd;
+        }
 
-			bOpened = true;
+        internal MaxDBDataReader(MaxDBConnection connection, FetchInfo fetchInfo, MaxDBCommand cmd, int maxRows, MaxDBReplyPacket reply)
+        {
+            dbConnection = connection;
+            mFetchInfo = fetchInfo;
 
-			iMaxRows = maxRows;
+            bOpened = true;
 
-			cmdCommand = cmd;
-			strUpdatedTableName = cmd.mParseInfo.UpdatedTableName;
+            iMaxRows = maxRows;
 
-			InitializeFields();
-			lstOpenStreams = new List<Stream>(5);
-			if (reply != null)
-			{
-				SetCurrentChunk(new FetchChunk(dbConnection,
-					FetchType.FIRST,		// fetch first is forward
-					1,						// absolute start position
-					reply,					// reply packet
-					fetchInfo.RecordSize,	// the size for data part navigation condition in that case
-					maxRows,				// how many rows to fetch
-					iRowsInResultSet
-					));
-				mPositionState = PositionType.BEFORE_FIRST;
-			}
-		}
+            cmdCommand = cmd;
+            strUpdatedTableName = cmd.mParseInfo.UpdatedTableName;
 
-		private void InitializeFields()
-		{
-			mCurrentChunk = null;
-			mPositionState = PositionType.BEFORE_FIRST;
-			mPositionStateOfChunk = PositionType.NOT_AVAILABLE;
-			bEmpty = false;
-			iLargestKnownAbsPos = 1;
-			iRowsInResultSet = -1;
-			iModifiedKernelPos = 0;
-		}
+            InitializeFields();
+            lstOpenStreams = new List<Stream>(5);
+            if (reply != null)
+            {
+                SetCurrentChunk(new FetchChunk(dbConnection,
+                    FetchType.FIRST,        // fetch first is forward
+                    1,                      // absolute start position
+                    reply,                  // reply packet
+                    fetchInfo.RecordSize,   // the size for data part navigation condition in that case
+                    maxRows,                // how many rows to fetch
+                    iRowsInResultSet
+                    ));
+                mPositionState = PositionType.BEFORE_FIRST;
+            }
+        }
 
-		private void SetCurrentChunk(FetchChunk newChunk)
-		{
-			mPositionState = mPositionStateOfChunk = PositionType.INSIDE;
-			mCurrentChunk = newChunk;
-			iModifiedKernelPos = 0; // clear this out, until someone will de
-			UpdateRowStatistics();
-		}
+        private void InitializeFields()
+        {
+            mCurrentChunk = null;
+            mPositionState = PositionType.BEFORE_FIRST;
+            mPositionStateOfChunk = PositionType.NOT_AVAILABLE;
+            bEmpty = false;
+            iLargestKnownAbsPos = 1;
+            iRowsInResultSet = -1;
+            iModifiedKernelPos = 0;
+        }
 
-		private void UpdateRowStatistics()
-		{
-			if (!RowsInResultSetKnown)
-			{
+        private void SetCurrentChunk(FetchChunk newChunk)
+        {
+            mPositionState = mPositionStateOfChunk = PositionType.INSIDE;
+            mCurrentChunk = newChunk;
+            iModifiedKernelPos = 0; // clear this out, until someone will de
+            UpdateRowStatistics();
+        }
+
+        private void UpdateRowStatistics()
+        {
+            if (!RowsInResultSetKnown)
+            {
                 // If this is the one and only chunk, yes then we
                 // have only the records in this chunk.
                 if (mCurrentChunk.IsLast && mCurrentChunk.IsFirst)
@@ -155,109 +152,78 @@ namespace MaxDB.Data
                 {
                     iLargestKnownAbsPos = Math.Max(iLargestKnownAbsPos, mCurrentChunk.End);
                 }
-			}
-		}
+            }
+        }
 
-		private bool RowsInResultSetKnown
-		{
-			get
-			{
-				return iRowsInResultSet != -1;
-			}
-		}
+        private bool RowsInResultSetKnown => iRowsInResultSet != -1;
 
-		internal bool Empty
-		{
-			set
-			{
-				bEmpty = value;
-			}
-		}
+        internal bool Empty
+        {
+            set => bEmpty = value;
+        }
 
-		/// <summary>
-		/// Always return a value of zero since nesting is not supported.
-		/// </summary>
-		public override int Depth
-		{
-			get
-			{
-				return 0;
-			}
-		}
+        /// <summary>
+        /// Always return a value of zero since nesting is not supported.
+        /// </summary>
+        public override int Depth => 0;
 
-		/// <summary>
-		/// Gets a value indicating whether the data reader is closed.
-		/// </summary>
-		public override bool IsClosed
-		{
-			//Keep track of the reader state - some methods should be disallowed if the reader is closed.
-			get
-			{
-				return !bOpened;
-			}
-		}
+        /// <summary>
+        /// Gets a value indicating whether the data reader is closed.
+        /// </summary>
+        public override bool IsClosed => !bOpened;
 
-		/// <summary>
-		/// Gets the number of rows changed, inserted, or deleted by execution of the SQL statement.
-		/// </summary>
-		public override int RecordsAffected
-		{
-			get
-			{
-				return cmdCommand.iRowsAffected;
-			}
-		}
+        /// <summary>
+        /// Gets the number of rows changed, inserted, or deleted by execution of the SQL statement.
+        /// </summary>
+        public override int RecordsAffected => cmdCommand.iRowsAffected;
 
-		/// <summary>
-		/// Closes the MaxDBDataReader object.
-		/// </summary>
-		public override void Close()
-		{
-			if (bOpened)
-			{
-				bOpened = false;
-				mCurrentChunk = null;
-				mFetchInfo = null;
-				if (bCloseConn && dbConnection != null)
-				{
-					dbConnection.Close();
-					dbConnection.mLogger.Flush();
-					dbConnection = null;
-				}
-			}
-		}
+        /// <summary>
+        /// Closes the MaxDBDataReader object.
+        /// </summary>
+        public override void Close()
+        {
+            if (bOpened)
+            {
+                bOpened = false;
+                mCurrentChunk = null;
+                mFetchInfo = null;
+                if (bCloseConn && dbConnection != null)
+                {
+                    dbConnection.Close();
+                    dbConnection.mLogger.Flush();
+                    dbConnection = null;
+                }
+            }
+        }
 
-		/// <summary>
-		/// Advances the data reader to the next result, when reading the results of batch SQL statements.
-		/// </summary>
-		/// <returns>Always <b>false</b>.</returns>
-		public override bool NextResult()
-		{
-			return false;
-		}
+        /// <summary>
+        /// Advances the data reader to the next result, when reading the results of batch SQL statements.
+        /// </summary>
+        /// <returns>Always <b>false</b>.</returns>
+        public override bool NextResult() => false;
 
-		/// <summary>
-		/// Advances the MaxDBDataReader to the next record.
-		/// </summary>
-		/// <returns><b>true</b> if there are more rows; otherwise, <b>false</b>.</returns>
-		public override bool Read()
-		{
-			AssertNotClosed();
-			// if we have nothing, there is nothing to do.
-			if (bEmpty || bSchemaOnly)
-			{
-				mPositionState = PositionType.AFTER_LAST;
-				return false;
-			}
+        /// <summary>
+        /// Advances the MaxDBDataReader to the next record.
+        /// </summary>
+        /// <returns><b>true</b> if there are more rows; otherwise, <b>false</b>.</returns>
+        public override bool Read()
+        {
+            AssertNotClosed();
+            // if we have nothing, there is nothing to do.
+            if (bEmpty || bSchemaOnly)
+            {
+                mPositionState = PositionType.AFTER_LAST;
+                return false;
+            }
 
-			bool result = false;
+            bool result = false;
 
-			// at first we have to close all input streams
-			CloseOpenStreams();
+            // at first we have to close all input streams
+            CloseOpenStreams();
 
-			// if we are outside, ...
-			if (mPositionState == PositionType.BEFORE_FIRST)
-			{
+            // if we are outside, ...
+            if (mPositionState == PositionType.BEFORE_FIRST)
+            {
                 // ... check whether we still have it
                 if (mPositionStateOfChunk == PositionType.INSIDE && mCurrentChunk.ContainsRow(1))
                 {
@@ -269,9 +235,9 @@ namespace MaxDB.Data
                 {
                     result = FetchFirst();
                 }
-			}
-			else if (mPositionState == PositionType.INSIDE)
-			{
+            }
+            else if (mPositionState == PositionType.INSIDE)
+            {
                 if (mCurrentChunk.Move(1))
                 {
                     result = true;
@@ -286,70 +252,76 @@ namespace MaxDB.Data
 
                     result = FetchNextChunk();
                 }
-			}
+            }
 
-			return result;
-		}
+            return result;
+        }
 
-		/// <summary>
-		/// Returns a DataTable that describes the column metadata of the MaxDBDataReader.
-		/// </summary>
-		/// <returns>The DataTable object with column metadata.</returns>
-		public override DataTable GetSchemaTable()
-		{
-			var schema = new DataTable("SchemaTable");
-			schema.Locale = CultureInfo.InvariantCulture;
-			var dtMetaData = new DataTable();
-			dtMetaData.Locale = CultureInfo.InvariantCulture;
-			dtMetaData.Columns.Add(new DataColumn("COLUMNNAME", typeof(string)));
-			dtMetaData.Columns.Add(new DataColumn("MODE", typeof(string)));
-			dtMetaData.Columns.Add(new DataColumn("DEFAULT", typeof(string)));
-			dtMetaData.Columns.Add(new DataColumn("TYPE", typeof(string)));
-			string user = null, table = null;
+        /// <summary>
+        /// Returns a DataTable that describes the column metadata of the MaxDBDataReader.
+        /// </summary>
+        /// <returns>The DataTable object with column metadata.</returns>
+        public override DataTable GetSchemaTable()
+        {
+            var schema = new DataTable("SchemaTable");
+            schema.Locale = CultureInfo.InvariantCulture;
+            var dtMetaData = new DataTable
+            {
+                Locale = CultureInfo.InvariantCulture
+            };
 
-			var dcID = new DataColumn("id", typeof(int));
-			dcID.AutoIncrement = true;
-			dcID.AutoIncrementSeed = 1;
-			schema.Columns.Add(dcID);
+            dtMetaData.Columns.Add(new DataColumn("COLUMNNAME", typeof(string)));
+            dtMetaData.Columns.Add(new DataColumn("MODE", typeof(string)));
+            dtMetaData.Columns.Add(new DataColumn("DEFAULT", typeof(string)));
+            dtMetaData.Columns.Add(new DataColumn("TYPE", typeof(string)));
+            string user = null, table = null;
 
-			schema.Columns.Add(new DataColumn("ColumnName", typeof(string)));
-			schema.Columns.Add(new DataColumn("ColumnOrdinal", typeof(int)));
-			schema.Columns.Add(new DataColumn("ColumnSize", typeof(int)));
-			schema.Columns.Add(new DataColumn("NumericPrecision", typeof(int)));
-			schema.Columns.Add(new DataColumn("NumericScale", typeof(int)));
-			schema.Columns.Add(new DataColumn("DataType", typeof(Type)));
-			schema.Columns.Add(new DataColumn("ProviderType", typeof(MaxDBType)));
-			schema.Columns.Add(new DataColumn("IsLong", typeof(bool)));
-			schema.Columns.Add(new DataColumn("AllowDBNull", typeof(bool)));
-			schema.Columns.Add(new DataColumn("IsReadOnly", typeof(bool)));
-			schema.Columns.Add(new DataColumn("IsUnique", typeof(bool)));
-			schema.Columns.Add(new DataColumn("IsKeyColumn", typeof(bool)));
-			schema.Columns.Add(new DataColumn("IsAutoIncrement", typeof(bool)));
-			schema.Columns.Add(new DataColumn("BaseSchemaName", typeof(string)));
-			schema.Columns.Add(new DataColumn("BaseTableName", typeof(string)));
+            var dcID = new DataColumn("id", typeof(int))
+            {
+                AutoIncrement = true,
+                AutoIncrementSeed = 1
+            };
 
-			DataRow row;
-			if (strUpdatedTableName != null)
-			{
-				string[] schemaName = strUpdatedTableName.Split('.');
-				if (schemaName.Length > 1)
-				{
-					user = schemaName[0].Replace("\"", string.Empty);
-					table = schemaName[1].Replace("\"", string.Empty);
+            schema.Columns.Add(dcID);
 
-					var oldMode = dbConnection.SqlMode;
-					dbConnection.SqlMode = SqlMode.Internal;
+            schema.Columns.Add(new DataColumn("ColumnName", typeof(string)));
+            schema.Columns.Add(new DataColumn("ColumnOrdinal", typeof(int)));
+            schema.Columns.Add(new DataColumn("ColumnSize", typeof(int)));
+            schema.Columns.Add(new DataColumn("NumericPrecision", typeof(int)));
+            schema.Columns.Add(new DataColumn("NumericScale", typeof(int)));
+            schema.Columns.Add(new DataColumn("DataType", typeof(Type)));
+            schema.Columns.Add(new DataColumn("ProviderType", typeof(MaxDBType)));
+            schema.Columns.Add(new DataColumn("IsLong", typeof(bool)));
+            schema.Columns.Add(new DataColumn("AllowDBNull", typeof(bool)));
+            schema.Columns.Add(new DataColumn("IsReadOnly", typeof(bool)));
+            schema.Columns.Add(new DataColumn("IsUnique", typeof(bool)));
+            schema.Columns.Add(new DataColumn("IsKeyColumn", typeof(bool)));
+            schema.Columns.Add(new DataColumn("IsAutoIncrement", typeof(bool)));
+            schema.Columns.Add(new DataColumn("BaseSchemaName", typeof(string)));
+            schema.Columns.Add(new DataColumn("BaseTableName", typeof(string)));
 
-					try
-					{
-						using (var cmdColumns = new MaxDBCommand(
-								   "SELECT A.COLUMNNAME, A.MODE, A.DEFAULT, B.TYPE FROM DOMAIN.COLUMNS A " +
-								   "LEFT OUTER JOIN DOMAIN.INDEXCOLUMNS B " +
-								   "ON A.OWNER = B.OWNER AND A.TABLENAME = B.TABLENAME AND A.COLUMNNAME = B.COLUMNNAME " +
-								   "WHERE A.OWNER = ? AND A.TABLENAME = ?", dbConnection))
-						{
-							cmdColumns.Parameters.Add("OWNER", MaxDBType.VarCharA).Value = user;
-							cmdColumns.Parameters.Add("TABLENAME", MaxDBType.VarCharA).Value = table;
+            DataRow row;
+            if (strUpdatedTableName != null)
+            {
+                string[] schemaName = strUpdatedTableName.Split('.');
+                if (schemaName.Length > 1)
+                {
+                    user = schemaName[0].Replace("\"", string.Empty);
+                    table = schemaName[1].Replace("\"", string.Empty);
+
+                    var oldMode = dbConnection.SqlMode;
+                    dbConnection.SqlMode = SqlMode.Internal;
+
+                    try
+                    {
+                        using (var cmdColumns = new MaxDBCommand(
+                                   "SELECT A.COLUMNNAME, A.MODE, A.DEFAULT, B.TYPE FROM DOMAIN.COLUMNS A " +
+                                   "LEFT OUTER JOIN DOMAIN.INDEXCOLUMNS B " +
+                                   "ON A.OWNER = B.OWNER AND A.TABLENAME = B.TABLENAME AND A.COLUMNNAME = B.COLUMNNAME " +
+                                   "WHERE A.OWNER = ? AND A.TABLENAME = ?", dbConnection))
+                        {
+                            cmdColumns.Parameters.Add("OWNER", MaxDBType.VarCharA).Value = user;
+                            cmdColumns.Parameters.Add("TABLENAME", MaxDBType.VarCharA).Value = table;
                             using (var reader = cmdColumns.ExecuteReader())
                             {
                                 while (reader.Read())
@@ -358,35 +330,35 @@ namespace MaxDB.Data
                                         reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3)});
                                 }
                             }
-						}
-					}
-					finally
-					{
-						dbConnection.SqlMode = oldMode;
-					}
-				}
-			}
+                        }
+                    }
+                    finally
+                    {
+                        dbConnection.SqlMode = oldMode;
+                    }
+                }
+            }
 
-			for (int cnt = 0; cnt < FieldCount; cnt++)
-			{
-				var info = mFetchInfo.GetColumnInfo(cnt);
-				row = schema.NewRow();
+            for (int cnt = 0; cnt < FieldCount; cnt++)
+            {
+                var info = mFetchInfo.GetColumnInfo(cnt);
+                row = schema.NewRow();
 
-				row["ColumnName"] = info.ColumnName;
-				row["ColumnOrdinal"] = cnt + 1;
-				row["ColumnSize"] = info.PhysicalLength;
-				row["NumericPrecision"] = info.Precision;
-				row["NumericScale"] = info.Scale;
-				row["DataType"] = info.ColumnDataType;
-				row["ProviderType"] = info.ColumnProviderType;
-				row["IsLong"] = info.IsLongKind;
-				row["AllowDBNull"] = info.IsNullable;
-				row["IsReadOnly"] = true;
+                row["ColumnName"] = info.ColumnName;
+                row["ColumnOrdinal"] = cnt + 1;
+                row["ColumnSize"] = info.PhysicalLength;
+                row["NumericPrecision"] = info.Precision;
+                row["NumericScale"] = info.Scale;
+                row["DataType"] = info.ColumnDataType;
+                row["ProviderType"] = info.ColumnProviderType;
+                row["IsLong"] = info.IsLongKind;
+                row["AllowDBNull"] = info.IsNullable;
+                row["IsReadOnly"] = true;
 
-				if (user != null && table != null)
-				{
-					row["BaseSchemaName"] = user;
-					row["BaseTableName"] = table;
+                if (user != null && table != null)
+                {
+                    row["BaseSchemaName"] = user;
+                    row["BaseTableName"] = table;
 
                     foreach (DataRow columnRow in dtMetaData.Rows)
                     {
@@ -397,59 +369,47 @@ namespace MaxDB.Data
                             row["IsUnique"] = !columnRow.IsNull(3) && columnRow[3].ToString() == "UNIQUE";
                         }
                     }
-				}
+                }
 
-				schema.Rows.Add(row);
-			}
+                schema.Rows.Add(row);
+            }
 
-			return schema;
-		}
+            return schema;
+        }
 
-		/// <summary>
-		/// Gets the count of the number of columns, which in this case is the size of the column metadata array.
-		/// </summary>
-		public override int FieldCount
-		{
-			get
-			{
-				return mFetchInfo.NumberOfColumns;
-			}
-		}
+        /// <summary>
+        /// Gets the count of the number of columns, which in this case is the size of the column metadata array.
+        /// </summary>
+        public override int FieldCount => mFetchInfo.NumberOfColumns;
 
-		/// <summary>
-		/// Return the count of the number of columns, which in this case is the size of the column metadata array.
-		/// </summary>
-		public override int VisibleFieldCount
-		{
-			get
-			{
-				return FieldCount;
-			}
-		}
+        /// <summary>
+        /// Return the count of the number of columns, which in this case is the size of the column metadata array.
+        /// </summary>
+        public override int VisibleFieldCount => FieldCount;
 
-		/// <summary>
-		/// Gets the name of the specified column.
-		/// </summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>Name of the column.</returns>
-		public override string GetName(int i)
-		{
+        /// <summary>
+        /// Gets the name of the specified column.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>Name of the column.</returns>
+        public override string GetName(int i)
+        {
             if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			return mFetchInfo.GetColumnInfo(i).ColumnName;
-		}
+            return mFetchInfo.GetColumnInfo(i).ColumnName;
+        }
 
-		/// <summary>
-		/// Gets the name of the source data type.
-		/// </summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>Data type name of the column.</returns>
-		public override string GetDataTypeName(int i)
-		{
-			/*
+        /// <summary>
+        /// Gets the name of the source data type.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>Data type name of the column.</returns>
+        public override string GetDataTypeName(int i)
+        {
+            /*
 			 * Usually this would return the name of the type
 			 * as used on the back end, for example 'smallint' or 'varchar'.
 			 * The sample returns the simple name of the .NET Framework type.
@@ -459,40 +419,40 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			return mFetchInfo.GetColumnInfo(i).ColumnTypeName;
-		}
+            return mFetchInfo.GetColumnInfo(i).ColumnTypeName;
+        }
 
-		/// <summary>
-		/// Gets the Type that is the data type of the column.
-		/// </summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>Type of the column.</returns>
-		public override Type GetFieldType(int i)
-		{
+        /// <summary>
+        /// Gets the Type that is the data type of the column.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>Type of the column.</returns>
+        public override Type GetFieldType(int i)
+        {
             if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			return mFetchInfo.GetColumnInfo(i).ColumnDataType;
-		}
+            return mFetchInfo.GetColumnInfo(i).ColumnDataType;
+        }
 
-		/// <summary>
-		/// Gets the value of the specified column in its native format.
-		/// </summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>Object that represents the value of the column.</returns>
-		public override object GetValue(int i)
-		{
+        /// <summary>
+        /// Gets the value of the specified column in its native format.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>Object that represents the value of the column.</returns>
+        public override object GetValue(int i)
+        {
             if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			var transl = FindColumnInfo(i);
-			object obj_value = transl.IsDBNull(CurrentRecord) ? DBNull.Value : transl.GetValue(this, CurrentRecord);
+            var transl = FindColumnInfo(i);
+            object obj_value = transl.IsDBNull(CurrentRecord) ? DBNull.Value : transl.GetValue(this, CurrentRecord);
 
-			//>>> SQL TRACE
+            //>>> SQL TRACE
             if (dbConnection.mLogger.TraceSQL)
             {
                 if (obj_value != DBNull.Value)
@@ -506,18 +466,18 @@ namespace MaxDB.Data
                 }
             }
 
-			//<<< SQL TRACE
+            //<<< SQL TRACE
 
-			return obj_value;
-		}
+            return obj_value;
+        }
 
-		/// <summary>
-		/// Gets all attribute columns in the collection for the current row.
-		/// </summary>
-		/// <param name="values">Array to store values.</param>
-		/// <returns>The number of the stored values.</returns>
-		public override int GetValues(object[] values)
-		{
+        /// <summary>
+        /// Gets all attribute columns in the collection for the current row.
+        /// </summary>
+        /// <param name="values">Array to store values.</param>
+        /// <returns>The number of the stored values.</returns>
+        public override int GetValues(object[] values)
+        {
             if (values == null)
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
@@ -528,22 +488,22 @@ namespace MaxDB.Data
                 values[i] = GetValue(i);
             }
 
-			return Math.Min(FieldCount, values.Length);
-		}
+            return Math.Min(FieldCount, values.Length);
+        }
 
-		/// <summary>
-		/// Gets the column ordinal, given the name of the column.
-		/// </summary>
-		/// <param name="name">The name of the column.</param>
-		/// <returns>The column ordinal.</returns>
-		public override int GetOrdinal(string name)
-		{
+        /// <summary>
+        /// Gets the column ordinal, given the name of the column.
+        /// </summary>
+        /// <param name="name">The name of the column.</param>
+        /// <returns>The column ordinal.</returns>
+        public override int GetOrdinal(string name)
+        {
             if (name == null)
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAME_NOTFOUND, name));
             }
 
-			// Throw an exception if the ordinal cannot be found.
+            // Throw an exception if the ordinal cannot be found.
             for (short cnt = 0; cnt <= FieldCount - 1; cnt++)
             {
                 if (string.Compare(GetName(cnt).Trim(), name.Trim(), true, CultureInfo.InvariantCulture) == 0)
@@ -552,56 +512,43 @@ namespace MaxDB.Data
                 }
             }
 
-			throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAME_NOTFOUND, name));
-		}
+            throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAME_NOTFOUND, name));
+        }
 
-		/// <summary>
-		/// Overloaded. Gets the value of a column in its native format.
-		/// In C#, this property is the indexer for the MaxDBDataReader class.
-		/// </summary>
-		public override object this[int i]
-		{
-			get
-			{
-				return GetValue(i);
-			}
-		}
+        /// <summary>
+        /// Overloaded. Gets the value of a column in its native format.
+        /// In C#, this property is the indexer for the MaxDBDataReader class.
+        /// </summary>
+        public override object this[int i] => GetValue(i);
 
-		/// <summary>
-		/// Gets the value of a column in its native format.
-		///	In C#, this property is the indexer for the MaxDBDataReader class.
-		/// </summary>
-		public override object this[string name]
-		{
-			// Look up the ordinal and return the value at that position.
-			get
-			{
-				return GetValue(GetOrdinal(name));
-			}
-		}
+        /// <summary>
+        /// Gets the value of a column in its native format.
+        ///	In C#, this property is the indexer for the MaxDBDataReader class.
+        /// </summary>
+        public override object this[string name] => GetValue(GetOrdinal(name));
 
-		private void LogValue(int i, DBTechTranslator transl, string type, int size, int minusLen, string value)
-		{
-			DateTime dt = DateTime.Now;
-			dbConnection.mLogger.SqlTrace(dt, "GET " + type + " VALUE:");
-			dbConnection.mLogger.SqlTraceDataHeader(dt);
-			var sb = new StringBuilder();
-			sb.Append(i.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.NumSize));
-			sb.Append(transl.ColumnTypeName.PadRight(MaxDBLogger.TypeSize));
-			sb.Append((transl.PhysicalLength - minusLen).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
-			sb.Append(size.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
-			sb.Append(value);
-			dbConnection.mLogger.SqlTrace(dt, sb.ToString());
-		}
+        private void LogValue(int i, DBTechTranslator transl, string type, int size, int minusLen, string value)
+        {
+            DateTime dt = DateTime.Now;
+            dbConnection.mLogger.SqlTrace(dt, "GET " + type + " VALUE:");
+            dbConnection.mLogger.SqlTraceDataHeader(dt);
+            var sb = new StringBuilder();
+            sb.Append(i.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.NumSize));
+            sb.Append(transl.ColumnTypeName.PadRight(MaxDBLogger.TypeSize));
+            sb.Append((transl.PhysicalLength - minusLen).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
+            sb.Append(size.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
+            sb.Append(value);
+            dbConnection.mLogger.SqlTrace(dt, sb.ToString());
+        }
 
-		/// <summary>
-		/// Gets the value of the specified column as a Boolean.
-		/// </summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>Boolean value of the column.</returns>
-		public override bool GetBoolean(int i)
-		{
-			/*
+        /// <summary>
+        /// Gets the value of the specified column as a Boolean.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>Boolean value of the column.</returns>
+        public override bool GetBoolean(int i)
+        {
+            /*
 			 * Force the cast to return the type. InvalidCastException
 			 * should be thrown if the data is not already of the correct type.
 			 */
@@ -610,103 +557,103 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			var transl = FindColumnInfo(i);
-			bool bool_value = transl.GetBoolean(CurrentRecord);
+            var transl = FindColumnInfo(i);
+            bool bool_value = transl.GetBoolean(CurrentRecord);
 
-			//>>> SQL TRACE
+            //>>> SQL TRACE
             if (dbConnection.mLogger.TraceSQL)
             {
                 LogValue(i + 1, transl, "BOOLEAN", 1, 0, bool_value.ToString());
             }
-			//<<< SQL TRACE
+            //<<< SQL TRACE
 
-			return bool_value;
-		}
+            return bool_value;
+        }
 
-		/// <summary>
-		/// Gets the value of the specified column as a Byte.
-		/// </summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>The byte value of the column.</returns>
-		public override byte GetByte(int i)
-		{
+        /// <summary>
+        /// Gets the value of the specified column as a Byte.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The byte value of the column.</returns>
+        public override byte GetByte(int i)
+        {
             if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			var transl = FindColumnInfo(i);
-			byte byte_value = transl.GetByte(this, CurrentRecord);
+            var transl = FindColumnInfo(i);
+            byte byte_value = transl.GetByte(this, CurrentRecord);
 
-			//>>> SQL TRACE
+            //>>> SQL TRACE
             if (dbConnection.mLogger.TraceSQL)
             {
                 LogValue(i + 1, transl, "BYTE", 1, 0, byte_value.ToString(CultureInfo.InvariantCulture));
             }
-			//<<< SQL TRACE
+            //<<< SQL TRACE
 
-			return byte_value;
-		}
+            return byte_value;
+        }
 
-		/// <summary>
-		/// Reads a stream of bytes from the specified column offset into the buffer an array starting at the given buffer offset.
-		/// </summary>
-		/// <param name="i">The zero-based column ordinal. </param>
-		/// <param name="fieldOffset">The index within the field from which to begin the read operation. </param>
-		/// <param name="buffer">The buffer into which to read the stream of bytes. </param>
-		/// <param name="bufferoffset">The index for buffer to begin the read operation. </param>
-		/// <param name="length">The maximum length to copy into the buffer. </param>
-		/// <returns>The actual number of bytes read.</returns>
-		public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
-		{
+        /// <summary>
+        /// Reads a stream of bytes from the specified column offset into the buffer an array starting at the given buffer offset.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal. </param>
+        /// <param name="fieldOffset">The index within the field from which to begin the read operation. </param>
+        /// <param name="buffer">The buffer into which to read the stream of bytes. </param>
+        /// <param name="bufferoffset">The index for buffer to begin the read operation. </param>
+        /// <param name="length">The maximum length to copy into the buffer. </param>
+        /// <returns>The actual number of bytes read.</returns>
+        public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
+        {
             if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			var transl = FindColumnInfo(i);
-			long result = transl.GetBytes(this, CurrentRecord, fieldOffset, buffer, bufferoffset, length);
+            var transl = FindColumnInfo(i);
+            long result = transl.GetBytes(this, CurrentRecord, fieldOffset, buffer, bufferoffset, length);
 
-			//>>> SQL TRACE
-			if (dbConnection.mLogger.TraceSQL)
-			{
-				byte[] logs = new byte[Math.Min(MaxDBLogger.DataSize / 2, length)];
+            //>>> SQL TRACE
+            if (dbConnection.mLogger.TraceSQL)
+            {
+                byte[] logs = new byte[Math.Min(MaxDBLogger.DataSize / 2, length)];
                 Buffer.BlockCopy(buffer, bufferoffset, logs, 0, logs.Length);
 
-				LogValue(i + 1, transl, "BYTES", logs.Length, 0, Consts.ToHexString(logs) + (logs.Length < length ? "..." : ""));
-			}
-			//<<< SQL TRACE
+                LogValue(i + 1, transl, "BYTES", logs.Length, 0, Consts.ToHexString(logs) + (logs.Length < length ? "..." : ""));
+            }
+            //<<< SQL TRACE
 
-			return result;
-		}
+            return result;
+        }
 
-		/// <summary>
-		/// Gets the value of the specified column as a Char.
-		/// </summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>The char value of the column.</returns>
-		public override char GetChar(int i)
-		{
+        /// <summary>
+        /// Gets the value of the specified column as a Char.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The char value of the column.</returns>
+        public override char GetChar(int i)
+        {
             // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
             if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			return GetString(i)[0];
-		}
+            return GetString(i)[0];
+        }
 
-		/// <summary>
-		/// Reads a stream of chars from the specified column offset into the buffer an array starting at the given buffer offset.
-		/// </summary>
-		/// <param name="i">The zero-based column ordinal. </param>
-		/// <param name="fieldoffset">The index within the field from which to begin the read operation. </param>
-		/// <param name="buffer">The buffer into which to read the stream of chars. </param>
-		/// <param name="bufferoffset">The index for buffer to begin the read operation. </param>
-		/// <param name="length">The maximum length to copy into the buffer. </param>
-		/// <returns>The actual number of chars read.</returns>
-		public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
-		{
+        /// <summary>
+        /// Reads a stream of chars from the specified column offset into the buffer an array starting at the given buffer offset.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal. </param>
+        /// <param name="fieldoffset">The index within the field from which to begin the read operation. </param>
+        /// <param name="buffer">The buffer into which to read the stream of chars. </param>
+        /// <param name="bufferoffset">The index for buffer to begin the read operation. </param>
+        /// <param name="length">The maximum length to copy into the buffer. </param>
+        /// <returns>The actual number of chars read.</returns>
+        public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
+        {
             if (buffer == null)
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "buffer"));
@@ -717,321 +664,303 @@ namespace MaxDB.Data
                 throw new InvalidColumnException(i);
             }
 
-			var transl = FindColumnInfo(i);
-			long result = transl.GetChars(this, CurrentRecord, fieldoffset, buffer, bufferoffset, length);
+            var transl = FindColumnInfo(i);
+            long result = transl.GetChars(this, CurrentRecord, fieldoffset, buffer, bufferoffset, length);
 
-			//>>> SQL TRACE
-			if (dbConnection.mLogger.TraceSQL)
-			{
-				char[] logs = new char[Math.Min(MaxDBLogger.DataSize, length)];
+            //>>> SQL TRACE
+            if (dbConnection.mLogger.TraceSQL)
+            {
+                char[] logs = new char[Math.Min(MaxDBLogger.DataSize, length)];
                 Buffer.BlockCopy(buffer, bufferoffset, logs, 0, logs.Length);
 
-				LogValue(i + 1, transl, "CHARS", logs.Length, 0, new string(logs) + (logs.Length < length ? "..." : ""));
-			}
-			//<<< SQL TRACE
+                LogValue(i + 1, transl, "CHARS", logs.Length, 0, new string(logs) + (logs.Length < length ? "..." : ""));
+            }
+            //<<< SQL TRACE
 
-			return result;
-		}
+            return result;
+        }
 
-		/// <summary>Gets the value of the specified column as a globally-unique identifier (GUID).</summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>The value of the specified column.</returns>
-		public override Guid GetGuid(int i)
-		{
-			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+        /// <summary>Gets the value of the specified column as a globally-unique identifier (GUID).</summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column.</returns>
+        public override Guid GetGuid(int i)
+        {
+            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
             if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			return new Guid(GetString(i));
-		}
+            return new Guid(GetString(i));
+        }
 
-		/// <summary>Gets the value of the specified column as a 16-bit signed integer.</summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>The value of the specified column.</returns>
-		public override short GetInt16(int i)
-		{
-			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+        /// <summary>Gets the value of the specified column as a 16-bit signed integer.</summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column.</returns>
+        public override short GetInt16(int i)
+        {
+            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
             if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			var transl = FindColumnInfo(i);
-			short short_value = transl.GetInt16(CurrentRecord);
+            var transl = FindColumnInfo(i);
+            short short_value = transl.GetInt16(CurrentRecord);
 
-			//>>> SQL TRACE
+            //>>> SQL TRACE
             if (dbConnection.mLogger.TraceSQL)
             {
                 LogValue(i + 1, transl, "INT16", 2, 0, short_value.ToString(CultureInfo.InvariantCulture));
             }
-			//<<< SQL TRACE
+            //<<< SQL TRACE
 
-			return short_value;
-		}
+            return short_value;
+        }
 
-		/// <summary>Gets the value of the specified column as a 32-bit signed integer.</summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>The value of the specified column.</returns>
-		public override int GetInt32(int i)
-		{
-			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+        /// <summary>Gets the value of the specified column as a 32-bit signed integer.</summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column.</returns>
+        public override int GetInt32(int i)
+        {
+            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
             if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			var transl = FindColumnInfo(i);
-			int int_value = transl.GetInt32(CurrentRecord);
+            var transl = FindColumnInfo(i);
+            int int_value = transl.GetInt32(CurrentRecord);
 
-			//>>> SQL TRACE
+            //>>> SQL TRACE
             if (dbConnection.mLogger.TraceSQL)
             {
                 LogValue(i + 1, transl, "INT32", 4, 0, int_value.ToString(CultureInfo.InvariantCulture));
             }
-			//<<< SQL TRACE
+            //<<< SQL TRACE
 
-			return int_value;
-		}
+            return int_value;
+        }
 
-		/// <summary>Gets the value of the specified column as a 64-bit signed integer.</summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>The value of the specified column.</returns>
-		public override long GetInt64(int i)
-		{
-			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+        /// <summary>Gets the value of the specified column as a 64-bit signed integer.</summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column.</returns>
+        public override long GetInt64(int i)
+        {
+            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
             if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			var transl = FindColumnInfo(i);
-			long long_value = transl.GetInt64(CurrentRecord);
+            var transl = FindColumnInfo(i);
+            long long_value = transl.GetInt64(CurrentRecord);
 
-			//>>> SQL TRACE
+            //>>> SQL TRACE
             if (dbConnection.mLogger.TraceSQL)
             {
                 LogValue(i + 1, transl, "INT64", 8, 0, long_value.ToString(CultureInfo.InvariantCulture));
             }
-			//<<< SQL TRACE
+            //<<< SQL TRACE
 
-			return long_value;
-		}
+            return long_value;
+        }
 
-		/// <summary>Gets the value of the specified column as a single-precision floating point number.</summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>The value of the specified column.</returns>
-		public override float GetFloat(int i)
-		{
-			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
-			if (i < 0 || i >= FieldCount)
+        /// <summary>Gets the value of the specified column as a single-precision floating point number.</summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column.</returns>
+        public override float GetFloat(int i)
+        {
+            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+            if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			var transl = FindColumnInfo(i);
-			float float_value = transl.GetFloat(CurrentRecord);
+            var transl = FindColumnInfo(i);
+            float float_value = transl.GetFloat(CurrentRecord);
 
-			//>>> SQL TRACE
-			if (dbConnection.mLogger.TraceSQL)
+            //>>> SQL TRACE
+            if (dbConnection.mLogger.TraceSQL)
             {
                 LogValue(i + 1, transl, "FLOAT", 4, 0, float_value.ToString(CultureInfo.InvariantCulture));
             }
-			//<<< SQL TRACE
+            //<<< SQL TRACE
 
-			return float_value;
-		}
+            return float_value;
+        }
 
-		///	<summary>Gets the value of the specified column as a double-precision floating point number.</summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>The value of the specified column.</returns>
-		public override double GetDouble(int i)
-		{
-			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
-			if (i < 0 || i >= FieldCount)
+        ///	<summary>Gets the value of the specified column as a double-precision floating point number.</summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column.</returns>
+        public override double GetDouble(int i)
+        {
+            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+            if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			var transl = FindColumnInfo(i);
-			double double_value = transl.GetDouble(CurrentRecord);
+            var transl = FindColumnInfo(i);
+            double double_value = transl.GetDouble(CurrentRecord);
 
-			//>>> SQL TRACE
-			if (dbConnection.mLogger.TraceSQL)
+            //>>> SQL TRACE
+            if (dbConnection.mLogger.TraceSQL)
             {
                 LogValue(i + 1, transl, "DOUBLE", 8, 0, double_value.ToString(CultureInfo.InvariantCulture));
             }
-			//<<< SQL TRACE
+            //<<< SQL TRACE
 
-			return double_value;
-		}
+            return double_value;
+        }
 
-		/// <summary>Gets the value of the specified column as a <see cref="String"/> object.</summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>The value of the specified column.</returns>
-		public override string GetString(int i)
-		{
-			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
-			if (i < 0 || i >= FieldCount)
+        /// <summary>Gets the value of the specified column as a <see cref="String"/> object.</summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column.</returns>
+        public override string GetString(int i)
+        {
+            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+            if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			var transl = FindColumnInfo(i);
-			string str_value = transl.GetString(this, CurrentRecord);
+            var transl = FindColumnInfo(i);
+            string str_value = transl.GetString(this, CurrentRecord);
 
-			//>>> SQL TRACE
-			if (dbConnection.mLogger.TraceSQL)
+            //>>> SQL TRACE
+            if (dbConnection.mLogger.TraceSQL)
             {
-				if (str_value != null)
+                if (str_value != null)
                 {
-					LogValue(i + 1, transl, "STRING", str_value.Length, 1,
-						(str_value.Length <= MaxDBLogger.DataSize ? str_value : str_value.Substring(0, MaxDBLogger.DataSize) + "..."));
+                    LogValue(i + 1, transl, "STRING", str_value.Length, 1,
+                        (str_value.Length <= MaxDBLogger.DataSize ? str_value : str_value.Substring(0, MaxDBLogger.DataSize) + "..."));
                 }
-				else
+                else
                 {
-					LogValue(i + 1, transl, "STRING", 0, 1, "NULL");
+                    LogValue(i + 1, transl, "STRING", 0, 1, "NULL");
                 }
             }
-			//<<< SQL TRACE
+            //<<< SQL TRACE
 
-			return str_value;
-		}
+            return str_value;
+        }
 
-		/// <summary>Gets the value of the specified column as a <see cref="Decimal"/> object.</summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>The value of the specified column.</returns>
-		public override decimal GetDecimal(int i)
-		{
-			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
-			if (i < 0 || i >= FieldCount)
+        /// <summary>Gets the value of the specified column as a <see cref="Decimal"/> object.</summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column.</returns>
+        public override decimal GetDecimal(int i)
+        {
+            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+            if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			var transl = FindColumnInfo(i);
-			decimal dec_value = transl.GetDecimal(CurrentRecord);
+            var transl = FindColumnInfo(i);
+            decimal dec_value = transl.GetDecimal(CurrentRecord);
 
-			//>>> SQL TRACE
-			if (dbConnection.mLogger.TraceSQL)
+            //>>> SQL TRACE
+            if (dbConnection.mLogger.TraceSQL)
             {
                 LogValue(i + 1, transl, "DECIMAL", 8, 0, dec_value.ToString(CultureInfo.InvariantCulture));
             }
-			//<<< SQL TRACE
+            //<<< SQL TRACE
 
-			return dec_value;
-		}
+            return dec_value;
+        }
 
-		/// <summary>Gets the value of the specified column as a <see cref="DateTime"/> object.</summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns>The value of the specified column.</returns>
-		public override DateTime GetDateTime(int i)
-		{
-			// Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
-			if (i < 0 || i >= FieldCount)
+        /// <summary>Gets the value of the specified column as a <see cref="DateTime"/> object.</summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column.</returns>
+        public override DateTime GetDateTime(int i)
+        {
+            // Force the cast to return the type. InvalidCastException should be thrown if the data is not already of the correct type.
+            if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			var transl = FindColumnInfo(i);
-			var dt_value = transl.GetDateTime(CurrentRecord);
+            var transl = FindColumnInfo(i);
+            var dt_value = transl.GetDateTime(CurrentRecord);
 
-			//>>> SQL TRACE
-			if (dbConnection.mLogger.TraceSQL)
+            //>>> SQL TRACE
+            if (dbConnection.mLogger.TraceSQL)
             {
                 LogValue(i + 1, transl, "DATETIME", 0, 0, dt_value.ToString(CultureInfo.InvariantCulture));
             }
-			//<<< SQL TRACE
+            //<<< SQL TRACE
 
-			return dt_value;
-		}
+            return dt_value;
+        }
 
-		/// <summary>
-		/// Gets a value indicating whether the column contains non-existent or missing values.
-		/// </summary>
-		/// <param name="i">The zero-based column ordinal.</param>
-		/// <returns><b>true</b> if the specified column value is equivalent to DBNull; otherwise, <b>false</b>.</returns>
-		public override bool IsDBNull(int i)
-		{
-			if (i < 0 || i >= FieldCount)
+        /// <summary>
+        /// Gets a value indicating whether the column contains non-existent or missing values.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns><b>true</b> if the specified column value is equivalent to DBNull; otherwise, <b>false</b>.</returns>
+        public override bool IsDBNull(int i)
+        {
+            if (i < 0 || i >= FieldCount)
             {
                 throw new InvalidColumnException(i);
             }
 
-			return FindColumnInfo(i).IsDBNull(CurrentRecord);
-		}
+            return FindColumnInfo(i).IsDBNull(CurrentRecord);
+        }
 
-		/// <summary>
-		/// Gets a value indicating whether the MaxDBDataReader contains one or more rows.
-		/// </summary>
-		public override bool HasRows
-		{
-			get
-			{
-				return iRowsInResultSet > 0;
-			}
-		}
+        /// <summary>
+        /// Gets a value indicating whether the MaxDBDataReader contains one or more rows.
+        /// </summary>
+        public override bool HasRows => iRowsInResultSet > 0;
 
-		#region "Methods to support native protocol"
+        #region "Methods to support native protocol"
 
-		MaxDBConnection ISqlParameterController.Connection
-		{
-			get
-			{
-				return dbConnection;
-			}
-		}
+        MaxDBConnection ISqlParameterController.Connection => dbConnection;
 
-		ByteArray ISqlParameterController.ReplyData
-		{
-			get
-			{
-				return (mCurrentChunk != null) ? mCurrentChunk.ReplyData : null;
-			}
-		}
+        ByteArray ISqlParameterController.ReplyData => mCurrentChunk?.ReplyData;
 
-		private void AssertNotClosed()
-		{
+        private void AssertNotClosed()
+        {
             if (!bOpened)
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.OBJECTISCLOSED));
             }
-		}
+        }
 
-		private void CloseOpenStreams()
-		{
-			foreach (var stream in lstOpenStreams)
-			{
-				try
-				{
-					stream.Close();
-				}
-				catch (IOException)
-				{
-					// ignore
-				}
-			}
+        private void CloseOpenStreams()
+        {
+            foreach (var stream in lstOpenStreams)
+            {
+                try
+                {
+                    stream.Close();
+                }
+                catch (IOException)
+                {
+                    // ignore
+                }
+            }
 
-			lstOpenStreams.Clear();
-		}
+            lstOpenStreams.Clear();
+        }
 
-		/*
+        /*
 			Executes a FETCH FIRST, and stores the result internally.
 			@return true if the cursor is positioned correctly.
 		*/
-		private bool FetchFirst()
-		{
-			MaxDBReplyPacket reply;
+        private bool FetchFirst()
+        {
+            MaxDBReplyPacket reply;
 
-			//int usedFetchSize = this.fetchSize;
+            //int usedFetchSize = this.fetchSize;
 
-			try
-			{
-				reply = mFetchInfo.ExecFetchNext();
-			}
-			catch (MaxDBException ex)
-			{
+            try
+            {
+                reply = mFetchInfo.ExecFetchNext();
+            }
+            catch (MaxDBException ex)
+            {
                 if (ex.ErrorCode == 100)
                 {
                     bEmpty = true;
@@ -1043,27 +972,27 @@ namespace MaxDB.Data
                     throw;
                 }
 
-				return false;
-			}
+                return false;
+            }
 
-			SetCurrentChunk(new FetchChunk(dbConnection,
-				FetchType.FIRST,		// fetch first is forward
-				1,						// absolute start position
-				reply,					// reply packet
-				mFetchInfo.RecordSize,	// the size for data part navigation
-				iMaxRows,				// how many rows to fetch
-				iRowsInResultSet));
+            SetCurrentChunk(new FetchChunk(dbConnection,
+                FetchType.FIRST,        // fetch first is forward
+                1,                      // absolute start position
+                reply,                  // reply packet
+                mFetchInfo.RecordSize,  // the size for data part navigation
+                iMaxRows,               // how many rows to fetch
+                iRowsInResultSet));
 
-			return true;
-		}
+            return true;
+        }
 
-		// Fetch the next chunk, moving forward over the result set.
-		private bool FetchNextChunk()
-		{
-			MaxDBReplyPacket reply;
+        // Fetch the next chunk, moving forward over the result set.
+        private bool FetchNextChunk()
+        {
+            MaxDBReplyPacket reply;
 
-			//int usedFetchSize = this.fetchSize;
-			int usedOffset = 1;
+            //int usedFetchSize = this.fetchSize;
+            int usedOffset = 1;
 
             if (mCurrentChunk.IsForward)
             {
@@ -1078,41 +1007,41 @@ namespace MaxDB.Data
                 }
             }
 
-			try
-			{
-				reply = mFetchInfo.ExecFetchNext();
-			}
-			catch (MaxDBException ex)
-			{
-				if (ex.ErrorCode == 100)
-				{
-					// fine, we are at the end.
-					mCurrentChunk.IsLast = true;
-					UpdateRowStatistics();
-					// but invalidate it, as it is thrown away by the kernel
-					mCurrentChunk = null;
-					mPositionStateOfChunk = PositionType.NOT_AVAILABLE;
-					mPositionState = PositionType.AFTER_LAST;
-					return false;
-				}
-				throw;
-			}
+            try
+            {
+                reply = mFetchInfo.ExecFetchNext();
+            }
+            catch (MaxDBException ex)
+            {
+                if (ex.ErrorCode == 100)
+                {
+                    // fine, we are at the end.
+                    mCurrentChunk.IsLast = true;
+                    UpdateRowStatistics();
+                    // but invalidate it, as it is thrown away by the kernel
+                    mCurrentChunk = null;
+                    mPositionStateOfChunk = PositionType.NOT_AVAILABLE;
+                    mPositionState = PositionType.AFTER_LAST;
+                    return false;
+                }
+                throw;
+            }
 
-			SetCurrentChunk(new FetchChunk(dbConnection,
-				FetchType.RELATIVE_UP,
-				mCurrentChunk.End + 1,
-				reply,
-				mFetchInfo.RecordSize,
-				iMaxRows,
-				iRowsInResultSet));
+            SetCurrentChunk(new FetchChunk(dbConnection,
+                FetchType.RELATIVE_UP,
+                mCurrentChunk.End + 1,
+                reply,
+                mFetchInfo.RecordSize,
+                iMaxRows,
+                iRowsInResultSet));
 
-			return true;
-		}
+            return true;
+        }
 
-		private ByteArray CurrentRecord
-		{
-			get
-			{
+        private ByteArray CurrentRecord
+        {
+            get
+            {
                 if (mPositionState == PositionType.BEFORE_FIRST)
                 {
                     throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSET_BEFOREFIRST));
@@ -1123,53 +1052,50 @@ namespace MaxDB.Data
                     throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSET_AFTERLAST));
                 }
 
-				return mCurrentChunk.CurrentRecord;
-			}
-		}
+                return mCurrentChunk.CurrentRecord;
+            }
+        }
 
-		private DBTechTranslator FindColumnInfo(int colIndex)
-		{
-			AssertNotClosed();
-			DBTechTranslator info;
+        private DBTechTranslator FindColumnInfo(int colIndex)
+        {
+            AssertNotClosed();
+            DBTechTranslator info;
 
-			try
-			{
-				info = mFetchInfo.GetColumnInfo(colIndex);
-			}
-			catch (IndexOutOfRangeException)
-			{
-				throw new InvalidColumnException(colIndex);
-			}
-			return info;
-		}
+            try
+            {
+                info = mFetchInfo.GetColumnInfo(colIndex);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                throw new InvalidColumnException(colIndex);
+            }
 
-		#endregion
+            return info;
+        }
 
-		/// <summary>
-		/// gets an enumerator that can iterate through this collection.
-		/// </summary>
-		/// <returns>The object that represents an enumerator.</returns>
-		public override IEnumerator GetEnumerator()
-		{
-			return new DbEnumerator(this);
-		}
+        #endregion
 
-		#region IDisposable Members
+        /// <summary>
+        /// gets an enumerator that can iterate through this collection.
+        /// </summary>
+        /// <returns>The object that represents an enumerator.</returns>
+        public override IEnumerator GetEnumerator() => new DbEnumerator(this);
 
-		/// <summary>
-		/// This method is intended for internal use and can not to be called directly from your code.
-		/// </summary>
-		/// <param name="disposing">Disposing flag</param>
-		protected override void Dispose(bool disposing)
-		{
-			base.Dispose(disposing);
+        #region IDisposable Members
+
+        /// <summary>
+        /// This method is intended for internal use and can not to be called directly from your code.
+        /// </summary>
+        /// <param name="disposing">Disposing flag</param>
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
             if (disposing)
             {
                 Close();
             }
-		}
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }
-

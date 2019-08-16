@@ -28,178 +28,158 @@ using System.Globalization;
 
 namespace MaxDB.Data
 {
-	/// <summary>
-	/// Provides a simple way to create and manage the contents of connection strings used by the <see cref="MaxDBConnection"/> class.
-	/// This class cannot be inherited.
-	/// </summary>
-	public sealed class MaxDBConnectionStringBuilder : DbConnectionStringBuilder, IEnumerable
-	{
-		private Hashtable mKeyValuePairs = new Hashtable();
-		private bool bBrowsable = true;
+    /// <summary>
+    /// Provides a simple way to create and manage the contents of connection strings used by the <see cref="MaxDBConnection"/> class.
+    /// This class cannot be inherited.
+    /// </summary>
+    public sealed class MaxDBConnectionStringBuilder : DbConnectionStringBuilder, IEnumerable
+    {
+        private Hashtable mKeyValuePairs = new Hashtable();
 
-		/// <summary>
-		/// Default constructor.
-		/// </summary>
-		public MaxDBConnectionStringBuilder()
-		{
-		}
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
+        public MaxDBConnectionStringBuilder()
+        {
+        }
 
-		/// <summary>
-		/// A constructor that takes a connection string.
-		/// </summary>
-		/// <param name="connectionString">Connection string.</param>
-		public MaxDBConnectionStringBuilder(string connectionString)
-		{
-			ConnectionString = connectionString;
-		}
+        /// <summary>
+        /// A constructor that takes a connection string.
+        /// </summary>
+        /// <param name="connectionString">Connection string.</param>
+        public MaxDBConnectionStringBuilder(string connectionString) => ConnectionString = connectionString;
 
-		/// <summary>
-		/// Gets or sets a value that indicates whether the <see cref="ConnectionString"/> property is visible in Visual Studio designers. 
-		/// </summary>
-		public new bool BrowsableConnectionString
-		{
-			get
-			{
-				return bBrowsable;
-			}
-			set
-			{
-				bBrowsable = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets a value that indicates whether the <see cref="ConnectionString"/> property is visible in Visual Studio designers. 
+        /// </summary>
+        public new bool BrowsableConnectionString { get; set; } = true;
 
-		/// <summary>
-		/// Append a key and value to an existing <see cref="StringBuilder"/> object. 
-		/// </summary>
-		/// <param name="builder">The <see cref="StringBuilder"/> to which to add the key/value pair.</param>
-		/// <param name="keyword">Key value.</param>
-		/// <param name="value">The value for the supplied key.</param>
-		public static new void AppendKeyValuePair(StringBuilder builder, string keyword, string value)
-		{
+        /// <summary>
+        /// Append a key and value to an existing <see cref="StringBuilder"/> object. 
+        /// </summary>
+        /// <param name="builder">The <see cref="StringBuilder"/> to which to add the key/value pair.</param>
+        /// <param name="keyword">Key value.</param>
+        /// <param name="value">The value for the supplied key.</param>
+        public static new void AppendKeyValuePair(StringBuilder builder, string keyword, string value)
+        {
             if (builder == null)
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "builder"));
             }
 
-			builder.Append(keyword).Append("=").Append(value).Append(";");
-		}
+            builder.Append(keyword).Append("=").Append(value).Append(";");
+        }
 
-		/// <summary>
-		/// Indicates whether the specified key exists in this <see cref="MaxDBConnectionStringBuilder"/> instance. 
-		/// </summary>
-		/// <param name="keyword">Key value.</param>
-		/// <returns>true if an entry with the specified key was found and false otherwise.</returns>
-		public override bool ShouldSerialize(string keyword)
-		{
-			return mKeyValuePairs.ContainsKey(keyword);
-		}
+        /// <summary>
+        /// Indicates whether the specified key exists in this <see cref="MaxDBConnectionStringBuilder"/> instance. 
+        /// </summary>
+        /// <param name="keyword">Key value.</param>
+        /// <returns>true if an entry with the specified key was found and false otherwise.</returns>
+        public override bool ShouldSerialize(string keyword) => mKeyValuePairs.ContainsKey(keyword);
 
-		/// <summary>
-		/// Return connection string.
-		/// </summary>
-		/// <returns>Connection string.</returns>
-		public override string ToString()
-		{
-			return ConnectionString;
-		}
+        /// <summary>
+        /// Return connection string.
+        /// </summary>
+        /// <returns>Connection string.</returns>
+        public override string ToString() => ConnectionString;
 
-		/// <summary>
-		/// Try to retrieve value for the specified key.
-		/// </summary>
-		/// <param name="keyword">The key of the item.</param>
-		/// <param name="value">The corresponding value.</param>
-		/// <returns>true if an entry with the specified key was found and false otherwise.</returns>
-		public override bool TryGetValue(string keyword, out object value)
-		{
-			if (mKeyValuePairs.ContainsKey(keyword))
-			{
-				value = mKeyValuePairs[keyword];
-				return true;
-			}
-			else
-			{
-				value = null;
-				return false;
-			}
-		}
+        /// <summary>
+        /// Try to retrieve value for the specified key.
+        /// </summary>
+        /// <param name="keyword">The key of the item.</param>
+        /// <param name="value">The corresponding value.</param>
+        /// <returns>true if an entry with the specified key was found and false otherwise.</returns>
+        public override bool TryGetValue(string keyword, out object value)
+        {
+            if (mKeyValuePairs.ContainsKey(keyword))
+            {
+                value = mKeyValuePairs[keyword];
+                return true;
+            }
+            else
+            {
+                value = null;
+                return false;
+            }
+        }
 
-		private void ParseIntParameter(string key, string parameter)
-		{
-			mKeyValuePairs[key] = 0;
-			try
-			{
-				mKeyValuePairs[key] = int.Parse(parameter.Split('=')[1], CultureInfo.InvariantCulture);
-			}
-			catch (IndexOutOfRangeException)
-			{
-			}
-			catch (ArgumentNullException)
-			{
-			}
-			catch (FormatException)
-			{
-			}
-			catch (OverflowException)
-			{
-			}
-		}
+        private void ParseIntParameter(string key, string parameter)
+        {
+            mKeyValuePairs[key] = 0;
+            try
+            {
+                mKeyValuePairs[key] = int.Parse(parameter.Split('=')[1], CultureInfo.InvariantCulture);
+            }
+            catch (IndexOutOfRangeException)
+            {
+            }
+            catch (ArgumentNullException)
+            {
+            }
+            catch (FormatException)
+            {
+            }
+            catch (OverflowException)
+            {
+            }
+        }
 
-		private void ParseBoolParameter(string key, string parameter)
-		{
-			mKeyValuePairs[key] = true;
-			try
-			{
-				mKeyValuePairs[key] = bool.Parse(parameter.Split('=')[1]);
-			}
-			catch (IndexOutOfRangeException)
-			{
-			}
-			catch (ArgumentNullException)
-			{
-			}
-			catch (FormatException)
-			{
-			}
-			catch (OverflowException)
-			{
-			}
-		}
+        private void ParseBoolParameter(string key, string parameter)
+        {
+            mKeyValuePairs[key] = true;
+            try
+            {
+                mKeyValuePairs[key] = bool.Parse(parameter.Split('=')[1]);
+            }
+            catch (IndexOutOfRangeException)
+            {
+            }
+            catch (ArgumentNullException)
+            {
+            }
+            catch (FormatException)
+            {
+            }
+            catch (OverflowException)
+            {
+            }
+        }
 
-		/// <summary>
-		/// Gets or sets the string used to connect to a MaxDB Server database.
-		/// </summary>
-		/// <remarks>
-		/// <para>
-		/// You can use this property to connect to a database.
-		/// The following example illustrates a typical connection string.
-		/// <c>"Server=MyServer;Database=MyDB;User ID=MyLogin;Password=MyPassword;"</c>
-		/// </para>
-		/// </remarks>
-		public new string ConnectionString
-		{
-			get
-			{
-				var builder = new StringBuilder();
-				var keys = new SortedList(mKeyValuePairs);
+        /// <summary>
+        /// Gets or sets the string used to connect to a MaxDB Server database.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// You can use this property to connect to a database.
+        /// The following example illustrates a typical connection string.
+        /// <c>"Server=MyServer;Database=MyDB;User ID=MyLogin;Password=MyPassword;"</c>
+        /// </para>
+        /// </remarks>
+        public new string ConnectionString
+        {
+            get
+            {
+                var builder = new StringBuilder();
+                var keys = new SortedList(mKeyValuePairs);
 
                 foreach (string key in keys.Keys)
                 {
                     builder.Append(key).Append("=").Append(mKeyValuePairs[key]).Append(";");
                 }
 
-				return builder.ToString();
-			}
-			set
-			{
-				bool isModeSet = false;
+                return builder.ToString();
+            }
+            set
+            {
+                bool isModeSet = false;
                 if (value == null)
                 {
                     return;
                 }
 
-				string[] paramArr = value.Split(';');
-				foreach (string param in paramArr)
-				{
+                string[] paramArr = value.Split(';');
+                foreach (string param in paramArr)
+                {
                     if (param.Split('=').Length > 1)
                     {
                         switch (param.Split('=')[0].Trim().ToUpper(CultureInfo.InvariantCulture))
@@ -302,467 +282,296 @@ namespace MaxDB.Data
                                 break;
                         }
                     }
-				}
+                }
 
                 if (!isModeSet)
                 {
                     Mode = SqlMode.Internal;
                 }
-			}
-		}
+            }
+        }
 
-		/// <summary>
-		/// Database server address or IP.
-		/// </summary>
-		/// <remarks>
-		/// <para>
-		/// To connect to a local machine, specify "localhost" or "127.0.0.1" for the server. 
-		/// If you do not specify a server, localhost is returned.
-		/// </para>
-		///</remarks>
-		public string DataSource
-		{
-			get
-			{
-                return mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] as string ?? "localhost";
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets database server address or IP.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// To connect to a local machine, specify "localhost" or "127.0.0.1" for the server. 
+        /// If you do not specify a server, localhost is returned.
+        /// </para>
+        ///</remarks>
+        public string DataSource
+        {
+            get => mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] as string ?? "localhost";
+            set => mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] = value;
+        }
 
-		/// <summary>
-		/// Database name.
-		/// </summary>
-		public string InitialCatalog
-		{
-			get
-			{
-				return (string)mKeyValuePairs[ConnectionStringParams.INITIAL_CATALOG];
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.INITIAL_CATALOG] = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets database name.
+        /// </summary>
+        public string InitialCatalog
+        {
+            get => (string)mKeyValuePairs[ConnectionStringParams.INITIAL_CATALOG];
+            set => mKeyValuePairs[ConnectionStringParams.INITIAL_CATALOG] = value;
+        }
 
-		/// <summary>
-		/// Database user login.
-		/// </summary>
-		public string UserId
-		{
-			get
-			{
-				return (string)mKeyValuePairs[ConnectionStringParams.USER_ID];
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.USER_ID] = value;
-			}
-		}
+        /// <summary>
+        /// Get or sets database user login.
+        /// </summary>
+        public string UserId
+        {
+            get => (string)mKeyValuePairs[ConnectionStringParams.USER_ID];
+            set => mKeyValuePairs[ConnectionStringParams.USER_ID] = value;
+        }
 
-		/// <summary>
-		/// Database user password.
-		/// </summary>
-		public string Password
-		{
-			get
-			{
-				return (string)mKeyValuePairs[ConnectionStringParams.PASSWORD];
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.PASSWORD] = value;
-			}
-		}
+        /// <summary>
+        /// Get or sets database user password.
+        /// </summary>
+        public string Password
+        {
+            get => (string)mKeyValuePairs[ConnectionStringParams.PASSWORD];
+            set => mKeyValuePairs[ConnectionStringParams.PASSWORD] = value;
+        }
 
-		/// <summary>
-		/// Connection timeout. If you do not specify a timeout, 0 is returned.
-		/// </summary>
-		public int Timeout
-		{
-			get
-			{
-                return mKeyValuePairs[ConnectionStringParams.TIMEOUT] != null ? (int)mKeyValuePairs[ConnectionStringParams.TIMEOUT] : 0;
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.TIMEOUT] = value;
-			}
-		}
+        /// <summary>
+        /// Get or sets connection timeout. If you do not specify a timeout, 0 is returned.
+        /// </summary>
+        public int Timeout
+        {
+            get => mKeyValuePairs[ConnectionStringParams.TIMEOUT] != null ? (int)mKeyValuePairs[ConnectionStringParams.TIMEOUT] : 0;
+            set => mKeyValuePairs[ConnectionStringParams.TIMEOUT] = value;
+        }
 
-		/// <summary>
-		/// Connection <see cref="SqlMode"/> mode. If you do not specify a mode, internal one is returned.
-		/// </summary>
-		public SqlMode Mode
-		{
-			get
-			{
-                return mKeyValuePairs[ConnectionStringParams.MODE] != null ? (SqlMode)mKeyValuePairs[ConnectionStringParams.MODE] : SqlMode.Internal;
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.MODE] = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets connection <see cref="SqlMode"/> mode. If you do not specify a mode, internal one is returned.
+        /// </summary>
+        public SqlMode Mode
+        {
+            get => mKeyValuePairs[ConnectionStringParams.MODE] != null ? (SqlMode)mKeyValuePairs[ConnectionStringParams.MODE] : SqlMode.Internal;
+            set => mKeyValuePairs[ConnectionStringParams.MODE] = value;
+        }
 
-		/// <summary>
-		/// Whether character values contain at least 1 blank, or are NULL. 
-		/// </summary>
-		public bool SpaceOption
-		{
-			get
-			{
-                return mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] != null ? (bool)mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] : false;
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets a value indicating whether character values contain at least 1 blank, or are NULL. 
+        /// </summary>
+        public bool SpaceOption
+        {
+            get => mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] != null ? (bool)mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] : false;
+            set => mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] = value;
+        }
 
-		/// <summary>
-		/// Should the connection use SSL connection. If you do not specify this flag, false is returned.
-		/// </summary>
-		public bool Encrypt
-		{
-			get
-			{
-                return mKeyValuePairs[ConnectionStringParams.ENCRYPT] != null ? (bool)mKeyValuePairs[ConnectionStringParams.ENCRYPT] : false;
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.ENCRYPT] = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets a value indicating whether the connection use SSL connection. If you do not specify this flag, false is returned.
+        /// </summary>
+        public bool Encrypt
+        {
+            get => mKeyValuePairs[ConnectionStringParams.ENCRYPT] != null ? (bool)mKeyValuePairs[ConnectionStringParams.ENCRYPT] : false;
+            set => mKeyValuePairs[ConnectionStringParams.ENCRYPT] = value;
+        }
 
-		/// <summary>
-		/// SSL certificate name.
-		/// </summary>
-		public string SslCertificateName
-		{
-			get
-			{
-				return (string)mKeyValuePairs[ConnectionStringParams.SSL_CERTIFICATE];
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.SSL_CERTIFICATE] = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets SSL certificate name.
+        /// </summary>
+        public string SslCertificateName
+        {
+            get => (string)mKeyValuePairs[ConnectionStringParams.SSL_CERTIFICATE];
+            set => mKeyValuePairs[ConnectionStringParams.SSL_CERTIFICATE] = value;
+        }
 
-		/// <summary>
-		/// Gets or sets the property that indicates what kind of SQL statements has to cached. This property is the string of the
-		/// form [s][i][u][d][all] where 
-		/// <list type="bullet">
-		/// <item>s - cache SELECT statements</item>
-		/// <item>i - cache INSERT statements</item>
-		/// <item>u - cache UPDATE statements</item>
-		/// <item>d - cache DELETE statements</item>
-		/// <item>all - cache all statements.</item>
-		/// </list>
-		/// </summary>
-		public string Cache
-		{
-			get
-			{
-                return mKeyValuePairs[ConnectionStringParams.CACHE] as string ?? "all";
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.CACHE] = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets the property that indicates what kind of SQL statements has to cached. This property is the string of the
+        /// form [s][i][u][d][all] where 
+        /// <list type="bullet">
+        /// <item>s - cache SELECT statements</item>
+        /// <item>i - cache INSERT statements</item>
+        /// <item>u - cache UPDATE statements</item>
+        /// <item>d - cache DELETE statements</item>
+        /// <item>all - cache all statements.</item>
+        /// </list>
+        /// </summary>
+        public string Cache
+        {
+            get => mKeyValuePairs[ConnectionStringParams.CACHE] as string ?? "all";
+            set => mKeyValuePairs[ConnectionStringParams.CACHE] = value;
+        }
 
-		/// <summary>
-		/// Get or set statement cache size
-		/// </summary>
-		public int CacheSize
-		{
-			get
-			{
-                return mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] != null ? (int)mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] : 0;
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets statement cache size
+        /// </summary>
+        public int CacheSize
+        {
+            get => mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] != null ? (int)mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] : 0;
+            set => mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] = value;
+        }
 
-		/// <summary>
-		/// Get or set statement cache limit
-		/// </summary>
-		public int CacheLimit
-		{
-			get
-			{
-                return mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] != null ? (int)mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] : 0;
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets statement cache limit
+        /// </summary>
+        public int CacheLimit
+        {
+            get => mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] != null ? (int)mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] : 0;
+            set => mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] = value;
+        }
 
-		/// <summary>
-		/// Check whether the connection supports pooling.
-		/// </summary>
-		public bool Pooling
-		{
-			get
-			{
-                return mKeyValuePairs[ConnectionStringParams.POOLING] != null ? (bool)mKeyValuePairs[ConnectionStringParams.POOLING] : true;
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.POOLING] = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets a value whether the connection supports pooling.
+        /// </summary>
+        public bool Pooling
+        {
+            get => mKeyValuePairs[ConnectionStringParams.POOLING] != null ? (bool)mKeyValuePairs[ConnectionStringParams.POOLING] : true;
+            set => mKeyValuePairs[ConnectionStringParams.POOLING] = value;
+        }
 
-		/// <summary>
-		/// Maximum number of seconds a connection should live. This is checked when a connection is returned to the pool.
-		/// Default value is 0.
-		/// </summary>
-		public int ConnectionLifetime
-		{
-			get
-			{
-                return mKeyValuePairs[ConnectionStringParams.CONNECTION_LIFETIME] != null ? (int)mKeyValuePairs[ConnectionStringParams.CONNECTION_LIFETIME] : 0;
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.CONNECTION_LIFETIME] = value;
-			}
-		}
+        /// <summary>
+        /// Gets the maximum number of seconds a connection should live. This is checked when a connection is returned to the pool.
+        /// Default value is 0.
+        /// </summary>
+        public int ConnectionLifetime
+        {
+            get => mKeyValuePairs[ConnectionStringParams.CONNECTION_LIFETIME] != null ? (int)mKeyValuePairs[ConnectionStringParams.CONNECTION_LIFETIME] : 0;
+            set => mKeyValuePairs[ConnectionStringParams.CONNECTION_LIFETIME] = value;
+        }
 
-		/// <summary>
-		/// Minimum number of connections to have in the pool. Default value is 0.
-		/// </summary>
-		public int MinPoolSize
-		{
-			get
-			{
-                return mKeyValuePairs[ConnectionStringParams.MIN_POOL_SIZE] != null ? (int)mKeyValuePairs[ConnectionStringParams.MIN_POOL_SIZE] : 0;
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.MIN_POOL_SIZE] = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets the minimum number of connections to have in the pool. Default value is 0.
+        /// </summary>
+        public int MinPoolSize
+        {
+            get => mKeyValuePairs[ConnectionStringParams.MIN_POOL_SIZE] != null ? (int)mKeyValuePairs[ConnectionStringParams.MIN_POOL_SIZE] : 0;
+            set => mKeyValuePairs[ConnectionStringParams.MIN_POOL_SIZE] = value;
+        }
 
-		/// <summary>
-		/// Maximum number of connections to have in the pool. Default value is 100.
-		/// </summary>
-		public int MaxPoolSize
-		{
-			get
-			{
-                return mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE] != null ? (int)mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE] : 100;
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE] = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets the minimum number of connections to have in the pool. Default value is 100.
+        /// </summary>
+        public int MaxPoolSize
+        {
+            get => mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE] != null ? (int)mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE] : 100;
+            set => mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE] = value;
+        }
 
         /// <summary>
         /// Gets or sets the current user code page (1252 by default).
         /// </summary>
 		public int CodePage
-		{
-			get
-			{
-                return mKeyValuePairs[ConnectionStringParams.CODE_PAGE] != null ? (int)mKeyValuePairs[ConnectionStringParams.CODE_PAGE] : 1252;
-			}
-			set
-			{
-				mKeyValuePairs[ConnectionStringParams.CODE_PAGE] = value;
-			}
-		}
+        {
+            get => mKeyValuePairs[ConnectionStringParams.CODE_PAGE] != null ? (int)mKeyValuePairs[ConnectionStringParams.CODE_PAGE] : 1252;
+            set => mKeyValuePairs[ConnectionStringParams.CODE_PAGE] = value;
+        }
 
-		#region IDictionary Members
+        #region IDictionary Members
 
-		/// <summary>
-		/// Add key/value pair.
-		/// </summary>
-		/// <param name="key">The key of the item.</param>
-		/// <param name="value">The value for the specified key.</param>
-		public new void Add(string key, object value)
-		{
-			mKeyValuePairs[key] = value;
-		}
+        /// <summary>
+        /// Add key/value pair.
+        /// </summary>
+        /// <param name="key">The key of the item.</param>
+        /// <param name="value">The value for the specified key.</param>
+        public new void Add(string key, object value) => mKeyValuePairs[key] = value;
 
-		/// <summary>
-		/// Remove all key/value pairs. 
-		/// </summary>
-		public override void Clear()
-		{
-			mKeyValuePairs.Clear();
-		}
+        /// <summary>
+        /// Remove all key/value pairs. 
+        /// </summary>
+        public override void Clear() => mKeyValuePairs.Clear();
 
-		/// <summary>
-		/// Check whether the key can be found.
-		/// </summary>
-		/// <param name="key">Key value.</param>
-		/// <returns>true if an entry with the specified key was found and false otherwise.</returns>
-		public bool Contains(object key)
-		{
-			return mKeyValuePairs.ContainsKey(key);
-		}
+        /// <summary>
+        /// Check whether the key can be found.
+        /// </summary>
+        /// <param name="key">Key value.</param>
+        /// <returns>true if an entry with the specified key was found and false otherwise.</returns>
+        public bool Contains(object key) => mKeyValuePairs.ContainsKey(key);
 
-		/// <summary>
-		/// Returns an enumerator to support iterating through the collection. 
-		/// </summary>
-		/// <returns>An enumerator object.</returns>
-		public IDictionaryEnumerator GetEnumerator()
-		{
-			return mKeyValuePairs.GetEnumerator();
-		}
+        /// <summary>
+        /// Returns an enumerator to support iterating through the collection. 
+        /// </summary>
+        /// <returns>An enumerator object.</returns>
+        public IDictionaryEnumerator GetEnumerator() => mKeyValuePairs.GetEnumerator();
 
-		/// <summary>
-		/// Gets a value indicating whether the collection is fixed-sized.
-		/// </summary>
-		public override bool IsFixedSize
-		{
-			get
-			{
-				return mKeyValuePairs.IsFixedSize;
-			}
-		}
+        /// <summary>
+        /// Gets a value indicating whether the collection is fixed-sized.
+        /// </summary>
+        public override bool IsFixedSize => mKeyValuePairs.IsFixedSize;
 
-		/// <summary>
-		/// Gets a value indicating whether the collection is read-only.
-		/// </summary>
-		public new bool IsReadOnly
-		{
-			get
-			{
-				return mKeyValuePairs.IsReadOnly;
-			}
-		}
+        /// <summary>
+        /// Gets a value indicating whether the collection is read-only.
+        /// </summary>
+        public new bool IsReadOnly => mKeyValuePairs.IsReadOnly;
 
-		/// <summary>
-		/// The collection of keys. 
-		/// </summary>
-		public override ICollection Keys
-		{
-			get
-			{
-				return mKeyValuePairs.Keys;
-			}
-		}
+        /// <summary>
+        /// The collection of keys. 
+        /// </summary>
+        public override ICollection Keys => mKeyValuePairs.Keys;
 
-		/// <summary>
-		/// Remove the item with specified key.
-		/// </summary>
-		/// <param name="keyword">The key of the item</param>
-		/// <returns>true if an entry with the specified key was found and false otherwise.</returns>
-		public override bool Remove(string keyword)
-		{
-			if (Contains(keyword))
-			{
-				mKeyValuePairs.Remove(keyword);
-				return true;
-			}
-			else
-				return false;
-		}
+        /// <summary>
+        /// Remove the item with specified key.
+        /// </summary>
+        /// <param name="keyword">The key of the item</param>
+        /// <returns>true if an entry with the specified key was found and false otherwise.</returns>
+        public override bool Remove(string keyword)
+        {
+            if (Contains(keyword))
+            {
+                mKeyValuePairs.Remove(keyword);
+                return true;
+            }
+            else
+                return false;
+        }
 
-		/// <summary>
-		/// The collection of values.
-		/// </summary>
-		public override ICollection Values
-		{
-			get
-			{
-				return mKeyValuePairs.Values;
-			}
-		}
+        /// <summary>
+        /// The collection of values.
+        /// </summary>
+        public override ICollection Values => mKeyValuePairs.Values;
 
-		/// <summary>
-		/// Gets or sets the value associated with the specified key. 
-		/// </summary>
-		/// <param name="keyword">The key of the item.</param>
-		/// <returns>The value associated with the specified key.</returns>
-		public override object this[string keyword]
-		{
-			get
-			{
-				return mKeyValuePairs[keyword];
-			}
-			set
-			{
-				mKeyValuePairs[keyword] = value;
-			}
-		}
+        /// <summary>
+        /// Gets or sets the value associated with the specified key. 
+        /// </summary>
+        /// <param name="keyword">The key of the item.</param>
+        /// <returns>The value associated with the specified key.</returns>
+        public override object this[string keyword]
+        {
+            get => mKeyValuePairs[keyword];
+            set => mKeyValuePairs[keyword] = value;
+        }
 
-		#endregion
+        #endregion
 
-		#region ICollection Members
+        #region ICollection Members
 
-		/// <summary>
-		/// Copy values to the one-dimensional array starting at the specified index of the target array.
-		/// </summary>
-		/// <param name="array">A target array.</param>
-		/// <param name="index">The index in the array at which to begin copying.</param>
-		public void CopyTo(Array array, int index)
-		{
-			mKeyValuePairs.CopyTo(array, index);
-		}
+        /// <summary>
+        /// Copy values to the one-dimensional array starting at the specified index of the target array.
+        /// </summary>
+        /// <param name="array">A target array.</param>
+        /// <param name="index">The index in the array at which to begin copying.</param>
+        public void CopyTo(Array array, int index) => mKeyValuePairs.CopyTo(array, index);
 
-		/// <summary>
-		/// Copy values to the one-dimensional string array starting at the specified index of the target array.
-		/// </summary>
-		/// <param name="array">A target array.</param>
-		/// <param name="index">The index in the array at which to begin copying.</param>
-		public void CopyTo(string[] array, int index)
-		{
-			mKeyValuePairs.CopyTo(array, index);
-		}
+        /// <summary>
+        /// Copy values to the one-dimensional string array starting at the specified index of the target array.
+        /// </summary>
+        /// <param name="array">A target array.</param>
+        /// <param name="index">The index in the array at which to begin copying.</param>
+        public void CopyTo(string[] array, int index) => mKeyValuePairs.CopyTo(array, index);
 
-		/// <summary>
-		/// Gets the number of items in the collection.
-		/// </summary>
-		public override int Count
-		{
-			get
-			{
-				return mKeyValuePairs.Count;
-			}
-		}
+        /// <summary>
+        /// Gets the number of items in the collection.
+        /// </summary>
+        public override int Count => mKeyValuePairs.Count;
 
-		/// <summary>
-		/// Gets a value indicating whether collection is synchronized.
-		/// </summary>
-		public bool IsSynchronized
-		{
-			get
-			{
-				return mKeyValuePairs.IsSynchronized;
-			}
-		}
+        /// <summary>
+        /// Gets a value indicating whether collection is synchronized.
+        /// </summary>
+        public bool IsSynchronized => mKeyValuePairs.IsSynchronized;
 
-		/// <summary>
-		/// Gets an object that can be used to synchronize access to the collection. 
-		/// </summary>
-		public object SyncRoot
-		{
-			get
-			{
-				return mKeyValuePairs.SyncRoot;
-			}
-		}
+        /// <summary>
+        /// Gets an object that can be used to synchronize access to the collection. 
+        /// </summary>
+        public object SyncRoot => mKeyValuePairs.SyncRoot;
 
-		#endregion
+        #endregion
 
-		#region IEnumerable Members
+        #region IEnumerable Members
 
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return mKeyValuePairs.GetEnumerator();
-		}
+        IEnumerator IEnumerable.GetEnumerator() => mKeyValuePairs.GetEnumerator();
 
-		#endregion
-	}
+        #endregion
+    }
 }

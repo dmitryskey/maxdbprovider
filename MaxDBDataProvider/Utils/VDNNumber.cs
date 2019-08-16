@@ -22,27 +22,24 @@ using System.Numerics;
 
 namespace MaxDB.Data.Utilities
 {
-	internal abstract class VDNNumber
-	{
-		private const int iZeroExpValue = 128;
-		private const int iTensComplement = 9;
-		private const int iNumberDigits = 38;
-		private const String strZeroString = "0000000000000000000000000000000000000000000000000000000000000000";
+    internal abstract class VDNNumber
+    {
+        private const int iZeroExpValue = 128;
+        private const int iTensComplement = 9;
+        private const int iNumberDigits = 38;
+        private const string strZeroString = "0000000000000000000000000000000000000000000000000000000000000000";
 
-		public static byte[] BigDecimal2Number(BigDecimal dec)
-		{
-			return BigDecimal2Number(dec, iNumberDigits);
-		}
+        public static byte[] BigDecimal2Number(BigDecimal dec) => BigDecimal2Number(dec, iNumberDigits);
 
-		public static string BigDecimal2PlainString(BigDecimal val)
-		{
-			string res;
-			int scale = val.Scale;
-			if (scale < 0)
-			{
-				val = val.setScale(0);
-				scale = 0;
-			}
+        public static string BigDecimal2PlainString(BigDecimal val)
+        {
+            string res;
+            int scale = val.Scale;
+            if (scale < 0)
+            {
+                val = val.SetScale(0);
+                scale = 0;
+            }
 
             if (scale == 0)
             {
@@ -50,7 +47,7 @@ namespace MaxDB.Data.Utilities
             }
             else
             {
-                string unsignedIntVal = BigInteger.Abs(val.unscaledValue).ToString();
+                string unsignedIntVal = BigInteger.Abs(val.UnscaledValue).ToString();
                 string prefix = (val < 0 ? "-0." : "0.");
                 int pointPos = unsignedIntVal.Length - scale;
                 if (pointPos == 0)
@@ -82,222 +79,223 @@ namespace MaxDB.Data.Utilities
                     res = buf.ToString();
                 }
             }
-			return res;
-		}
+            return res;
+        }
 
-		public static byte[] BigDecimal2Number(BigDecimal dec, int validDigits)
-		{
-			byte[] number;
-			string plain = BigDecimal2PlainString(dec);
-			int scale = (dec.Scale < 0) ? 0 : dec.Scale;
-			char[] chars = plain.ToCharArray();
-			bool isNegative;
-			int firstDigit;
-			int exponent;
-			int digitCount = chars.Length;
+        public static byte[] BigDecimal2Number(BigDecimal dec, int validDigits)
+        {
+            byte[] number;
+            string plain = BigDecimal2PlainString(dec);
+            int scale = (dec.Scale < 0) ? 0 : dec.Scale;
+            char[] chars = plain.ToCharArray();
+            bool isNegative;
+            int firstDigit;
+            int exponent;
+            int digitCount = chars.Length;
 
-			if (chars[0] == '-')
-			{
-				isNegative = true;
-				firstDigit = 1;
-			}
-			else
-			{
-				isNegative = false;
-				firstDigit = 0;
-			}
+            if (chars[0] == '-')
+            {
+                isNegative = true;
+                firstDigit = 1;
+            }
+            else
+            {
+                isNegative = false;
+                firstDigit = 0;
+            }
+
             while ((chars[firstDigit] == '0' || chars[firstDigit] == '.') && firstDigit < digitCount - 1)
             {
                 firstDigit++;
             }
 
-			exponent = chars.Length - firstDigit - scale;
-			digitCount = chars.Length - firstDigit;
-            if ((digitCount == 1) && (chars[firstDigit] == '0'))
+            exponent = chars.Length - firstDigit - scale;
+            digitCount = chars.Length - firstDigit;
+            if (digitCount == 1 && chars[firstDigit] == '0')
             {
                 return new byte[] { (byte)iZeroExpValue };
             }
 
-			if (exponent > 0 && scale > 0)
-			{
-				// adjust place taken by decimal point
-				exponent--;
-				digitCount--;
-				Array.Copy(chars, chars.Length - scale, chars, chars.Length - scale - 1, scale);
-			}
-			if (digitCount > validDigits)
-			{
+            if (exponent > 0 && scale > 0)
+            {
+                // adjust place taken by decimal point
+                exponent--;
+                digitCount--;
+                Array.Copy(chars, chars.Length - scale, chars, chars.Length - scale - 1, scale);
+            }
+            if (digitCount > validDigits)
+            {
                 if (chars[firstDigit + validDigits] >= '5')
                 {
                     chars[firstDigit + validDigits]++;
                 }
 
-				digitCount = validDigits;
-			}
+                digitCount = validDigits;
+            }
 
             for (int i = firstDigit; i < digitCount + firstDigit; ++i)
             {
                 chars[i] -= '0';
             }
 
-			number = new byte[digitCount + 1];
-			packDigits(chars, firstDigit, digitCount, isNegative, number);
+            number = new byte[digitCount + 1];
+            packDigits(chars, firstDigit, digitCount, isNegative, number);
 
             exponent = isNegative ? 64 - exponent : exponent + 192;
 
-			number[0] = (byte)exponent;
-			return number;
-		}
+            number[0] = (byte)exponent;
+            return number;
+        }
 
-		public static byte[] Long2Number(long val)
-		{
-			bool isNegative = false;
-			int negativeVal = 1;
-			byte[] number;
-			char[] scratch = new char[iNumberDigits + 1];
-			char digit;
-			int scratchPos = iNumberDigits - 1;
-			int exponent;
+        public static byte[] Long2Number(long val)
+        {
+            bool isNegative = false;
+            int negativeVal = 1;
+            byte[] number;
+            char[] scratch = new char[iNumberDigits + 1];
+            char digit;
+            int scratchPos = iNumberDigits - 1;
+            int exponent;
 
             if (val == 0)
             {
                 return new byte[] { iZeroExpValue };
             }
 
-			if (val < 0)
-			{
-				negativeVal = -1;
-				isNegative = true;
-			}
+            if (val < 0)
+            {
+                negativeVal = -1;
+                isNegative = true;
+            }
 
-			/*
+            /*
 			 * calculate digits
 			 */
-			while (val != 0)
-			{
-				digit = (char)(negativeVal * (val % 10));
-				scratch[scratchPos] = digit;
-				val /= 10;
-				scratchPos--;
-			}
+            while (val != 0)
+            {
+                digit = (char)(negativeVal * (val % 10));
+                scratch[scratchPos] = digit;
+                val /= 10;
+                scratchPos--;
+            }
 
-			exponent = iNumberDigits - scratchPos - 1;
-			scratchPos++;
-			number = new byte[iNumberDigits - scratchPos + 1];
-			packDigits(scratch, scratchPos, iNumberDigits - scratchPos, isNegative, number);
+            exponent = iNumberDigits - scratchPos - 1;
+            scratchPos++;
+            number = new byte[iNumberDigits - scratchPos + 1];
+            packDigits(scratch, scratchPos, iNumberDigits - scratchPos, isNegative, number);
 
             exponent = isNegative ? 64 - exponent : exponent + 192;
 
             number[0] = (byte)exponent;
-			return number;
-		}
+            return number;
+        }
 
-		public static BigDecimal Number2BigDecimal(byte[] rawNumber)
-		{
-			BigDecimal result = null;
-			int characteristic;
-			int digitCount = (rawNumber.Length - 1) * 2;
-			int exponent;
-			byte[] digits;
-			int lastSignificant = 2;
-			string numberString;
-			try
-			{
-				characteristic = rawNumber[0] & 0xff;
+        public static BigDecimal Number2BigDecimal(byte[] rawNumber)
+        {
+            BigDecimal result = null;
+            int characteristic;
+            int digitCount = (rawNumber.Length - 1) * 2;
+            int exponent;
+            byte[] digits;
+            int lastSignificant = 2;
+            string numberString;
+            try
+            {
+                characteristic = rawNumber[0] & 0xff;
                 if (characteristic == iZeroExpValue)
                 {
                     return new BigDecimal(0);
                 }
 
-				digits = new byte[digitCount + 2];
-				if (characteristic < iZeroExpValue)
-				{
-					exponent = -(characteristic - 64);
-					digits[0] = (byte)'-';
-					digits[1] = (byte)'.';
+                digits = new byte[digitCount + 2];
+                if (characteristic < iZeroExpValue)
+                {
+                    exponent = -(characteristic - 64);
+                    digits[0] = (byte)'-';
+                    digits[1] = (byte)'.';
 
-					for (int i = 1; i < rawNumber.Length; i++)
-					{
-						int val;
-						val = (((char)rawNumber[i]) & 0xff) >> 4;
+                    for (int i = 1; i < rawNumber.Length; i++)
+                    {
+                        int val;
+                        val = (((char)rawNumber[i]) & 0xff) >> 4;
                         if (val != 0)
                         {
                             lastSignificant = i * 2;
                         }
 
-						digits[i * 2] = (byte)(iTensComplement - val + '0');
-						val = (((char)rawNumber[i]) & 0x0f);
+                        digits[i * 2] = (byte)(iTensComplement - val + '0');
+                        val = (((char)rawNumber[i]) & 0x0f);
                         if (val != 0)
                         {
                             lastSignificant = i * 2 + 1;
                         }
 
-						digits[i * 2 + 1] = (byte)(iTensComplement - val + '0');
-					}
+                        digits[i * 2 + 1] = (byte)(iTensComplement - val + '0');
+                    }
 
-					digits[lastSignificant]++;
-				}
-				else
-				{
-					exponent = characteristic - 192;
-					digits[0] = (byte)'0';
-					digits[1] = (byte)'.';
-					for (int i = 1; i < rawNumber.Length; ++i)
-					{
-						int val;
-						val = (((char)rawNumber[i]) & 0xff) >> 4;
+                    digits[lastSignificant]++;
+                }
+                else
+                {
+                    exponent = characteristic - 192;
+                    digits[0] = (byte)'0';
+                    digits[1] = (byte)'.';
+                    for (int i = 1; i < rawNumber.Length; ++i)
+                    {
+                        int val;
+                        val = (((char)rawNumber[i]) & 0xff) >> 4;
                         if (val != 0)
                         {
                             lastSignificant = i * 2;
                         }
 
-						digits[i * 2] = (byte)(val + '0');
-						val = (((char)rawNumber[i]) & 0x0f);
+                        digits[i * 2] = (byte)(val + '0');
+                        val = (((char)rawNumber[i]) & 0x0f);
                         if (val != 0)
                         {
                             lastSignificant = i * 2 + 1;
                         }
 
-						digits[i * 2 + 1] = (byte)(val + '0');
-					}
-				}
+                        digits[i * 2 + 1] = (byte)(val + '0');
+                    }
+                }
 
-				numberString = Encoding.ASCII.GetString(digits, 0, lastSignificant + 1);
-				result = new BigDecimal(numberString);
-				return result.MovePointRight(exponent);
-			}
-			catch (Exception)
-			{
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONVDNnumber, Consts.ToHexString(rawNumber)));
-			}
-		}
+                numberString = Encoding.ASCII.GetString(digits, 0, lastSignificant + 1);
+                result = new BigDecimal(numberString);
+                return result.MovePointRight(exponent);
+            }
+            catch (Exception)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONVDNnumber, Consts.ToHexString(rawNumber)));
+            }
+        }
 
-		public static long Number2Long(byte[] rawNumber)
-		{
-			long result = 0;
-			int characteristic;
-			int exponent;
-			bool isNegative;
-			int numberDigits = rawNumber.Length * 2 - 2;
+        public static long Number2Long(byte[] rawNumber)
+        {
+            long result = 0;
+            int characteristic;
+            int exponent;
+            bool isNegative;
+            int numberDigits = rawNumber.Length * 2 - 2;
 
-			characteristic = rawNumber[0] & 0xFF;
+            characteristic = rawNumber[0] & 0xFF;
             if (characteristic == iZeroExpValue)
             {
                 return 0;
             }
 
-			if (characteristic < iZeroExpValue)
-			{
-				exponent = -(characteristic - 64);
+            if (characteristic < iZeroExpValue)
+            {
+                exponent = -(characteristic - 64);
                 if (exponent < 0 || exponent > numberDigits)
                 {
                     return (long)(Number2BigDecimal(rawNumber));
                 }
 
-				isNegative = true;
-				for (int i = 0; i < exponent; i++)
-				{
-					int val = rawNumber[i / 2 + 1];
+                isNegative = true;
+                for (int i = 0; i < exponent; i++)
+                {
+                    int val = rawNumber[i / 2 + 1];
                     if ((i % 2) == 0)
                     {
                         val &= 0xF0;
@@ -308,23 +306,23 @@ namespace MaxDB.Data.Utilities
                         val &= 0x0F;
                     }
 
-					result *= 10;
-					result += iTensComplement - val;
-				}
-				result++;
-			}
-			else
-			{
-				exponent = characteristic - 192;
+                    result *= 10;
+                    result += iTensComplement - val;
+                }
+                result++;
+            }
+            else
+            {
+                exponent = characteristic - 192;
                 if (exponent < 0 || exponent > numberDigits)
                 {
                     return (long)Number2BigDecimal(rawNumber);
                 }
 
-				isNegative = false;
-				for (int i = 0; i < exponent; i++)
-				{
-					int val = rawNumber[i / 2 + 1];
+                isNegative = false;
+                for (int i = 0; i < exponent; i++)
+                {
+                    int val = rawNumber[i / 2 + 1];
                     if ((i % 2) == 0)
                     {
                         val &= 0xF0;
@@ -335,53 +333,50 @@ namespace MaxDB.Data.Utilities
                         val &= 0x0F;
                     }
 
-					result *= 10;
-					result += val;
-				}
-			}
+                    result *= 10;
+                    result += val;
+                }
+            }
 
-            result *= isNegative  ? - 1 : 1;
+            result *= isNegative ? -1 : 1;
 
-			return result;
-		}
+            return result;
+        }
 
-		public static int Number2Int(byte[] rawBytes)
-		{
-			return (int)Number2Long(rawBytes);
-		}
+        public static int Number2Int(byte[] rawBytes) => (int)Number2Long(rawBytes);
 
-		private static void packDigits(char[] digits, int start, int count, bool isNegative, byte[] number)
-		{
-			int lastDigit = start + count - 1;
-			byte highNibble;
-			byte lowNibble;
+        private static void packDigits(char[] digits, int start, int count, bool isNegative, byte[] number)
+        {
+            int lastDigit = start + count - 1;
+            byte highNibble;
+            byte lowNibble;
 
-			if (isNegative)
-			{
+            if (isNegative)
+            {
                 // 10s complement
                 for (int i = start; i < lastDigit; ++i)
                 {
                     digits[i] = (char)(9 - digits[i]);
                 }
 
-				digits[lastDigit] = (char)(10 - digits[lastDigit]);
+                digits[lastDigit] = (char)(10 - digits[lastDigit]);
 
-				// handle overflow
-				int digitPos = lastDigit;
-				while (digits[digitPos] == 10)
-				{
-					digits[digitPos] = '\0';
-					digits[digitPos - 1]++;
-					digitPos--;
-				}
-			}
+                // handle overflow
+                int digitPos = lastDigit;
+                while (digits[digitPos] == 10)
+                {
+                    digits[digitPos] = '\0';
+                    digits[digitPos - 1]++;
+                    digitPos--;
+                }
+            }
 
-			/*
+            /*
 			 * pack digits into bytes
 			 */
-			for (int i = 1; start <= lastDigit; ++i, start += 2)
-			{
-				highNibble = (byte)digits[start];
+            for (int i = 1; start <= lastDigit; ++i, start += 2)
+            {
+                highNibble = (byte)digits[start];
                 if ((start + 1) <= lastDigit)
                 {
                     lowNibble = (byte)digits[start + 1];
@@ -391,102 +386,84 @@ namespace MaxDB.Data.Utilities
                     lowNibble = 0;
                 }
 
-				number[i] = (byte)(highNibble << 4 | lowNibble);
-			}
-		}
+                number[i] = (byte)(highNibble << 4 | lowNibble);
+            }
+        }
 
-		public static string Number2String(byte[] number, bool fixedtype, int logicalLength, int frac)
-		{
-			int characteristic;
+        public static string Number2String(byte[] number, bool fixedtype, int logicalLength, int frac)
+        {
+            int characteristic;
 
-			try
-			{
-				characteristic = number[0] & 0xFF;
+            try
+            {
+                characteristic = number[0] & 0xFF;
                 if (characteristic == iZeroExpValue)
                 {
                     return "0";
                 }
 
-				char[] digits = new char[logicalLength];
-				int exponent;
-				int lastsignificant = 0;
-				bool isnegative = false;
-				if (characteristic < iZeroExpValue)
-				{
-					isnegative = true;
-					exponent = -(characteristic - 64);
-					for (int i = 0; i < logicalLength; i++)
-					{
-						int v1;
-                        if (i % 2 == 0)
-                        {
-                            v1 = (number[1 + i / 2] & 0xFF) >> 4;
-                        }
-                        else
-                        {
-                            v1 = (number[1 + i / 2] & 0xF);
-                        }
-
+                char[] digits = new char[logicalLength];
+                int exponent;
+                int lastsignificant = 0;
+                bool isnegative = false;
+                if (characteristic < iZeroExpValue)
+                {
+                    isnegative = true;
+                    exponent = -(characteristic - 64);
+                    for (int i = 0; i < logicalLength; i++)
+                    {
+                        int v1 = i % 2 == 0 ? (number[1 + i / 2] & 0xFF) >> 4 : number[1 + i / 2] & 0xF;
                         if (v1 != 0)
                         {
                             lastsignificant = i;
                         }
 
-						digits[i] = (char)((9 - v1) + '0');
-					}
+                        digits[i] = (char)((9 - v1) + '0');
+                    }
 
-					digits[lastsignificant]++;
-				}
-				else
-				{
-					exponent = characteristic - 192;
-					for (int i = 0; i < logicalLength; i++)
-					{
-						int v1;
-                        if (i % 2 == 0)
-                        {
-                            v1 = (number[1 + i / 2] & 0xFF) >> 4;
-                        }
-                        else
-                        {
-                            v1 = (number[1 + i / 2] & 0xF);
-                        }
-
+                    digits[lastsignificant]++;
+                }
+                else
+                {
+                    exponent = characteristic - 192;
+                    for (int i = 0; i < logicalLength; i++)
+                    {
+                        int v1 = i % 2 == 0 ? (number[1 + i / 2] & 0xFF) >> 4 : number[1 + i / 2] & 0xF;
                         if (v1 != 0)
                         {
                             lastsignificant = i;
                         }
 
-						digits[i] = (char)((v1) + '0');
-					}
-				}
+                        digits[i] = (char)((v1) + '0');
+                    }
+                }
 
-				string sign = (isnegative ? "-" : string.Empty);
-				string numberstr = new string(digits, 0, lastsignificant + 1);
-				if (fixedtype)
-				{
-					if (exponent > 0)
-					{
+                string sign = (isnegative ? "-" : string.Empty);
+                string numberstr = new string(digits, 0, lastsignificant + 1);
+                if (fixedtype)
+                {
+                    if (exponent > 0)
+                    {
                         if (numberstr.Length < logicalLength)
                         {
                             numberstr = numberstr + strZeroString.Substring(0, logicalLength - numberstr.Length);
                         }
 
                         return sign + numberstr.Substring(0, exponent) + (frac != 0 ? "." + numberstr.Substring(exponent, exponent + frac) : string.Empty);
-					}
-					else
-					{
-						int zeroend = frac - (-exponent) - numberstr.Length;
+                    }
+                    else
+                    {
+                        int zeroend = frac - (-exponent) - numberstr.Length;
                         if (zeroend < 0)
                         {
                             zeroend = 0;
                         }
 
-						return sign + "0." + strZeroString.Substring(0, -exponent) + numberstr + strZeroString.Substring(0, zeroend);
-					}
-				}
-				else
-				{
+                        return sign + "0." + strZeroString.Substring(0, -exponent) + numberstr + strZeroString.Substring(0, zeroend);
+                    }
+                }
+                else
+                {
                     if (exponent < -3 || exponent > 7)
                     {
                         return sign + "0." + numberstr + "E" + exponent;
@@ -505,21 +482,16 @@ namespace MaxDB.Data.Utilities
                                 return sign + "0." + numberstr;
                         }
 
-                        if (numberstr.Length <= exponent)
-                        {
-                            return sign + numberstr + strZeroString.Substring(0, exponent - numberstr.Length);
-                        }
-                        else
-                        {
-                            return sign + numberstr.Substring(0, exponent) + "." + numberstr.Substring(exponent);
-                        }
+                        return numberstr.Length <= exponent
+                            ? sign + numberstr + strZeroString.Substring(0, exponent - numberstr.Length)
+                            : sign + numberstr.Substring(0, exponent) + "." + numberstr.Substring(exponent);
                     }
-				}
-			}
-			catch (Exception)
-			{
-				throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONVDNnumber, Consts.ToHexString(number)));
-			}
-		}
-	}
+                }
+            }
+            catch (Exception)
+            {
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONVDNnumber, Consts.ToHexString(number)));
+            }
+        }
+    }
 }
