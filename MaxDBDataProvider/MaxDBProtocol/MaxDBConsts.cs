@@ -1,26 +1,26 @@
-//	Copyright © 2005-2018 Dmitry S. Kataev
-//	Copyright © 2002-2003 SAP AG
+// Copyright © 2005-2018 Dmitry S. Kataev
+// Copyright © 2002-2003 SAP AG
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System;
-using System.Text;
-using System.Globalization;
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data.MaxDBProtocol
 {
+    using System;
+    using System.Globalization;
+    using System.Text;
+
     #region "Offsets"
 
     internal struct HeaderOffset
@@ -490,18 +490,18 @@ namespace MaxDB.Data.MaxDBProtocol
     {
         public const int
 
-            //Control flag for garbage collection on execute. If this is
-            //set, old cursors/parse ids are sent <i>together with</i> the current
-            //statement for being dropped.
+            // Control flag for garbage collection on execute. If this is
+            // set, old cursors/parse ids are sent <i>together with</i> the current
+            // statement for being dropped.
             GC_ALLOWED = 1,
 
-            //Control flag for garbage collection on execute. If this is
-            //set, old cursors/parse ids are sent <i>after</i> the current
-            //statement for being dropped.
+            // Control flag for garbage collection on execute. If this is
+            // set, old cursors/parse ids are sent <i>after</i> the current
+            // statement for being dropped.
             GC_DELAYED = 2,
 
-            //Control flag for garbage collection on execute. If this is
-            //set, nothing is done to drop cursors or parse ids.
+            // Control flag for garbage collection on execute. If this is
+            // set, nothing is done to drop cursors or parse ids.
             GC_NONE = 3;
     }
 
@@ -690,7 +690,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
     internal struct ArgType
     {
-        //geo03.h
+        // geo03.h
         public const byte
             PORT_NO = 0x50,   // = P
             REM_PID = 0x49,   // = I
@@ -793,7 +793,7 @@ namespace MaxDB.Data.MaxDBProtocol
         };
     }
 
-    //copies of tsp1_param_opt_type, tsp1_param_io_type, tsp1_param_info
+    // copies of tsp1_param_opt_type, tsp1_param_io_type, tsp1_param_info
     internal struct ParamInfo
     {
         // param modes, declared as set values
@@ -1030,23 +1030,18 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public const int AlignValue = 8;
 
-        public const int ReserveFor2ndSegment = 8192; //8kB reserve size in order packet if more than 1 segment will be used
+        public const int ReserveFor2ndSegment = 8192; // 8kB reserve size in order packet if more than 1 segment will be used
         public const int ReserveForReply = SegmentHeaderOffset.Part - PartHeaderOffset.Data + 200;
-        public const int DefaultMaxNumberOfSegm = 6; //default maximum number of segments for a request packet
+        public const int DefaultMaxNumberOfSegm = 6; // default maximum number of segments for a request packet
         public const int ResultCountSize = 6;
 
         public const string AppID = "ODB";
-        public const string AppVersion = "70400";//"10100";
+        public const string AppVersion = "70400";// "10100";
 
         public const string CursorPrefix = "ADONET_CURSOR_";
         public const string TimeStampFormat = "yyyy-MM-dd hh:mm:ss.ffffff";
 
-        public static string ToHexString(byte[] array, int offset)
-        {
-            return ToHexString(array, offset, array.Length);
-        }
-
-        public static string ToHexString(byte[] array, int offset, int length)
+        public static string ToHexString(byte[] array, int offset = 0, int length = int.MaxValue)
         {
             if (array != null)
             {
@@ -1062,11 +1057,6 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 return "NULL";
             }
-        }
-
-        public static string ToHexString(byte[] array)
-        {
-            return ToHexString(array, 0, array.Length);
         }
     }
 }

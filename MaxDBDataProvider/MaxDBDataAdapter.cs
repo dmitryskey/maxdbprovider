@@ -1,31 +1,30 @@
 //-----------------------------------------------------------------------------------------------
-// <copyright file="MaxDBDataAdapter.cs" company="Dmitry S. Kataev">
-//     Copyright © 2005-2018 Dmitry S. Kataev
-//     Copyright © 2002-2003 SAP AG
+// <copyright file="MaxDBDataAdapter.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------------------------------
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System;
-using System.Data;
-using System.Data.Common;
-using System.Collections.Generic;
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Data;
+    using System.Data.Common;
+
     /// <summary>
     /// Represents a set of data commands and a database connection that are used to fill a dataset and update a MaxDB database. 
     /// This class cannot be inherited.
@@ -64,9 +63,9 @@ namespace MaxDB.Data
         private MaxDBCommand batInsertCmd;
         private MaxDBCommand batUpdateCmd;
         private MaxDBCommand batDeleteCmd;
-        private List<MaxDBParameterCollection> lstInsertParams = new List<MaxDBParameterCollection>();
-        private List<MaxDBParameterCollection> lstUpdateParams = new List<MaxDBParameterCollection>();
-        private List<MaxDBParameterCollection> lstDeleteParams = new List<MaxDBParameterCollection>();
+        private readonly List<MaxDBParameterCollection> lstInsertParams = new List<MaxDBParameterCollection>();
+        private readonly List<MaxDBParameterCollection> lstUpdateParams = new List<MaxDBParameterCollection>();
+        private readonly List<MaxDBParameterCollection> lstDeleteParams = new List<MaxDBParameterCollection>();
         private StatementType stCurrentType = StatementType.Select;
 
         static private readonly object EventRowUpdated = new object();
@@ -86,7 +85,7 @@ namespace MaxDB.Data
         /// <param name="selectCommand"><see cref="MaxDBCommand"/> that is a SQL SELECT statement or stored procedure/function call
         /// and is set as the <see cref="SelectCommand"/> property of the <see cref="MaxDBDataAdapter"/>. 
         /// </param>
-        public MaxDBDataAdapter(MaxDBCommand selectCommand) => SelectCommand = selectCommand;
+        public MaxDBDataAdapter(MaxDBCommand selectCommand) => this.SelectCommand = selectCommand;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MaxDBDataAdapter"/> class with 
@@ -96,7 +95,7 @@ namespace MaxDB.Data
         /// and is set as the <see cref="SelectCommand"/> property of the <see cref="MaxDBDataAdapter"/>.
         /// </param>
         /// <param name="connection">The <see cref="MaxDBConnection"/> object that represents the connection.</param>
-        public MaxDBDataAdapter(string selectCmdText, MaxDBConnection connection) => SelectCommand = new MaxDBCommand(selectCmdText, connection);
+        public MaxDBDataAdapter(string selectCmdText, MaxDBConnection connection) => this.SelectCommand = new MaxDBCommand(selectCmdText, connection);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MaxDBDataAdapter"/> class with 
@@ -106,7 +105,7 @@ namespace MaxDB.Data
         /// and is set as the <see cref="SelectCommand"/> property of the <see cref="MaxDBDataAdapter"/>.
         /// </param>
         /// <param name="connectionString">The connection string.</param>
-        public MaxDBDataAdapter(string selectCmdText, string connectionString) => SelectCommand = new MaxDBCommand(selectCmdText, new MaxDBConnection(connectionString));
+        public MaxDBDataAdapter(string selectCmdText, string connectionString) => this.SelectCommand = new MaxDBCommand(selectCmdText, new MaxDBConnection(connectionString));
 
         /// <summary>
         /// This method is intended for internal use and can not to be called directly from your code.
@@ -136,8 +135,8 @@ namespace MaxDB.Data
         /// <param name="value">The <see cref="RowUpdatingEventArgs"/> object.</param>
         override protected void OnRowUpdating(RowUpdatingEventArgs value)
         {
-            stCurrentType = value.StatementType;
-            var handler = (EventHandler<MaxDBRowUpdatingEventArgs>)Events[EventRowUpdating];
+            this.stCurrentType = value.StatementType;
+            var handler = (EventHandler<MaxDBRowUpdatingEventArgs>)this.Events[EventRowUpdating];
 
             if (null != handler && value is MaxDBRowUpdatingEventArgs)
             {
@@ -151,7 +150,7 @@ namespace MaxDB.Data
         /// <param name="value">The <see cref="RowUpdatedEventArgs"/> object.</param>
         override protected void OnRowUpdated(RowUpdatedEventArgs value)
         {
-            var handler = (EventHandler<MaxDBRowUpdatedEventArgs>)Events[EventRowUpdated];
+            var handler = (EventHandler<MaxDBRowUpdatedEventArgs>)this.Events[EventRowUpdated];
             if (null != handler && value is MaxDBRowUpdatedEventArgs)
             {
                 handler(this, (MaxDBRowUpdatedEventArgs)value);
@@ -165,11 +164,11 @@ namespace MaxDB.Data
         {
             add
             {
-                Events.AddHandler(EventRowUpdating, value);
+                this.Events.AddHandler(EventRowUpdating, value);
             }
             remove
             {
-                Events.RemoveHandler(EventRowUpdating, value);
+                this.Events.RemoveHandler(EventRowUpdating, value);
             }
         }
 
@@ -180,11 +179,11 @@ namespace MaxDB.Data
         {
             add
             {
-                Events.AddHandler(EventRowUpdated, value);
+                this.Events.AddHandler(EventRowUpdated, value);
             }
             remove
             {
-                Events.RemoveHandler(EventRowUpdated, value);
+                this.Events.RemoveHandler(EventRowUpdated, value);
             }
         }
 
@@ -219,8 +218,8 @@ namespace MaxDB.Data
 
         IDbCommand IDbDataAdapter.UpdateCommand
         {
-            get => UpdateCommand;
-            set => UpdateCommand = (MaxDBCommand)value;
+            get => this.UpdateCommand;
+            set => this.UpdateCommand = (MaxDBCommand)value;
         }
 
         /// <summary>
@@ -244,8 +243,8 @@ namespace MaxDB.Data
 
         IDbCommand IDbDataAdapter.SelectCommand
         {
-            get => SelectCommand;
-            set => SelectCommand = (MaxDBCommand)value;
+            get => this.SelectCommand;
+            set => this.SelectCommand = (MaxDBCommand)value;
         }
 
         /// <summary>
@@ -273,8 +272,8 @@ namespace MaxDB.Data
 
         IDbCommand IDbDataAdapter.DeleteCommand
         {
-            get => DeleteCommand;
-            set => DeleteCommand = (MaxDBCommand)value;
+            get => this.DeleteCommand;
+            set => this.DeleteCommand = (MaxDBCommand)value;
         }
 
         /// <summary>
@@ -306,8 +305,8 @@ namespace MaxDB.Data
 
         IDbCommand IDbDataAdapter.InsertCommand
         {
-            get => InsertCommand;
-            set => InsertCommand = (MaxDBCommand)value;
+            get => this.InsertCommand;
+            set => this.InsertCommand = (MaxDBCommand)value;
         }
         #endregion
 
@@ -316,8 +315,8 @@ namespace MaxDB.Data
         /// </summary>
         public override int UpdateBatchSize
         {
-            get => batUpdateSize;
-            set => batUpdateSize = value;
+            get => this.batUpdateSize;
+            set => this.batUpdateSize = value;
         }
 
         /// <summary>
@@ -332,19 +331,19 @@ namespace MaxDB.Data
         /// </summary>
         protected override void TerminateBatching()
         {
-            if (batInsertCmd != null)
+            if (this.batInsertCmd != null)
             {
-                batInsertCmd.Cancel();
+                this.batInsertCmd.Cancel();
             }
 
-            if (batUpdateCmd != null)
+            if (this.batUpdateCmd != null)
             {
-                batUpdateCmd.Cancel();
+                this.batUpdateCmd.Cancel();
             }
 
-            if (batDeleteCmd != null)
+            if (this.batDeleteCmd != null)
             {
-                batDeleteCmd.Cancel();
+                this.batDeleteCmd.Cancel();
             }
         }
 
@@ -356,25 +355,25 @@ namespace MaxDB.Data
         protected override int AddToBatch(IDbCommand command)
         {
             var addCommand = (MaxDBCommand)command;
-            switch (stCurrentType)
+            switch (this.stCurrentType)
             {
                 case StatementType.Insert:
-                    batInsertCmd = addCommand;
-                    lstInsertParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
+                    this.batInsertCmd = addCommand;
+                    this.lstInsertParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
                     break;
                 case StatementType.Update:
-                    batUpdateCmd = addCommand;
-                    lstUpdateParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
+                    this.batUpdateCmd = addCommand;
+                    this.lstUpdateParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
                     break;
                 case StatementType.Delete:
-                    batDeleteCmd = addCommand;
-                    lstDeleteParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
+                    this.batDeleteCmd = addCommand;
+                    this.lstDeleteParams.Add(((MaxDBParameterCollection)command.Parameters).Clone());
                     break;
                 default:
                     break;
             }
 
-            return lstInsertParams.Count + lstUpdateParams.Count + lstDeleteParams.Count - 1;
+            return this.lstInsertParams.Count + this.lstUpdateParams.Count + this.lstDeleteParams.Count - 1;
         }
 
         /// <summary>
@@ -382,12 +381,12 @@ namespace MaxDB.Data
         /// </summary>
         protected override void ClearBatch()
         {
-            batInsertCmd = null;
-            batUpdateCmd = null;
-            batDeleteCmd = null;
-            lstInsertParams.Clear();
-            lstUpdateParams.Clear();
-            lstDeleteParams.Clear();
+            this.batInsertCmd = null;
+            this.batUpdateCmd = null;
+            this.batDeleteCmd = null;
+            this.lstInsertParams.Clear();
+            this.lstUpdateParams.Clear();
+            this.lstDeleteParams.Clear();
         }
 
         /// <summary>
@@ -396,22 +395,22 @@ namespace MaxDB.Data
         protected override int ExecuteBatch()
         {
             int rowAffected = 0;
-            if (batInsertCmd != null)
+            if (this.batInsertCmd != null)
             {
-                batInsertCmd.ExecuteBatch(lstInsertParams.ToArray());
-                rowAffected += batInsertCmd.iRowsAffected;
+                this.batInsertCmd.ExecuteBatch(this.lstInsertParams.ToArray());
+                rowAffected += this.batInsertCmd.iRowsAffected;
             }
 
-            if (batUpdateCmd != null)
+            if (this.batUpdateCmd != null)
             {
-                batUpdateCmd.ExecuteBatch(lstUpdateParams.ToArray());
-                rowAffected += batUpdateCmd.iRowsAffected;
+                this.batUpdateCmd.ExecuteBatch(this.lstUpdateParams.ToArray());
+                rowAffected += this.batUpdateCmd.iRowsAffected;
             }
 
-            if (batDeleteCmd != null)
+            if (this.batDeleteCmd != null)
             {
-                batDeleteCmd.ExecuteBatch(lstDeleteParams.ToArray());
-                rowAffected += batDeleteCmd.iRowsAffected;
+                this.batDeleteCmd.ExecuteBatch(this.lstDeleteParams.ToArray());
+                rowAffected += this.batDeleteCmd.iRowsAffected;
             }
 
             return rowAffected;

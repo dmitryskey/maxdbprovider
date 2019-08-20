@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------------------------
-// <copyright file="MaxDBCommand.cs" company="Dmitry S. Kataev">
-//     Copyright © 2005-2018 Dmitry S. Kataev
+// <copyright file="MaxDBCommand.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------------------------------
 //
@@ -1125,14 +1125,14 @@ namespace MaxDB.Data
                     case PartKind.ShortInfo:
                         if (infos == null)
                         {
-                            infos = replyPacket.ParseShortFields(this.dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, false);
+                            infos = replyPacket.ParseShortFields(this.dbConnection.mComm.ConnStrBuilder.SpaceOption, false, null, false);
                         }
 
                         break;
                     case PartKind.VardataShortInfo:
                         if (infos == null)
                         {
-                            infos = replyPacket.ParseShortFields(this.dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, true);
+                            infos = replyPacket.ParseShortFields(this.dbConnection.mComm.ConnStrBuilder.SpaceOption, false, null, true);
                         }
 
                         break;
@@ -1207,14 +1207,14 @@ namespace MaxDB.Data
                             case PartKind.ShortInfo:
                                 if (infos == null)
                                 {
-                                    infos = replyPacket.ParseShortFields(this.dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, false);
+                                    infos = replyPacket.ParseShortFields(this.dbConnection.mComm.ConnStrBuilder.SpaceOption, false, null, false);
                                 }
 
                                 break;
                             case PartKind.VardataShortInfo:
                                 if (infos == null)
                                 {
-                                    infos = replyPacket.ParseShortFields(this.dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, true);
+                                    infos = replyPacket.ParseShortFields(this.dbConnection.mComm.ConnStrBuilder.SpaceOption, false, null, true);
                                 }
 
                                 break;
@@ -1281,7 +1281,7 @@ namespace MaxDB.Data
 
             MaxDBReplyPacket replyPacket;
             MaxDBParseInfo result = null;
-            var cache = this.dbConnection.mComm.mParseCache;
+            var cache = this.dbConnection.mComm.ParseCache;
             string[] columnNames = null;
 
             if (parseAgain)
@@ -1344,11 +1344,11 @@ namespace MaxDB.Data
                             ////<<< SQL TRACE
                             break;
                         case PartKind.ShortInfo:
-                            shortInfos = replyPacket.ParseShortFields(this.dbConnection.mComm.mConnStrBuilder.SpaceOption, result.IsDBProc, result.mProcParamInfos, false);
+                            shortInfos = replyPacket.ParseShortFields(this.dbConnection.mComm.ConnStrBuilder.SpaceOption, result.IsDBProc, result.mProcParamInfos, false);
                             break;
                         case PartKind.VardataShortInfo:
                             result.bVarDataInput = true;
-                            shortInfos = replyPacket.ParseShortFields(this.dbConnection.mComm.mConnStrBuilder.SpaceOption, result.IsDBProc, result.mProcParamInfos, true);
+                            shortInfos = replyPacket.ParseShortFields(this.dbConnection.mComm.ConnStrBuilder.SpaceOption, result.IsDBProc, result.mProcParamInfos, true);
                             break;
                         case PartKind.ResultTableName:
                             result.IsSelect = true;
@@ -1912,7 +1912,7 @@ namespace MaxDB.Data
                 {
                     if (this.mCurrentDataReader != null)
                     {
-                        mCurrentDataReader.Dispose();
+                        this.mCurrentDataReader.Dispose();
                     }
 
                     this.dbConnection.mComm.DropParseID(this.mParseInfo.ParseID);

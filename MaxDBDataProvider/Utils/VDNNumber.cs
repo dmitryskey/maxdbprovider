@@ -1,27 +1,27 @@
-//	Copyright © 2005-2006 Dmitry S. Kataev
-//	Copyright © 2002-2003 SAP AG
+// Copyright © 2005-2006 Dmitry S. Kataev
+// Copyright © 2002-2003 SAP AG
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System;
-using System.Text;
-using MaxDB.Data.MaxDBProtocol;
-using System.Numerics;
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data.Utilities
 {
+    using System;
+    using System.Numerics;
+    using System.Text;
+    using MaxDB.Data.MaxDBProtocol;
+
     internal abstract class VDNNumber
     {
         private const int iZeroExpValue = 128;
@@ -139,7 +139,7 @@ namespace MaxDB.Data.Utilities
             }
 
             number = new byte[digitCount + 1];
-            packDigits(chars, firstDigit, digitCount, isNegative, number);
+            PackDigits(chars, firstDigit, digitCount, isNegative, number);
 
             exponent = isNegative ? 64 - exponent : exponent + 192;
 
@@ -169,8 +169,8 @@ namespace MaxDB.Data.Utilities
             }
 
             /*
-			 * calculate digits
-			 */
+             * calculate digits
+             */
             while (val != 0)
             {
                 digit = (char)(negativeVal * (val % 10));
@@ -182,7 +182,7 @@ namespace MaxDB.Data.Utilities
             exponent = iNumberDigits - scratchPos - 1;
             scratchPos++;
             number = new byte[iNumberDigits - scratchPos + 1];
-            packDigits(scratch, scratchPos, iNumberDigits - scratchPos, isNegative, number);
+            PackDigits(scratch, scratchPos, iNumberDigits - scratchPos, isNegative, number);
 
             exponent = isNegative ? 64 - exponent : exponent + 192;
 
@@ -345,7 +345,7 @@ namespace MaxDB.Data.Utilities
 
         public static int Number2Int(byte[] rawBytes) => (int)Number2Long(rawBytes);
 
-        private static void packDigits(char[] digits, int start, int count, bool isNegative, byte[] number)
+        private static void PackDigits(char[] digits, int start, int count, bool isNegative, byte[] number)
         {
             int lastDigit = start + count - 1;
             byte highNibble;
@@ -372,8 +372,8 @@ namespace MaxDB.Data.Utilities
             }
 
             /*
-			 * pack digits into bytes
-			 */
+             * pack digits into bytes
+             */
             for (int i = 1; start <= lastDigit; ++i, start += 2)
             {
                 highNibble = (byte)digits[start];

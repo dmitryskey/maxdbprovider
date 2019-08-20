@@ -1,31 +1,30 @@
 //-----------------------------------------------------------------------------------------------
-// <copyright file="MaxDBMessages.cs" company="Dmitry S. Kataev">
-//     Copyright © 2005-2018 Dmitry S. Kataev
-//     Copyright © 2002-2003 SAP AG
+// <copyright file="MaxDBMessages.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------------------------------
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System.Resources;
-using System.Text;
-using System.Globalization;
-using System.Collections.Generic;
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data
 {
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.Resources;
+    using System.Text;
+
     #region "Message translator class"
 
     internal struct MaxDBError
@@ -155,13 +154,13 @@ namespace MaxDB.Data
             // Password invalid.
             INVALIDPASSWORD = "invalidpassword",
 
-            //No data found
+            // No data found
             NODATA_FOUND = "nodata_found",
 
-            //Invalid data type
+            // Invalid data type
             INVALID_DATATYPE = "invalid_datatype",
 
-            //Unknown data type
+            // Unknown data type
             UNKNOWN_DATATYPE = "unknown_datatype",
 
             // Try to get record at position < first.
@@ -194,10 +193,10 @@ namespace MaxDB.Data
             // getObject function failed
             GETOBJECT_FAILED = "getobject_failed",
 
-            //Fetch operation delivered no data part.
+            // Fetch operation delivered no data part.
             FETCH_NODATAPART = "fetch_nodatapart",
 
-            //Fetch operation 
+            // Fetch operation 
             FETCH_DATA_FAILED = "fetch_data_failed",
 
             // Runtime: connect to host failed.

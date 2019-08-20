@@ -1,30 +1,30 @@
-//	Copyright © 2005-2018 Dmitry S. Kataev
-//	Copyright © 2002-2003 SAP AG
+// Copyright © 2005-2018 Dmitry S. Kataev
+// Copyright © 2002-2003 SAP AG
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System;
-using System.Data;
-using System.Text;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using MaxDB.Data.Utilities;
-using System.Globalization;
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data.MaxDBProtocol
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Data;
+    using System.Globalization;
+    using System.Runtime.CompilerServices;
+    using System.Text;
+    using MaxDB.Data.Utilities;
+
     #region "Parse information class"
 
     internal class MaxDBParseInfo
@@ -46,30 +46,30 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public MaxDBParseInfo(MaxDBConnection connection, string sqlCmd, int functionCode)
         {
-            dbConnection = connection;
-            SqlCommand = sqlCmd;
-            FuncCode = functionCode;
-            iSessionId = -1;
-            if (FuncCode == FunctionCode.Select || FuncCode == FunctionCode.Show || FuncCode == FunctionCode.DBProcWithResultSetExecute || FuncCode == FunctionCode.Explain)
+            this.dbConnection = connection;
+            this.SqlCommand = sqlCmd;
+            this.FuncCode = functionCode;
+            this.iSessionId = -1;
+            if (this.FuncCode == FunctionCode.Select || this.FuncCode == FunctionCode.Show || this.FuncCode == FunctionCode.DBProcWithResultSetExecute || this.FuncCode == FunctionCode.Explain)
             {
-                IsSelect = true;
+                this.IsSelect = true;
             }
 
-            if (FuncCode == FunctionCode.DBProcWithResultSetExecute || FuncCode == FunctionCode.DBProcExecute)
+            if (this.FuncCode == FunctionCode.DBProcWithResultSetExecute || this.FuncCode == FunctionCode.DBProcExecute)
             {
-                IsDBProc = true;
+                this.IsDBProc = true;
             }
 
-            if (FuncCode == FunctionCode.DBProcExecute)
+            if (this.FuncCode == FunctionCode.DBProcExecute)
             {
-                DescribeProcedureCall();
+                this.DescribeProcedureCall();
             }
         }
 
         ~MaxDBParseInfo()
         {
-            IsCached = false;
-            DropParseIDs();
+            this.IsCached = false;
+            this.DropParseIDs();
         }
 
         public bool IsSelect { get; set; }
@@ -97,7 +97,7 @@ namespace MaxDB.Data.MaxDBProtocol
             // "OWNER"."IDENTIFIER" etc.
             // we always simply give up if we find nothing that helps our needs
             //
-            char[] cmdchars = SqlCommand.Trim().ToCharArray();
+            char[] cmdchars = this.SqlCommand.Trim().ToCharArray();
             int i = 0;
             int cmdchars_len = cmdchars.Length;
 
@@ -283,7 +283,7 @@ namespace MaxDB.Data.MaxDBProtocol
             string sql = "SELECT 1 FROM DUAL WHERE FALSE";
             if (ownerName == null)
             {
-                if (dbConnection.KernelVersion < 70400)
+                if (this.dbConnection.KernelVersion < 70400)
                 {
                     sql = "SELECT PARAM_NO, "
                         + "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, OFFSET AS ASCII_OFFSET, "
@@ -298,12 +298,12 @@ namespace MaxDB.Data.MaxDBProtocol
                         + "DBPROCEDURE = :DBPROCEDURE ORDER BY PARAM_NO, ASCII_OFFSET";
                 }
 
-                cmd = new MaxDBCommand(sql, dbConnection);
+                cmd = new MaxDBCommand(sql, this.dbConnection);
                 cmd.Parameters.Add("DBPROCEDURE", procedureName);
             }
             else
             {
-                if (dbConnection.KernelVersion < 70400)
+                if (this.dbConnection.KernelVersion < 70400)
                 {
                     sql = "SELECT PARAM_NO, "
                         + "DATATYPE, CODE, LEN, DEC, \"IN/OUT-TYPE\", OFFSET, OFFSET AS ASCII_OFFSET, "
@@ -318,7 +318,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         + "DBPROCEDURE = :DBPROCEDURE ORDER BY PARAM_NO, ASCII_OFFSET";
                 }
 
-                cmd = new MaxDBCommand(sql, dbConnection);
+                cmd = new MaxDBCommand(sql, this.dbConnection);
                 cmd.Parameters.Add("OWNER", ownerName);
                 cmd.Parameters.Add("DBPROCEDURE", procedureName);
             }
@@ -327,7 +327,7 @@ namespace MaxDB.Data.MaxDBProtocol
             var rs = cmd.ExecuteReader();
             if (!rs.Read())
             {
-                mProcParamInfos = new DBProcParameterInfo[0];
+                this.mProcParamInfos = new DBProcParameterInfo[0];
                 rs.Close();
                 return;
             }
@@ -371,15 +371,15 @@ namespace MaxDB.Data.MaxDBProtocol
 
             while (rs.Read());
             rs.Close();
-            mProcParamInfos = parameterInfos.ToArray();
+            this.mProcParamInfos = parameterInfos.ToArray();
         }
 
         public byte[] MassParseID
         {
-            get => byMassParseId;
+            get => this.byMassParseId;
             set
             {
-                byMassParseId = value;
+                this.byMassParseId = value;
                 if (value == null)
                 {
                     return;
@@ -389,7 +389,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 {
                     if (value[iApplCodeByte] == FunctionCode.massCmdAppCodes[i])
                     {
-                        IsMassCmd = true;
+                        this.IsMassCmd = true;
                         return;
                     }
                 }
@@ -397,110 +397,110 @@ namespace MaxDB.Data.MaxDBProtocol
         }
 
         /**
-		 * Checks the validity. A parse info is valid if the session is the same as
-		 * of the current connection.
-		 * 
-		 * @return <code>true</code> if the session ids are equal
-		 */
-        public bool IsValid => iSessionId == dbConnection.mComm.iSessionID;
+         * Checks the validity. A parse info is valid if the session is the same as
+         * of the current connection.
+         * 
+         * @return <code>true</code> if the session ids are equal
+         */
+        public bool IsValid => this.iSessionId == this.dbConnection.mComm.SessionID;
 
         /**
-		 * Sets a parse id, together with the correct session id.
-		 * 
-		 * @param parseId
-		 *            the parse id.
-		 * @param sessionId
-		 *            the session id of the parse id.
-		 */
+         * Sets a parse id, together with the correct session id.
+         * 
+         * @param parseId
+         *            the parse id.
+         * @param sessionId
+         *            the session id of the parse id.
+         */
         public void SetParseIDAndSession(byte[] parseId, int sessionId)
         {
-            iSessionId = sessionId;
-            ParseID = parseId;
+            this.iSessionId = sessionId;
+            this.ParseID = parseId;
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
         public void DropParseIDs()
         {
-            if (dbConnection != null && dbConnection.mComm != null)
+            if (this.dbConnection != null && this.dbConnection.mComm != null)
             {
-                if (ParseID != null)
+                if (this.ParseID != null)
                 {
-                    dbConnection.mComm.DropParseID(ParseID);
-                    ParseID = null;
+                    this.dbConnection.mComm.DropParseID(this.ParseID);
+                    this.ParseID = null;
                 }
 
-                if (byMassParseId != null)
+                if (this.byMassParseId != null)
                 {
-                    dbConnection.mComm.DropParseID(byMassParseId);
-                    byMassParseId = null;
+                    this.dbConnection.mComm.DropParseID(this.byMassParseId);
+                    this.byMassParseId = null;
                 }
             }
         }
 
         // Gets the information about parameters in sql statement
-        public DBTechTranslator[] ParamInfo => mParamInfos;
+        public DBTechTranslator[] ParamInfo => this.mParamInfos;
 
-        public DBTechTranslator[] ColumnInfo => mColumnInfos;
+        public DBTechTranslator[] ColumnInfo => this.mColumnInfos;
 
         /**
-		 * Gets the parse id.
-		 */
+         * Gets the parse id.
+         */
         public byte[] ParseID { get; private set; }
 
         /**
-		 * Retrieves whether the statement is already executed during parse. (by
-		 * checking byte 11 of the parse if for <code>csp1_p_command_executed</code>.
-		 */
-        public bool IsAlreadyExecuted => ParseID != null && ParseID[MaxDBParseInfo.iApplCodeByte] == FunctionCode.command_executed;
+         * Retrieves whether the statement is already executed during parse. (by
+         * checking byte 11 of the parse if for <code>csp1_p_command_executed</code>.
+         */
+        public bool IsAlreadyExecuted => this.ParseID != null && this.ParseID[MaxDBParseInfo.iApplCodeByte] == FunctionCode.command_executed;
 
         /**
-		 * Sets the infos about parameters and result columns.
-		 * 
-		 * @param shortInfo
-		 *            info about the parameters and result columns
-		 * @param columnames
-		 *            the names of the result columns
-		 */
+         * Sets the infos about parameters and result columns.
+         * 
+         * @param shortInfo
+         *            info about the parameters and result columns
+         * @param columnames
+         *            the names of the result columns
+         */
         public void SetShortInfosAndColumnNames(DBTechTranslator[] shortInfo, string[] columnNames)
         {
             // clear the internal dependent fields
-            sInputCount = 0;
-            HasLongs = false;
-            mParamInfos = null;
-            mColumnInfos = null;
-            strColumnNames = columnNames;
+            this.sInputCount = 0;
+            this.HasLongs = false;
+            this.mParamInfos = null;
+            this.mColumnInfos = null;
+            this.strColumnNames = columnNames;
 
             if (shortInfo == null && columnNames == null)
             {
-                mParamInfos = mColumnInfos = new DBTechTranslator[0];
+                this.mParamInfos = this.mColumnInfos = new DBTechTranslator[0];
                 return;
             }
 
             // we have variants:
             // only a select is really good. All other variants
             // do not and never deliver information on being prepared.
-            if (FuncCode == FunctionCode.Select)
+            if (this.FuncCode == FunctionCode.Select)
             {
                 if (columnNames == null || columnNames.Length == 0)
                 {
-                    mParamInfos = shortInfo;
-                    for (int i = 0; i < mParamInfos.Length; ++i)
+                    this.mParamInfos = shortInfo;
+                    for (int i = 0; i < this.mParamInfos.Length; ++i)
                     {
                         var current = shortInfo[i];
                         if (current.IsInput)
                         {
                             current.ColumnIndex = i;
-                            sInputCount++;
+                            this.sInputCount++;
                         }
 
-                        HasLongs |= current.IsLongKind;
+                        this.HasLongs |= current.IsLongKind;
                     }
                 }
                 else
                 {
                     int column_count = columnNames.Length;
-                    mColumnInfos = new DBTechTranslator[column_count];
-                    mParamInfos = new DBTechTranslator[shortInfo.Length - column_count];
+                    this.mColumnInfos = new DBTechTranslator[column_count];
+                    this.mParamInfos = new DBTechTranslator[shortInfo.Length - column_count];
 
                     int colInfoIdx = 0;
                     int paramInfoIdx = 0;
@@ -510,67 +510,67 @@ namespace MaxDB.Data.MaxDBProtocol
                         var current = shortInfo[i];
                         if (current.IsInput)
                         {
-                            if (paramInfoIdx == mParamInfos.Length)
+                            if (paramInfoIdx == this.mParamInfos.Length)
                             {
                                 throw new DataException(MaxDBMessages.Extract(MaxDBError.INTERNAL_UNEXPECTEDINPUT, paramInfoIdx));
                             }
 
                             current.ColumnIndex = paramInfoIdx;
-                            mParamInfos[paramInfoIdx] = current;
+                            this.mParamInfos[paramInfoIdx] = current;
                             paramInfoIdx++;
-                            sInputCount++;
+                            this.sInputCount++;
                         }
                         else
                         {
-                            if (colInfoIdx == mColumnInfos.Length)
+                            if (colInfoIdx == this.mColumnInfos.Length)
                             {
                                 throw new DataException(MaxDBMessages.Extract(MaxDBError.INTERNAL_UNEXPECTEDOUTPUT, colInfoIdx));
                             }
 
-                            mColumnInfos[colInfoIdx] = current;
+                            this.mColumnInfos[colInfoIdx] = current;
                             current.ColumnIndex = colInfoIdx;
                             current.ColumnName = columnNames[colInfoIdx];
                             colInfoIdx++;
                         }
 
-                        HasLongs |= shortInfo[i].IsLongKind;
+                        this.HasLongs |= shortInfo[i].IsLongKind;
                     }
                 }
             }
             else
             { // no result set data, as we cannot to be sure
-                mParamInfos = shortInfo;
+                this.mParamInfos = shortInfo;
                 if (columnNames != null)
                 {
                     // fortunately at least column names
                     // sometimes only output parameters are named
-                    if (columnNames.Length == mParamInfos.Length)
+                    if (columnNames.Length == this.mParamInfos.Length)
                     {
                         for (int i = 0; i < columnNames.Length; ++i)
                         {
-                            var current = mParamInfos[i];
+                            var current = this.mParamInfos[i];
                             current.ColumnIndex = i;
                             current.ColumnName = columnNames[i];
-                            if (mProcParamInfos != null && i < mProcParamInfos.Length)
+                            if (this.mProcParamInfos != null && i < this.mProcParamInfos.Length)
                             {
-                                current.SetProcParamInfo(mProcParamInfos[i]);
+                                current.SetProcParamInfo(this.mProcParamInfos[i]);
                             }
 
-                            sInputCount += (short)(current.IsInput ? 1 : 0);
-                            HasLongs |= current.IsLongKind;
+                            this.sInputCount += (short)(current.IsInput ? 1 : 0);
+                            this.HasLongs |= current.IsLongKind;
                         }
                     }
                     else
                     {
                         // we will leave out the input parameters
                         int colNameIdx = 0;
-                        for (int j = 0; j < mParamInfos.Length; ++j)
+                        for (int j = 0; j < this.mParamInfos.Length; ++j)
                         {
-                            var current = mParamInfos[j];
+                            var current = this.mParamInfos[j];
                             current.ColumnIndex = j;
-                            if (mProcParamInfos != null && j < mProcParamInfos.Length)
+                            if (this.mProcParamInfos != null && j < this.mProcParamInfos.Length)
                             {
-                                current.SetProcParamInfo(mProcParamInfos[j]);
+                                current.SetProcParamInfo(this.mProcParamInfos[j]);
                             }
 
                             if (current.IsOutput)
@@ -579,32 +579,32 @@ namespace MaxDB.Data.MaxDBProtocol
                             }
                             else
                             {
-                                ++sInputCount;
+                                ++this.sInputCount;
                             }
 
-                            HasLongs |= current.IsLongKind;
+                            this.HasLongs |= current.IsLongKind;
                         }
                     }
                 }
                 else
                 {
                     // No column names at all. OK.
-                    for (int i = 0; i < mParamInfos.Length; ++i)
+                    for (int i = 0; i < this.mParamInfos.Length; ++i)
                     {
-                        var current = mParamInfos[i];
+                        var current = this.mParamInfos[i];
                         current.ColumnIndex = i;
-                        if (mProcParamInfos != null && i < mProcParamInfos.Length)
+                        if (this.mProcParamInfos != null && i < this.mProcParamInfos.Length)
                         {
-                            current.SetProcParamInfo(mProcParamInfos[i]);
+                            current.SetProcParamInfo(this.mProcParamInfos[i]);
                         }
 
-                        sInputCount += (short)(current.IsInput ? 1 : 0);
-                        HasLongs |= current.IsLongKind;
+                        this.sInputCount += (short)(current.IsInput ? 1 : 0);
+                        this.HasLongs |= current.IsLongKind;
                     }
                 }
             }
 
-            DBTechTranslator.SetEncoding(mParamInfos, dbConnection.UserAsciiEncoding);
+            DBTechTranslator.SetEncoding(this.mParamInfos, this.dbConnection.UserAsciiEncoding);
         }
 
         public void SetMetaData(DBTechTranslator[] info, string[] colName)
@@ -612,11 +612,11 @@ namespace MaxDB.Data.MaxDBProtocol
             int colCount = info.Length;
             DBTechTranslator currentInfo;
             string currentName;
-            strColumnNames = colName;
+            this.strColumnNames = colName;
 
             if (colCount == colName.Length)
             {
-                mColumnInfos = info;
+                this.mColumnInfos = info;
                 for (int i = 0; i < colCount; ++i)
                 {
                     currentInfo = info[i];
@@ -628,12 +628,12 @@ namespace MaxDB.Data.MaxDBProtocol
             else
             {
                 int outputColCnt = 0;
-                mColumnInfos = new DBTechTranslator[colName.Length];
+                this.mColumnInfos = new DBTechTranslator[colName.Length];
                 for (int i = 0; i < colCount; ++i)
                 {
                     if (info[i].IsOutput)
                     {
-                        currentInfo = mColumnInfos[outputColCnt] = info[i];
+                        currentInfo = this.mColumnInfos[outputColCnt] = info[i];
                         currentName = colName[outputColCnt];
                         currentInfo.ColumnName = currentName;
                         currentInfo.ColumnIndex = outputColCnt++;
@@ -658,28 +658,28 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public StructureElement(string typeName, string codeType, int length, int precision, int asciiOffset, int unicodeOffset)
         {
-            strTypeName = typeName.ToUpper(CultureInfo.InvariantCulture).Trim();
-            strCodeType = codeType.ToUpper(CultureInfo.InvariantCulture).Trim();
-            iLength = length;
-            iPrecision = precision;
-            iASCIIOffset = asciiOffset;
-            iUnicodeOffset = unicodeOffset;
+            this.strTypeName = typeName.ToUpper(CultureInfo.InvariantCulture).Trim();
+            this.strCodeType = codeType.ToUpper(CultureInfo.InvariantCulture).Trim();
+            this.iLength = length;
+            this.iPrecision = precision;
+            this.iASCIIOffset = asciiOffset;
+            this.iUnicodeOffset = unicodeOffset;
         }
 
         public string SqlTypeName
         {
             get
             {
-                switch (strTypeName.ToUpper(CultureInfo.InvariantCulture).Trim())
+                switch (this.strTypeName.ToUpper(CultureInfo.InvariantCulture).Trim())
                 {
                     case "CHAR":
-                        return strTypeName + "(" + iLength + ") " + strCodeType;
+                        return this.strTypeName + "(" + this.iLength + ") " + this.strCodeType;
                     case "FIXED":
-                        return strTypeName + "(" + iLength + ", " + iPrecision + ")";
+                        return this.strTypeName + "(" + this.iLength + ", " + this.iPrecision + ")";
                     case "BOOLEAN":
-                        return strTypeName;
+                        return this.strTypeName;
                     default:
-                        return strTypeName + "(" + iLength + ")";
+                        return this.strTypeName + "(" + this.iLength + ")";
                 }
             }
         }
@@ -690,45 +690,45 @@ namespace MaxDB.Data.MaxDBProtocol
         public const int ABAPTABLE = 1;
         public const int STRUCTURE = 2;
         private string strSqlTypeName;
-        private List<StructureElement> lstTypeElements;
+        private readonly List<StructureElement> lstTypeElements;
 
         /*
-		  Creates a new DB procedure parameter info.
-		  @param datatype The data type as read from DBPROCPARAMINFO.
-		  @param len The length information from DBPROCPARAMINFO.
-		  @param dec The precision information from DBPROCPARAMINFO.
-		*/
+          Creates a new DB procedure parameter info.
+          @param datatype The data type as read from DBPROCPARAMINFO.
+          @param len The length information from DBPROCPARAMINFO.
+          @param dec The precision information from DBPROCPARAMINFO.
+        */
         public DBProcParameterInfo(string datatype)
         {
             if (string.Compare(datatype.Trim(), "ABAPTABLE", true, CultureInfo.InvariantCulture) == 0)
             {
-                ElementType = ABAPTABLE;
-                lstTypeElements = new List<StructureElement>();
+                this.ElementType = ABAPTABLE;
+                this.lstTypeElements = new List<StructureElement>();
             }
             else if (string.Compare(datatype.Trim(), "STRUCTURE", true, CultureInfo.InvariantCulture) == 0)
             {
-                ElementType = STRUCTURE;
-                lstTypeElements = new List<StructureElement>();
+                this.ElementType = STRUCTURE;
+                this.lstTypeElements = new List<StructureElement>();
             }
         }
 
         public void AddStructureElement(string typeName, string codeType, int length, int precision, int asciiOffset, int unicodeOffset)
         {
-            if (lstTypeElements == null)
+            if (this.lstTypeElements == null)
             {
                 return;
             }
             else
             {
-                lstTypeElements.Add(new StructureElement(typeName, codeType, length, precision, asciiOffset, unicodeOffset));
+                this.lstTypeElements.Add(new StructureElement(typeName, codeType, length, precision, asciiOffset, unicodeOffset));
             }
         }
 
-        public int MemberCount => lstTypeElements.Count;
+        public int MemberCount => this.lstTypeElements.Count;
 
         public int ElementType { get; }
 
-        public StructureElement this[int index] => lstTypeElements[index];
+        public StructureElement this[int index] => this.lstTypeElements[index];
 
         public string SQLTypeName
         {
@@ -739,25 +739,25 @@ namespace MaxDB.Data.MaxDBProtocol
                     var typeBuffer = new StringBuilder();
                     var baseType = new StringBuilder();
                     string close = ")";
-                    if (ElementType == ABAPTABLE)
+                    if (this.ElementType == ABAPTABLE)
                     {
-                        if (lstTypeElements.Count == 1)
+                        if (this.lstTypeElements.Count == 1)
                         {
-                            var el = lstTypeElements[0];
+                            var el = this.lstTypeElements[0];
                             if (el.strTypeName.ToUpper(CultureInfo.InvariantCulture).Trim() == "CHAR")
                             {
                                 if (el.strCodeType.ToUpper(CultureInfo.InvariantCulture).Trim() == "ASCII")
                                 {
-                                    strSqlTypeName = "CHARACTER STREAM";
+                                    this.strSqlTypeName = "CHARACTER STREAM";
                                 }
                                 else if (el.strCodeType.ToUpper(CultureInfo.InvariantCulture).Trim() == "BYTE")
                                 {
-                                    strSqlTypeName = "BYTE STREAM";
+                                    this.strSqlTypeName = "BYTE STREAM";
                                 }
                             }
                             else if (el.strTypeName.ToUpper(CultureInfo.InvariantCulture).Trim() == "WYDE")
                             {
-                                strSqlTypeName = "CHARACTER STREAM";
+                                this.strSqlTypeName = "CHARACTER STREAM";
                             }
 
                             typeBuffer.Append("STREAM(");
@@ -773,7 +773,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         typeBuffer.Append("STRUCTURE(");
                     }
 
-                    for (int i = 0; i < lstTypeElements.Count; ++i)
+                    for (int i = 0; i < this.lstTypeElements.Count; ++i)
                     {
                         if (i != 0)
                         {
@@ -781,17 +781,17 @@ namespace MaxDB.Data.MaxDBProtocol
                             typeBuffer.Append(", ");
                         }
 
-                        var el = lstTypeElements[i];
+                        var el = this.lstTypeElements[i];
                         typeBuffer.Append(el.SqlTypeName);
                         baseType.Append(el.SqlTypeName);
                     }
 
                     typeBuffer.Append(close);
-                    strSqlTypeName = typeBuffer.ToString();
-                    BaseTypeName = baseType.ToString();
+                    this.strSqlTypeName = typeBuffer.ToString();
+                    this.BaseTypeName = baseType.ToString();
                 }
 
-                return strSqlTypeName;
+                return this.strSqlTypeName;
             }
         }
 
@@ -804,7 +804,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
     internal class DBProcStructure
     {
-        public DBProcStructure(object[] elements) => Attributes = elements;
+        public DBProcStructure(object[] elements) => this.Attributes = elements;
 
         public object[] Attributes { get; }
     }
@@ -824,18 +824,18 @@ namespace MaxDB.Data.MaxDBProtocol
 
     internal class FetchInfo
     {
-        private MaxDBConnection dbConnection;           // current connection
+        private readonly MaxDBConnection dbConnection;           // current connection
         private readonly string strCursorName;          // cursor
         private DBTechTranslator[] mColumnInfo;            // short info of all columns
         private string strFetchParamString; // cache for fetch parameters
 
         public FetchInfo(MaxDBConnection connection, string cursorName, DBTechTranslator[] infos, string[] columnNames)
         {
-            dbConnection = connection;
-            strCursorName = cursorName;
+            this.dbConnection = connection;
+            this.strCursorName = cursorName;
             if (infos != null && columnNames != null)
             {
-                SetMetaData(infos, columnNames);
+                this.SetMetaData(infos, columnNames);
             }
         }
 
@@ -845,56 +845,56 @@ namespace MaxDB.Data.MaxDBProtocol
             DBTechTranslator currentInfo;
             int currentFieldEnd;
 
-            RecordSize = 0;
+            this.RecordSize = 0;
 
             if (colCount == colName.Length)
             {
-                mColumnInfo = info;
+                this.mColumnInfo = info;
                 for (int i = 0; i < colCount; ++i)
                 {
                     currentInfo = info[i];
                     currentInfo.ColumnName = colName[i];
                     currentInfo.ColumnIndex = i;
                     currentFieldEnd = currentInfo.PhysicalLength + currentInfo.BufPos - 1;
-                    RecordSize = Math.Max(RecordSize, currentFieldEnd);
+                    this.RecordSize = Math.Max(this.RecordSize, currentFieldEnd);
                 }
             }
             else
             {
                 int outputColCnt = 0;
-                mColumnInfo = new DBTechTranslator[colName.Length];
+                this.mColumnInfo = new DBTechTranslator[colName.Length];
                 for (int i = 0; i < colCount; ++i)
                 {
                     if (info[i].IsOutput)
                     {
-                        currentInfo = mColumnInfo[outputColCnt] = info[i];
+                        currentInfo = this.mColumnInfo[outputColCnt] = info[i];
                         currentInfo.ColumnName = colName[outputColCnt];
                         currentInfo.ColumnIndex = outputColCnt++;
                         currentFieldEnd = currentInfo.PhysicalLength + currentInfo.BufPos - 1;
-                        RecordSize = Math.Max(RecordSize, currentFieldEnd);
+                        this.RecordSize = Math.Max(this.RecordSize, currentFieldEnd);
                     }
                 }
             }
 
-            DBTechTranslator.SetEncoding(mColumnInfo, dbConnection.UserAsciiEncoding);
+            DBTechTranslator.SetEncoding(this.mColumnInfo, this.dbConnection.UserAsciiEncoding);
         }
 
         private void Describe()
         {
             DBTechTranslator[] infos = null;
             string[] columnNames = null;
-            var request = dbConnection.mComm.GetRequestPacket();
+            var request = this.dbConnection.mComm.GetRequestPacket();
             byte currentSQLMode = request.SwitchSqlMode((byte)SqlMode.Internal);
 
             try
             {
-                request.InitDbsCommand(false, "DESCRIBE \"" + strCursorName + "\"");
+                request.InitDbsCommand(false, "DESCRIBE \"" + this.strCursorName + "\"");
 
-                //>>> SQL TRACE
-                dbConnection.mLogger.SqlTrace(DateTime.Now, "::DESCRIBE CURSOR " + strCursorName);
-                //<<< SQL TRACE
+                // >>> SQL TRACE
+                this.dbConnection.mLogger.SqlTrace(DateTime.Now, "::DESCRIBE CURSOR " + this.strCursorName);
+                // <<< SQL TRACE
 
-                MaxDBReplyPacket reply = dbConnection.mComm.Execute(dbConnection.mConnArgs, request, this, GCMode.GC_ALLOWED);
+                MaxDBReplyPacket reply = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, request, this, GCMode.GC_ALLOWED);
                 reply.ClearPartOffset();
                 for (int i = 0; i < reply.PartCount; i++)
                 {
@@ -908,15 +908,15 @@ namespace MaxDB.Data.MaxDBProtocol
                     }
                     else if (partType == PartKind.ShortInfo)
                     {
-                        infos = reply.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, false);
+                        infos = reply.ParseShortFields(this.dbConnection.mComm.ConnStrBuilder.SpaceOption, false, null, false);
                     }
                     else if (partType == PartKind.VardataShortInfo)
                     {
-                        infos = reply.ParseShortFields(dbConnection.mComm.mConnStrBuilder.SpaceOption, false, null, true);
+                        infos = reply.ParseShortFields(this.dbConnection.mComm.ConnStrBuilder.SpaceOption, false, null, true);
                     }
                 }
 
-                SetMetaData(infos, columnNames);
+                this.SetMetaData(infos, columnNames);
             }
             catch
             {
@@ -930,40 +930,40 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public MaxDBReplyPacket ExecFetchNext()
         {
-            if (mColumnInfo == null)
+            if (this.mColumnInfo == null)
             {
-                Describe();
+                this.Describe();
             }
 
-            if (strFetchParamString == null)
+            if (this.strFetchParamString == null)
             {
                 var tmp = new StringBuilder("?");
-                for (int i = 1; i < mColumnInfo.Length; i++)
+                for (int i = 1; i < this.mColumnInfo.Length; i++)
                 {
                     tmp.Append(", ?");
                 }
 
-                strFetchParamString = tmp.ToString();
+                this.strFetchParamString = tmp.ToString();
             }
 
-            string cmd = "FETCH NEXT \"" + strCursorName + "\" INTO " + strFetchParamString;
+            string cmd = "FETCH NEXT \"" + this.strCursorName + "\" INTO " + this.strFetchParamString;
 
             DateTime dt = DateTime.Now;
-            //>>> SQL TRACE
-            dbConnection.mLogger.SqlTrace(dt, "::FETCH NEXT " + strCursorName);
-            dbConnection.mLogger.SqlTrace(dt, "SQL COMMAND: " + cmd);
-            //<<< SQL TRACE
+            // >>> SQL TRACE
+            this.dbConnection.mLogger.SqlTrace(dt, "::FETCH NEXT " + this.strCursorName);
+            this.dbConnection.mLogger.SqlTrace(dt, "SQL COMMAND: " + cmd);
+            // <<< SQL TRACE
 
-            var request = dbConnection.mComm.GetRequestPacket();
+            var request = this.dbConnection.mComm.GetRequestPacket();
             byte currentSQLMode = request.SwitchSqlMode((byte)SqlMode.Internal);
-            request.InitDbsCommand(dbConnection.AutoCommit, cmd);
+            request.InitDbsCommand(this.dbConnection.AutoCommit, cmd);
 
             request.SetMassCommand();
             request.AddResultCount(30000);
 
             try
             {
-                return dbConnection.mComm.Execute(dbConnection.mConnArgs, request, this, GCMode.GC_DELAYED);
+                return this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, request, this, GCMode.GC_DELAYED);
             }
             finally
             {
@@ -973,24 +973,24 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public DBTechTranslator GetColumnInfo(int index)
         {
-            if (mColumnInfo == null)
+            if (this.mColumnInfo == null)
             {
-                Describe();
+                this.Describe();
             }
 
-            return mColumnInfo[index];
+            return this.mColumnInfo[index];
         }
 
         public int NumberOfColumns
         {
             get
             {
-                if (mColumnInfo == null)
+                if (this.mColumnInfo == null)
                 {
-                    Describe();
+                    this.Describe();
                 }
 
-                return mColumnInfo.Length;
+                return this.mColumnInfo.Length;
             }
         }
 

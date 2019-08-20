@@ -1,26 +1,26 @@
-//	Copyright © 2005-2018 Dmitry S. Kataev
+// Copyright © 2005-2018 Dmitry S. Kataev
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System;
-using System.Diagnostics;
-using MaxDB.Data.MaxDBProtocol;
-using System.Globalization;
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data.Utilities
 {
+    using System;
+    using System.Diagnostics;
+    using System.Globalization;
+    using MaxDB.Data.MaxDBProtocol;
+
     internal enum MaxDBTraceLevel
     {
         None = 0,
@@ -39,7 +39,7 @@ namespace MaxDB.Data.Utilities
         {
             get
             {
-                switch (SwitchSetting)
+                switch (this.SwitchSetting)
                 {
                     case (int)MaxDBTraceLevel.None:
                         return MaxDBTraceLevel.None;
@@ -53,9 +53,9 @@ namespace MaxDB.Data.Utilities
             }
         }
 
-        public bool TraceSQL => Level != MaxDBTraceLevel.None;
+        public bool TraceSQL => this.Level != MaxDBTraceLevel.None;
 
-        public bool TraceFull => Level == MaxDBTraceLevel.Full;
+        public bool TraceFull => this.Level == MaxDBTraceLevel.Full;
     }
 
     internal class MaxDBLogger
@@ -69,19 +69,19 @@ namespace MaxDB.Data.Utilities
 
         public const string Null = "NULL";
 
-        private MaxDBTraceSwitch mSwitcher = new MaxDBTraceSwitch("TraceLevel", "Trace Level");
+        private readonly MaxDBTraceSwitch mSwitcher = new MaxDBTraceSwitch("TraceLevel", "Trace Level");
 
         public MaxDBLogger()
         {
         }
 
-        public bool TraceSQL => mSwitcher.TraceSQL;
+        public bool TraceSQL => this.mSwitcher.TraceSQL;
 
-        public bool TraceFull => mSwitcher.TraceFull;
+        public bool TraceFull => this.mSwitcher.TraceFull;
 
         public void SqlTrace(DateTime dt, string msg)
         {
-            if (mSwitcher.TraceSQL)
+            if (this.mSwitcher.TraceSQL)
             {
                 Trace.WriteLine(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " " + msg);
             }
@@ -90,12 +90,12 @@ namespace MaxDB.Data.Utilities
         public void SqlTraceParseInfo(DateTime dt, object objInfo)
         {
             var parseInfo = (MaxDBParseInfo)objInfo;
-            if (mSwitcher.TraceSQL)
+            if (this.mSwitcher.TraceSQL)
             {
                 if (parseInfo.ParamInfo != null && parseInfo.ParamInfo.Length > 0)
                 {
-                    SqlTrace(dt, "PARAMETERS:");
-                    SqlTrace(dt, "I   T              L    P   IO    N");
+                    this.SqlTrace(dt, "PARAMETERS:");
+                    this.SqlTrace(dt, "I   T              L    P   IO    N");
                     foreach (var info in parseInfo.ParamInfo)
                     {
                         Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
@@ -148,8 +148,8 @@ namespace MaxDB.Data.Utilities
 
                 if (parseInfo.ColumnInfo != null && parseInfo.ColumnInfo.Length > 0)
                 {
-                    SqlTrace(dt, "COLUMNS:");
-                    SqlTrace(dt, "I   T              L           P           N");
+                    this.SqlTrace(dt, "COLUMNS:");
+                    this.SqlTrace(dt, "I   T              L           P           N");
                     foreach (var info in parseInfo.ColumnInfo)
                     {
                         Trace.Write(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture) + " ");
@@ -160,7 +160,7 @@ namespace MaxDB.Data.Utilities
             }
         }
 
-        public void SqlTraceDataHeader(DateTime dt) => SqlTrace(dt, "I".PadRight(NumSize) + "T".PadRight(TypeSize) + "L".PadRight(LenSize) + "I".PadRight(InputSize) + "DATA");
+        public void SqlTraceDataHeader(DateTime dt) => this.SqlTrace(dt, "I".PadRight(NumSize) + "T".PadRight(TypeSize) + "L".PadRight(LenSize) + "I".PadRight(InputSize) + "DATA");
 
         private static void SqlTraceTransl(DBTechTranslator info)
         {
@@ -172,7 +172,7 @@ namespace MaxDB.Data.Utilities
 
         public void Flush()
         {
-            if (mSwitcher.TraceSQL)
+            if (this.mSwitcher.TraceSQL)
             {
                 Trace.Flush();
             }

@@ -1,32 +1,31 @@
 //-----------------------------------------------------------------------------------------------
-// <copyright file="MaxDBValue.cs" company="Dmitry S. Kataev">
-//     Copyright © 2005-2018 Dmitry S. Kataev
-//     Copyright © 2002-2003 SAP AG
+// <copyright file="MaxDBValue.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------------------------------
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System;
-using System.IO;
-using System.Data;
-using MaxDB.Data.Utilities;
-using System.Globalization;
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data.MaxDBProtocol
 {
+    using System;
+    using System.Data;
+    using System.Globalization;
+    using System.IO;
+    using MaxDB.Data.Utilities;
+
     #region "Put Value class"
 
     internal class PutValue : IDisposable
@@ -44,30 +43,30 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (length >= 0)
             {
-                mStream = new FilteredStream(stream, length);
+                this.mStream = new FilteredStream(stream, length);
             }
             else
             {
-                mStream = stream;
+                this.mStream = stream;
             }
 
-            BufferPosition = position;
+            this.BufferPosition = position;
         }
 
         public PutValue(byte[] bytes, int bufferPosition)
         {
-            mStream = new MemoryStream(bytes);
-            BufferPosition = bufferPosition;
+            this.mStream = new MemoryStream(bytes);
+            this.BufferPosition = bufferPosition;
         }
 
         protected PutValue(int bufferPosition)
         {
-            BufferPosition = bufferPosition;
+            this.BufferPosition = bufferPosition;
         }
 
         public int BufferPosition { get; }
 
-        public virtual bool AtEnd => mStream == null;
+        public virtual bool AtEnd => this.mStream == null;
 
         public void WriteDescriptor(DataPart memory, int pos)
         {
@@ -76,12 +75,12 @@ namespace MaxDB.Data.MaxDBProtocol
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "memory"));
             }
 
-            if (byDescription == null)
+            if (this.byDescription == null)
             {
-                byDescription = new byte[LongDesc.Size];
+                this.byDescription = new byte[LongDesc.Size];
             }
 
-            baDescriptionMark = memory.WriteDescriptor(pos, byDescription);
+            this.baDescriptionMark = memory.WriteDescriptor(pos, this.byDescription);
         }
 
         private static byte[] NewDescriptor => new byte[LongDesc.Size];
@@ -93,15 +92,15 @@ namespace MaxDB.Data.MaxDBProtocol
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "memory"));
             }
 
-            if (byDescription == null)
+            if (this.byDescription == null)
             {
-                byDescription = NewDescriptor;
+                this.byDescription = NewDescriptor;
             }
 
-            baDescriptionMark = memory.WriteDescriptor(pos, byDescription);
+            this.baDescriptionMark = memory.WriteDescriptor(pos, this.byDescription);
         }
 
-        public void SetDescriptor(byte[] description) => byDescription = description;
+        public void SetDescriptor(byte[] description) => this.byDescription = description;
 
         public virtual void TransferStream(DataPart dataPart)
         {
@@ -110,15 +109,15 @@ namespace MaxDB.Data.MaxDBProtocol
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "dataPart"));
             }
 
-            if (AtEnd)
+            if (this.AtEnd)
             {
-                dataPart.MarkEmptyStream(baDescriptionMark);
+                dataPart.MarkEmptyStream(this.baDescriptionMark);
             }
-            else if (dataPart.FillWithStream(mStream, baDescriptionMark, this))
+            else if (dataPart.FillWithStream(this.mStream, this.baDescriptionMark, this))
             {
                 try
                 {
-                    mStream.Close();
+                    this.mStream.Close();
                 }
                 catch (ObjectDisposedException)
                 {
@@ -126,7 +125,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
                 finally
                 {
-                    mStream = null;
+                    this.mStream = null;
                 }
             }
         }
@@ -138,8 +137,8 @@ namespace MaxDB.Data.MaxDBProtocol
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "dataPart"));
             }
 
-            TransferStream(dataPart);
-            baDescriptionMark.WriteInt16(streamIndex, LongDesc.ValInd);
+            this.TransferStream(dataPart);
+            this.baDescriptionMark.WriteInt16(streamIndex, LongDesc.ValInd);
         }
 
         public void MarkAsLast(DataPart dataPart)
@@ -156,59 +155,59 @@ namespace MaxDB.Data.MaxDBProtocol
             }
 
             int descriptorPos = dataPart.Extent;
-            WriteDescriptor(dataPart, descriptorPos);
+            this.WriteDescriptor(dataPart, descriptorPos);
             dataPart.AddArg(descriptorPos, LongDesc.Size + 1);
-            baDescriptionMark.WriteByte(LongDesc.LastPutval, LongDesc.ValMode);
+            this.baDescriptionMark.WriteByte(LongDesc.LastPutval, LongDesc.ValMode);
         }
 
         public void MarkRequestedChunk(ByteArray data, int length)
         {
-            baRequestData = data;
-            iRequestLength = length;
+            this.baRequestData = data;
+            this.iRequestLength = length;
         }
 
         public void MarkErrorStream()
         {
-            baDescriptionMark.WriteByte(LongDesc.Error, LongDesc.ValMode);
-            baDescriptionMark.WriteInt32(0, LongDesc.ValPos);
-            baDescriptionMark.WriteInt32(0, LongDesc.ValLen);
+            this.baDescriptionMark.WriteByte(LongDesc.Error, LongDesc.ValMode);
+            this.baDescriptionMark.WriteInt32(0, LongDesc.ValPos);
+            this.baDescriptionMark.WriteInt32(0, LongDesc.ValLen);
 
             try
             {
-                mStream.Close();
+                this.mStream.Close();
             }
             catch (IOException)
             {
                 // ignore
             }
-            mStream = null;
+            this.mStream = null;
         }
 
         public virtual void Reset()
         {
-            if (baRequestData != null)
+            if (this.baRequestData != null)
             {
-                byte[] data = baRequestData.ReadBytes(0, iRequestLength);
+                byte[] data = this.baRequestData.ReadBytes(0, this.iRequestLength);
                 var firstChunk = new MemoryStream(data);
-                mStream = mStream == null ? firstChunk : (Stream)new JoinStream(new Stream[] { firstChunk, mStream });
+                this.mStream = this.mStream == null ? firstChunk : (Stream)new JoinStream(new Stream[] { firstChunk, this.mStream });
             }
 
-            baRequestData = null;
+            this.baRequestData = null;
         }
 
         #region IDisposable Members
 
         public void Dispose()
         {
-            Dispose(true);
+            this.Dispose(true);
             GC.SuppressFinalize(this);
         }
 
         private void Dispose(bool disposing)
         {
-            if (disposing && mStream != null)
+            if (disposing && this.mStream != null)
             {
-                ((IDisposable)mStream).Dispose();
+                ((IDisposable)this.mStream).Dispose();
             }
         }
 
@@ -224,20 +223,20 @@ namespace MaxDB.Data.MaxDBProtocol
         private TextReader mReader;
 
         public PutUnicodeValue(TextReader readerp, int length, int bufpos)
-            : base(bufpos) => mReader = length >= 0 ? new TextReaderFilter(readerp, length) : readerp;
+            : base(bufpos) => this.mReader = length >= 0 ? new TextReaderFilter(readerp, length) : readerp;
 
         public PutUnicodeValue(char[] source, int bufpos)
-            : base(bufpos) => mReader = new StringReader(new string(source));
+            : base(bufpos) => this.mReader = new StringReader(new string(source));
 
-        public override bool AtEnd => mReader == null;
+        public override bool AtEnd => this.mReader == null;
 
         public override void TransferStream(DataPart dataPart)
         {
-            if (!AtEnd && dataPart.FillWithReader(mReader, baDescriptionMark, this))
+            if (!this.AtEnd && dataPart.FillWithReader(this.mReader, this.baDescriptionMark, this))
             {
                 try
                 {
-                    mReader.Close();
+                    this.mReader.Close();
                 }
                 catch (ObjectDisposedException)
                 {
@@ -245,27 +244,27 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
                 finally
                 {
-                    mReader = null;
+                    this.mReader = null;
                 }
             }
         }
 
         public override void Reset()
         {
-            if (baRequestData != null)
+            if (this.baRequestData != null)
             {
-                var firstChunk = new StringReader(baRequestData.ReadUnicode(0, iRequestLength));
+                var firstChunk = new StringReader(this.baRequestData.ReadUnicode(0, this.iRequestLength));
 
-                if (mReader == null)
+                if (this.mReader == null)
                 {
-                    mReader = firstChunk;
+                    this.mReader = firstChunk;
                 }
                 else
                 {
-                    mReader = new JoinTextReader(new TextReader[] { firstChunk, mReader });
+                    this.mReader = new JoinTextReader(new TextReader[] { firstChunk, this.mReader });
                 }
 
-                baRequestData = null;
+                this.baRequestData = null;
             }
         }
     }
@@ -276,24 +275,24 @@ namespace MaxDB.Data.MaxDBProtocol
 
     internal abstract class AbstractProcedurePutValue
     {
-        private DBTechTranslator m_translator;
-        private ByteArray m_descriptor;
+        private readonly DBTechTranslator m_translator;
+        private readonly ByteArray m_descriptor;
         private ByteArray m_descriptorMark;
 
         public AbstractProcedurePutValue(DBTechTranslator translator)
         {
-            m_translator = translator;
-            m_descriptor = new ByteArray(LongDesc.Size);
-            m_descriptor.WriteByte(LongDesc.StateStream, LongDesc.State);
+            this.m_translator = translator;
+            this.m_descriptor = new ByteArray(LongDesc.Size);
+            this.m_descriptor.WriteByte(LongDesc.StateStream, LongDesc.State);
         }
 
-        public void UpdateIndex(int index) => m_descriptorMark.WriteInt16((short)index, LongDesc.ValInd);
+        public void UpdateIndex(int index) => this.m_descriptorMark.WriteInt16((short)index, LongDesc.ValInd);
 
-        public void putDescriptor(DataPart memory)
+        public void PutDescriptor(DataPart memory)
         {
-            memory.WriteDefineByte(0, m_translator.BufPos - 1);
-            memory.WriteBytes(m_descriptor.GetArrayData(), m_translator.BufPos);
-            m_descriptorMark = memory.baOrigData.Clone(m_translator.BufPos);
+            memory.WriteDefineByte(0, this.m_translator.BufPos - 1);
+            memory.WriteBytes(this.m_descriptor.GetArrayData(), this.m_translator.BufPos);
+            this.m_descriptorMark = memory.baOrigData.Clone(this.m_translator.BufPos);
         }
 
         public abstract void TransferStream(DataPart dataPart, short rowCount);
@@ -310,15 +309,15 @@ namespace MaxDB.Data.MaxDBProtocol
         protected Stream mStream;
 
         internal BasicProcedurePutValue(DBTechTranslator translator, Stream stream, int length)
-            : base(translator) => mStream = length == -1 ? stream : new FilteredStream(stream, length);
+            : base(translator) => this.mStream = length == -1 ? stream : new FilteredStream(stream, length);
 
-        public override void TransferStream(DataPart dataPart, short rowCount) => dataPart.FillWithProcedureStream(mStream, rowCount);
+        public override void TransferStream(DataPart dataPart, short rowCount) => dataPart.FillWithProcedureStream(this.mStream, rowCount);
 
         public override void CloseStream()
         {
             try
             {
-                mStream.Close();
+                this.mStream.Close();
             }
             catch (Exception ex)
             {
@@ -369,15 +368,15 @@ namespace MaxDB.Data.MaxDBProtocol
         }
 
         public UnicodeProcedurePutValue(DBTechTranslator translator, TextReader reader, int length)
-            : base(translator) => mReader = length == -1 ? reader : new TextReaderFilter(reader, length);
+            : base(translator) => this.mReader = length == -1 ? reader : new TextReaderFilter(reader, length);
 
-        public override void TransferStream(DataPart dataPart, short rowCount) => dataPart.FillWithProcedureReader(mReader, rowCount);
+        public override void TransferStream(DataPart dataPart, short rowCount) => dataPart.FillWithProcedureReader(this.mReader, rowCount);
 
         public override void CloseStream()
         {
             try
             {
-                mReader.Close();
+                this.mReader.Close();
             }
             catch (Exception ex)
             {
@@ -402,34 +401,34 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public AbstractGetValue(MaxDBConnection connection, byte[] descriptor, ByteArray dataPart, int itemSize)
         {
-            dbConnection = connection;
-            iItemSize = itemSize;
-            SetupStreamBuffer(descriptor, dataPart);
+            this.dbConnection = connection;
+            this.iItemSize = itemSize;
+            this.SetupStreamBuffer(descriptor, dataPart);
         }
 
         internal bool NextChunk()
         {
             try
             {
-                int valMode = byDescriptor[LongDesc.ValMode];
+                int valMode = this.byDescriptor[LongDesc.ValMode];
                 if (valMode == LongDesc.LastData || valMode == LongDesc.AllData)
                 {
-                    bAtEnd = true;
+                    this.bAtEnd = true;
                     return false;
                 }
 
-                var requestPacket = dbConnection.mComm.GetRequestPacket();
+                var requestPacket = this.dbConnection.mComm.GetRequestPacket();
                 MaxDBReplyPacket replyPacket;
-                var longpart = requestPacket.InitGetValue(dbConnection.AutoCommit);
+                var longpart = requestPacket.InitGetValue(this.dbConnection.AutoCommit);
                 longpart.WriteByte(0, 0);
-                longpart.WriteBytes(byDescriptor, 1);
+                longpart.WriteBytes(this.byDescriptor, 1);
                 int maxval = int.MaxValue - 1;
                 longpart.WriteInt32(maxval, 1 + LongDesc.ValLen);
                 longpart.AddArg(1, LongDesc.Size);
                 longpart.Close();
                 try
                 {
-                    replyPacket = dbConnection.mComm.Execute(dbConnection.mConnArgs, requestPacket, this, GCMode.GC_DELAYED);
+                    replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, GCMode.GC_DELAYED);
                 }
                 catch (MaxDBException ex)
                 {
@@ -438,13 +437,13 @@ namespace MaxDB.Data.MaxDBProtocol
 
                 replyPacket.FindPart(PartKind.LongData);
                 int dataPos = replyPacket.PartDataPos;
-                byDescriptor = replyPacket.ReadDataBytes(dataPos, LongDesc.Size + 1);
-                if (byDescriptor[LongDesc.ValMode] == LongDesc.StartposInvalid)
+                this.byDescriptor = replyPacket.ReadDataBytes(dataPos, LongDesc.Size + 1);
+                if (this.byDescriptor[LongDesc.ValMode] == LongDesc.StartposInvalid)
                 {
                     throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INVALID_STARTPOSITION));
                 }
 
-                SetupStreamBuffer(byDescriptor, replyPacket.Clone(dataPos));
+                this.SetupStreamBuffer(this.byDescriptor, replyPacket.Clone(dataPos));
                 return true;
             }
             catch (PartNotFoundException)
@@ -459,12 +458,12 @@ namespace MaxDB.Data.MaxDBProtocol
 
         private void SetupStreamBuffer(byte[] descriptor, ByteArray dataPart)
         {
-            var desc = new ByteArray(descriptor); //??? swapMode? 
+            var desc = new ByteArray(descriptor); // ??? swapMode? 
             int dataStart;
 
             dataStart = desc.ReadInt32(LongDesc.ValPos) - 1;
-            iItemsInBuffer = desc.ReadInt32(LongDesc.ValLen) / iItemSize;
-            bsStreamBuffer = dataPart.Clone(dataStart);
+            this.iItemsInBuffer = desc.ReadInt32(LongDesc.ValLen) / this.iItemSize;
+            this.bsStreamBuffer = dataPart.Clone(dataStart);
             this.byDescriptor = descriptor;
             if (descriptor[LongDesc.InternPos] == 0 && descriptor[LongDesc.InternPos + 1] == 0 &&
                 descriptor[LongDesc.InternPos + 2] == 0 && descriptor[LongDesc.InternPos + 3] == 0)
@@ -495,15 +494,15 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public override Stream BinaryStream => new GetValueStream(this);
 
-        public override TextReader CharacterStream => new RawByteReader(ASCIIStream);
+        public override TextReader CharacterStream => new RawByteReader(this.ASCIIStream);
 
         #region "Get Value Stream class"
 
         class GetValueStream : Stream
         {
-            GetValue m_value;
+            readonly GetValue m_value;
 
-            public GetValueStream(GetValue val) => m_value = val;
+            public GetValueStream(GetValue val) => this.m_value = val;
 
             public override bool CanRead => true;
 
@@ -513,32 +512,32 @@ namespace MaxDB.Data.MaxDBProtocol
 
             public override void Flush() => throw new NotSupportedException();
 
-            public override long Length => m_value.bsStreamBuffer.Length;
+            public override long Length => this.m_value.bsStreamBuffer.Length;
 
             public override long Position
             {
-                get => m_value.bsStreamBuffer.Offset;
-                set => m_value.bsStreamBuffer.Offset = (int)value;
+                get => this.m_value.bsStreamBuffer.Offset;
+                set => this.m_value.bsStreamBuffer.Offset = (int)value;
             }
 
             public override int ReadByte()
             {
                 int result;
 
-                if (m_value.iItemsInBuffer <= 0)
+                if (this.m_value.iItemsInBuffer <= 0)
                 {
-                    m_value.NextChunk();
+                    this.m_value.NextChunk();
                 }
 
-                if (m_value.bAtEnd)
+                if (this.m_value.bAtEnd)
                 {
                     return -1;
                 }
 
-                result = m_value.bsStreamBuffer.ReadByte(0);
-                m_value.bsStreamBuffer.Offset++;
-                m_value.iItemsInBuffer--;
-                m_value.lLongPosition++;
+                result = this.m_value.bsStreamBuffer.ReadByte(0);
+                this.m_value.bsStreamBuffer.Offset++;
+                this.m_value.iItemsInBuffer--;
+                this.m_value.lLongPosition++;
                 return result;
             }
 
@@ -548,33 +547,33 @@ namespace MaxDB.Data.MaxDBProtocol
                 int chunkSize;
                 byte[] chunk;
 
-                while ((len > 0) && !m_value.bAtEnd)
+                while ((len > 0) && !this.m_value.bAtEnd)
                 {
-                    if (m_value.iItemsInBuffer <= 0)
+                    if (this.m_value.iItemsInBuffer <= 0)
                     {
-                        m_value.NextChunk();
+                        this.m_value.NextChunk();
                     }
 
-                    if (!m_value.bAtEnd)
+                    if (!this.m_value.bAtEnd)
                     {
                         // copy bytes in buffer
-                        chunkSize = Math.Min(len, m_value.iItemsInBuffer);
-                        chunk = m_value.bsStreamBuffer.ReadBytes(0, chunkSize);
+                        chunkSize = Math.Min(len, this.m_value.iItemsInBuffer);
+                        chunk = this.m_value.bsStreamBuffer.ReadBytes(0, chunkSize);
                         Buffer.BlockCopy(chunk, 0, b, off, chunkSize);
                         len -= chunkSize;
                         off += chunkSize;
-                        m_value.iItemsInBuffer -= chunkSize;
-                        m_value.bsStreamBuffer.Offset += chunkSize;
+                        this.m_value.iItemsInBuffer -= chunkSize;
+                        this.m_value.bsStreamBuffer.Offset += chunkSize;
                         bytesCopied += chunkSize;
                     }
                 }
-                if (bytesCopied == 0 && m_value.bAtEnd)
+                if (bytesCopied == 0 && this.m_value.bAtEnd)
                 {
                     bytesCopied = -1;
                 }
                 else
                 {
-                    m_value.lLongPosition += bytesCopied;
+                    this.m_value.lLongPosition += bytesCopied;
                 }
 
                 return bytesCopied;
@@ -585,17 +584,17 @@ namespace MaxDB.Data.MaxDBProtocol
                 switch (origin)
                 {
                     case SeekOrigin.Begin:
-                        m_value.bsStreamBuffer.Offset = (int)offset;
+                        this.m_value.bsStreamBuffer.Offset = (int)offset;
                         break;
                     case SeekOrigin.Current:
-                        m_value.bsStreamBuffer.Offset += (int)offset;
+                        this.m_value.bsStreamBuffer.Offset += (int)offset;
                         break;
                     case SeekOrigin.End:
-                        m_value.bsStreamBuffer.Offset = m_value.bsStreamBuffer.Length - (int)offset - 1;
+                        this.m_value.bsStreamBuffer.Offset = this.m_value.bsStreamBuffer.Length - (int)offset - 1;
                         break;
                 }
 
-                return m_value.bsStreamBuffer.Offset;
+                return this.m_value.bsStreamBuffer.Offset;
             }
 
             public override void SetLength(long value) => throw new NotSupportedException();
@@ -629,9 +628,9 @@ namespace MaxDB.Data.MaxDBProtocol
         {
         }
 
-        public override Stream ASCIIStream => new ReaderStream(CharacterStream, false);
+        public override Stream ASCIIStream => new ReaderStream(this.CharacterStream, false);
 
-        public override Stream BinaryStream => new ReaderStream(CharacterStream, false);
+        public override Stream BinaryStream => new ReaderStream(this.CharacterStream, false);
 
         public override TextReader CharacterStream => new GetUnicodeValueReader(this);
 
@@ -639,9 +638,9 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public class GetUnicodeValueReader : TextReader
         {
-            private GetUnicodeValue m_value;
+            private readonly GetUnicodeValue m_value;
 
-            public GetUnicodeValueReader(GetUnicodeValue val) => m_value = val;
+            public GetUnicodeValueReader(GetUnicodeValue val) => this.m_value = val;
 
             public override int Read(char[] b, int offset, int count)
             {
@@ -650,34 +649,34 @@ namespace MaxDB.Data.MaxDBProtocol
                 int chunkBytes;
                 char[] chunk;
 
-                while ((count > 0) && !m_value.bAtEnd)
+                while ((count > 0) && !this.m_value.bAtEnd)
                 {
-                    if (m_value.iItemsInBuffer <= 0)
+                    if (this.m_value.iItemsInBuffer <= 0)
                     {
-                        m_value.NextChunk();
+                        this.m_value.NextChunk();
                     }
 
-                    if (!m_value.bAtEnd)
+                    if (!this.m_value.bAtEnd)
                     {
-                        chunkChars = Math.Min(count, m_value.iItemsInBuffer);
+                        chunkChars = Math.Min(count, this.m_value.iItemsInBuffer);
                         chunkBytes = chunkChars * Consts.UnicodeWidth;
-                        chunk = m_value.bsStreamBuffer.ReadUnicode(0, chunkBytes).ToCharArray();
+                        chunk = this.m_value.bsStreamBuffer.ReadUnicode(0, chunkBytes).ToCharArray();
                         Array.Copy(chunk, 0, b, offset, chunkChars);
                         count -= chunkChars;
                         offset += chunkChars;
-                        m_value.iItemsInBuffer -= chunkChars;
-                        m_value.bsStreamBuffer = m_value.bsStreamBuffer.Clone(chunkBytes);
+                        this.m_value.iItemsInBuffer -= chunkChars;
+                        this.m_value.bsStreamBuffer = this.m_value.bsStreamBuffer.Clone(chunkBytes);
                         charsCopied += chunkChars;
                     }
                 }
 
-                if (charsCopied == 0 && m_value.bAtEnd)
+                if (charsCopied == 0 && this.m_value.bAtEnd)
                 {
                     charsCopied = -1;
                 }
                 else
                 {
-                    m_value.lLongPosition += charsCopied;
+                    this.m_value.lLongPosition += charsCopied;
                 }
 
                 return charsCopied;
@@ -710,22 +709,22 @@ namespace MaxDB.Data.MaxDBProtocol
     /// the kind of the fetch, the positioning in the result at the database
     /// server and the start and end index computation does differ.
     /// </summary>
-	internal class FetchChunk
+    internal class FetchChunk
     {
-        private MaxDBConnection dbConnection; //database connection
-        private MaxDBReplyPacket mReplyPacket;  // The data packet from the fetch operation.
+        private readonly MaxDBConnection dbConnection; // database connection
+        private readonly MaxDBReplyPacket mReplyPacket;  // The data packet from the fetch operation.
         private readonly FetchType mType;   // type of fetch chunk
-        private int iCurrentOffset; //The current index within this chunk, starting with 0.
+        private int iCurrentOffset; // The current index within this chunk, starting with 0.
         private readonly int iRecordSize;   // The number of bytes in a row.
         private int iRowsInResultSet;   // The number of rows in the complete result set, or -1 if this is not known.
 
         public FetchChunk(MaxDBConnection conn, FetchType type, int absoluteStartRow, MaxDBReplyPacket replyPacket, int recordSize, int maxRows, int rowsInResultSet)
         {
-            dbConnection = conn;
-            mReplyPacket = replyPacket;
-            mType = type;
-            iRecordSize = recordSize;
-            iRowsInResultSet = rowsInResultSet;
+            this.dbConnection = conn;
+            this.mReplyPacket = replyPacket;
+            this.mType = type;
+            this.iRecordSize = recordSize;
+            this.iRowsInResultSet = rowsInResultSet;
             try
             {
                 replyPacket.FirstSegment();
@@ -736,38 +735,38 @@ namespace MaxDB.Data.MaxDBProtocol
                 throw new DataException(MaxDBMessages.Extract(MaxDBError.FETCH_NODATAPART));
             }
 
-            Size = replyPacket.PartArgsCount;
+            this.Size = replyPacket.PartArgsCount;
             int dataPos = replyPacket.PartDataPos;
-            ReplyData = replyPacket.Clone(dataPos);
-            CurrentRecord = ReplyData.Clone(iCurrentOffset * iRecordSize);
+            this.ReplyData = replyPacket.Clone(dataPos);
+            this.CurrentRecord = this.ReplyData.Clone(this.iCurrentOffset * this.iRecordSize);
             if (absoluteStartRow > 0)
             {
-                Start = absoluteStartRow;
-                End = absoluteStartRow + Size - 1;
+                this.Start = absoluteStartRow;
+                this.End = absoluteStartRow + this.Size - 1;
             }
             else
             {
                 if (rowsInResultSet != -1)
                 {
-                    Start = rowsInResultSet + (absoluteStartRow < 0 ? absoluteStartRow + 1 : -absoluteStartRow + Size);
+                    this.Start = rowsInResultSet + (absoluteStartRow < 0 ? absoluteStartRow + 1 : -absoluteStartRow + this.Size);
 
-                    End = Start + Size - 1;
+                    this.End = this.Start + this.Size - 1;
                 }
                 else
                 {
-                    Start = absoluteStartRow;
-                    End = absoluteStartRow + Size - 1;
+                    this.Start = absoluteStartRow;
+                    this.End = absoluteStartRow + this.Size - 1;
                 }
             }
 
             DateTime dt = DateTime.Now;
 
-            //>>> SQL TRACE
-            dbConnection.mLogger.SqlTrace(dt, "FETCH BUFFER START: " + Start.ToString(CultureInfo.InvariantCulture));
-            dbConnection.mLogger.SqlTrace(dt, "FETCH BUFFER END  : " + End.ToString(CultureInfo.InvariantCulture));
-            //<<< SQL TRACE
+            // >>> SQL TRACE
+            this.dbConnection.mLogger.SqlTrace(dt, "FETCH BUFFER START: " + this.Start.ToString(CultureInfo.InvariantCulture));
+            this.dbConnection.mLogger.SqlTrace(dt, "FETCH BUFFER END  : " + this.End.ToString(CultureInfo.InvariantCulture));
+            // <<< SQL TRACE
 
-            DetermineFlags(maxRows);
+            this.DetermineFlags(maxRows);
         }
 
         /// <summary>
@@ -781,41 +780,41 @@ namespace MaxDB.Data.MaxDBProtocol
         /// <param name="maxRows">Maximum number of rows.</param>
         private void DetermineFlags(int maxRows)
         {
-            if (mReplyPacket.WasLastPart)
+            if (this.mReplyPacket.WasLastPart)
             {
-                switch (mType)
+                switch (this.mType)
                 {
                     case FetchType.FIRST:
                     case FetchType.LAST:
                     case FetchType.RELATIVE_DOWN:
-                        IsFirst = true;
-                        IsLast = true;
+                        this.IsFirst = true;
+                        this.IsLast = true;
                         break;
                     case FetchType.ABSOLUTE_UP:
                     case FetchType.ABSOLUTE_DOWN:
                     case FetchType.RELATIVE_UP:
-                        IsLast = true;
+                        this.IsLast = true;
                         break;
                 }
             }
 
-            if (Start == 1)
+            if (this.Start == 1)
             {
-                IsFirst = true;
+                this.IsFirst = true;
             }
 
-            if (End == -1)
+            if (this.End == -1)
             {
-                IsLast = true;
+                this.IsLast = true;
             }
 
             // one special last for maxRows set
-            if (maxRows != 0 && IsForward && End >= maxRows)
+            if (maxRows != 0 && this.IsForward && this.End >= maxRows)
             {
                 // if we have fetched too much, we have to cut here ...
-                End = maxRows;
-                Size = maxRows + 1 - Start;
-                IsLast = true;
+                this.End = maxRows;
+                this.Size = maxRows + 1 - this.Start;
+                this.IsLast = true;
             }
         }
 
@@ -855,29 +854,29 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             get
             {
-                switch (mType)
+                switch (this.mType)
                 {
                     case FetchType.ABSOLUTE_DOWN:
                     case FetchType.RELATIVE_UP:
                     case FetchType.LAST:
-                        return Start;
+                        return this.Start;
                     case FetchType.FIRST:
                     case FetchType.ABSOLUTE_UP:
                     case FetchType.RELATIVE_DOWN:
                     default:
-                        return End;
+                        return this.End;
                 }
             }
         }
 
-        public bool IsForward => mType == FetchType.FIRST || mType == FetchType.ABSOLUTE_UP || mType == FetchType.RELATIVE_UP;
+        public bool IsForward => this.mType == FetchType.FIRST || this.mType == FetchType.ABSOLUTE_UP || this.mType == FetchType.RELATIVE_UP;
 
         /// <summary>
         /// Sets the number of rows in the result set.
         /// </summary>
         public int RowsInResultSet
         {
-            set => iRowsInResultSet = value;
+            set => this.iRowsInResultSet = value;
         }
 
         /// <summary>
@@ -897,27 +896,27 @@ namespace MaxDB.Data.MaxDBProtocol
         /// <returns>Returns <c>true</c> if the row is inside, <c>false</c> if it's not or the condition could not be determined due to an unknown end of result set.</returns>
         public bool ContainsRow(int row)
         {
-            if (Start <= row && End >= row)
+            if (this.Start <= row && this.End >= row)
             {
                 return true;
             }
 
             // some tricks depending on whether we are on last/first chunk
-            if (IsForward && IsLast && row < 0)
+            if (this.IsForward && this.IsLast && row < 0)
             {
-                return row >= Start - End - 1;
+                return row >= this.Start - this.End - 1;
             }
 
-            if (!IsForward && IsFirst && row > 0)
+            if (!this.IsForward && this.IsFirst && row > 0)
             {
-                return row <= End - Start + 1;
+                return row <= this.End - this.Start + 1;
             }
 
             // if we know the number of rows, we can compute this anyway by inverting the row
-            if (iRowsInResultSet != -1 && ((Start < 0 && row > 0) || (Start > 0 && row < 0)))
+            if (this.iRowsInResultSet != -1 && ((this.Start < 0 && row > 0) || (this.Start > 0 && row < 0)))
             {
-                int inverted_row = (row > 0) ? (row - iRowsInResultSet - 1) : (row + iRowsInResultSet + 1);
-                return Start <= inverted_row && End >= inverted_row;
+                int inverted_row = (row > 0) ? (row - this.iRowsInResultSet - 1) : (row + this.iRowsInResultSet + 1);
+                return this.Start <= inverted_row && this.End >= inverted_row;
             }
 
             return false;
@@ -930,56 +929,56 @@ namespace MaxDB.Data.MaxDBProtocol
         /// <returns></returns>
         public bool Move(int relativepos)
         {
-            if (iCurrentOffset + relativepos < 0 || iCurrentOffset + relativepos >= Size)
+            if (this.iCurrentOffset + relativepos < 0 || this.iCurrentOffset + relativepos >= this.Size)
             {
                 return false;
             }
             else
             {
-                UnsafeMove(relativepos);
+                this.UnsafeMove(relativepos);
                 return true;
             }
         }
 
-        //	Moves the position inside the chunk by a relative offset, but unchecked.
+        // Moves the position inside the chunk by a relative offset, but unchecked.
         private void UnsafeMove(int relativepos)
         {
-            iCurrentOffset += relativepos;
-            CurrentRecord = CurrentRecord.Clone(relativepos * iRecordSize);
+            this.iCurrentOffset += relativepos;
+            this.CurrentRecord = this.CurrentRecord.Clone(relativepos * this.iRecordSize);
         }
 
         // Sets the current record to the supplied absolute position.
-        public bool setRow(int row)
+        public bool SetRow(int row)
         {
-            if (Start <= row && End >= row)
+            if (this.Start <= row && this.End >= row)
             {
-                UnsafeMove(row - Start - iCurrentOffset);
+                this.UnsafeMove(row - this.Start - this.iCurrentOffset);
                 return true;
             }
 
             // some tricks depending on whether we are on last/first chunk
-            if (IsForward && IsLast && row < 0 && row >= Start - End - 1)
+            if (this.IsForward && this.IsLast && row < 0 && row >= this.Start - this.End - 1)
             {
                 // move backward to the row from the end index, but
                 // honor the row number start at 1, make this
                 // relative to chunk by subtracting start index
                 // and relative for the move by subtracting the
                 // current offset
-                UnsafeMove(End + row + 1 - Start - iCurrentOffset);
+                this.UnsafeMove(this.End + row + 1 - this.Start - this.iCurrentOffset);
                 return true;
             }
 
-            if (!IsForward && IsFirst && row > 0 && row <= End - Start + 1)
+            if (!this.IsForward && this.IsFirst && row > 0 && row <= this.End - this.Start + 1)
             {
                 // simple. row is > 0. m_startIndex if positive were 1 ...
-                UnsafeMove(row - 1 - iCurrentOffset);
+                this.UnsafeMove(row - 1 - this.iCurrentOffset);
             }
 
             // if we know the number of rows, we can compute this anyway by inverting the row
-            if (iRowsInResultSet != -1 && ((Start < 0 && row > 0) || (Start > 0 && row < 0)))
+            if (this.iRowsInResultSet != -1 && ((this.Start < 0 && row > 0) || (this.Start > 0 && row < 0)))
             {
-                int inverted_row = (row > 0) ? (row - iRowsInResultSet - 1) : (row + iRowsInResultSet + 1);
-                return setRow(inverted_row);
+                int inverted_row = (row > 0) ? (row - this.iRowsInResultSet - 1) : (row + this.iRowsInResultSet + 1);
+                return this.SetRow(inverted_row);
             }
 
             return false;

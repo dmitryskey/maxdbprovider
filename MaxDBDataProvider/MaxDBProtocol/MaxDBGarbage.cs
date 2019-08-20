@@ -1,42 +1,42 @@
-//	Copyright © 2005-2018 Dmitry S. Kataev
-//	Copyright © 2002-2003 SAP AG
+// Copyright © 2005-2018 Dmitry S. Kataev
+// Copyright © 2002-2003 SAP AG
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data.MaxDBProtocol
 {
+    using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
+
     internal class GarbageParseId
     {
         protected int iCanTrashOld = 20;
         protected bool bObjPending;
         protected bool bCurrentEmptyRun;
         protected bool bCurrentEmptyRun2;
-        private List<byte[]> lstGarbage;
+        private readonly List<byte[]> lstGarbage;
         private readonly bool bSupportsMultipleDropParseIDs;
 
         public GarbageParseId(bool supportMultipleDropParseIds)
             : base()
         {
-            bSupportsMultipleDropParseIDs = supportMultipleDropParseIds;
-            lstGarbage = new List<byte[]>(iCanTrashOld);
+            this.bSupportsMultipleDropParseIDs = supportMultipleDropParseIds;
+            this.lstGarbage = new List<byte[]>(this.iCanTrashOld);
         }
 
-        public bool IsPending => GarbageSize >= iCanTrashOld;
+        public bool IsPending => this.GarbageSize >= this.iCanTrashOld;
 
         public void EmptyCan(MaxDBComm communication, ConnectArgs connArgs)
         {
@@ -45,22 +45,22 @@ namespace MaxDB.Data.MaxDBProtocol
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "communication"));
             }
 
-            if (bCurrentEmptyRun)
+            if (this.bCurrentEmptyRun)
             {
                 return;
             }
 
-            bCurrentEmptyRun = true;
+            this.bCurrentEmptyRun = true;
 
             MaxDBRequestPacket requestPacket;
-            bObjPending = false;
-            while (GarbageSize > 0)
+            this.bObjPending = false;
+            while (this.GarbageSize > 0)
             {
                 try
                 {
                     requestPacket = communication.GetRequestPacket();
                     requestPacket.Init(short.MaxValue);
-                    EmptyCan(requestPacket);
+                    this.EmptyCan(requestPacket);
                     communication.Execute(connArgs, requestPacket, this, GCMode.GC_NONE);
                 }
                 catch (MaxDBException)
@@ -69,12 +69,12 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
             }
 
-            bCurrentEmptyRun = false;
+            this.bCurrentEmptyRun = false;
         }
 
-        public void ThrowIntoGarbageCan(byte[] obj) => lstGarbage.Add(obj);
+        public void ThrowIntoGarbageCan(byte[] obj) => this.lstGarbage.Add(obj);
 
-        protected int GarbageSize => lstGarbage.Count;
+        protected int GarbageSize => this.lstGarbage.Count;
 
         [MethodImpl(MethodImplOptions.Synchronized)]
         public bool EmptyCan(MaxDBRequestPacket requestPacket)
@@ -84,26 +84,26 @@ namespace MaxDB.Data.MaxDBProtocol
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "requestPacket"));
             }
 
-            if (bCurrentEmptyRun2)
+            if (this.bCurrentEmptyRun2)
             {
                 return false;
             }
 
-            bCurrentEmptyRun2 = true;
+            this.bCurrentEmptyRun2 = true;
 
             bool packetActionFailed = false;
-            int sz = GarbageSize;
+            int sz = this.GarbageSize;
 
-            if (!bSupportsMultipleDropParseIDs)
+            if (!this.bSupportsMultipleDropParseIDs)
             {
                 while (sz > 0 && !packetActionFailed)
                 {
-                    byte[] obj = lstGarbage[sz - 1];
-                    lstGarbage.RemoveAt(sz - 1);
+                    byte[] obj = this.lstGarbage[sz - 1];
+                    this.lstGarbage.RemoveAt(sz - 1);
                     packetActionFailed = !requestPacket.DropParseId(obj, false);
                     if (packetActionFailed)
                     {
-                        lstGarbage.Add(obj);
+                        this.lstGarbage.Add(obj);
                     }
 
                     sz--;
@@ -113,24 +113,24 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 if (sz > 0)
                 {
-                    byte[] obj = lstGarbage[sz - 1];
-                    lstGarbage.RemoveAt(sz - 1);
+                    byte[] obj = this.lstGarbage[sz - 1];
+                    this.lstGarbage.RemoveAt(sz - 1);
                     packetActionFailed = !requestPacket.DropParseId(obj, false);
                     if (packetActionFailed)
                     {
-                        lstGarbage.Add(obj);
+                        this.lstGarbage.Add(obj);
                     }
                     else
                     {
                         sz--;
                         while (sz > 0 && !packetActionFailed)
                         {
-                            obj = lstGarbage[sz - 1];
-                            lstGarbage.RemoveAt(sz - 1);
+                            obj = this.lstGarbage[sz - 1];
+                            this.lstGarbage.RemoveAt(sz - 1);
                             packetActionFailed = !requestPacket.DropParseIdAddToParseIdPart(obj);
                             if (packetActionFailed)
                             {
-                                lstGarbage.Add(obj);
+                                this.lstGarbage.Add(obj);
                             }
 
                             sz--;
@@ -139,10 +139,10 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
             }
 
-            bCurrentEmptyRun2 = false;
+            this.bCurrentEmptyRun2 = false;
             return !packetActionFailed;
         }
 
-        public void EmptyCan() => lstGarbage.Clear();
+        public void EmptyCan() => this.lstGarbage.Clear();
     }
 }

@@ -1,34 +1,34 @@
-//	Copyright © 2005-2018 Dmitry S. Kataev
+// Copyright © 2005-2018 Dmitry S. Kataev
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System;
-using System.Globalization;
-using System.Numerics;
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data.Utilities
 {
+    using System;
+    using System.Globalization;
+    using System.Numerics;
+
     internal class BigDecimal
     {
-        private string strSeparator = CultureInfo.InvariantCulture.NumberFormat.CurrencyDecimalSeparator;
+        private readonly string strSeparator = CultureInfo.InvariantCulture.NumberFormat.CurrencyDecimalSeparator;
 
-        public BigDecimal() => UnscaledValue = new BigInteger(0);
+        public BigDecimal() => this.UnscaledValue = new BigInteger(0);
 
-        public BigDecimal(long num) => UnscaledValue = new BigInteger(num);
+        public BigDecimal(long num) => this.UnscaledValue = new BigInteger(num);
 
-        public BigDecimal(ulong num) => UnscaledValue = new BigInteger(num);
+        public BigDecimal(ulong num) => this.UnscaledValue = new BigInteger(num);
 
         public BigDecimal(double num)
             : this(num.ToString(CultureInfo.InvariantCulture))
@@ -42,8 +42,8 @@ namespace MaxDB.Data.Utilities
 
         public BigDecimal(BigInteger num, int scale)
         {
-            UnscaledValue = num;
-            Scale = scale;
+            this.UnscaledValue = num;
+            this.Scale = scale;
         }
 
         public BigDecimal(string num)
@@ -58,13 +58,13 @@ namespace MaxDB.Data.Utilities
             // empty string = 0
             if (num.Trim().Length == 0)
             {
-                UnscaledValue = new BigInteger(0);
+                this.UnscaledValue = new BigInteger(0);
                 return;
             }
 
             // find the decimal separator and exponent position
             num = num.Replace(CultureInfo.InvariantCulture.NumberFormat.CurrencyGroupSeparator, string.Empty);
-            int dot_index = num.IndexOf(strSeparator, cur_off);
+            int dot_index = num.IndexOf(this.strSeparator, cur_off);
             int exp_index = num.IndexOf('e', cur_off);
             if (exp_index < 0)
             {
@@ -72,7 +72,7 @@ namespace MaxDB.Data.Utilities
             }
 
             // check number format
-            if (num.IndexOf(strSeparator, dot_index + 1) >= 0)
+            if (num.IndexOf(this.strSeparator, dot_index + 1) >= 0)
             {
                 throw new FormatException();
             }
@@ -106,14 +106,14 @@ namespace MaxDB.Data.Utilities
 
                     if (int_part.Trim().Length == 0)
                     {
-                        UnscaledValue = new BigInteger(0);
+                        this.UnscaledValue = new BigInteger(0);
                     }
                     else
                     {
-                        UnscaledValue = new BigInteger(long.Parse(int_part, CultureInfo.InvariantCulture));
-                        if (UnscaledValue != 0)
+                        this.UnscaledValue = new BigInteger(long.Parse(int_part, CultureInfo.InvariantCulture));
+                        if (this.UnscaledValue != 0)
                         {
-                            Scale = -s;
+                            this.Scale = -s;
                         }
                     }
                 }
@@ -123,11 +123,11 @@ namespace MaxDB.Data.Utilities
                     int_part = num.TrimStart('0');
                     if (int_part.Trim().Length == 0)
                     {
-                        UnscaledValue = new BigInteger(0);
+                        this.UnscaledValue = new BigInteger(0);
                     }
                     else
                     {
-                        UnscaledValue = new BigInteger(long.Parse(int_part, CultureInfo.InvariantCulture));
+                        this.UnscaledValue = new BigInteger(long.Parse(int_part, CultureInfo.InvariantCulture));
                     }
                 }
 
@@ -147,14 +147,14 @@ namespace MaxDB.Data.Utilities
                 float_num += float_part;
                 if (float_num.Trim().Length == 0)
                 {
-                    UnscaledValue = new BigInteger(0);
+                    this.UnscaledValue = new BigInteger(0);
                 }
                 else
                 {
-                    UnscaledValue = new BigInteger(long.Parse(float_num, CultureInfo.InvariantCulture));
-                    if (UnscaledValue != 0)
+                    this.UnscaledValue = new BigInteger(long.Parse(float_num, CultureInfo.InvariantCulture));
+                    if (this.UnscaledValue != 0)
                     {
-                        Scale = float_part.Length;
+                        this.Scale = float_part.Length;
                     }
                 }
 
@@ -174,14 +174,14 @@ namespace MaxDB.Data.Utilities
             float_num += float_part;
             if (float_num.Trim().Length == 0)
             {
-                UnscaledValue = new BigInteger(0);
+                this.UnscaledValue = new BigInteger(0);
             }
             else
             {
-                UnscaledValue = new BigInteger(long.Parse(float_num, CultureInfo.InvariantCulture));
-                if (UnscaledValue != 0)
+                this.UnscaledValue = new BigInteger(long.Parse(float_num, CultureInfo.InvariantCulture));
+                if (this.UnscaledValue != 0)
                 {
-                    Scale = float_part.Length - s;
+                    this.Scale = float_part.Length - s;
                 }
             }
         }
@@ -191,17 +191,17 @@ namespace MaxDB.Data.Utilities
         public BigDecimal SetScale(int val)
         {
             var ten = new BigInteger(10);
-            var num = UnscaledValue;
-            if (val > Scale)
+            var num = this.UnscaledValue;
+            if (val > this.Scale)
             {
-                for (int i = 0; i < val - Scale; i++)
+                for (int i = 0; i < val - this.Scale; i++)
                 {
                     num *= ten;
                 }
             }
             else
             {
-                for (int i = 0; i < Scale - val; i++)
+                for (int i = 0; i < this.Scale - val; i++)
                 {
                     num /= ten;
                 }
@@ -287,21 +287,21 @@ namespace MaxDB.Data.Utilities
 
         public static implicit operator BigDecimal(double val) => new BigDecimal(val);
 
-        public BigDecimal MovePointLeft(int n) => n >= 0 ? new BigDecimal(UnscaledValue, Scale + n) : MovePointRight(-n);
+        public BigDecimal MovePointLeft(int n) => n >= 0 ? new BigDecimal(this.UnscaledValue, this.Scale + n) : this.MovePointRight(-n);
 
         public BigDecimal MovePointRight(int n)
         {
             if (n >= 0)
             {
-                if (Scale >= n)
+                if (this.Scale >= n)
                 {
-                    return new BigDecimal(UnscaledValue, Scale - n);
+                    return new BigDecimal(this.UnscaledValue, this.Scale - n);
                 }
                 else
                 {
                     var ten = new BigInteger(10);
-                    var num = UnscaledValue;
-                    for (int i = 0; i < n - Scale; i++)
+                    var num = this.UnscaledValue;
+                    for (int i = 0; i < n - this.Scale; i++)
                     {
                         num *= ten;
                     }
@@ -311,15 +311,15 @@ namespace MaxDB.Data.Utilities
             }
             else
             {
-                return MovePointLeft(-n);
+                return this.MovePointLeft(-n);
             }
         }
 
         public override string ToString()
         {
-            string s_num = UnscaledValue.ToString();
-            int s_scale = Scale;
-            if (UnscaledValue < 0)
+            string s_num = this.UnscaledValue.ToString();
+            int s_scale = this.Scale;
+            if (this.UnscaledValue < 0)
             {
                 s_num = s_num.Remove(0, 1);
             }
@@ -335,11 +335,11 @@ namespace MaxDB.Data.Utilities
                 s_num = s_num.PadLeft(s_scale + 1, '0');
             }
 
-            s_num = (UnscaledValue >= 0 ? string.Empty : "-") + s_num.Insert(s_num.Length - s_scale, strSeparator);
+            s_num = (this.UnscaledValue >= 0 ? string.Empty : "-") + s_num.Insert(s_num.Length - s_scale, this.strSeparator);
 
-            if (s_num.EndsWith(strSeparator))
+            if (s_num.EndsWith(this.strSeparator))
             {
-                s_num = s_num.Remove(s_num.Length - strSeparator.Length, strSeparator.Length);
+                s_num = s_num.Remove(s_num.Length - this.strSeparator.Length, this.strSeparator.Length);
             }
 
             return s_num;
@@ -347,6 +347,6 @@ namespace MaxDB.Data.Utilities
 
         public override bool Equals(object o) => this == (BigDecimal)o;
 
-        public override int GetHashCode() => ToString().GetHashCode();
+        public override int GetHashCode() => this.ToString().GetHashCode();
     }
 }

@@ -1,35 +1,34 @@
 //-----------------------------------------------------------------------------------------------
-// <copyright file="MaxDBException.cs" company="Dmitry S. Kataev">
-//     Copyright © 2005-2018 Dmitry S. Kataev
-//     Copyright © 2002-2003 SAP AG
+// <copyright file="MaxDBException.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------------------------------
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System;
-using System.Data;
-using System.IO;
-using MaxDB.Data.MaxDBProtocol;
-using System.Runtime.Serialization;
-using System.Security.Permissions;
-using System.Globalization;
-using System.Data.Common;
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data
 {
+    using System;
+    using System.Data;
+    using System.Data.Common;
+    using System.Globalization;
+    using System.IO;
+    using System.Runtime.Serialization;
+    using System.Security.Permissions;
+    using MaxDB.Data.MaxDBProtocol;
+
     /// <summary>
     /// Summary description for MaxDBException.
     /// </summary>
@@ -103,35 +102,35 @@ namespace MaxDB.Data
     /// 
     /// <code lang="Visual Basic">
     /// Public Sub ShowException()
-    ///		Dim mySelectQuery As String = "SELECT column1 FROM table1"
-    ///		Dim myConnection As New MaxDBConnection ("Data Source=localhost;Database=Sample;")
-    ///		Dim myCommand As New MaxDBCommand(mySelectQuery, myConnection)
+    ///     Dim mySelectQuery As String = "SELECT column1 FROM table1"
+    ///     Dim myConnection As New MaxDBConnection ("Data Source=localhost;Database=Sample;")
+    ///     Dim myCommand As New MaxDBCommand(mySelectQuery, myConnection)
     ///
-    ///		Try
-    ///			myCommand.Connection.Open()
-    ///		Catch e As MaxDBException
-    ///			MessageBox.Show( e.Message )
-    ///		End Try
-    ///	End Sub
+    ///     Try
+    ///         myCommand.Connection.Open()
+    ///     Catch e As MaxDBException
+    ///         MessageBox.Show( e.Message )
+    ///     End Try
+    /// End Sub
     /// </code>
     /// <code lang="C#">
     /// public void ShowException() 
     /// {
-    ///		string mySelectQuery = "SELECT column1 FROM table1";
-    ///		MaxDBConnection myConnection =
-    ///			new MaxDBConnection("Data Source=localhost;Database=Sample;");
-    ///		MaxDBCommand myCommand = new MaxDBCommand(mySelectQuery,myConnection);
+    ///     string mySelectQuery = "SELECT column1 FROM table1";
+    ///     MaxDBConnection myConnection =
+    ///         new MaxDBConnection("Data Source=localhost;Database=Sample;");
+    ///     MaxDBCommand myCommand = new MaxDBCommand(mySelectQuery,myConnection);
     ///
-    ///		try 
-    ///		{
-    ///			myCommand.Connection.Open();
-    ///		}
-    ///		catch (MaxDBException e) 
-    ///		{
-    ///			MessageBox.Show( e.Message );
-    ///		}
-    ///	}
-    ///	</code>
+    ///     try 
+    ///     {
+    ///         myCommand.Connection.Open();
+    ///     }
+    ///     catch (MaxDBException e) 
+    ///     {
+    ///         MessageBox.Show( e.Message );
+    ///     }
+    /// }
+    /// </code>
     /// </example>
     [Serializable]
     public class MaxDBException : DbException
@@ -161,39 +160,39 @@ namespace MaxDB.Data
         }
 
         internal MaxDBException(string message, string sqlState)
-            : base(message) => SqlState = sqlState;
+            : base(message) => this.SqlState = sqlState;
 
         internal MaxDBException(string message, string sqlState, Exception innerException)
-            : base(message, innerException) => SqlState = sqlState;
+            : base(message, innerException) => this.SqlState = sqlState;
 
         internal MaxDBException(string message, string sqlState, int vendorCode)
             : base(message)
         {
-            SqlState = sqlState;
-            iErrorCode = vendorCode;
+            this.SqlState = sqlState;
+            this.iErrorCode = vendorCode;
         }
 
         internal MaxDBException(string message, string sqlState, int vendorCode, Exception innerException)
             : base(message, innerException)
         {
-            SqlState = sqlState;
-            iErrorCode = vendorCode;
+            this.SqlState = sqlState;
+            this.iErrorCode = vendorCode;
         }
 
         internal MaxDBException(string message, string sqlState, int vendorCode, int errorPosition)
             : base(message)
         {
-            SqlState = sqlState;
-            iErrorCode = vendorCode;
-            ErrorPos = errorPosition;
+            this.SqlState = sqlState;
+            this.iErrorCode = vendorCode;
+            this.ErrorPos = errorPosition;
         }
 
         internal MaxDBException(string message, string sqlState, int vendorCode, int errorPosition, Exception innerException)
             : base(message, innerException)
         {
-            SqlState = sqlState;
-            iErrorCode = vendorCode;
-            ErrorPos = errorPosition;
+            this.SqlState = sqlState;
+            this.iErrorCode = vendorCode;
+            this.ErrorPos = errorPosition;
         }
 
         /// <summary>
@@ -210,15 +209,15 @@ namespace MaxDB.Data
             }
 
             base.GetObjectData(info, context);
-            info.AddValue("VendorCode", ErrorCode);
-            info.AddValue("ErrorPos", ErrorPos);
-            info.AddValue("SqlState", SqlState);
+            info.AddValue("VendorCode", this.ErrorCode);
+            info.AddValue("ErrorPos", this.ErrorPos);
+            info.AddValue("SqlState", this.SqlState);
         }
 
         /// <summary>
         /// Error code
         /// </summary>
-        public override int ErrorCode => iErrorCode;
+        public override int ErrorCode => this.iErrorCode;
 
         /// <summary>
         /// Error position
@@ -237,7 +236,7 @@ namespace MaxDB.Data
         {
             get
             {
-                switch (iErrorCode)
+                switch (this.iErrorCode)
                 {
                     case -904:  // Space for result tables exhausted
                     case -708:  // SERVERDB system not available
@@ -419,7 +418,7 @@ namespace MaxDB.Data
 
         public StreamIOException(DataException sqlEx)
         {
-            SqlException = sqlEx;
+            this.SqlException = sqlEx;
         }
 
         protected StreamIOException(SerializationInfo info, StreamingContext context)
@@ -438,7 +437,7 @@ namespace MaxDB.Data
             }
 
             base.GetObjectData(info, context);
-            info.AddValue("mSqlException", SqlException);
+            info.AddValue("mSqlException", this.SqlException);
         }
 
     }

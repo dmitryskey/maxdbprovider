@@ -1,29 +1,29 @@
-//	Copyright © 2005-2018 Dmitry S. Kataev
+// Copyright © 2005-2018 Dmitry S. Kataev
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System;
-using System.IO;
-using System.Text;
-using System.Net;
-using System.Net.Security;
-using System.Net.Sockets;
-using System.Security.Authentication;
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data.Utilities
 {
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Net.Security;
+    using System.Net.Sockets;
+    using System.Security.Authentication;
+    using System.Text;
+
     /// <summary>
     /// Interface to support tcp and ssl connection.
     /// </summary>
@@ -92,12 +92,12 @@ namespace MaxDB.Data.Utilities
 
                 this.Client = new TcpClient(host, port)
                 {
-                    ReceiveTimeout = Timeout * 1000
+                    ReceiveTimeout = this.Timeout * 1000
                 };
             }
             catch (Exception ex)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT_FAILED, Host, Port), ex);
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT_FAILED, this.Host, this.Port), ex);
             }
         }
 
@@ -131,15 +131,15 @@ namespace MaxDB.Data.Utilities
 
         public void Dispose()
         {
-            Dispose(true);
+            this.Dispose(true);
             GC.SuppressFinalize(this);
         }
 
         private void Dispose(bool disposing)
         {
-            if (disposing && Client != null)
+            if (disposing && this.Client != null)
             {
-                ((IDisposable)Client).Dispose();
+                ((IDisposable)this.Client).Dispose();
             }
         }
 
@@ -155,20 +155,20 @@ namespace MaxDB.Data.Utilities
         public SslSocketClass(string host, int port, int timeout, bool check_socket, string certificate)
             : base(host, port, timeout, check_socket)
         {
-            strCertificateName = certificate;
-            mSslStream = new SslStream(
+            this.strCertificateName = certificate;
+            this.mSslStream = new SslStream(
                 this.Client.GetStream(),
                 false,
                 (sender, cert, chain, sslPolicyErrors) =>
                 {
-                    strCertificateError = string.Empty;
+                    this.strCertificateError = string.Empty;
 
                     if (sslPolicyErrors == SslPolicyErrors.None)
                     {
                         return true;
                     }
 
-                    strCertificateError = MaxDBMessages.Extract(MaxDBError.SSL_CERTIFICATE, sslPolicyErrors);
+                    this.strCertificateError = MaxDBMessages.Extract(MaxDBError.SSL_CERTIFICATE, sslPolicyErrors);
 
                     // Do not allow this client to communicate with unauthenticated servers.
                     return false;
@@ -182,13 +182,13 @@ namespace MaxDB.Data.Utilities
             }
             catch (AuthenticationException ex)
             {
-                throw new MaxDBException(strCertificateError + ". " + ex.Message);
+                throw new MaxDBException(this.strCertificateError + ". " + ex.Message);
             }
         }
 
         public override Stream Stream => this.mSslStream;
 
-        public override IMaxDBSocket Clone() => new SslSocketClass(Host, Port, Timeout, false, strCertificateName);
+        public override IMaxDBSocket Clone() => new SslSocketClass(this.Host, this.Port, this.Timeout, false, this.strCertificateName);
 
         public override void Close()
         {
@@ -203,20 +203,20 @@ namespace MaxDB.Data.Utilities
 
     internal class JoinStream : Stream
     {
-        private Stream[] mStreams;
+        private readonly Stream[] mStreams;
         private Stream mCurrentStream;
         private int mCurrentIndex = -1;
 
         public JoinStream(Stream[] streams)
         {
             this.mStreams = streams;
-            NextStream();
+            this.NextStream();
         }
 
         protected void NextStream()
         {
             this.mCurrentIndex++;
-            this.mCurrentStream = this.mCurrentIndex >= this.mStreams.Length ? null : this.mStreams[mCurrentIndex];
+            this.mCurrentStream = this.mCurrentIndex >= this.mStreams.Length ? null : this.mStreams[this.mCurrentIndex];
         }
 
         public override int Read(byte[] buffer, int offset, int count)
@@ -240,7 +240,7 @@ namespace MaxDB.Data.Utilities
                 }
             }
 
-            if (result == 0 && mCurrentStream == null)
+            if (result == 0 && this.mCurrentStream == null)
             {
                 result = -1;
             }
@@ -343,7 +343,7 @@ namespace MaxDB.Data.Utilities
         protected void NextReader()
         {
             this.iCurrentIndex++;
-            this.mCurrentReader = this.iCurrentIndex >= this.mReaders.Length ? null : this.mReaders[iCurrentIndex];
+            this.mCurrentReader = this.iCurrentIndex >= this.mReaders.Length ? null : this.mReaders[this.iCurrentIndex];
         }
 
         public override int Read(char[] buffer, int index, int count)
@@ -419,7 +419,7 @@ namespace MaxDB.Data.Utilities
     internal class FilteredStream : Stream
     {
         private readonly int iMaxLength;
-        private Stream mStream;
+        private readonly Stream mStream;
         private int iReadlength;
 
         public FilteredStream(Stream stream, int length)
@@ -478,9 +478,9 @@ namespace MaxDB.Data.Utilities
 
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 
-        public override void Flush() => mStream.Flush();
+        public override void Flush() => this.mStream.Flush();
 
-        public override long Length => mStream.Length;
+        public override long Length => this.mStream.Length;
     }
 
     #endregion
@@ -557,7 +557,7 @@ namespace MaxDB.Data.Utilities
             try
             {
                 byte[] bbuf = new byte[count];
-                int result = BaseStream.Read(bbuf, 0, count);
+                int result = this.BaseStream.Read(bbuf, 0, count);
 
                 if (result == -1)
                 {
@@ -635,11 +635,11 @@ namespace MaxDB.Data.Utilities
 
             if (this.iBufPos >= this.iBufExtent)
             {
-                FillBuffer();
+                this.FillBuffer();
             }
 
-            result = this.byBuffer[iBufPos];
-            iBufPos++;
+            result = this.byBuffer[this.iBufPos];
+            this.iBufPos++;
             return result;
         }
 
@@ -661,7 +661,7 @@ namespace MaxDB.Data.Utilities
                 }
 
                 int copySize = Math.Min(count, this.iBufExtent - this.iBufPos);
-                Buffer.BlockCopy(byBuffer, this.iBufPos, buffer, offset, copySize);
+                Buffer.BlockCopy(this.byBuffer, this.iBufPos, buffer, offset, copySize);
                 this.iBufPos += copySize;
                 offset += copySize;
                 count -= copySize;

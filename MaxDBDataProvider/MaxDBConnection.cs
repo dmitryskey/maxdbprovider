@@ -1,36 +1,35 @@
 //-----------------------------------------------------------------------------------------------
-// <copyright file="MaxDBConnection.cs" company="Dmitry S. Kataev">
-//     Copyright © 2005-2018 Dmitry S. Kataev
-//     Copyright © 2002-2003 SAP AG
+// <copyright file="MaxDBConnection.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------------------------------
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System;
-using System.Data;
-using System.Data.Common;
-using System.Text;
-using System.Runtime.CompilerServices;
-using MaxDB.Data.MaxDBProtocol;
-using MaxDB.Data.Utilities;
-using System.Globalization;
-using System.Collections.Generic;
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Data;
+    using System.Data.Common;
+    using System.Globalization;
+    using System.Runtime.CompilerServices;
+    using System.Text;
+    using MaxDB.Data.MaxDBProtocol;
+    using MaxDB.Data.Utilities;
+
     internal struct ConnectArgs
     {
         public string username;
@@ -80,7 +79,7 @@ namespace MaxDB.Data
         /// <summary>
         /// Default constructor
         /// </summary>
-        public MaxDBConnection() => mLogger = new MaxDBLogger();
+        public MaxDBConnection() => this.mLogger = new MaxDBLogger();
 
         /// <summary>
         /// A constructor that takes a connection string
@@ -89,23 +88,23 @@ namespace MaxDB.Data
         public MaxDBConnection(string connectionString)
             : this()
         {
-            strConnection = connectionString;
-            mConnStrBuilder = new MaxDBConnectionStringBuilder(connectionString);
-            SetConnectionParameters();
+            this.strConnection = connectionString;
+            this.mConnStrBuilder = new MaxDBConnectionStringBuilder(connectionString);
+            this.SetConnectionParameters();
         }
 
         private void SetConnectionParameters()
         {
-            if (mConnStrBuilder.DataSource != null)
+            if (this.mConnStrBuilder.DataSource != null)
             {
-                string[] hostPort = mConnStrBuilder.DataSource.Split(':');
-                mConnArgs.host = hostPort[0];
-                mConnArgs.port = 0;
+                string[] hostPort = this.mConnStrBuilder.DataSource.Split(':');
+                this.mConnArgs.host = hostPort[0];
+                this.mConnArgs.port = 0;
                 try
                 {
                     if (hostPort.Length > 1)
                     {
-                        mConnArgs.port = int.Parse(hostPort[1], CultureInfo.InvariantCulture);
+                        this.mConnArgs.port = int.Parse(hostPort[1], CultureInfo.InvariantCulture);
                     }
                 }
                 catch (IndexOutOfRangeException)
@@ -122,34 +121,34 @@ namespace MaxDB.Data
                 }
             }
 
-            mConnArgs.dbname = mConnStrBuilder.InitialCatalog;
-            mConnArgs.username = mConnStrBuilder.UserId;
-            mConnArgs.password = mConnStrBuilder.Password;
-            if (mConnStrBuilder.CodePage > 0)
+            this.mConnArgs.dbname = this.mConnStrBuilder.InitialCatalog;
+            this.mConnArgs.username = this.mConnStrBuilder.UserId;
+            this.mConnArgs.password = this.mConnStrBuilder.Password;
+            if (this.mConnStrBuilder.CodePage > 0)
             {
                 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-                UserAsciiEncoding = Encoding.GetEncoding(mConnStrBuilder.CodePage);
+                this.UserAsciiEncoding = Encoding.GetEncoding(this.mConnStrBuilder.CodePage);
             }
         }
 
         /// <summary>
         /// MaxDB database encoding (<see cref="Encoding.ASCII"/> or <see cref="Encoding.Unicode"/>).
         /// </summary>
-        public Encoding DatabaseEncoding => mComm.mEncoding;
+        public Encoding DatabaseEncoding => this.mComm.Encoding;
 
         /// <summary>
         /// MaxDB database SQL mode (<see cref="SqlMode"/>). 
         /// </summary>
         public SqlMode SqlMode
         {
-            get => mConnStrBuilder.Mode;
+            get => this.mConnStrBuilder.Mode;
 
             set
             {
-                mConnStrBuilder.Mode = value;
-                if (mComm != null)
+                this.mConnStrBuilder.Mode = value;
+                if (this.mComm != null)
                 {
-                    mComm.mConnStrBuilder.Mode = value;
+                    this.mComm.ConnStrBuilder.Mode = value;
                 }
             }
         }
@@ -161,29 +160,29 @@ namespace MaxDB.Data
         {
             get
             {
-                if (mComm == null || State != ConnectionState.Open)
+                if (this.mComm == null || this.State != ConnectionState.Open)
                 {
                     throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_NOTOPENED));
                 }
 
-                return mComm.bAutoCommit;
+                return this.mComm.AutoCommit;
             }
 
             set
             {
-                if (mComm == null || State != ConnectionState.Open)
+                if (this.mComm == null || this.State != ConnectionState.Open)
                 {
                     throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_NOTOPENED));
                 }
 
-                //>>> SQL TRACE
-                if (mLogger.TraceSQL)
+                // >>> SQL TRACE
+                if (this.mLogger.TraceSQL)
                 {
-                    mLogger.SqlTrace(DateTime.Now, "::SET AUTOCOMMIT " + (value ? "ON" : "OFF"));
+                    this.mLogger.SqlTrace(DateTime.Now, "::SET AUTOCOMMIT " + (value ? "ON" : "OFF"));
                 }
-                //<<< SQL TRACE				
+                // <<< SQL TRACE                
 
-                mComm.bAutoCommit = value;
+                this.mComm.AutoCommit = value;
             }
         }
 
@@ -194,7 +193,7 @@ namespace MaxDB.Data
         {
             get
             {
-                int version = mComm.iKernelVersion;
+                int version = this.mComm.KernelVersion;
                 int correction_level = version % 100;
                 int minor_release = ((version - correction_level) % 10000) / 100;
                 int mayor_release = (version - minor_release * 100 - correction_level) / 10000;
@@ -204,18 +203,18 @@ namespace MaxDB.Data
             }
         }
 
-        internal int KernelVersion => mComm.iKernelVersion;
+        internal int KernelVersion => this.mComm.KernelVersion;
 
         private Encoding userAsciiEncoding;
 
         /// <summary>
         /// Gets or sets the user encoding.
         /// </summary>
-		public Encoding UserAsciiEncoding
+        public Encoding UserAsciiEncoding
         {
-            get => userAsciiEncoding ?? Encoding.ASCII;
+            get => this.userAsciiEncoding ?? Encoding.ASCII;
 
-            set => userAsciiEncoding = value;
+            set => this.userAsciiEncoding = value;
         }
 
         internal static int MapIsolationLevel(IsolationLevel level)
@@ -237,29 +236,29 @@ namespace MaxDB.Data
 
         private void SetIsolationLevel(IsolationLevel level)
         {
-            if (mComm.mIsolationLevel != level)
+            if (this.mComm.IsolationLevel != level)
             {
-                AssertOpen();
+                this.AssertOpen();
                 string cmd = "SET ISOLATION LEVEL " + MapIsolationLevel(level).ToString(CultureInfo.InvariantCulture);
-                var requestPacket = mComm.GetRequestPacket();
+                var requestPacket = this.mComm.GetRequestPacket();
                 byte oldMode = requestPacket.SwitchSqlMode((byte)SqlMode.Internal);
-                requestPacket.InitDbsCommand(mComm.bAutoCommit, cmd);
+                requestPacket.InitDbsCommand(this.mComm.AutoCommit, cmd);
                 try
                 {
-                    mComm.Execute(mConnArgs, requestPacket, this, GCMode.GC_ALLOWED);
+                    this.mComm.Execute(this.mConnArgs, requestPacket, this, GCMode.GC_ALLOWED);
                 }
                 catch (MaxDBTimeoutException)
                 {
                     requestPacket.SwitchSqlMode(oldMode);
                 }
 
-                mComm.mIsolationLevel = level;
+                this.mComm.IsolationLevel = level;
             }
         }
 
         internal void AssertOpen()
         {
-            if (State == ConnectionState.Closed)
+            if (this.State == ConnectionState.Closed)
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.OBJECTISCLOSED));
             }
@@ -277,7 +276,7 @@ namespace MaxDB.Data
         /// </summary>
         /// <param name="isolationLevel">Isolation level <see cref="IsolationLevel"/> under which the transaction should run.</param>
         /// <returns>A <see cref="DbTransaction"/> object.</returns>
-        protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) => BeginTransaction(isolationLevel);
+        protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) => this.BeginTransaction(isolationLevel);
 
         /// <summary>
         /// Initiate a local transaction with the specified isolation level.
@@ -286,7 +285,7 @@ namespace MaxDB.Data
         /// <returns>A <see cref="MaxDBTransaction"/> object.</returns>
         public new MaxDBTransaction BeginTransaction(IsolationLevel isolationLevel)
         {
-            SetIsolationLevel(isolationLevel);
+            this.SetIsolationLevel(isolationLevel);
             return new MaxDBTransaction(this);
         }
 
@@ -301,40 +300,40 @@ namespace MaxDB.Data
         /// and not a property because the operation requires an expensive round trip.
         /// </summary>
         /// <param name="databaseName">Database name</param>
-        public override void ChangeDatabase(string databaseName) => mConnArgs.dbname = databaseName;
+        public override void ChangeDatabase(string databaseName) => this.mConnArgs.dbname = databaseName;
 
         /// <summary>
         /// Close the database connection and set the ConnectionState
-        ///	property. If the underlying connection to the server is
+        /// property. If the underlying connection to the server is
         /// being pooled, Close() will release it back to the pool.
         /// </summary>
         [MethodImpl(MethodImplOptions.Synchronized)]
         public override void Close()
         {
-            if (State == ConnectionState.Open)
+            if (this.State == ConnectionState.Open)
             {
-                //>>> SQL TRACE
-                if (mLogger.TraceSQL)
+                // >>> SQL TRACE
+                if (this.mLogger.TraceSQL)
                 {
-                    mLogger.SqlTrace(DateTime.Now, "::CLOSE CONNECTION");
+                    this.mLogger.SqlTrace(DateTime.Now, "::CLOSE CONNECTION");
                 }
-                //<<< SQL TRACE
+                // <<< SQL TRACE
 
-                mLogger.Flush();
+                this.mLogger.Flush();
 
-                if (mComm != null)
+                if (this.mComm != null)
                 {
-                    if (mConnStrBuilder.Pooling)
+                    if (this.mConnStrBuilder.Pooling)
                     {
                         MaxDBConnectionPool.ReleaseEntry(this);
                     }
                     else
                     {
-                        mComm.Close(true, true);
-                        mComm.Dispose();
+                        this.mComm.Close(true, true);
+                        this.mComm.Dispose();
                     }
 
-                    mComm = null;
+                    this.mComm = null;
                 }
             }
         }
@@ -358,13 +357,13 @@ namespace MaxDB.Data
         /// </remarks>
         public override string ConnectionString
         {
-            get => strConnection;
+            get => this.strConnection;
 
             set
             {
-                strConnection = value;
-                mConnStrBuilder = new MaxDBConnectionStringBuilder(value);
-                SetConnectionParameters();
+                this.strConnection = value;
+                this.mConnStrBuilder = new MaxDBConnectionStringBuilder(value);
+                this.SetConnectionParameters();
             }
         }
 
@@ -372,13 +371,13 @@ namespace MaxDB.Data
         /// Returns the connection time-out value set in the connection
         /// string. Zero indicates an indefinite time-out period.
         /// </summary>
-        public override int ConnectionTimeout => mConnStrBuilder.Timeout;
+        public override int ConnectionTimeout => this.mConnStrBuilder.Timeout;
 
         /// <summary>
         /// Creates and returns a <see cref="DbCommand"/> object associated with the <see cref="MaxDBConnection"/>.
         /// </summary>
         /// <returns>A <see cref="DbCommand"/> object.</returns>
-        protected override DbCommand CreateDbCommand() => CreateCommand();
+        protected override DbCommand CreateDbCommand() => this.CreateCommand();
 
         /// <summary>
         /// Creates and returns a <see cref="MaxDBCommand"/> object associated with the <see cref="MaxDBConnection"/>.
@@ -388,12 +387,12 @@ namespace MaxDB.Data
 
         internal bool Ping(MaxDBComm communication)
         {
-            var oldMode = communication.mConnStrBuilder.Mode;
-            var oldComm = mComm;
-            mComm = communication;
-            if (mComm.mConnStrBuilder.Mode != SqlMode.Internal)
+            var oldMode = communication.ConnStrBuilder.Mode;
+            var oldComm = this.mComm;
+            this.mComm = communication;
+            if (this.mComm.ConnStrBuilder.Mode != SqlMode.Internal)
             {
-                mComm.mConnStrBuilder.Mode = SqlMode.Internal;
+                this.mComm.ConnStrBuilder.Mode = SqlMode.Internal;
             }
 
             try
@@ -411,10 +410,10 @@ namespace MaxDB.Data
             }
             finally
             {
-                mComm = oldComm;
+                this.mComm = oldComm;
                 if (oldMode != SqlMode.Internal)
                 {
-                    communication.mConnStrBuilder.Mode = oldMode;
+                    communication.ConnStrBuilder.Mode = oldMode;
                 }
             }
         }
@@ -422,10 +421,10 @@ namespace MaxDB.Data
         private DataTable ExecuteInternalQuery(string sql, string table, MaxDBParameterCollection parameters)
         {
             var dt = new DataTable(table);
-            var oldMode = mComm.mConnStrBuilder.Mode;
+            var oldMode = this.mComm.ConnStrBuilder.Mode;
             if (oldMode != SqlMode.Internal)
             {
-                mComm.mConnStrBuilder.Mode = SqlMode.Internal;
+                this.mComm.ConnStrBuilder.Mode = SqlMode.Internal;
             }
 
             try
@@ -450,9 +449,9 @@ namespace MaxDB.Data
             }
             finally
             {
-                if (mComm.mConnStrBuilder.Mode != oldMode)
+                if (this.mComm.ConnStrBuilder.Mode != oldMode)
                 {
-                    mComm.mConnStrBuilder.Mode = oldMode;
+                    this.mComm.ConnStrBuilder.Mode = oldMode;
                 }
             }
 
@@ -461,7 +460,7 @@ namespace MaxDB.Data
 
         private DataTable ExecuteInternalQuery(string sql, string table)
         {
-            return ExecuteInternalQuery(sql, table, null);
+            return this.ExecuteInternalQuery(sql, table, null);
         }
 
         /// <summary>
@@ -470,7 +469,7 @@ namespace MaxDB.Data
         /// <returns>A <see cref="DataTable"/> that contains schema information. </returns>
         public override DataTable GetSchema()
         {
-            return GetSchema("MetaDataCollections");
+            return this.GetSchema("MetaDataCollections");
         }
 
         /// <summary>
@@ -480,7 +479,7 @@ namespace MaxDB.Data
         /// <returns>A <see cref="DataTable"/> that contains schema information.</returns>
         public override DataTable GetSchema(string collectionName)
         {
-            return GetSchema(collectionName, null);
+            return this.GetSchema(collectionName, null);
         }
 
         /// <summary>
@@ -550,9 +549,9 @@ namespace MaxDB.Data
                 dt.Columns.Add(new DataColumn("SupportedJoinOperators ", typeof(SupportedJoinOperators)));
 
                 string langSpecific = "\\u0080-\\uFFFF";
-                if (DatabaseEncoding != Encoding.Unicode)
+                if (this.DatabaseEncoding != Encoding.Unicode)
                 {
-                    var enc = UserAsciiEncoding;
+                    var enc = this.UserAsciiEncoding;
                     byte[] buf = new byte[1];
                     var sb = new StringBuilder();
                     for (byte b = 0x80; b < 0xFF; b++)
@@ -569,7 +568,7 @@ namespace MaxDB.Data
 
                 string identifierPattern = "(([A-Za-z" + langSpecific + "#@\\$][\\w" + langSpecific + "#@\\$_]*)|(\".+\"))";
 
-                dt.Rows.Add("\\.", "MaxDB", ServerVersion, ServerVersion, GroupByBehavior.Unrelated,
+                dt.Rows.Add("\\.", "MaxDB", this.ServerVersion, this.ServerVersion, GroupByBehavior.Unrelated,
                     identifierPattern, IdentifierCase.Insensitive, false, ":{0}", ":" + identifierPattern, 128,
                     identifierPattern, "(([^\\\"]|\\\"\\\")*)", IdentifierCase.Sensitive, "\r\n", "(\'([^\']|\'\')*\')",
                     SupportedJoinOperators.FullOuter);
@@ -600,7 +599,7 @@ namespace MaxDB.Data
                 dt.Columns.Add(new DataColumn("LiteralPrefix", typeof(string)));
                 dt.Columns.Add(new DataColumn("LitteralSuffix", typeof(string)));
 
-                bool isUnicode = (DatabaseEncoding == Encoding.Unicode);
+                bool isUnicode = (this.DatabaseEncoding == Encoding.Unicode);
 
                 dt.Rows.Add(new object[]{"CHAR", MaxDBType.CharA, 8000, "CHAR({0})", "length", typeof(string).ToString(),
                     false, !isUnicode, true, false, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
@@ -677,7 +676,7 @@ namespace MaxDB.Data
                 string TimestampPattern;
                 string DateTimeFormat = "INTERNAL";
 
-                DataTable formatTable = ExecuteInternalQuery("SELECT VALUE FROM DBA.DBPARAMETERS WHERE DESCRIPTION = 'DATE_TIME_FORMAT'", "DateTimeFormat");
+                DataTable formatTable = this.ExecuteInternalQuery("SELECT VALUE FROM DBA.DBPARAMETERS WHERE DESCRIPTION = 'DATE_TIME_FORMAT'", "DateTimeFormat");
                 if (formatTable.Rows.Count > 0)
                 {
                     DateTimeFormat = formatTable.Rows[0].ToString();
@@ -793,17 +792,17 @@ namespace MaxDB.Data
 
             if (string.Compare(collectionName, "Catalogs", true, CultureInfo.InvariantCulture) == 0)
             {
-                dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.CATALOGS", "Catalogs");
+                dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.CATALOGS", "Catalogs");
             }
 
             if (string.Compare(collectionName, "Schemas", true, CultureInfo.InvariantCulture) == 0)
             {
-                dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.SCHEMAS ORDER BY TABLE_SCHEM", "Schemas");
+                dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.SCHEMAS ORDER BY TABLE_SCHEM", "Schemas");
             }
 
             if (string.Compare(collectionName, "TableTypes", true, CultureInfo.InvariantCulture) == 0)
             {
-                dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.TABLETYPES ORDER BY TABLE_TYPE", "TableTypes");
+                dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.TABLETYPES ORDER BY TABLE_TYPE", "TableTypes");
             }
 
             if (string.Compare(collectionName, "ForeignKeys", true, CultureInfo.InvariantCulture) == 0)
@@ -824,7 +823,7 @@ namespace MaxDB.Data
                 }
 
                 sql += "ORDER BY FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, KEY_SEQ";
-                dt = ExecuteInternalQuery(sql, "ForeignKeys", parameters);
+                dt = this.ExecuteInternalQuery(sql, "ForeignKeys", parameters);
             }
 
             if (string.Compare(collectionName, "PrimaryKeys", true, CultureInfo.InvariantCulture) == 0)
@@ -844,7 +843,7 @@ namespace MaxDB.Data
                     parameters.Add(":TABLE_NAME", restrictionValues[1]);
                 }
 
-                dt = ExecuteInternalQuery(sql, "PrimaryKeys", parameters);
+                dt = this.ExecuteInternalQuery(sql, "PrimaryKeys", parameters);
             }
 
             if (string.Compare(collectionName, "Procedures", true, CultureInfo.InvariantCulture) == 0)
@@ -866,17 +865,17 @@ namespace MaxDB.Data
 
                 sql += "ORDER BY PROCEDURE_SCHEM, PROCEDURE_NAME";
 
-                dt = ExecuteInternalQuery(sql, "Procedures", parameters);
+                dt = this.ExecuteInternalQuery(sql, "Procedures", parameters);
             }
 
             if (string.Compare(collectionName, "SuperTables", true, CultureInfo.InvariantCulture) == 0)
             {
-                dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.SUPERTABLES", "SuperTables");
+                dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.SUPERTABLES", "SuperTables");
             }
 
             if (string.Compare(collectionName, "SuperTypes", true, CultureInfo.InvariantCulture) == 0)
             {
-                dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.SUPERTYPES", "SuperTypes");
+                dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.SUPERTYPES", "SuperTypes");
             }
 
             if (string.Compare(collectionName, "TablePrivileges", true, CultureInfo.InvariantCulture) == 0)
@@ -898,12 +897,12 @@ namespace MaxDB.Data
 
                 sql += "ORDER BY TABLE_SCHEM, TABLE_NAME, PRIVILEGE";
 
-                dt = ExecuteInternalQuery(sql, "TablePrivileges", parameters);
+                dt = this.ExecuteInternalQuery(sql, "TablePrivileges", parameters);
             }
 
             if (string.Compare(collectionName, "VersionColumns", true, CultureInfo.InvariantCulture) == 0)
             {
-                dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.VERSIONCOLUMNS", "VersionColumns");
+                dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.VERSIONCOLUMNS", "VersionColumns");
             }
 
             if (string.Compare(collectionName, "BestRowIdentifier", true, CultureInfo.InvariantCulture) == 0)
@@ -923,7 +922,7 @@ namespace MaxDB.Data
                     parameters.Add(":TABLE_NAME", restrictionValues[1]);
                 }
 
-                dt = ExecuteInternalQuery(sql, "BestRowIdentifier", parameters);
+                dt = this.ExecuteInternalQuery(sql, "BestRowIdentifier", parameters);
             }
 
             if (string.Compare(collectionName, "Indexes", true, CultureInfo.InvariantCulture) == 0)
@@ -966,12 +965,12 @@ namespace MaxDB.Data
 
                 sql += "ORDER BY NON_UNIQUE, TYPE, INDEX_NAME, ORDINAL_POSITION";
 
-                dt = ExecuteInternalQuery(sql, "Indexes", parameters);
+                dt = this.ExecuteInternalQuery(sql, "Indexes", parameters);
             }
 
             if (string.Compare(collectionName, "UserDefinedTypes", true, CultureInfo.InvariantCulture) == 0)
             {
-                dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.UDTS", "UserDefinedTypes");
+                dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.UDTS", "UserDefinedTypes");
             }
 
             if (string.Compare(collectionName, "Attributes", true, CultureInfo.InvariantCulture) == 0)
@@ -991,7 +990,7 @@ namespace MaxDB.Data
                     parameters.Add(":SCOPE_NAME", restrictionValues[1]);
                 }
 
-                dt = ExecuteInternalQuery(sql, "Attributes", parameters);
+                dt = this.ExecuteInternalQuery(sql, "Attributes", parameters);
             }
 
             if (string.Compare(collectionName, "ColumnPrivileges", true, CultureInfo.InvariantCulture) == 0)
@@ -1017,7 +1016,7 @@ namespace MaxDB.Data
                     parameters.Add(":COLUMN_NAME", restrictionValues[2]);
                 }
 
-                dt = ExecuteInternalQuery(sql, "ColumnPrivileges", parameters);
+                dt = this.ExecuteInternalQuery(sql, "ColumnPrivileges", parameters);
             }
 
             if (string.Compare(collectionName, "Columns", true, CultureInfo.InvariantCulture) == 0)
@@ -1045,7 +1044,7 @@ namespace MaxDB.Data
 
                 sql += "ORDER BY TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION";
 
-                dt = ExecuteInternalQuery(sql, "Columns", parameters);
+                dt = this.ExecuteInternalQuery(sql, "Columns", parameters);
             }
 
             if (string.Compare(collectionName, "ProcedureColumns", true, CultureInfo.InvariantCulture) == 0)
@@ -1073,7 +1072,7 @@ namespace MaxDB.Data
 
                 sql += "ORDER BY PROCEDURE_SCHEM, PROCEDURE_NAME, ORDINAL_POSITION";
 
-                dt = ExecuteInternalQuery(sql, "ProcedureColumns", parameters);
+                dt = this.ExecuteInternalQuery(sql, "ProcedureColumns", parameters);
             }
 
             if (string.Compare(collectionName, "Tables", true, CultureInfo.InvariantCulture) == 0)
@@ -1093,7 +1092,7 @@ namespace MaxDB.Data
                     parameters.Add(":TABLE_NAME", restrictionValues[1]);
                 }
 
-                dt = ExecuteInternalQuery(sql, "Tables", parameters);
+                dt = this.ExecuteInternalQuery(sql, "Tables", parameters);
             }
 
             if (string.Compare(collectionName, "Constraints", true, CultureInfo.InvariantCulture) == 0)
@@ -1113,12 +1112,12 @@ namespace MaxDB.Data
                     parameters.Add(":TABLE_NAME", restrictionValues[1]);
                 }
 
-                dt = ExecuteInternalQuery(sql, "Constraints", parameters);
+                dt = this.ExecuteInternalQuery(sql, "Constraints", parameters);
             }
 
             if (string.Compare(collectionName, "SystemInfo", true, CultureInfo.InvariantCulture) == 0)
             {
-                dt = ExecuteInternalQuery("SELECT * FROM SYSJDBC.SYSTEMINFO", "SystemInfo");
+                dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.SYSTEMINFO", "SystemInfo");
             }
 
             return dt;
@@ -1127,12 +1126,12 @@ namespace MaxDB.Data
         /// <summary>
         /// Gets the name of the current database or the database to be used after a connection is opened.
         /// </summary>
-        public override string Database => mConnArgs.dbname;
+        public override string Database => this.mConnArgs.dbname;
 
         /// <summary>
         /// Data source address or IP.
         /// </summary>
-        public override string DataSource => mConnArgs.host;
+        public override string DataSource => this.mConnArgs.host;
 
         /// <summary>
         /// Opens a database connection with the property settings specified by the ConnectionString.
@@ -1143,24 +1142,25 @@ namespace MaxDB.Data
         /// </remarks>
         public override void Open()
         {
-            if (mConnStrBuilder.Pooling)
+            if (this.mConnStrBuilder.Pooling)
             {
-                mComm = MaxDBConnectionPool.GetPoolEntry(this, mLogger);
+                this.mComm = MaxDBConnectionPool.GetPoolEntry(this, this.mLogger);
             }
             else
             {
-                mComm = new MaxDBComm(mLogger);
+                this.mComm = new MaxDBComm(this.mLogger)
+                {
+                    ConnStrBuilder = this.mConnStrBuilder
+                };
 
-                mComm.mConnStrBuilder = mConnStrBuilder;
-
-                mComm.Open(mConnArgs);
+                this.mComm.Open(this.mConnArgs);
             }
         }
 
         /// <summary>
         /// Gets the current <see cref="ConnectionState"/> of the connection.
         /// </summary>
-        public override ConnectionState State => mComm != null && mComm.iSessionID >= 0 ? ConnectionState.Open : ConnectionState.Closed;
+        public override ConnectionState State => this.mComm != null && this.mComm.SessionID >= 0 ? ConnectionState.Open : ConnectionState.Closed;
 
         #endregion
 
@@ -1188,9 +1188,9 @@ namespace MaxDB.Data
             base.Dispose(disposing);
             if (disposing)
             {
-                if (State == ConnectionState.Open)
+                if (this.State == ConnectionState.Open)
                 {
-                    Close();
+                    this.Close();
                 }
             }
         }

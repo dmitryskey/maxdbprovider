@@ -1,30 +1,30 @@
 //-----------------------------------------------------------------------------------------------
-// <copyright file="MaxDBParameter.cs" company="Dmitry S. Kataev">
-//     Copyright © 2005-2018 Dmitry S. Kataev
+// <copyright file="MaxDBParameter.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------------------------------
 //
-//	This program is free software; you can redistribute it and/or
-//	modify it under the terms of the GNU General Public License
-//	as published by the Free Software Foundation; either version 2
-//	of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 //
-//	This program is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//	You should have received a copy of the GNU General Public License
-//	along with this program; if not, write to the Free Software
-//	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-using System;
-using System.Data;
-using System.Data.Common;
-using System.Globalization;
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace MaxDB.Data
 {
+    using System;
+    using System.Data;
+    using System.Data.Common;
+    using System.Globalization;
+
     /// <summary>
     /// Represents a parameter to a <see cref="MaxDBCommand"/>, and optionally, its mapping to <see cref="DataSet"/> columns. 
     /// This class cannot be inherited.
@@ -55,8 +55,8 @@ namespace MaxDB.Data
         /// <param name="type">One of the <see cref="MaxDBType"/> values.</param>
         public MaxDBParameter(string parameterName, MaxDBType type)
         {
-            strParamName = parameterName;
-            dbType = type;
+            this.strParamName = parameterName;
+            this.dbType = type;
         }
 
         /// <summary>
@@ -69,7 +69,7 @@ namespace MaxDB.Data
         public MaxDBParameter(string parameterName, MaxDBType type, string sourceColumn)
             : this(parameterName, type)
         {
-            strSourceColumn = sourceColumn;
+            this.strSourceColumn = sourceColumn;
         }
 
         /// <summary>
@@ -85,9 +85,9 @@ namespace MaxDB.Data
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
             }
 
-            strParamName = parameterName;
-            dbType = InferType(Type.GetTypeCode(value.GetType()));
-            Value = value;
+            this.strParamName = parameterName;
+            this.dbType = InferType(Type.GetTypeCode(value.GetType()));
+            this.Value = value;
         }
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace MaxDB.Data
         /// <param name="type">One of the <see cref="MaxDBType"/> values.</param>
         /// <param name="size">The length of the parameter.</param>
         public MaxDBParameter(string parameterName, MaxDBType type, int size)
-            : this(parameterName, type) => iSize = size;
+            : this(parameterName, type) => this.iSize = size;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MaxDBParameter"/> class with the parameter name, 
@@ -109,7 +109,7 @@ namespace MaxDB.Data
         /// <param name="size">The length of the parameter. </param>
         /// <param name="sourceColumn">The name of the source column. </param>
         public MaxDBParameter(string parameterName, MaxDBType type, int size, string sourceColumn)
-            : this(parameterName, type, size) => strSourceColumn = sourceColumn;
+            : this(parameterName, type, size) => this.strSourceColumn = sourceColumn;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MaxDBParameter"/> class with the parameter name, 
@@ -132,12 +132,12 @@ namespace MaxDB.Data
             bool isNullable, byte precision, byte scale, string sourceColumn, DataRowVersion sourceVersion, object value)
             : this(parameterName, type, size, sourceColumn)
         {
-            bNullable = isNullable;
-            mDirection = direction;
-            mSourceVersion = sourceVersion;
-            Value = value;
-            Scale = scale;
-            Precision = precision;
+            this.bNullable = isNullable;
+            this.mDirection = direction;
+            this.mSourceVersion = sourceVersion;
+            this.Value = value;
+            this.Scale = scale;
+            this.Precision = precision;
         }
 
         /// <summary>
@@ -145,8 +145,8 @@ namespace MaxDB.Data
         /// </summary>
         public override int Size
         {
-            get => iSize;
-            set => iSize = value;
+            get => this.iSize;
+            set => this.iSize = value;
         }
 
         private static MaxDBType InferType(TypeCode type)
@@ -208,7 +208,7 @@ namespace MaxDB.Data
 
         #region ICloneable Members
 
-        object ICloneable.Clone() => new MaxDBParameter(strParamName, dbType, iSize, mDirection, bNullable, 0, 0, strSourceColumn, mSourceVersion, objValue);
+        object ICloneable.Clone() => new MaxDBParameter(this.strParamName, this.dbType, this.iSize, this.mDirection, this.bNullable, 0, 0, this.strSourceColumn, this.mSourceVersion, this.objValue);
 
         #endregion
 
@@ -220,8 +220,8 @@ namespace MaxDB.Data
         /// </summary>
         public override ParameterDirection Direction
         {
-            get => mDirection;
-            set => mDirection = value;
+            get => this.mDirection;
+            set => this.mDirection = value;
         }
 
         /// <summary>
@@ -231,7 +231,7 @@ namespace MaxDB.Data
         {
             get
             {
-                switch (dbType)
+                switch (this.dbType)
                 {
                     case MaxDBType.Boolean:
                         return DbType.Boolean;
@@ -279,51 +279,51 @@ namespace MaxDB.Data
                 {
                     case DbType.SByte:
                     case DbType.Byte:
-                        dbType = MaxDBType.CharB;
+                        this.dbType = MaxDBType.CharB;
                         break;
                     case DbType.UInt16:
                     case DbType.UInt32:
                     case DbType.UInt64:
                     case DbType.Int64:
-                        dbType = MaxDBType.Fixed;
+                        this.dbType = MaxDBType.Fixed;
                         break;
                     case DbType.Boolean:
-                        dbType = MaxDBType.Boolean;
+                        this.dbType = MaxDBType.Boolean;
                         break;
                     case DbType.Int16:
-                        dbType = MaxDBType.SmallInt;
+                        this.dbType = MaxDBType.SmallInt;
                         break;
                     case DbType.Int32:
-                        dbType = MaxDBType.Integer;
+                        this.dbType = MaxDBType.Integer;
                         break;
                     case DbType.Single:
-                        dbType = MaxDBType.Number;
+                        this.dbType = MaxDBType.Number;
                         break;
                     case DbType.Double:
-                        dbType = MaxDBType.Number;
+                        this.dbType = MaxDBType.Number;
                         break;
                     case DbType.Decimal:
-                        dbType = MaxDBType.Number;
+                        this.dbType = MaxDBType.Number;
                         break;
                     case DbType.Date:
-                        dbType = MaxDBType.Date;
+                        this.dbType = MaxDBType.Date;
                         break;
                     case DbType.Time:
-                        dbType = MaxDBType.Time;
+                        this.dbType = MaxDBType.Time;
                         break;
                     case DbType.DateTime:
-                        dbType = MaxDBType.Timestamp;
+                        this.dbType = MaxDBType.Timestamp;
                         break;
                     case DbType.AnsiString:
                     case DbType.AnsiStringFixedLength:
                     case DbType.Guid:
-                        dbType = MaxDBType.VarCharA;
+                        this.dbType = MaxDBType.VarCharA;
                         break;
                     case DbType.String:
-                        dbType = MaxDBType.VarCharUni;//?? unicode
+                        this.dbType = MaxDBType.VarCharUni;// ?? unicode
                         break;
                     case DbType.StringFixedLength:
-                        dbType = MaxDBType.CharE;//?? unicode
+                        this.dbType = MaxDBType.CharE;// ?? unicode
                         break;
                     default:
                         throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONNETSQL, value.ToString(), string.Empty));
@@ -339,24 +339,24 @@ namespace MaxDB.Data
         {
             get
             {
-                return objValue ?? DBNull.Value;
+                return this.objValue ?? DBNull.Value;
             }
             set
             {
-                objInputValue = objValue = value;
+                this.objInputValue = this.objValue = value;
 
                 if (value == null)
                 {
-                    objInputValue = DBNull.Value;
+                    this.objInputValue = DBNull.Value;
                     return;
                 }
 
                 if (value != DBNull.Value)
                 {
-                    switch (dbType)
+                    switch (this.dbType)
                     {
                         case MaxDBType.Boolean:
-                            objInputValue = bool.Parse(value.ToString());
+                            this.objInputValue = bool.Parse(value.ToString());
                             break;
 
                         case MaxDBType.Fixed:
@@ -364,19 +364,19 @@ namespace MaxDB.Data
                         case MaxDBType.VFloat:
                         case MaxDBType.Number:
                         case MaxDBType.NoNumber:
-                            objInputValue = double.Parse(value.ToString(), CultureInfo.CurrentCulture);
+                            this.objInputValue = double.Parse(value.ToString(), CultureInfo.CurrentCulture);
                             break;
 
                         case MaxDBType.Integer:
-                            objInputValue = int.Parse(value.ToString(), CultureInfo.CurrentCulture);
+                            this.objInputValue = int.Parse(value.ToString(), CultureInfo.CurrentCulture);
                             break;
 
                         case MaxDBType.SmallInt:
-                            objInputValue = short.Parse(value.ToString(), CultureInfo.CurrentCulture);
+                            this.objInputValue = short.Parse(value.ToString(), CultureInfo.CurrentCulture);
                             break;
 
                         default:
-                            objInputValue = value;
+                            this.objInputValue = value;
                             break;
                     }
                 }
@@ -388,8 +388,8 @@ namespace MaxDB.Data
         /// </summary>
         public override bool IsNullable
         {
-            get => bNullable;
-            set => bNullable = value;
+            get => this.bNullable;
+            set => this.bNullable = value;
         }
 
         /// <summary>
@@ -398,8 +398,8 @@ namespace MaxDB.Data
         /// </summary>
         public override bool SourceColumnNullMapping
         {
-            get => bSourceNullable;
-            set => bSourceNullable = value;
+            get => this.bSourceNullable;
+            set => this.bSourceNullable = value;
         }
 
         /// <summary>
@@ -407,8 +407,8 @@ namespace MaxDB.Data
         /// </summary>
         public override DataRowVersion SourceVersion
         {
-            get => mSourceVersion;
-            set => mSourceVersion = value;
+            get => this.mSourceVersion;
+            set => this.mSourceVersion = value;
         }
 
         /// <summary>
@@ -416,8 +416,8 @@ namespace MaxDB.Data
         /// </summary>
         public override string ParameterName
         {
-            get => strParamName;
-            set => strParamName = value;
+            get => this.strParamName;
+            set => this.strParamName = value;
         }
 
         /// <summary>
@@ -426,8 +426,8 @@ namespace MaxDB.Data
         /// </summary>
         public override string SourceColumn
         {
-            get => strSourceColumn;
-            set => strSourceColumn = value;
+            get => this.strSourceColumn;
+            set => this.strSourceColumn = value;
         }
 
         /// <summary>
