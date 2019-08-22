@@ -29,7 +29,7 @@ public class Test
         //        CREATE TABLE employee (
         //           firstname varchar(32),
         //           lastname varchar(32));
-        string sql = SELECT firstname, lastname FROM employee";
+        string sql = "SELECT firstname, lastname FROM employee";
         dbcmd.CommandText = sql;
         dbcmd.Connection = dbcon;
         using(var reader = dbcmd.ExecuteReader())

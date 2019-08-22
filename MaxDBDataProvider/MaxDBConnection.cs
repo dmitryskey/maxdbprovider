@@ -37,28 +37,34 @@ namespace MaxDB.Data
         public string dbname;
         public string host;
         public int port;
-    };
+    }
 
     /// <summary>
-    /// MaxDB SQL Mode
+    /// MaxDB SQL Mode.
     /// </summary>
     /// <remarks>
-    /// copy of vsp001::tsp1_sqlmode
+    /// Copy of vsp001::tsp1_sqlmode.
     /// </remarks>
     public enum SqlMode
     {
         /// <summary>Unknown mode</summary>
         Nil = 0,
+
         /// <summary>Session mode</summary>
         SessionSqlMode = 1,
+
         /// <summary>Internal mode</summary>
         Internal = 2,
+
         /// <summary>ANSI mode</summary>
         Ansi = 3,
+
         /// <summary>DB2 mode</summary>
         Db2 = 4,
+
         /// <summary>Oracle mode</summary>
         Oracle = 5,
+
         /// <summary>SAP R/3 mode</summary>
         SapR3 = 6,
     }

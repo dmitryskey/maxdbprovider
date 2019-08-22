@@ -1,4 +1,8 @@
-// Copyright © 2005-2018 Dmitry S. Kataev
+//-----------------------------------------------------------------------------------------------
+// <copyright file="BigNumber.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License

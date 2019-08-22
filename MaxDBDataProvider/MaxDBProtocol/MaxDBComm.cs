@@ -33,7 +33,7 @@ namespace MaxDB.Data.MaxDBProtocol
     /// </summary>
     internal sealed class MaxDBComm : IDisposable
     {
-        private static readonly string strSyncObj = string.Empty;
+        private static readonly object SyncObj = string.Empty;
         private static byte[] byDefFeatureSet = { 1, 0, 2, 0, 3, 0, 4, 0, 5, 0 };
         private readonly MaxDBLogger logger;
         private readonly TimeSpan ts = new TimeSpan(1);
@@ -105,12 +105,24 @@ namespace MaxDB.Data.MaxDBProtocol
         /// </summary>
         public int SessionID { get; private set; } = -1;
 
+        /// <summary>
+        /// Gets a parsing cache.
+        /// </summary>
         internal MaxDBCache.ParseInfoCache ParseCache { get; private set; }
 
+        /// <summary>
+        /// Gets a network socket.
+        /// </summary>
         internal IMaxDBSocket Socket { get; private set; }
 
+        /// <summary>
+        /// Gets a request packets pool.
+        /// </summary>
         internal Stack<MaxDBRequestPacket> PacketPool { get; private set; } = new Stack<MaxDBRequestPacket>();
 
+        /// <summary>
+        /// Gets an Unicode request packets pool.
+        /// </summary>
         internal Stack<MaxDBUnicodeRequestPacket> UnicodePacketPool { get; private set; } = new Stack<MaxDBUnicodeRequestPacket>();
 
         private string TermID => $"ado.net@{this.GetHashCode().ToString("x", CultureInfo.InvariantCulture)}".PadRight(18);
@@ -204,6 +216,11 @@ namespace MaxDB.Data.MaxDBProtocol
             }
         }
 
+        /// <summary>
+        /// Close session.
+        /// </summary>
+        /// <param name="closeSocket">Close underlaying socket.</param>
+        /// <param name="release">Release work.</param>
         public void Close(bool closeSocket, bool release)
         {
             if (this.Socket != null && this.Socket.Stream != null)
@@ -237,6 +254,9 @@ namespace MaxDB.Data.MaxDBProtocol
             }
         }
 
+        /// <summary>
+        /// Cancel session.
+        /// </summary>
         public void Cancel()
         {
             try
@@ -267,6 +287,12 @@ namespace MaxDB.Data.MaxDBProtocol
             }
         }
 
+        /// <summary>
+        /// Execute user packet.
+        /// </summary>
+        /// <param name="userPacket">User packet.</param>
+        /// <param name="len">Packet length.</param>
+        /// <returns>Response packet.</returns>
         public byte[] Execute(MaxDBRequestPacket userPacket, int len)
         {
             var rawPacket = new MaxDBPacket(userPacket.GetArrayData(), 0, userPacket.Swapped);
@@ -323,10 +349,24 @@ namespace MaxDB.Data.MaxDBProtocol
             return packetBuf;
         }
 
+        /// <summary>
+        /// Set kernal feature request.
+        /// </summary>
+        /// <param name="feature">Feature number.</param>
         public void SetKernelFeatureRequest(int feature) => this.byKernelFeatures[(2 * (feature - 1)) + 1] = 1;
 
+        /// <summary>
+        /// Checks if the given feature supported by kernel.
+        /// </summary>
+        /// <param name="feature">Feature number.</param>
+        /// <returns>Returns <c>true</c> if feature is supported and <c>false</c> otherwise.</returns>
         public bool IsKernelFeatureSupported(int feature) => (this.byKernelFeatures[(2 * (feature - 1)) + 1] == 1) ? true : false;
 
+        /// <summary>
+        /// Open session.
+        /// </summary>
+        /// <param name="connArgs">Connection arguments.</param>
+        /// <param name="initSocket">Parameter indicating whether network socket should be initialized.</param>
         public void Open(ConnectArgs connArgs, bool initSocket = true)
         {
             if (initSocket)
@@ -378,7 +418,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 this.logger.SqlTrace(
                     currentDt,
                     $"SERVERNODE: '{connArgs.host + (connArgs.port > 0 ? ":" + connArgs.port.ToString(CultureInfo.InvariantCulture) : string.Empty)}'");
-                this.logger.SqlTrace(currentDt, $"SERVERDB  : '{connArgs.dbname }'");
+                this.logger.SqlTrace(currentDt, $"SERVERDB  : '{connArgs.dbname}'");
                 this.logger.SqlTrace(currentDt, $"USER  : '{connArgs.username}'");
             }
             //// <<< SQL TRACE
@@ -522,9 +562,13 @@ namespace MaxDB.Data.MaxDBProtocol
             this.OpenTime = DateTime.Now;
         }
 
+        /// <summary>
+        /// Try to reconnect.
+        /// </summary>
+        /// <param name="connArgs">Connection arguments.</param>
         public void TryReconnect(ConnectArgs connArgs)
         {
-            lock (strSyncObj)
+            lock (SyncObj)
             {
                 if (this.ParseCache != null)
                 {
@@ -552,6 +596,114 @@ namespace MaxDB.Data.MaxDBProtocol
             }
         }
 
+        /// <summary>
+        /// Cancel request.
+        /// </summary>
+        /// <param name="reqObj">Request object.</param>
+        public void Cancel(object reqObj)
+        {
+            DateTime dt = DateTime.Now;
+
+            //// >>> SQL TRACE
+            if (this.logger.TraceSQL)
+            {
+                this.logger.SqlTrace(dt, "::CANCEL");
+                this.logger.SqlTrace(dt, $"SESSION ID: {this.SessionID}");
+            }
+            //// <<< SQL TRACE
+
+            if (this.objExec == reqObj)
+            {
+                this.Cancel();
+            }
+            else
+            {
+                //// >>> SQL TRACE
+                if (this.logger.TraceSQL)
+                {
+                    this.logger.SqlTrace(dt, "RETURN     : 100");
+                    this.logger.SqlTrace(dt, "MESSAGE    : No active command found.");
+                }
+                //// <<< SQL TRACE
+            }
+        }
+
+        /// <summary>
+        /// Drop parsing ID.
+        /// </summary>
+        /// <param name="pid">Parsing ID.</param>
+        public void DropParseID(byte[] pid)
+        {
+            if (pid == null)
+            {
+                return;
+            }
+
+            if (this.garbageParseids == null)
+            {
+                this.garbageParseids = new GarbageParseId(this.IsKernelFeatureSupported(Feature.MultipleDropParseid));
+            }
+
+            this.garbageParseids.ThrowIntoGarbageCan(pid);
+        }
+
+        /// <summary>
+        /// Execute SQL statement.
+        /// </summary>
+        /// <param name="connArgs">Connection arguments.</param>
+        /// <param name="cmd">Sql command.</param>
+        /// <param name="gcFlags">GC flags.</param>
+        public void ExecuteSqlString(ConnectArgs connArgs, string cmd, int gcFlags)
+        {
+            var requestPacket = this.GetRequestPacket();
+            requestPacket.InitDbs(this.AutoCommit);
+            requestPacket.AddString(cmd);
+            try
+            {
+                this.Execute(connArgs, requestPacket, this, gcFlags);
+            }
+            catch (MaxDBTimeoutException)
+            {
+                // ignore
+            }
+        }
+
+        /// <summary>
+        /// Commit command.
+        /// </summary>
+        /// <param name="connArgs">Connection arguments.</param>
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public void Commit(ConnectArgs connArgs)
+        {
+            // send commit
+            this.ExecuteSqlString(connArgs, "COMMIT WORK", GCMode.GC_ALLOWED);
+            this.inTransaction = false;
+        }
+
+        /// <summary>
+        /// Rollback command.
+        /// </summary>
+        /// <param name="connArgs">Connection arguments.</param>
+        public void Rollback(ConnectArgs connArgs)
+        {
+            // send rollback
+            this.ExecuteSqlString(connArgs, "ROLLBACK WORK", GCMode.GC_ALLOWED);
+            this.inTransaction = false;
+        }
+
+        /// <summary>
+        /// Dispose object.
+        /// </summary>
+        public void Dispose()
+        {
+            this.Close(true, false);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Get request packet.
+        /// </summary>
+        /// <returns>Request packet.</returns>
         [MethodImpl(MethodImplOptions.Synchronized)]
         internal MaxDBRequestPacket GetRequestPacket()
         {
@@ -566,6 +718,10 @@ namespace MaxDB.Data.MaxDBProtocol
             return packet;
         }
 
+        /// <summary>
+        /// Release request packet.
+        /// </summary>
+        /// <param name="requestPacket">Request packet.</param>
         internal void FreeRequestPacket(MaxDBRequestPacket requestPacket)
         {
             if (this.Encoding == Encoding.Unicode)
@@ -578,9 +734,27 @@ namespace MaxDB.Data.MaxDBProtocol
             }
         }
 
+        /// <summary>
+        /// Execute DB object.
+        /// </summary>
+        /// <param name="connArgs">Connection arguments.</param>
+        /// <param name="requestPacket">Request packet.</param>
+        /// <param name="execObj">Object to execute.</param>
+        /// <param name="gcFlags">GC flags.</param>
+        /// <returns>Reply packet.</returns>
         internal MaxDBReplyPacket Execute(ConnectArgs connArgs, MaxDBRequestPacket requestPacket, object execObj, int gcFlags) =>
             this.Execute(connArgs, requestPacket, false, false, execObj, gcFlags);
 
+        /// <summary>
+        /// Execute DB object.
+        /// </summary>
+        /// <param name="connArgs">Connection arguments.</param>
+        /// <param name="requestPacket">Request packet.</param>
+        /// <param name="ignoreErrors">Flag indicating whether errors should be ignored.</param>
+        /// <param name="isParse">Flag indicating whether only parsing should be done.</param>
+        /// <param name="execObj">Object to execute.</param>
+        /// <param name="gcFlags">GC flags.</param>
+        /// <returns>Reply packet.</returns>
         [MethodImpl(MethodImplOptions.Synchronized)]
         internal MaxDBReplyPacket Execute(ConnectArgs connArgs, MaxDBRequestPacket requestPacket, bool ignoreErrors, bool isParse, object execObj, int gcFlags)
         {
@@ -712,99 +886,8 @@ namespace MaxDB.Data.MaxDBProtocol
             return replyPacket;
         }
 
-        public void Cancel(object reqObj)
-        {
-            DateTime dt = DateTime.Now;
-
-            //// >>> SQL TRACE
-            if (this.logger.TraceSQL)
-            {
-                this.logger.SqlTrace(dt, "::CANCEL");
-                this.logger.SqlTrace(dt, $"SESSION ID: {this.SessionID}");
-            }
-            //// <<< SQL TRACE
-
-            if (this.objExec == reqObj)
-            {
-                this.Cancel();
-            }
-            else
-            {
-                //// >>> SQL TRACE
-                if (this.logger.TraceSQL)
-                {
-                    this.logger.SqlTrace(dt, "RETURN     : 100");
-                    this.logger.SqlTrace(dt, "MESSAGE    : No active command found.");
-                }
-                //// <<< SQL TRACE
-            }
-        }
-
-        public void DropParseID(byte[] pid)
-        {
-            if (pid == null)
-            {
-                return;
-            }
-
-            if (this.garbageParseids == null)
-            {
-                this.garbageParseids = new GarbageParseId(this.IsKernelFeatureSupported(Feature.MultipleDropParseid));
-            }
-
-            this.garbageParseids.ThrowIntoGarbageCan(pid);
-        }
-
-        public void ExecuteSqlString(ConnectArgs connArgs, string cmd, int gcFlags)
-        {
-            var requestPacket = this.GetRequestPacket();
-            requestPacket.InitDbs(this.AutoCommit);
-            requestPacket.AddString(cmd);
-            try
-            {
-                this.Execute(connArgs, requestPacket, this, gcFlags);
-            }
-            catch (MaxDBTimeoutException)
-            {
-                // ignore
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        public void Commit(ConnectArgs connArgs)
-        {
-            // send commit
-            this.ExecuteSqlString(connArgs, "COMMIT WORK", GCMode.GC_ALLOWED);
-            this.inTransaction = false;
-        }
-
-        public void Rollback(ConnectArgs connArgs)
-        {
-            // send rollback
-            this.ExecuteSqlString(connArgs, "ROLLBACK WORK", GCMode.GC_ALLOWED);
-            this.inTransaction = false;
-        }
-
-        #region IDisposable Members
-
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
         private static string StripString(string str) =>
            !(str.StartsWith("\"", StringComparison.InvariantCulture) && str.EndsWith("\"", StringComparison.InvariantCulture)) ? str.ToUpperInvariant() : str.Substring(1, str.Length - 2);
-
-        private void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                this.Close(true, false);
-            }
-        }
-
-        #endregion
 
         private bool InitiateChallengeResponse(ConnectArgs connArgs, MaxDBRequestPacket requestPacket, string user, Auth auth)
         {

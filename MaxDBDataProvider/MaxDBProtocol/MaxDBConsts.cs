@@ -886,24 +886,39 @@ namespace MaxDB.Data.MaxDBProtocol
 
     internal struct ConnectionStringParams
     {
-        public const string
-            DATA_SOURCE = "DATA SOURCE",
-            INITIAL_CATALOG = "INITIAL CATALOG",
-            USER_ID = "USER ID",
-            PASSWORD = "PASSWORD",
-            TIMEOUT = "TIMEOUT",
-            SPACE_OPTION = "SPACE OPTION",
-            CACHE = "CACHE",
-            CACHE_LIMIT = "CACHE LIMIT",
-            CACHE_SIZE = "CACHE SIZE",
-            ENCRYPT = "ENCRYPT",
-            MODE = "MODE",
-            SSL_CERTIFICATE = "SSL CERTIFICATE",
-            POOLING = "POOLING",
-            CONNECTION_LIFETIME = "CONNECTION LIFETIME",
-            MIN_POOL_SIZE = "MIN POOL SIZE",
-            MAX_POOL_SIZE = "MAX POOL SIZE",
-            CODE_PAGE = "CODE_PAGE";
+        public const string DATA_SOURCE = "DATA SOURCE";
+
+        public const string INITIAL_CATALOG = "INITIAL CATALOG";
+
+        public const string USER_ID = "USER ID";
+
+        public const string PASSWORD = "PASSWORD";
+
+        public const string TIMEOUT = "TIMEOUT";
+
+        public const string SPACE_OPTION = "SPACE OPTION";
+
+        public const string CACHE = "CACHE";
+
+        public const string CACHE_LIMIT = "CACHE LIMIT";
+
+        public const string CACHE_SIZE = "CACHE SIZE";
+
+        public const string ENCRYPT = "ENCRYPT";
+
+        public const string MODE = "MODE";
+
+        public const string SSL_CERTIFICATE = "SSL CERTIFICATE";
+
+        public const string POOLING = "POOLING";
+
+        public const string CONNECTION_LIFETIME = "CONNECTION LIFETIME";
+
+        public const string MIN_POOL_SIZE = "MIN POOL SIZE";
+
+        public const string MAX_POOL_SIZE = "MAX POOL SIZE";
+
+        public const string CODE_PAGE = "CODE_PAGE";
     }
 
     /// <summary>
@@ -911,34 +926,13 @@ namespace MaxDB.Data.MaxDBProtocol
     /// </summary>
     internal class Consts
     {
-        public static bool IsLittleEndian
-        {
-            get
-            {
-                return BitConverter.IsLittleEndian;
-            }
-        }
+        public static bool IsLittleEndian => BitConverter.IsLittleEndian;
 
-        private static readonly int iUnicodeWidth = System.Text.Encoding.Unicode.GetByteCount(BlankChar);
-        public static int UnicodeWidth
-        {
-            get
-            {
-                return iUnicodeWidth;
-            }
-        }
+        public static int UnicodeWidth { get; } = Encoding.Unicode.GetByteCount(BlankChar);
 
         public const int FillBufSize = 1024;
         public const string BlankChar = " ";
-
-        private static readonly byte[] byBlankBytes = InitializeBlankBytes;
-        public static byte[] BlankBytes
-        {
-            get
-            {
-                return byBlankBytes;
-            }
-        }
+        public static byte[] BlankBytes { get; } = InitializeBlankBytes;
 
         private static byte[] InitializeBlankBytes
         {
@@ -954,20 +948,13 @@ namespace MaxDB.Data.MaxDBProtocol
             }
         }
 
-        private static readonly byte[] byBlankUnicodeBytes = InitializeBlankUnicodeBytes;
-        public static byte[] BlankUnicodeBytes
-        {
-            get
-            {
-                return byBlankUnicodeBytes;
-            }
-        }
+        public static byte[] BlankUnicodeBytes { get; } = InitializeBlankUnicodeBytes;
 
         private static byte[] InitializeBlankUnicodeBytes
         {
             get
             {
-                byte[] blanks = new byte[FillBufSize * iUnicodeWidth];
+                byte[] blanks = new byte[FillBufSize * UnicodeWidth];
                 for (int i = 0; i < FillBufSize; i += UnicodeWidth)
                 {
                     if (IsLittleEndian)
@@ -982,10 +969,6 @@ namespace MaxDB.Data.MaxDBProtocol
 
                 return blanks;
             }
-        }
-
-        private Consts()
-        {
         }
 
         // some constants
@@ -1017,16 +1000,10 @@ namespace MaxDB.Data.MaxDBProtocol
             "unknown17",
             "unknown18",
             "unicode_swap",
-            "unicode"};
+            "unicode",
+        };
 
-        private static readonly byte[] byZeroBytes = new byte[FillBufSize];
-        public static byte[] ZeroBytes
-        {
-            get
-            {
-                return byZeroBytes;
-            }
-        }
+        public static byte[] ZeroBytes { get; } = new byte[FillBufSize];
 
         public const int AlignValue = 8;
 
@@ -1036,7 +1013,7 @@ namespace MaxDB.Data.MaxDBProtocol
         public const int ResultCountSize = 6;
 
         public const string AppID = "ODB";
-        public const string AppVersion = "70400";// "10100";
+        public const string AppVersion = "70400"; // "10100";
 
         public const string CursorPrefix = "ADONET_CURSOR_";
         public const string TimeStampFormat = "yyyy-MM-dd hh:mm:ss.ffffff";
