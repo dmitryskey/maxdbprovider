@@ -41,8 +41,8 @@ namespace MaxDB.Data
     /// </para>
     /// <para>
     /// While the <B>MaxDBDataReader</B> is in use, the associated <see cref="MaxDBConnection"/>
-    /// is busy serving the <B>MaxDBDataReader</B>, and no other operations can be performed 
-    /// on the <B>MaxDBConnection</B> other than closing it. This is the case until the 
+    /// is busy serving the <B>MaxDBDataReader</B>, and no other operations can be performed
+    /// on the <B>MaxDBConnection</B> other than closing it. This is the case until the
     /// <see cref="MaxDBDataReader.Close"/> method of the <B>MaxDBDataReader</B> is called.
     /// </para>
     /// </remarks>
@@ -54,7 +54,7 @@ namespace MaxDB.Data
         internal bool bSchemaOnly;              // return column information only
         private MaxDBConnection dbConnection;   // connection handle
         private readonly MaxDBCommand cmdCommand;        // command handle
-        private readonly string strUpdatedTableName;     // tablename used for updateable resultsets 
+        private readonly string strUpdatedTableName;     // tablename used for updateable resultsets
 
         private FetchInfo mFetchInfo;                   // The fetch details.
         private FetchChunk mCurrentChunk;               // The data of the last fetch operation.
@@ -135,12 +135,14 @@ namespace MaxDB.Data
                     this.iRowsInResultSet = this.mCurrentChunk.Size;
                     this.mCurrentChunk.RowsInResultSet = this.iRowsInResultSet;
                 }
+
                 // otherwise, we may have navigated through it from start ...
                 else if (this.mCurrentChunk.IsLast && this.mCurrentChunk.IsForward)
                 {
                     this.iRowsInResultSet = this.mCurrentChunk.End;
                     this.mCurrentChunk.RowsInResultSet = this.iRowsInResultSet;
                 }
+
                 // ... or from end
                 else if (this.mCurrentChunk.IsFirst && !this.mCurrentChunk.IsForward)
                 {
@@ -529,7 +531,7 @@ namespace MaxDB.Data
         /// </summary>
         public override object this[string name] => this.GetValue(this.GetOrdinal(name));
 
-        private void LogValue(int i, DBTechTranslator transl, string type, int size, int minusLen, string value)
+        private void LogValue(int i, MaxDBTranslators.DBTechTranslator transl, string type, int size, int minusLen, string value)
         {
             DateTime dt = DateTime.Now;
             this.dbConnection.mLogger.SqlTrace(dt, "GET " + type + " VALUE:");
@@ -567,6 +569,7 @@ namespace MaxDB.Data
             {
                 this.LogValue(i + 1, transl, "BOOLEAN", 1, 0, bool_value.ToString());
             }
+
             // <<< SQL TRACE
 
             return bool_value;
@@ -592,6 +595,7 @@ namespace MaxDB.Data
             {
                 this.LogValue(i + 1, transl, "BYTE", 1, 0, byte_value.ToString(CultureInfo.InvariantCulture));
             }
+
             // <<< SQL TRACE
 
             return byte_value;
@@ -624,6 +628,7 @@ namespace MaxDB.Data
 
                 this.LogValue(i + 1, transl, "BYTES", logs.Length, 0, Consts.ToHexString(logs) + (logs.Length < length ? "..." : ""));
             }
+
             // <<< SQL TRACE
 
             return result;
@@ -677,6 +682,7 @@ namespace MaxDB.Data
 
                 this.LogValue(i + 1, transl, "CHARS", logs.Length, 0, new string(logs) + (logs.Length < length ? "..." : ""));
             }
+
             // <<< SQL TRACE
 
             return result;
@@ -715,6 +721,7 @@ namespace MaxDB.Data
             {
                 this.LogValue(i + 1, transl, "INT16", 2, 0, short_value.ToString(CultureInfo.InvariantCulture));
             }
+
             // <<< SQL TRACE
 
             return short_value;
@@ -739,6 +746,7 @@ namespace MaxDB.Data
             {
                 this.LogValue(i + 1, transl, "INT32", 4, 0, int_value.ToString(CultureInfo.InvariantCulture));
             }
+
             // <<< SQL TRACE
 
             return int_value;
@@ -763,6 +771,7 @@ namespace MaxDB.Data
             {
                 this.LogValue(i + 1, transl, "INT64", 8, 0, long_value.ToString(CultureInfo.InvariantCulture));
             }
+
             // <<< SQL TRACE
 
             return long_value;
@@ -787,6 +796,7 @@ namespace MaxDB.Data
             {
                 this.LogValue(i + 1, transl, "FLOAT", 4, 0, float_value.ToString(CultureInfo.InvariantCulture));
             }
+
             // <<< SQL TRACE
 
             return float_value;
@@ -811,6 +821,7 @@ namespace MaxDB.Data
             {
                 this.LogValue(i + 1, transl, "DOUBLE", 8, 0, double_value.ToString(CultureInfo.InvariantCulture));
             }
+
             // <<< SQL TRACE
 
             return double_value;
@@ -843,6 +854,7 @@ namespace MaxDB.Data
                     this.LogValue(i + 1, transl, "STRING", 0, 1, "NULL");
                 }
             }
+
             // <<< SQL TRACE
 
             return str_value;
@@ -867,6 +879,7 @@ namespace MaxDB.Data
             {
                 this.LogValue(i + 1, transl, "DECIMAL", 8, 0, dec_value.ToString(CultureInfo.InvariantCulture));
             }
+
             // <<< SQL TRACE
 
             return dec_value;
@@ -891,6 +904,7 @@ namespace MaxDB.Data
             {
                 this.LogValue(i + 1, transl, "DATETIME", 0, 0, dt_value.ToString(CultureInfo.InvariantCulture));
             }
+
             // <<< SQL TRACE
 
             return dt_value;
@@ -1026,6 +1040,7 @@ namespace MaxDB.Data
                     this.mPositionState = PositionType.AFTER_LAST;
                     return false;
                 }
+
                 throw;
             }
 
@@ -1058,10 +1073,10 @@ namespace MaxDB.Data
             }
         }
 
-        private DBTechTranslator FindColumnInfo(int colIndex)
+        private MaxDBTranslators.DBTechTranslator FindColumnInfo(int colIndex)
         {
             this.AssertNotClosed();
-            DBTechTranslator info;
+            MaxDBTranslators.DBTechTranslator info;
 
             try
             {

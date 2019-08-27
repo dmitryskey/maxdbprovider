@@ -75,7 +75,7 @@ namespace MaxDB.Data
         public MaxDBCommand(string cmdText) => this.strCmdText = cmdText;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MaxDBCommand"/> class 
+        /// Initializes a new instance of the <see cref="MaxDBCommand"/> class
         /// with the text of the query and a <see cref="MaxDBConnection"/>.
         /// </summary>
         /// <param name="cmdText">The text of the query.</param>
@@ -83,7 +83,7 @@ namespace MaxDB.Data
         public MaxDBCommand(string cmdText, MaxDBConnection connection) : this(cmdText) => this.dbConnection = connection;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MaxDBCommand"/> class with the text of the query, a <see cref="MaxDBConnection"/>, 
+        /// Initializes a new instance of the <see cref="MaxDBCommand"/> class with the text of the query, a <see cref="MaxDBConnection"/>,
         /// and the <see cref="MaxDBTransaction"/>.
         /// </summary>
         /// <param name="cmdText">The text of the query.</param>
@@ -121,18 +121,18 @@ namespace MaxDB.Data
 
             if (this.mParseInfo != null && this.mParseInfo.IsSelect)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BATCHRESULTSET, new int[0]));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BATCHRESULTSET, Array.Empty<int>()));
             }
 
             if (this.mParseInfo != null && (this.mParseInfo.FuncCode == FunctionCode.DBProcExecute || this.mParseInfo.FuncCode == FunctionCode.DBProcWithResultSetExecute) &&
                 Array.Exists(this.mParseInfo.mParamInfos, t => t.IsOutput))
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BATCHPROCOUT, new int[0]));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BATCHPROCOUT, Array.Empty<int>()));
             }
 
             if (batchParams == null)
             {
-                return new int[0];
+                return Array.Empty<int>();
             }
 
             ////>>> SQL TRACE
@@ -257,7 +257,7 @@ namespace MaxDB.Data
 
                     try
                     {
-                        replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, GCMode.GC_DELAYED);
+                        replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, GCMode.DELAYED);
                     }
                     catch (MaxDBException ex)
                     {
@@ -349,7 +349,7 @@ namespace MaxDB.Data
 
             try
             {
-                replyPacket = this.SendCommand(this.dbConnection.mComm.GetRequestPacket(), sql, GCMode.GC_ALLOWED, parseAgain);
+                replyPacket = this.SendCommand(this.dbConnection.mComm.GetRequestPacket(), sql, GCMode.ALLOWED, parseAgain);
             }
             catch (IndexOutOfRangeException)
             {
@@ -490,7 +490,7 @@ namespace MaxDB.Data
                     // if streams are in the command. Even sending it just behind
                     // as next packet is harmful. Same with INPUT LONG parameters of
                     // DB Procedures.
-                    replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, this.lstInputProcedureLongs == null ? GCMode.GC_ALLOWED : GCMode.GC_NONE);
+                    replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, this.lstInputProcedureLongs == null ? GCMode.ALLOWED : GCMode.NONE);
                 }
                 catch (MaxDBException ex)
                 {
@@ -794,7 +794,7 @@ namespace MaxDB.Data
                             if (param.objInputValue != null && param.objInputValue.ToString().Length == 0
                                 && this.dbConnection.SqlMode == SqlMode.Oracle)
                             {
-                                // in ORACLE mode a null values will be inserted if the string value is equal to "" 
+                                // in ORACLE mode a null values will be inserted if the string value is equal to ""
                                 inputArgs[i] = null;
                             }
                             else
@@ -1098,7 +1098,7 @@ namespace MaxDB.Data
             }
         }
 
-        private bool ParseResult(MaxDBReplyPacket replyPacket, DBTechTranslator[] infos, string[] columnNames, CommandBehavior behavior)
+        private bool ParseResult(MaxDBReplyPacket replyPacket, MaxDBTranslators.DBTechTranslator[] infos, string[] columnNames, CommandBehavior behavior)
         {
             bool rowNotFound = false;
             bool dataPartFound = false;
@@ -1149,6 +1149,7 @@ namespace MaxDB.Data
                             }
                             ////<<< SQL TRACE
                         }
+
                         break;
                     case PartKind.ResultTableName:
                         string cname = replyPacket.ReadString(replyPacket.PartDataPos, replyPacket.PartLength);
@@ -1177,6 +1178,7 @@ namespace MaxDB.Data
                                 this.iRowsAffected = 0; // for any select update count must be -1
                             }
                         }
+
                         break;
                     case PartKind.ParsidOfSelect:
                         // ignore
@@ -1238,7 +1240,7 @@ namespace MaxDB.Data
             return isQuery;
         }
 
-        private MaxDBDataReader CreateDataReader(DBTechTranslator[] infos, string[] columnNames, bool rowNotFound, CommandBehavior behavior, MaxDBReplyPacket reply)
+        private MaxDBDataReader CreateDataReader(MaxDBTranslators.DBTechTranslator[] infos, string[] columnNames, bool rowNotFound, CommandBehavior behavior, MaxDBReplyPacket reply)
         {
             MaxDBDataReader reader;
 
@@ -1327,7 +1329,7 @@ namespace MaxDB.Data
                 }
 
                 replyPacket.ClearPartOffset();
-                DBTechTranslator[] shortInfos = null;
+                MaxDBTranslators.DBTechTranslator[] shortInfos = null;
                 for (int i = 0; i < replyPacket.PartCount; i++)
                 {
                     replyPacket.NextPart();
@@ -1362,6 +1364,7 @@ namespace MaxDB.Data
                                     result.IsSelect = false;
                                 }
                             }
+
                             break;
                         case PartKind.TableName:
                             result.UpdatedTableName = replyPacket.ReadString(replyPacket.PartDataPos, replyPacket.PartLength);
@@ -1381,6 +1384,7 @@ namespace MaxDB.Data
                     cache.AddParseInfo(result);
                 }
             }
+
             this.objInputArgs = new object[result.mParamInfos.Length];
             this.ClearParameters();
 
@@ -1400,7 +1404,7 @@ namespace MaxDB.Data
             var requestPacket = this.dbConnection.mComm.GetRequestPacket();
             requestPacket.InitParseCommand(this.mParseInfo.SqlCommand, true, parsegain);
             requestPacket.SetMassCommand();
-            var replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, GCMode.GC_ALLOWED);
+            var replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, GCMode.ALLOWED);
             if (replyPacket.ExistsPart(PartKind.ParseId))
             {
                 this.mParseInfo.MassParseID = replyPacket.ReadBytes(replyPacket.PartDataPos, 12);
@@ -1569,7 +1573,7 @@ namespace MaxDB.Data
                 dataPart.Close();
 
                 // execute and get descriptors
-                replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, GCMode.GC_DELAYED);
+                replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, GCMode.DELAYED);
 
                 // write trailing end of LONGs marker
                 if (requiresTrailingPacket && !this.bCanceled)
@@ -1578,7 +1582,7 @@ namespace MaxDB.Data
                     dataPart = requestPacket.InitPutValue(this.dbConnection.AutoCommit);
                     lastStream.MarkAsLast(dataPart);
                     dataPart.Close();
-                    this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, GCMode.GC_DELAYED);
+                    this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, GCMode.DELAYED);
                 }
             }
 
@@ -1606,7 +1610,7 @@ namespace MaxDB.Data
             }
         }
 
-        private DBTechTranslator FindColumnInfo(int colIndex)
+        private MaxDBTranslators.DBTechTranslator FindColumnInfo(int colIndex)
         {
             try
             {
@@ -1731,7 +1735,7 @@ namespace MaxDB.Data
         /// </summary>
         /// <returns>Number of rows affected.</returns>
         /// <remarks>
-        /// You can use ExecuteNonQuery to perform any type of database operation, 
+        /// You can use ExecuteNonQuery to perform any type of database operation,
         /// however any resultsets returned will not be available.  Any output parameters
         /// used in calling a stored procedure will be populated with data and can be
         /// retrieved after execution is complete.
@@ -1763,16 +1767,16 @@ namespace MaxDB.Data
         /// <returns>A new <see cref="MaxDBDataReader"/> object.</returns>
         /// <remarks>
         /// <para>
-        /// When the <see cref="CommandType"/> property is set to <B>StoredProcedure</B>, 
-        ///    the <see cref="CommandText"/> property should be set to the name of the stored 
-        ///    procedure. The command executes this stored procedure when you call 
+        /// When the <see cref="CommandType"/> property is set to <B>StoredProcedure</B>,
+        ///    the <see cref="CommandText"/> property should be set to the name of the stored
+        ///    procedure. The command executes this stored procedure when you call
         ///    <B>ExecuteReader</B>.
         /// </para>
         /// <para>
-        ///    While the <see cref="MaxDBDataReader"/> is in use, the associated 
-        ///    <see cref="MaxDBConnection"/> is busy serving the <see cref="MaxDBDataReader"/>. 
-        ///    While in this state, no other operations can be performed on the 
-        ///    <see cref="MaxDBConnection"/> other than closing it. This is the case until the 
+        ///    While the <see cref="MaxDBDataReader"/> is in use, the associated
+        ///    <see cref="MaxDBConnection"/> is busy serving the <see cref="MaxDBDataReader"/>.
+        ///    While in this state, no other operations can be performed on the
+        ///    <see cref="MaxDBConnection"/> other than closing it. This is the case until the
         ///    <see cref="MaxDBDataReader.Close"/> method of the <see cref="MaxDBDataReader"/> is called.
         /// </para>
         /// </remarks>
@@ -1817,16 +1821,16 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// Executes the query, and returns the first column of the first row in the 
+        /// Executes the query, and returns the first column of the first row in the
         /// result set returned by the query. Extra columns or rows are ignored.
         /// </summary>
-        /// <returns>The first column of the first row in the result set, or a null reference if the 
+        /// <returns>The first column of the first row in the result set, or a null reference if the
         /// result set is empty
         /// </returns>
         /// <remarks>
-        /// <para>Use the <B>ExecuteScalar</B> method to retrieve a single value (for example, 
-        /// an aggregate value) from a database. This requires less code than using the 
-        /// <see cref="ExecuteReader()"/> method, and then performing the operations necessary 
+        /// <para>Use the <B>ExecuteScalar</B> method to retrieve a single value (for example,
+        /// an aggregate value) from a database. This requires less code than using the
+        /// <see cref="ExecuteReader()"/> method, and then performing the operations necessary
         /// to generate the single value using the data returned by a <see cref="MaxDBDataReader"/>
         /// </para>
         /// </remarks>
@@ -1870,7 +1874,7 @@ namespace MaxDB.Data
 
         /// <summary>
         /// Gets or sets how command results are applied to the <see cref="DataRow"/>
-        /// when used by the <see cref="System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)"/> method 
+        /// when used by the <see cref="System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)"/> method
         /// of the <see cref="System.Data.Common.DbDataAdapter"/>.
         /// </summary>
         public override UpdateRowSource UpdatedRowSource

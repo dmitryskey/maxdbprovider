@@ -61,10 +61,7 @@ namespace MaxDB.Data.MaxDBProtocol
             this.reqPacket.ClosePart(this.iMassExtent + this.iExtent * rows, rows);
         }
 
-        public virtual bool HasRoomFor(int recordSize, int reserve)
-        {
-            return (this.sArgCount < iMaxArgCount && (this.baOrigData.Length - this.baOrigData.Offset - this.iExtent) > (recordSize + reserve));
-        }
+        public virtual bool HasRoomFor(int recordSize, int reserve) => this.sArgCount < iMaxArgCount && (this.baOrigData.Length - this.baOrigData.Offset - this.iExtent) > (recordSize + reserve);
 
         public virtual bool HasRoomFor(int recordSize) => this.sArgCount < iMaxArgCount && (this.baOrigData.Length - this.baOrigData.Offset - this.iExtent) > recordSize;
 
@@ -596,6 +593,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         bytesToRead = 0;
                     }
                 }
+
                 if (asciiForUnicode)
                 {
                     for (int i = 0; i < bytesRead; ++i)

@@ -81,7 +81,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public virtual int ReturnCode => this.ReadInt16(HeaderOffset.RTEReturnCode);
 
-        protected static int AlignSize(int value) => value + (value % Consts.AlignValue != 0 ? (Consts.AlignValue - value % Consts.AlignValue) : 0);
+        protected static int AlignSize(int value) => value + (value % Consts.AlignValue != 0 ? (Consts.AlignValue - (value % Consts.AlignValue)) : 0);
 
         #region "Segment operations"
 
@@ -350,6 +350,7 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 packetData.DBName = packetData.DBName.Substring(0, ConnectPacketOffset.DBNameSize);
             }
+
             this.WriteAscii(packetData.DBName.PadRight(ConnectPacketOffset.DBNameSize), HeaderOffset.END + ConnectPacketOffset.ServerDB);
             this.WriteAscii("        ", HeaderOffset.END + ConnectPacketOffset.ClientDB);
             // fill out variable part
@@ -461,8 +462,10 @@ namespace MaxDB.Data.MaxDBProtocol
     {
         protected int iLength = PacketHeaderOffset.Segment;
         protected short sSegments;
-        protected int iPartLength = -1, iSegmentLength = -1;
-        protected short sPartArguments = -1, sSegmentParts = -1;
+        protected int iPartLength = -1;
+        protected int iSegmentLength = -1;
+        protected short sPartArguments = -1;
+        protected short sSegmentParts = -1;
         private byte byCurrentSqlMode = (byte)SqlMode.SessionSqlMode;
         private int iReplyReserve;
         private int iMaxNumberOfSegment = Consts.DefaultMaxNumberOfSegm;
@@ -1154,14 +1157,14 @@ namespace MaxDB.Data.MaxDBProtocol
         }
 
         // Extracts the short field info, and creates translator instances.
-        public DBTechTranslator[] ParseShortFields(bool spaceoption, bool isDBProcedure, DBProcParameterInfo[] procParameters, bool isVardata)
+        public MaxDBTranslators.DBTechTranslator[] ParseShortFields(bool spaceoption, bool isDBProcedure, DBProcParameterInfo[] procParameters, bool isVardata)
         {
             int columnCount;
-            DBTechTranslator[] result;
+            MaxDBTranslators.DBTechTranslator[] result;
             int pos, mode, ioType, dataType, frac, len, ioLen, bufpos;
 
             columnCount = this.PartArgsCount;
-            result = new DBTechTranslator[columnCount];
+            result = new MaxDBTranslators.DBTechTranslator[columnCount];
             pos = this.PartDataPos;
 
             for (int i = 0; i < columnCount; ++i)
@@ -1195,7 +1198,7 @@ namespace MaxDB.Data.MaxDBProtocol
             return result;
         }
 
-        protected virtual DBTechTranslator GetTranslator(int mode, int ioType, int dataType, int frac, int len,
+        protected virtual MaxDBTranslators.DBTechTranslator GetTranslator(int mode, int ioType, int dataType, int frac, int len,
             int ioLen, int bufpos, bool spaceoption, bool isDBProcedure, DBProcParameterInfo procParamInfo)
         {
             switch (dataType)
@@ -1204,70 +1207,56 @@ namespace MaxDB.Data.MaxDBProtocol
                 case DataType.CHE:
                 case DataType.VARCHARA:
                 case DataType.VARCHARE:
-                    return spaceoption ? new SpaceOptionStringTranslator(mode, ioType, dataType, len, ioLen, bufpos) : new StringTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    return spaceoption ?
+                        new MaxDBTranslators.SpaceOptionStringTranslator(mode, ioType, dataType, len, ioLen, bufpos) :
+                        new MaxDBTranslators.StringTranslator(mode, ioType, dataType, len, ioLen, bufpos);
                 case DataType.CHB:
-                    if (procParamInfo != null && procParamInfo.ElementType == DBProcParameterInfo.STRUCTURE)
-                    {
-                        return new StructureTranslator(mode, ioType, dataType, len, ioLen, bufpos, false);
-                    }
-                    else
-                    {
-                        return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
+                    return procParamInfo != null && procParamInfo.ElementType == DBProcParameterInfo.STRUCTURE
+                        ? new MaxDBTranslators.StructureTranslator(mode, ioType, dataType, len, ioLen, bufpos, false)
+                        : (MaxDBTranslators.DBTechTranslator)new MaxDBTranslators.BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+
                 case DataType.VARCHARB:
-                    return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    return new MaxDBTranslators.BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
                 case DataType.BOOLEAN:
-                    return new BooleanTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    return new MaxDBTranslators.BooleanTranslator(mode, ioType, dataType, len, ioLen, bufpos);
                 case DataType.TIME:
-                    return new TimeTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    return new MaxDBTranslators.TimeTranslator(mode, ioType, dataType, len, ioLen, bufpos);
                 case DataType.DATE:
-                    return new DateTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    return new MaxDBTranslators.DateTranslator(mode, ioType, dataType, len, ioLen, bufpos);
                 case DataType.TIMESTAMP:
-                    return new TimestampTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    return new MaxDBTranslators.TimestampTranslator(mode, ioType, dataType, len, ioLen, bufpos);
                 case DataType.FIXED:
                 case DataType.FLOAT:
                 case DataType.VFLOAT:
                 case DataType.SMALLINT:
                 case DataType.INTEGER:
-                    return new NumericTranslator(mode, ioType, dataType, len, frac, ioLen, bufpos);
+                    return new MaxDBTranslators.NumericTranslator(mode, ioType, dataType, len, frac, ioLen, bufpos);
                 case DataType.STRA:
                 case DataType.STRE:
                 case DataType.LONGA:
                 case DataType.LONGE:
-                    if (isDBProcedure)
-                    {
-                        return new ProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
-                    else
-                    {
-                        return new ASCIIStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
+                    return isDBProcedure
+                        ? new MaxDBTranslators.ProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos)
+                        : (MaxDBTranslators.DBTechTranslator)new MaxDBTranslators.ASCIIStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+
                 case DataType.STRB:
                 case DataType.LONGB:
-                    if (isDBProcedure)
-                    {
-                        return new ProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
-                    else
-                    {
-                        return new BinaryStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
+                    return isDBProcedure
+                        ? new MaxDBTranslators.ProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos)
+                        : (MaxDBTranslators.DBTechTranslator)new MaxDBTranslators.BinaryStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+
                 case DataType.UNICODE:
                 case DataType.VARCHARUNI:
-                    return spaceoption ? new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode) :
-                        new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
+                    return spaceoption ? new MaxDBTranslators.SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode) :
+                        new MaxDBTranslators.UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
                 case DataType.LONGUNI:
                 case DataType.STRUNI:
-                    if (isDBProcedure)
-                    {
-                        return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
-                    else
-                    {
-                        return new UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
+                    return isDBProcedure
+                        ? new MaxDBTranslators.UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos)
+                        : (MaxDBTranslators.DBTechTranslator)new MaxDBTranslators.UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+
                 default:
-                    return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    return new MaxDBTranslators.BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
             }
         }
 
@@ -1394,13 +1383,14 @@ namespace MaxDB.Data.MaxDBProtocol
                         case FunctionCode.FetchPos:
                         case FunctionCode.FetchSame:
                         case FunctionCode.FetchRelative:
-                            // keep result 
+                            // keep result
                             break;
                         default:
                             result = 0;
                             break;
                     }
                 }
+
                 return result;
             }
         }
@@ -1500,7 +1490,7 @@ namespace MaxDB.Data.MaxDBProtocol
             }
         }
 
-        protected override DBTechTranslator GetTranslator(int mode, int ioType, int dataType, int frac, int len,
+        protected override MaxDBTranslators.DBTechTranslator GetTranslator(int mode, int ioType, int dataType, int frac, int len,
                   int ioLen, int bufpos, bool spaceoption, bool isDBProcedure, DBProcParameterInfo procParamInfo)
         {
             switch (dataType)
@@ -1509,71 +1499,55 @@ namespace MaxDB.Data.MaxDBProtocol
                 case DataType.CHE:
                 case DataType.VARCHARA:
                 case DataType.VARCHARE:
-                    return spaceoption ? new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode) :
-                        new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
+                    return spaceoption ? new MaxDBTranslators.SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode) :
+                        new MaxDBTranslators.UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
                 case DataType.CHB:
-                    if (procParamInfo != null && procParamInfo.ElementType == DBProcParameterInfo.STRUCTURE)
-                    {
-                        return new StructureTranslator(mode, ioType, dataType, len, ioLen, bufpos, false);
-                    }
-                    else
-                    {
-                        return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
+                    return procParamInfo != null && procParamInfo.ElementType == DBProcParameterInfo.STRUCTURE
+                        ? new MaxDBTranslators.StructureTranslator(mode, ioType, dataType, len, ioLen, bufpos, false)
+                        : (MaxDBTranslators.DBTechTranslator)new MaxDBTranslators.BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+
                 case DataType.VARCHARB:
-                    return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    return new MaxDBTranslators.BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
                 case DataType.BOOLEAN:
-                    return new BooleanTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    return new MaxDBTranslators.BooleanTranslator(mode, ioType, dataType, len, ioLen, bufpos);
                 case DataType.TIME:
-                    return new UnicodeTimeTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
+                    return new MaxDBTranslators.UnicodeTimeTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
                 case DataType.DATE:
-                    return new UnicodeDateTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
+                    return new MaxDBTranslators.UnicodeDateTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
                 case DataType.TIMESTAMP:
-                    return new UnicodeTimestampTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
+                    return new MaxDBTranslators.UnicodeTimestampTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
                 case DataType.FIXED:
                 case DataType.FLOAT:
                 case DataType.VFLOAT:
                 case DataType.SMALLINT:
                 case DataType.INTEGER:
-                    return new NumericTranslator(mode, ioType, dataType, len, frac, ioLen, bufpos);
+                    return new MaxDBTranslators.NumericTranslator(mode, ioType, dataType, len, frac, ioLen, bufpos);
                 case DataType.STRA:
                 case DataType.STRE:
                 case DataType.LONGA:
                 case DataType.LONGE:
-                    if (isDBProcedure)
-                    {
-                        return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
-                    else
-                    {
-                        return new UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
+                    return isDBProcedure
+                        ? new MaxDBTranslators.UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos)
+                        : (MaxDBTranslators.DBTechTranslator)new MaxDBTranslators.UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+
                 case DataType.STRB:
                 case DataType.LONGB:
-                    if (isDBProcedure)
-                    {
-                        return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
-                    else
-                    {
-                        return new BinaryStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
+                    return isDBProcedure
+                        ? new MaxDBTranslators.UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos)
+                        : (MaxDBTranslators.DBTechTranslator)new MaxDBTranslators.BinaryStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+
                 case DataType.UNICODE:
                 case DataType.VARCHARUNI:
-                    return spaceoption ? new SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode) :
-                        new UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
+                    return spaceoption ? new MaxDBTranslators.SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode) :
+                        new MaxDBTranslators.UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
                 case DataType.LONGUNI:
                 case DataType.STRUNI:
-                    if (isDBProcedure)
-                    {
-                        return new UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
-                    else
-                    {
-                        return new UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
-                    }
+                    return isDBProcedure
+                        ? new MaxDBTranslators.UnicodeProcedureStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos)
+                        : (MaxDBTranslators.DBTechTranslator)new MaxDBTranslators.UnicodeStreamTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+
                 default:
-                    return new BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
+                    return new MaxDBTranslators.BytesTranslator(mode, ioType, dataType, len, ioLen, bufpos);
             }
         }
 

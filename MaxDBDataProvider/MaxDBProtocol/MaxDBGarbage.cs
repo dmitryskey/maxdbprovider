@@ -61,11 +61,11 @@ namespace MaxDB.Data.MaxDBProtocol
                     requestPacket = communication.GetRequestPacket();
                     requestPacket.Init(short.MaxValue);
                     this.EmptyCan(requestPacket);
-                    communication.Execute(connArgs, requestPacket, this, GCMode.GC_NONE);
+                    communication.Execute(connArgs, requestPacket, this, GCMode.NONE);
                 }
                 catch (MaxDBException)
                 {
-                    // ignore 
+                    // ignore
                 }
             }
 

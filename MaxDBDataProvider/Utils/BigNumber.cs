@@ -68,7 +68,7 @@ namespace MaxDB.Data.Utilities
 
             // find the decimal separator and exponent position
             num = num.Replace(CultureInfo.InvariantCulture.NumberFormat.CurrencyGroupSeparator, string.Empty);
-            int dot_index = num.IndexOf(this.strSeparator, cur_off);
+            int dot_index = num.IndexOf(this.strSeparator, cur_off, StringComparison.InvariantCulture);
             int exp_index = num.IndexOf('e', cur_off);
             if (exp_index < 0)
             {
@@ -76,7 +76,7 @@ namespace MaxDB.Data.Utilities
             }
 
             // check number format
-            if (num.IndexOf(this.strSeparator, dot_index + 1) >= 0)
+            if (num.IndexOf(this.strSeparator, dot_index + 1, StringComparison.InvariantCulture) >= 0)
             {
                 throw new FormatException();
             }
@@ -144,7 +144,7 @@ namespace MaxDB.Data.Utilities
 
             string float_num = int_part;
 
-            // if exponent doesn't exist just extract float part 
+            // if exponent doesn't exist just extract float part
             if (exp_index < 0)
             {
                 float_part = num.Substring(cur_off).TrimEnd('0');
@@ -321,7 +321,7 @@ namespace MaxDB.Data.Utilities
 
         public override string ToString()
         {
-            string s_num = this.UnscaledValue.ToString();
+            string s_num = this.UnscaledValue.ToString(CultureInfo.InvariantCulture);
             int s_scale = this.Scale;
             if (this.UnscaledValue < 0)
             {
@@ -341,7 +341,7 @@ namespace MaxDB.Data.Utilities
 
             s_num = (this.UnscaledValue >= 0 ? string.Empty : "-") + s_num.Insert(s_num.Length - s_scale, this.strSeparator);
 
-            if (s_num.EndsWith(this.strSeparator))
+            if (s_num.EndsWith(this.strSeparator, StringComparison.InvariantCulture))
             {
                 s_num = s_num.Remove(s_num.Length - this.strSeparator.Length, this.strSeparator.Length);
             }

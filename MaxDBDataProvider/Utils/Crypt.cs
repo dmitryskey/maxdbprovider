@@ -58,6 +58,7 @@ namespace MaxDB.Data.Utilities
                 this.rgbInner[i] = 0x36;
                 this.rgbOuter[i] = 0x5C;
             }
+
             for (i = 0; i < this.KeyValue.Length; i++)
             {
                 this.rgbInner[i] ^= this.KeyValue[i];
@@ -129,7 +130,7 @@ namespace MaxDB.Data.Utilities
             }
 
             // Finalize the original hash.
-            this.hashOne.TransformFinalBlock(new byte[0], 0, 0);
+            this.hashOne.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
             // Write the outer array.
             this.hashTwo.TransformBlock(this.rgbOuter, 0, 64, this.rgbOuter, 0);
             // Write the inner hash and finalize the hash.
@@ -167,9 +168,9 @@ namespace MaxDB.Data.Utilities
         // the key and "x" is the text signed by the key. salt is a per-user salt
         // value the server stores Us is a unique nonce the server sends to the
         // client Uc is a unique nonce the client sends to the server
-        // 
+        //
         // The SCRAM computations and exchange are as follows:
-        // 
+        //
         // client-msg-1 = AZ + AU + Uc (1) client -> server: client-msg-1
         // server-msg-1 = salt + ssecinfo + service + Us (2) server -> client:
         // server-msg-1 salted-pass = MAC(salt, pass) client-key = H(salted-pass)

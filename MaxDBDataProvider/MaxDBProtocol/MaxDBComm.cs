@@ -236,7 +236,7 @@ namespace MaxDB.Data.MaxDBProtocol
                             this.garbageParseids.EmptyCan();
                         }
 
-                        this.ExecuteSqlString(default(ConnectArgs), "ROLLBACK WORK RELEASE", GCMode.GC_NONE);
+                        this.ExecuteSqlString(default(ConnectArgs), "ROLLBACK WORK RELEASE", GCMode.NONE);
                     }
                     catch (MaxDBException)
                     {
@@ -531,7 +531,7 @@ namespace MaxDB.Data.MaxDBProtocol
             requestPacket.AddFeatureRequestPart(this.byKernelFeatures);
 
             // execute
-            var replyPacket = this.Execute(connArgs, requestPacket, this, GCMode.GC_DELAYED);
+            var replyPacket = this.Execute(connArgs, requestPacket, this, GCMode.DELAYED);
             this.SessionID = replyPacket.SessionID;
             this.Encoding = replyPacket.IsUnicode ? Encoding.Unicode : Encoding.ASCII;
 
@@ -676,7 +676,7 @@ namespace MaxDB.Data.MaxDBProtocol
         public void Commit(ConnectArgs connArgs)
         {
             // send commit
-            this.ExecuteSqlString(connArgs, "COMMIT WORK", GCMode.GC_ALLOWED);
+            this.ExecuteSqlString(connArgs, "COMMIT WORK", GCMode.ALLOWED);
             this.inTransaction = false;
         }
 
@@ -687,7 +687,7 @@ namespace MaxDB.Data.MaxDBProtocol
         public void Rollback(ConnectArgs connArgs)
         {
             // send rollback
-            this.ExecuteSqlString(connArgs, "ROLLBACK WORK", GCMode.GC_ALLOWED);
+            this.ExecuteSqlString(connArgs, "ROLLBACK WORK", GCMode.ALLOWED);
             this.inTransaction = false;
         }
 
@@ -764,7 +764,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
             if (this.SessionID >= 0)
             {
-                if (gcFlags == GCMode.GC_ALLOWED)
+                if (gcFlags == GCMode.ALLOWED)
                 {
                     if (this.garbageParseids != null && this.garbageParseids.IsPending)
                     {
@@ -845,7 +845,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
 
                 // if it is not completely forbidden, we will send the drop
-                if (gcFlags != GCMode.GC_NONE)
+                if (gcFlags != GCMode.NONE)
                 {
                     if (this.nonRecyclingExecutions > 20 && localWeakReturnCode == 0)
                     {
@@ -893,7 +893,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (requestPacket.InitChallengeResponse(user, auth.ClientChallenge))
             {
-                var replyPacket = this.Execute(connArgs, requestPacket, this, GCMode.GC_DELAYED);
+                var replyPacket = this.Execute(connArgs, requestPacket, this, GCMode.DELAYED);
                 auth.ParseServerChallenge(replyPacket.VarDataPart);
                 return true;
             }

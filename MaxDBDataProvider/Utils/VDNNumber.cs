@@ -79,6 +79,7 @@ namespace MaxDB.Data.Utilities
                     res = buf.ToString();
                 }
             }
+
             return res;
         }
 
@@ -123,6 +124,7 @@ namespace MaxDB.Data.Utilities
                 digitCount--;
                 Array.Copy(chars, chars.Length - scale, chars, chars.Length - scale - 1, scale);
             }
+
             if (digitCount > validDigits)
             {
                 if (chars[firstDigit + validDigits] >= '5')
@@ -309,6 +311,7 @@ namespace MaxDB.Data.Utilities
                     result *= 10;
                     result += iTensComplement - val;
                 }
+
                 result++;
             }
             else

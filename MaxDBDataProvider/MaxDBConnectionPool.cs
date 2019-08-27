@@ -27,131 +27,29 @@ namespace MaxDB.Data
     using MaxDB.Data.MaxDBProtocol;
     using MaxDB.Data.Utilities;
 
-    internal class MaxDBConnectionPoolEntry
-    {
-        private readonly MaxDBConnectionStringBuilder mConnStrBuilder;
-        private readonly MaxDBLogger mLogger;
-        private List<MaxDBComm> entryList = new List<MaxDBComm>();
-        private int activeCount;
-
-        public MaxDBConnectionPoolEntry(MaxDBConnection conn, MaxDBLogger logger)
-        {
-            this.mConnStrBuilder = conn.mConnStrBuilder;
-
-            this.entryList.Capacity = this.mConnStrBuilder.MinPoolSize;
-
-            this.mLogger = logger;
-
-            for (int i = 0; i < this.mConnStrBuilder.MinPoolSize; i++)
-            {
-                this.entryList.Add(this.CreateEntry());
-            }
-        }
-
-        public MaxDBComm GetEntry()
-        {
-            var newList = new List<MaxDBComm>();
-            lock (((ICollection)this.entryList).SyncRoot)
-            {
-                foreach (var comm in this.entryList)
-                {
-                    var conn = new MaxDBConnection();
-                    if ((this.mConnStrBuilder.ConnectionLifetime > 0 && comm.OpenTime.AddSeconds(this.mConnStrBuilder.ConnectionLifetime) < DateTime.Now) || !conn.Ping(comm))
-                    {
-                        comm.Close(true, false);
-                        this.activeCount--;
-                    }
-                    else
-                    {
-                        newList.Add(comm);
-                    }
-                }
-
-                this.entryList = newList;
-
-                for (int i = this.entryList.Count; i < this.mConnStrBuilder.MinPoolSize; i++)
-                {
-                    this.entryList.Add(this.CreateEntry());
-                }
-            }
-
-            lock (((ICollection)this.entryList).SyncRoot)
-            {
-                MaxDBComm comm = null;
-                do
-                {
-                    if (this.entryList.Count > 0)
-                    {
-                        comm = this.entryList[this.entryList.Count - 1];
-                        this.entryList.RemoveAt(this.entryList.Count - 1);
-                    }
-
-                    if (comm == null && this.activeCount < this.mConnStrBuilder.MaxPoolSize)
-                    {
-                        comm = this.CreateEntry();
-                    }
-
-                    if (comm == null)
-                    {
-                        Monitor.Wait(this.entryList);
-                    }
-                }
-                while (comm == null);
-
-                return comm;
-            }
-        }
-
-        private MaxDBComm CreateEntry()
-        {
-            var comm = new MaxDBComm(this.mLogger)
-            {
-                ConnStrBuilder = this.mConnStrBuilder
-            };
-
-            comm.Open(this.ConnectionArguments);
-            this.activeCount++;
-            return comm;
-        }
-
-        public void ReleaseEntry(MaxDBComm comm)
-        {
-            lock (this.entryList)
-            {
-                this.entryList.Add(comm);
-                Monitor.Pulse(this.entryList);
-            }
-        }
-
-        private ConnectArgs ConnectionArguments => new ConnectArgs
-        {
-            host = this.mConnStrBuilder.DataSource,
-            dbname = this.mConnStrBuilder.InitialCatalog,
-            username = this.mConnStrBuilder.UserId,
-            password = this.mConnStrBuilder.Password,
-        };
-    }
-
+    /// <summary>
+    /// MaxDB Connection pool.
+    /// </summary>
     internal sealed class MaxDBConnectionPool
     {
-        private static readonly Hashtable mPool = new Hashtable();
+        private static readonly Hashtable Pool = new Hashtable();
 
         public static MaxDBComm GetPoolEntry(MaxDBConnection conn, MaxDBLogger logger)
         {
             string key = conn.mConnStrBuilder.ConnectionString;
 
-            lock (mPool.SyncRoot)
+            lock (Pool.SyncRoot)
             {
                 MaxDBConnectionPoolEntry poolEntry;
 
-                if (mPool.ContainsKey(key))
+                if (Pool.ContainsKey(key))
                 {
-                    poolEntry = (MaxDBConnectionPoolEntry)mPool[key];
+                    poolEntry = (MaxDBConnectionPoolEntry)Pool[key];
                 }
                 else
                 {
                     poolEntry = new MaxDBConnectionPoolEntry(conn, logger);
-                    mPool[key] = poolEntry;
+                    Pool[key] = poolEntry;
                 }
 
                 return poolEntry.GetEntry();
@@ -160,12 +58,12 @@ namespace MaxDB.Data
 
         public static void ReleaseEntry(MaxDBConnection conn)
         {
-            lock (mPool.SyncRoot)
+            lock (Pool.SyncRoot)
             {
                 if (conn != null && conn.mComm != null)
                 {
                     string key = conn.mConnStrBuilder.ConnectionString;
-                    var poolEntry = (MaxDBConnectionPoolEntry)mPool[key];
+                    var poolEntry = (MaxDBConnectionPoolEntry)Pool[key];
                     if (poolEntry == null)
                     {
                         throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.POOL_NOT_FOUND, key));
@@ -178,11 +76,11 @@ namespace MaxDB.Data
 
         public static void ClearEntry(MaxDBConnection conn)
         {
-            lock (mPool.SyncRoot)
+            lock (Pool.SyncRoot)
             {
                 if (conn != null && conn.mComm != null)
                 {
-                    mPool.Remove(conn.mConnStrBuilder.ConnectionString);
+                    Pool.Remove(conn.mConnStrBuilder.ConnectionString);
                     conn.mComm.Dispose();
                 }
             }
@@ -190,19 +88,124 @@ namespace MaxDB.Data
 
         public static void ClearAllPools()
         {
-            lock (mPool.SyncRoot)
+            lock (Pool.SyncRoot)
             {
-                while (mPool.Keys.Count > 0)
+                while (Pool.Keys.Count > 0)
                 {
-                    foreach (string key in mPool.Keys)
+                    foreach (string key in Pool.Keys)
                     {
-                        var poolEntry = (MaxDBConnectionPoolEntry)mPool[key];
+                        var poolEntry = (MaxDBConnectionPoolEntry)Pool[key];
                         poolEntry.GetEntry().Dispose();
-                        mPool.Remove(key);
+                        Pool.Remove(key);
                         break;
                     }
                 }
             }
+        }
+
+        internal class MaxDBConnectionPoolEntry
+        {
+            private readonly MaxDBConnectionStringBuilder mConnStrBuilder;
+            private readonly MaxDBLogger mLogger;
+            private List<MaxDBComm> entryList = new List<MaxDBComm>();
+            private int activeCount;
+
+            public MaxDBConnectionPoolEntry(MaxDBConnection conn, MaxDBLogger logger)
+            {
+                this.mConnStrBuilder = conn.mConnStrBuilder;
+
+                this.entryList.Capacity = this.mConnStrBuilder.MinPoolSize;
+
+                this.mLogger = logger;
+
+                for (int i = 0; i < this.mConnStrBuilder.MinPoolSize; i++)
+                {
+                    this.entryList.Add(this.CreateEntry());
+                }
+            }
+
+            public MaxDBComm GetEntry()
+            {
+                var newList = new List<MaxDBComm>();
+                lock (((ICollection)this.entryList).SyncRoot)
+                {
+                    foreach (var comm in this.entryList)
+                    {
+                        var conn = new MaxDBConnection();
+                        if ((this.mConnStrBuilder.ConnectionLifetime > 0 && comm.OpenTime.AddSeconds(this.mConnStrBuilder.ConnectionLifetime) < DateTime.Now) || !conn.Ping(comm))
+                        {
+                            comm.Close(true, false);
+                            this.activeCount--;
+                        }
+                        else
+                        {
+                            newList.Add(comm);
+                        }
+                    }
+
+                    this.entryList = newList;
+
+                    for (int i = this.entryList.Count; i < this.mConnStrBuilder.MinPoolSize; i++)
+                    {
+                        this.entryList.Add(this.CreateEntry());
+                    }
+                }
+
+                lock (((ICollection)this.entryList).SyncRoot)
+                {
+                    MaxDBComm comm = null;
+                    do
+                    {
+                        if (this.entryList.Count > 0)
+                        {
+                            comm = this.entryList[this.entryList.Count - 1];
+                            this.entryList.RemoveAt(this.entryList.Count - 1);
+                        }
+
+                        if (comm == null && this.activeCount < this.mConnStrBuilder.MaxPoolSize)
+                        {
+                            comm = this.CreateEntry();
+                        }
+
+                        if (comm == null)
+                        {
+                            Monitor.Wait(this.entryList);
+                        }
+                    }
+                    while (comm == null);
+
+                    return comm;
+                }
+            }
+
+            private MaxDBComm CreateEntry()
+            {
+                var comm = new MaxDBComm(this.mLogger)
+                {
+                    ConnStrBuilder = this.mConnStrBuilder,
+                };
+
+                comm.Open(this.ConnectionArguments);
+                this.activeCount++;
+                return comm;
+            }
+
+            public void ReleaseEntry(MaxDBComm comm)
+            {
+                lock (this.entryList)
+                {
+                    this.entryList.Add(comm);
+                    Monitor.Pulse(this.entryList);
+                }
+            }
+
+            private ConnectArgs ConnectionArguments => new ConnectArgs
+            {
+                host = this.mConnStrBuilder.DataSource,
+                dbname = this.mConnStrBuilder.InitialCatalog,
+                username = this.mConnStrBuilder.UserId,
+                password = this.mConnStrBuilder.Password,
+            };
         }
     }
 }

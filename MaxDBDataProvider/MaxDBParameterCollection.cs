@@ -28,12 +28,12 @@ namespace MaxDB.Data
     using System.Globalization;
 
     /// <summary>
-    /// Represents a collection of parameters relevant to a <see cref="MaxDBCommand"/> as 
+    /// Represents a collection of parameters relevant to a <see cref="MaxDBCommand"/> as
     /// well as their respective mappings to columns in a <see cref="DataSet"/>. This class cannot be inherited.
     /// </summary>
     public sealed class MaxDBParameterCollection : DbParameterCollection, IDataParameterCollection, ICloneable
     {
-        private MaxDBParameter[] mCollection = new MaxDBParameter[0];
+        private MaxDBParameter[] mCollection = Array.Empty<MaxDBParameter>();
 
         #region "IDataParameterCollection implementation"
 
@@ -109,7 +109,7 @@ namespace MaxDB.Data
         public override bool IsSynchronized => this.mCollection.IsSynchronized;
 
         /// <summary>
-        /// Gets an object that can be used to synchronize access to the collection. 
+        /// Gets an object that can be used to synchronize access to the collection.
         /// </summary>
         public override object SyncRoot => this.mCollection.SyncRoot;
 
@@ -118,7 +118,7 @@ namespace MaxDB.Data
         #region "IEnumerable implementation"
 
         /// <summary>
-        /// Returns an enumerator to support iterating through the collection. 
+        /// Returns an enumerator to support iterating through the collection.
         /// </summary>
         /// <returns>An enumerator object.</returns>
         public override IEnumerator GetEnumerator() => this.mCollection.GetEnumerator();
@@ -141,7 +141,7 @@ namespace MaxDB.Data
         /// <summary>
         /// Removes all items from the collection.
         /// </summary>
-        public override void Clear() => this.mCollection = new MaxDBParameter[0];
+        public override void Clear() => this.mCollection = Array.Empty<MaxDBParameter>();
 
         /// <summary>
         /// Gets a value indicating whether a <see cref="MaxDBParameter"/> exists in the collection.
@@ -217,24 +217,12 @@ namespace MaxDB.Data
         /// <summary>
         /// Gets a value indicating whether the collection has fixed size.
         /// </summary>
-        public override bool IsFixedSize
-        {
-            get
-            {
-                return this.mCollection.IsFixedSize;
-            }
-        }
+        public override bool IsFixedSize => this.mCollection.IsFixedSize;
 
         /// <summary>
         /// Gets a value indicating whether the collection is read-only.
         /// </summary>
-        public override bool IsReadOnly
-        {
-            get
-            {
-                return this.mCollection.IsReadOnly;
-            }
-        }
+        public override bool IsReadOnly => this.mCollection.IsReadOnly;
 
         /// <summary>
         /// Removes the specified <see cref="MaxDBParameter"/> from the collection.
@@ -364,7 +352,7 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// Adds a <see cref="MaxDBParameter"/> to the <see cref="MaxDBParameterCollection"/>. 
+        /// Adds a <see cref="MaxDBParameter"/> to the <see cref="MaxDBParameterCollection"/>.
         /// </summary>
         /// <param name="parameterName">The name of the <see cref="MaxDBParameter"/>.</param>
         /// <param name="type">The <see cref="MaxDBType"/> of the <see cref="MaxDBParameter"/>.</param>
@@ -384,7 +372,7 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// Adds elements to the end of the <see cref="MaxDBParameterCollection"/>. 
+        /// Adds elements to the end of the <see cref="MaxDBParameterCollection"/>.
         /// </summary>
         /// <param name="values">Adds an array of values to the end of the <see cref="MaxDBParameterCollection"/>.</param>
         public override void AddRange(Array values)
@@ -401,9 +389,9 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// Adds elements to the end of the <see cref="MaxDBParameterCollection"/>. 
+        /// Adds elements to the end of the <see cref="MaxDBParameterCollection"/>.
         /// </summary>
-        /// <param name="values">Adds an array of <see cref="MaxDBParameter"/> 
+        /// <param name="values">Adds an array of <see cref="MaxDBParameter"/>
         /// values to the end of the <see cref="MaxDBParameterCollection"/>.</param>
         public void AddRange(MaxDBParameter[] values)
         {

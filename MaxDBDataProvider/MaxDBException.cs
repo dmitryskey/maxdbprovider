@@ -91,15 +91,15 @@ namespace MaxDB.Data
     /// This class is created whenever the MaxDB Data Provider encounters an error generated from the server.
     /// </para>
     /// <para>
-    /// Any open connections are not automatically closed when an exception is thrown.  If 
+    /// Any open connections are not automatically closed when an exception is thrown.  If
     /// the client application determines that the exception is fatal, it should close any open
     /// <see cref="MaxDBDataReader"/> objects or <see cref="MaxDBConnection"/> objects.
     /// </para>
     /// </remarks>
     /// <example>
-    /// The following example generates a <B>MaxDBException</B> due to a missing server, 
+    /// The following example generates a <B>MaxDBException</B> due to a missing server,
     /// and then displays the exception.
-    /// 
+    ///
     /// <code lang="Visual Basic">
     /// Public Sub ShowException()
     ///     Dim mySelectQuery As String = "SELECT column1 FROM table1"
@@ -114,18 +114,18 @@ namespace MaxDB.Data
     /// End Sub
     /// </code>
     /// <code lang="C#">
-    /// public void ShowException() 
+    /// public void ShowException()
     /// {
     ///     string mySelectQuery = "SELECT column1 FROM table1";
     ///     MaxDBConnection myConnection =
     ///         new MaxDBConnection("Data Source=localhost;Database=Sample;");
     ///     MaxDBCommand myCommand = new MaxDBCommand(mySelectQuery,myConnection);
     ///
-    ///     try 
+    ///     try
     ///     {
     ///         myCommand.Connection.Open();
     ///     }
-    ///     catch (MaxDBException e) 
+    ///     catch (MaxDBException e)
     ///     {
     ///         MessageBox.Show( e.Message );
     ///     }
@@ -248,6 +248,7 @@ namespace MaxDB.Data
                     case -75:   // Too many SQL statements (work rolled back)
                         return true;
                 }
+
                 return false;
             }
         }

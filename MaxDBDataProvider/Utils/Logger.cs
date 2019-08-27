@@ -61,11 +61,15 @@ namespace MaxDB.Data.Utilities
     internal class MaxDBLogger
     {
         public const int
-            NumSize = 4,
-            TypeSize = 16,
-            LenSize = 10,
-            InputSize = 10,
-            DataSize = 256;
+NumSize = 4;
+        public const int
+TypeSize = 16;
+        public const int
+LenSize = 10;
+        public const int
+InputSize = 10;
+        public const int
+DataSize = 256;
 
         public const string Null = "NULL";
 
@@ -162,7 +166,7 @@ namespace MaxDB.Data.Utilities
 
         public void SqlTraceDataHeader(DateTime dt) => this.SqlTrace(dt, "I".PadRight(NumSize) + "T".PadRight(TypeSize) + "L".PadRight(LenSize) + "I".PadRight(InputSize) + "DATA");
 
-        private static void SqlTraceTransl(DBTechTranslator info)
+        private static void SqlTraceTransl(MaxDBTranslators.DBTechTranslator info)
         {
             Trace.Write(info.ColumnIndex.ToString(CultureInfo.InvariantCulture).PadRight(4));
             Trace.Write(info.ColumnTypeName.PadRight(15));

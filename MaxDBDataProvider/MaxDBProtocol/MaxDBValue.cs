@@ -41,14 +41,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public PutValue(Stream stream, int length, int position)
         {
-            if (length >= 0)
-            {
-                this.mStream = new FilteredStream(stream, length);
-            }
-            else
-            {
-                this.mStream = stream;
-            }
+            this.mStream = length >= 0 ? new FilteredStream(stream, length) : stream;
 
             this.BufferPosition = position;
         }
@@ -180,6 +173,7 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 // ignore
             }
+
             this.mStream = null;
         }
 
@@ -275,11 +269,11 @@ namespace MaxDB.Data.MaxDBProtocol
 
     internal abstract class AbstractProcedurePutValue
     {
-        private readonly DBTechTranslator m_translator;
+        private readonly MaxDBTranslators.DBTechTranslator m_translator;
         private readonly ByteArray m_descriptor;
         private ByteArray m_descriptorMark;
 
-        public AbstractProcedurePutValue(DBTechTranslator translator)
+        public AbstractProcedurePutValue(MaxDBTranslators.DBTechTranslator translator)
         {
             this.m_translator = translator;
             this.m_descriptor = new ByteArray(LongDesc.Size);
@@ -308,7 +302,7 @@ namespace MaxDB.Data.MaxDBProtocol
     {
         protected Stream mStream;
 
-        internal BasicProcedurePutValue(DBTechTranslator translator, Stream stream, int length)
+        internal BasicProcedurePutValue(MaxDBTranslators.DBTechTranslator translator, Stream stream, int length)
             : base(translator) => this.mStream = length == -1 ? stream : new FilteredStream(stream, length);
 
         public override void TransferStream(DataPart dataPart, short rowCount) => dataPart.FillWithProcedureStream(this.mStream, rowCount);
@@ -332,12 +326,12 @@ namespace MaxDB.Data.MaxDBProtocol
 
     internal class ASCIIProcedurePutValue : BasicProcedurePutValue
     {
-        public ASCIIProcedurePutValue(DBTechTranslator translator, byte[] bytes)
+        public ASCIIProcedurePutValue(MaxDBTranslators.DBTechTranslator translator, byte[] bytes)
             : this(translator, new MemoryStream(bytes), -1)
         {
         }
 
-        public ASCIIProcedurePutValue(DBTechTranslator translator, Stream stream, int length)
+        public ASCIIProcedurePutValue(MaxDBTranslators.DBTechTranslator translator, Stream stream, int length)
             : base(translator, stream, length)
         {
         }
@@ -348,7 +342,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
     internal class BinaryProcedurePutValue : BasicProcedurePutValue
     {
-        public BinaryProcedurePutValue(DBTechTranslator translator, Stream stream, int length)
+        public BinaryProcedurePutValue(MaxDBTranslators.DBTechTranslator translator, Stream stream, int length)
             : base(translator, stream, length)
         {
         }
@@ -362,12 +356,12 @@ namespace MaxDB.Data.MaxDBProtocol
     {
         protected TextReader mReader;
 
-        public UnicodeProcedurePutValue(DBTechTranslator translator, char[] buffer)
+        public UnicodeProcedurePutValue(MaxDBTranslators.DBTechTranslator translator, char[] buffer)
             : this(translator, new StringReader(new string(buffer)), -1)
         {
         }
 
-        public UnicodeProcedurePutValue(DBTechTranslator translator, TextReader reader, int length)
+        public UnicodeProcedurePutValue(MaxDBTranslators.DBTechTranslator translator, TextReader reader, int length)
             : base(translator) => this.mReader = length == -1 ? reader : new TextReaderFilter(reader, length);
 
         public override void TransferStream(DataPart dataPart, short rowCount) => dataPart.FillWithProcedureReader(this.mReader, rowCount);
@@ -428,7 +422,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 longpart.Close();
                 try
                 {
-                    replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, GCMode.GC_DELAYED);
+                    replyPacket = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, requestPacket, this, GCMode.DELAYED);
                 }
                 catch (MaxDBException ex)
                 {
@@ -458,7 +452,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
         private void SetupStreamBuffer(byte[] descriptor, ByteArray dataPart)
         {
-            var desc = new ByteArray(descriptor); // ??? swapMode? 
+            var desc = new ByteArray(descriptor); // ??? swapMode?
             int dataStart;
 
             dataStart = desc.ReadInt32(LongDesc.ValPos) - 1;
@@ -567,6 +561,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         bytesCopied += chunkSize;
                     }
                 }
+
                 if (bytesCopied == 0 && this.m_value.bAtEnd)
                 {
                     bytesCopied = -1;

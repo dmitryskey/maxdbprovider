@@ -26,33 +26,33 @@ namespace MaxDB.Data
     using System.Data.Common;
 
     /// <summary>
-    /// Represents a set of data commands and a database connection that are used to fill a dataset and update a MaxDB database. 
+    /// Represents a set of data commands and a database connection that are used to fill a dataset and update a MaxDB database.
     /// This class cannot be inherited.
     /// </summary>
     /// <remarks>
     /// <para>
     /// The <B>MaxDBDataAdapter</B>, serves as a bridge between a <see cref="System.Data.DataSet"/>
-    /// and MaxDB for retrieving and saving data. The <B>MaxDBDataAdapter</B> provides this 
-    /// bridge by mapping <see cref="DbDataAdapter.Fill(DataSet)"/>, which changes the data in the 
-    /// <B>DataSet</B> to match the data in the data source, and <see cref="DbDataAdapter.Update(DataSet)"/>, 
-    /// which changes the data in the data source to match the data in the <B>DataSet</B>, 
+    /// and MaxDB for retrieving and saving data. The <B>MaxDBDataAdapter</B> provides this
+    /// bridge by mapping <see cref="DbDataAdapter.Fill(DataSet)"/>, which changes the data in the
+    /// <B>DataSet</B> to match the data in the data source, and <see cref="DbDataAdapter.Update(DataSet)"/>,
+    /// which changes the data in the data source to match the data in the <B>DataSet</B>,
     /// using the appropriate SQL statements against the data source.
     /// </para>
     /// <para>
-    /// When the <B>MaxDBDataAdapter</B> fills a <B>DataSet</B>, it will create the necessary 
-    /// tables and columns for the returned data if they do not already exist. However, primary 
-    /// key information will not be included in the implicitly created schema unless the 
-    /// <see cref="System.Data.MissingSchemaAction"/> property is set to <see cref="System.Data.MissingSchemaAction.AddWithKey"/>. 
-    /// You may also have the <B>MaxDBDataAdapter</B> create the schema of the <B>DataSet</B>, 
-    /// including primary key information, before filling it with data using 
-    /// <see cref="System.Data.Common.DbDataAdapter.FillSchema(System.Data.DataTable, System.Data.SchemaType)"/>. 
+    /// When the <B>MaxDBDataAdapter</B> fills a <B>DataSet</B>, it will create the necessary
+    /// tables and columns for the returned data if they do not already exist. However, primary
+    /// key information will not be included in the implicitly created schema unless the
+    /// <see cref="System.Data.MissingSchemaAction"/> property is set to <see cref="System.Data.MissingSchemaAction.AddWithKey"/>.
+    /// You may also have the <B>MaxDBDataAdapter</B> create the schema of the <B>DataSet</B>,
+    /// including primary key information, before filling it with data using
+    /// <see cref="System.Data.Common.DbDataAdapter.FillSchema(System.Data.DataTable, System.Data.SchemaType)"/>.
     /// </para>
     /// <para><B>MaxDBDataAdapter</B> is used in conjunction with <see cref="MaxDBConnection"/>
     /// and <see cref="MaxDBCommand"/> to increase performance when connecting to a MaxDB database.
     /// </para>
-    /// <para>The <B>MaxDBDataAdapter</B> also includes the <see cref="MaxDBDataAdapter.SelectCommand"/>, 
-    /// <see cref="MaxDBDataAdapter.InsertCommand"/>, <see cref="MaxDBDataAdapter.DeleteCommand"/>, 
-    /// <see cref="MaxDBDataAdapter.UpdateCommand"/>, and <see cref="DataAdapter.TableMappings"/> 
+    /// <para>The <B>MaxDBDataAdapter</B> also includes the <see cref="MaxDBDataAdapter.SelectCommand"/>,
+    /// <see cref="MaxDBDataAdapter.InsertCommand"/>, <see cref="MaxDBDataAdapter.DeleteCommand"/>,
+    /// <see cref="MaxDBDataAdapter.UpdateCommand"/>, and <see cref="DataAdapter.TableMappings"/>
     /// properties to facilitate the loading and updating of data.
     /// </para>
     /// </remarks>
@@ -79,16 +79,16 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MaxDBDataAdapter"/> class with 
+        /// Initializes a new instance of the <see cref="MaxDBDataAdapter"/> class with
         /// the specified <see cref="MaxDBCommand"/> as the <see cref="SelectCommand"/> property.
         /// </summary>
         /// <param name="selectCommand"><see cref="MaxDBCommand"/> that is a SQL SELECT statement or stored procedure/function call
-        /// and is set as the <see cref="SelectCommand"/> property of the <see cref="MaxDBDataAdapter"/>. 
+        /// and is set as the <see cref="SelectCommand"/> property of the <see cref="MaxDBDataAdapter"/>.
         /// </param>
         public MaxDBDataAdapter(MaxDBCommand selectCommand) => this.SelectCommand = selectCommand;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MaxDBDataAdapter"/> class with 
+        /// Initializes a new instance of the <see cref="MaxDBDataAdapter"/> class with
         /// the specified <see cref="MaxDBCommand"/> as the <see cref="SelectCommand"/> property and <see cref="MaxDBConnection"/> object.
         /// </summary>
         /// <param name="selectCmdText"><see cref="MaxDBCommand"/> that is a SQL SELECT statement or stored procedure/function call
@@ -98,7 +98,7 @@ namespace MaxDB.Data
         public MaxDBDataAdapter(string selectCmdText, MaxDBConnection connection) => this.SelectCommand = new MaxDBCommand(selectCmdText, connection);
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MaxDBDataAdapter"/> class with 
+        /// Initializes a new instance of the <see cref="MaxDBDataAdapter"/> class with
         /// the specified <see cref="MaxDBCommand"/> as the <see cref="SelectCommand"/> property and connection string.
         /// </summary>
         /// <param name="selectCmdText"><see cref="MaxDBCommand"/> that is a SQL SELECT statement or stored procedure/function call
@@ -193,20 +193,20 @@ namespace MaxDB.Data
         /// Gets or sets a SQL statement or stored procedure/function call used to updated records in the data source.
         /// </summary>
         /// <value>
-        /// A <see cref="MaxDBCommand"/> used during <see cref="System.Data.Common.DataAdapter.Update"/> to update records in the 
+        /// A <see cref="MaxDBCommand"/> used during <see cref="System.Data.Common.DataAdapter.Update"/> to update records in the
         /// database with data from the <see cref="DataSet"/>.
         /// </value>
         /// <remarks>
-        /// <para>During <see cref="System.Data.Common.DataAdapter.Update"/>, if this property is not set and primary key information 
-        /// is present in the <see cref="DataSet"/>, the <B>UpdateCommand</B> can be generated 
-        /// automatically if you set the <see cref="SelectCommand"/> property and use the 
-        /// <see cref="MaxDBCommandBuilder"/>.  Then, any additional commands that you do not set are 
-        /// generated by the <B>MaxDBCommandBuilder</B>. This generation logic requires key column 
-        /// information to be present in the <B>DataSet</B>. 
+        /// <para>During <see cref="System.Data.Common.DataAdapter.Update"/>, if this property is not set and primary key information
+        /// is present in the <see cref="DataSet"/>, the <B>UpdateCommand</B> can be generated
+        /// automatically if you set the <see cref="SelectCommand"/> property and use the
+        /// <see cref="MaxDBCommandBuilder"/>.  Then, any additional commands that you do not set are
+        /// generated by the <B>MaxDBCommandBuilder</B>. This generation logic requires key column
+        /// information to be present in the <B>DataSet</B>.
         /// </para>
         /// <para>
-        /// When <B>UpdateCommand</B> is assigned to a previously created <see cref="MaxDBCommand"/>, 
-        /// the <B>MaxDBCommand</B> is not cloned. The <B>UpdateCommand</B> maintains a reference 
+        /// When <B>UpdateCommand</B> is assigned to a previously created <see cref="MaxDBCommand"/>,
+        /// the <B>MaxDBCommand</B> is not cloned. The <B>UpdateCommand</B> maintains a reference
         /// to the previously created <B>MaxDBCommand</B> object.
         /// </para>
         /// <note>
@@ -226,16 +226,16 @@ namespace MaxDB.Data
         /// Gets or sets a SQL statement or stored procedure/function call used to select records in the data source.
         /// </summary>
         /// <value>
-        /// A <see cref="MaxDBCommand"/> used during <see cref="System.Data.Common.DbDataAdapter.Fill(System.Data.DataSet)"/> 
+        /// A <see cref="MaxDBCommand"/> used during <see cref="System.Data.Common.DbDataAdapter.Fill(System.Data.DataSet)"/>
         /// to select records from the database for placement in the <see cref="DataSet"/>.
         /// </value>
         /// <remarks>
-        /// <para>When <B>SelectCommand</B> is assigned to a previously created <see cref="MaxDBCommand"/>, 
-        /// the <B>MaxDBCommand</B> is not cloned. The <B>SelectCommand</B> maintains a reference to the 
+        /// <para>When <B>SelectCommand</B> is assigned to a previously created <see cref="MaxDBCommand"/>,
+        /// the <B>MaxDBCommand</B> is not cloned. The <B>SelectCommand</B> maintains a reference to the
         /// previously created <B>MaxDBCommand</B> object.
         /// </para>
         /// <para>
-        /// If the <B>SelectCommand</B> does not return any rows, no tables are added to the 
+        /// If the <B>SelectCommand</B> does not return any rows, no tables are added to the
         /// <see cref="DataSet"/>, and no exception is raised.
         /// </para>
         /// </remarks>
@@ -251,20 +251,20 @@ namespace MaxDB.Data
         /// Gets or sets a SQL statement or stored procedure/function call used to delete records from the data set.
         /// </summary>
         /// <value>
-        /// A <see cref="MaxDBCommand"/> used during <see cref="System.Data.Common.DataAdapter.Update"/> to delete records in the 
+        /// A <see cref="MaxDBCommand"/> used during <see cref="System.Data.Common.DataAdapter.Update"/> to delete records in the
         /// database that correspond to deleted rows in the <see cref="DataSet"/>.
         /// </value>
         /// <remarks>
-        /// <para>During <see cref="System.Data.Common.DataAdapter.Update"/>, if this property is not set and primary key information 
-        /// is present in the <see cref="DataSet"/>, the <B>DeleteCommand</B> can be generated 
-        /// automatically if you set the <see cref="SelectCommand"/> property and use the 
-        /// <see cref="MaxDBCommandBuilder"/>.  Then, any additional commands that you do not set are 
-        /// generated by the <B>MaxDBCommandBuilder</B>. This generation logic requires key column 
-        /// information to be present in the <B>DataSet</B>. 
+        /// <para>During <see cref="System.Data.Common.DataAdapter.Update"/>, if this property is not set and primary key information
+        /// is present in the <see cref="DataSet"/>, the <B>DeleteCommand</B> can be generated
+        /// automatically if you set the <see cref="SelectCommand"/> property and use the
+        /// <see cref="MaxDBCommandBuilder"/>.  Then, any additional commands that you do not set are
+        /// generated by the <B>MaxDBCommandBuilder</B>. This generation logic requires key column
+        /// information to be present in the <B>DataSet</B>.
         /// </para>
         /// <para>
-        /// When <B>DeleteCommand</B> is assigned to a previously created <see cref="MaxDBCommand"/>, 
-        /// the <B>MaxDBCommand</B> is not cloned. The <B>DeleteCommand</B> maintains a reference 
+        /// When <B>DeleteCommand</B> is assigned to a previously created <see cref="MaxDBCommand"/>,
+        /// the <B>MaxDBCommand</B> is not cloned. The <B>DeleteCommand</B> maintains a reference
         /// to the previously created <B>MaxDBCommand</B> object.
         /// </para>
         /// </remarks>
@@ -280,24 +280,24 @@ namespace MaxDB.Data
         /// Gets or sets a SQL statement or stored procedure used to insert records into the data set.
         /// </summary>
         /// <value>
-        /// A <see cref="MaxDBCommand"/> used during <see cref="System.Data.Common.DataAdapter.Update"/> to insert records into the 
+        /// A <see cref="MaxDBCommand"/> used during <see cref="System.Data.Common.DataAdapter.Update"/> to insert records into the
         /// database that correspond to new rows in the <see cref="DataSet"/>.
         /// </value>
         /// <remarks>
-        /// <para>During <see cref="System.Data.Common.DataAdapter.Update"/>, if this property is not set and primary key information 
-        /// is present in the <see cref="DataSet"/>, the <B>InsertCommand</B> can be generated 
-        /// automatically if you set the <see cref="SelectCommand"/> property and use the 
-        /// <see cref="MaxDBCommandBuilder"/>.  Then, any additional commands that you do not set are 
-        /// generated by the <B>MaxDBCommandBuilder</B>. This generation logic requires key column 
-        /// information to be present in the <B>DataSet</B>. 
+        /// <para>During <see cref="System.Data.Common.DataAdapter.Update"/>, if this property is not set and primary key information
+        /// is present in the <see cref="DataSet"/>, the <B>InsertCommand</B> can be generated
+        /// automatically if you set the <see cref="SelectCommand"/> property and use the
+        /// <see cref="MaxDBCommandBuilder"/>.  Then, any additional commands that you do not set are
+        /// generated by the <B>MaxDBCommandBuilder</B>. This generation logic requires key column
+        /// information to be present in the <B>DataSet</B>.
         /// </para>
         /// <para>
-        /// When <B>InsertCommand</B> is assigned to a previously created <see cref="MaxDBCommand"/>, 
-        /// the <B>MaxDBCommand</B> is not cloned. The <B>InsertCommand</B> maintains a reference 
+        /// When <B>InsertCommand</B> is assigned to a previously created <see cref="MaxDBCommand"/>,
+        /// the <B>MaxDBCommand</B> is not cloned. The <B>InsertCommand</B> maintains a reference
         /// to the previously created <B>MaxDBCommand</B> object.
         /// </para>
         /// <note>
-        /// If execution of this command returns rows, these rows may be added to the <B>DataSet</B> 
+        /// If execution of this command returns rows, these rows may be added to the <B>DataSet</B>
         /// depending on how you set the <see cref="MaxDBCommand.UpdatedRowSource"/> property of the <B>MaxDBCommand</B> object.
         /// </note>
         /// </remarks>
@@ -311,7 +311,7 @@ namespace MaxDB.Data
         #endregion
 
         /// <summary>
-        /// Gets or sets a value that enables or disables batch processing support, and specifies the number of commands that can be executed in a batch. 
+        /// Gets or sets a value that enables or disables batch processing support, and specifies the number of commands that can be executed in a batch.
         /// </summary>
         public override int UpdateBatchSize
         {

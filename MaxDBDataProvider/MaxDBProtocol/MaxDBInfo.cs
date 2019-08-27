@@ -31,13 +31,13 @@ namespace MaxDB.Data.MaxDBProtocol
     {
         internal MaxDBConnection dbConnection;
         private byte[] byMassParseId;
-        internal DBTechTranslator[] mParamInfos;
+        internal MaxDBTranslators.DBTechTranslator[] mParamInfos;
         internal DBProcParameterInfo[] mProcParamInfos;
         internal short sInputCount;
         private int iSessionId; // unique identifier for the connection
         internal string[] strColumnNames;
 
-        internal DBTechTranslator[] mColumnInfos;
+        internal MaxDBTranslators.DBTechTranslator[] mColumnInfos;
 
         internal bool bVarDataInput;
 
@@ -327,7 +327,7 @@ namespace MaxDB.Data.MaxDBProtocol
             var rs = cmd.ExecuteReader();
             if (!rs.Read())
             {
-                this.mProcParamInfos = new DBProcParameterInfo[0];
+                this.mProcParamInfos = Array.Empty<DBProcParameterInfo>();
                 rs.Close();
                 return;
             }
@@ -399,14 +399,14 @@ namespace MaxDB.Data.MaxDBProtocol
         /**
          * Checks the validity. A parse info is valid if the session is the same as
          * of the current connection.
-         * 
+         *
          * @return <code>true</code> if the session ids are equal
          */
         public bool IsValid => this.iSessionId == this.dbConnection.mComm.SessionID;
 
         /**
          * Sets a parse id, together with the correct session id.
-         * 
+         *
          * @param parseId
          *            the parse id.
          * @param sessionId
@@ -438,9 +438,9 @@ namespace MaxDB.Data.MaxDBProtocol
         }
 
         // Gets the information about parameters in sql statement
-        public DBTechTranslator[] ParamInfo => this.mParamInfos;
+        public MaxDBTranslators.DBTechTranslator[] ParamInfo => this.mParamInfos;
 
-        public DBTechTranslator[] ColumnInfo => this.mColumnInfos;
+        public MaxDBTranslators.DBTechTranslator[] ColumnInfo => this.mColumnInfos;
 
         /**
          * Gets the parse id.
@@ -455,13 +455,13 @@ namespace MaxDB.Data.MaxDBProtocol
 
         /**
          * Sets the infos about parameters and result columns.
-         * 
+         *
          * @param shortInfo
          *            info about the parameters and result columns
          * @param columnames
          *            the names of the result columns
          */
-        public void SetShortInfosAndColumnNames(DBTechTranslator[] shortInfo, string[] columnNames)
+        public void SetShortInfosAndColumnNames(MaxDBTranslators.DBTechTranslator[] shortInfo, string[] columnNames)
         {
             // clear the internal dependent fields
             this.sInputCount = 0;
@@ -472,7 +472,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
             if (shortInfo == null && columnNames == null)
             {
-                this.mParamInfos = this.mColumnInfos = new DBTechTranslator[0];
+                this.mParamInfos = this.mColumnInfos = Array.Empty<MaxDBTranslators.DBTechTranslator>();
                 return;
             }
 
@@ -499,8 +499,8 @@ namespace MaxDB.Data.MaxDBProtocol
                 else
                 {
                     int column_count = columnNames.Length;
-                    this.mColumnInfos = new DBTechTranslator[column_count];
-                    this.mParamInfos = new DBTechTranslator[shortInfo.Length - column_count];
+                    this.mColumnInfos = new MaxDBTranslators.DBTechTranslator[column_count];
+                    this.mParamInfos = new MaxDBTranslators.DBTechTranslator[shortInfo.Length - column_count];
 
                     int colInfoIdx = 0;
                     int paramInfoIdx = 0;
@@ -604,13 +604,13 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
             }
 
-            DBTechTranslator.SetEncoding(this.mParamInfos, this.dbConnection.UserAsciiEncoding);
+            MaxDBTranslators.DBTechTranslator.SetEncoding(this.mParamInfos, this.dbConnection.UserAsciiEncoding);
         }
 
-        public void SetMetaData(DBTechTranslator[] info, string[] colName)
+        public void SetMetaData(MaxDBTranslators.DBTechTranslator[] info, string[] colName)
         {
             int colCount = info.Length;
-            DBTechTranslator currentInfo;
+            MaxDBTranslators.DBTechTranslator currentInfo;
             string currentName;
             this.strColumnNames = colName;
 
@@ -628,7 +628,7 @@ namespace MaxDB.Data.MaxDBProtocol
             else
             {
                 int outputColCnt = 0;
-                this.mColumnInfos = new DBTechTranslator[colName.Length];
+                this.mColumnInfos = new MaxDBTranslators.DBTechTranslator[colName.Length];
                 for (int i = 0; i < colCount; ++i)
                 {
                     if (info[i].IsOutput)
@@ -826,10 +826,10 @@ namespace MaxDB.Data.MaxDBProtocol
     {
         private readonly MaxDBConnection dbConnection;           // current connection
         private readonly string strCursorName;          // cursor
-        private DBTechTranslator[] mColumnInfo;            // short info of all columns
+        private MaxDBTranslators.DBTechTranslator[] mColumnInfo;            // short info of all columns
         private string strFetchParamString; // cache for fetch parameters
 
-        public FetchInfo(MaxDBConnection connection, string cursorName, DBTechTranslator[] infos, string[] columnNames)
+        public FetchInfo(MaxDBConnection connection, string cursorName, MaxDBTranslators.DBTechTranslator[] infos, string[] columnNames)
         {
             this.dbConnection = connection;
             this.strCursorName = cursorName;
@@ -839,10 +839,10 @@ namespace MaxDB.Data.MaxDBProtocol
             }
         }
 
-        private void SetMetaData(DBTechTranslator[] info, string[] colName)
+        private void SetMetaData(MaxDBTranslators.DBTechTranslator[] info, string[] colName)
         {
             int colCount = info.Length;
-            DBTechTranslator currentInfo;
+            MaxDBTranslators.DBTechTranslator currentInfo;
             int currentFieldEnd;
 
             this.RecordSize = 0;
@@ -862,7 +862,7 @@ namespace MaxDB.Data.MaxDBProtocol
             else
             {
                 int outputColCnt = 0;
-                this.mColumnInfo = new DBTechTranslator[colName.Length];
+                this.mColumnInfo = new MaxDBTranslators.DBTechTranslator[colName.Length];
                 for (int i = 0; i < colCount; ++i)
                 {
                     if (info[i].IsOutput)
@@ -876,12 +876,12 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
             }
 
-            DBTechTranslator.SetEncoding(this.mColumnInfo, this.dbConnection.UserAsciiEncoding);
+            MaxDBTranslators.DBTechTranslator.SetEncoding(this.mColumnInfo, this.dbConnection.UserAsciiEncoding);
         }
 
         private void Describe()
         {
-            DBTechTranslator[] infos = null;
+            MaxDBTranslators.DBTechTranslator[] infos = null;
             string[] columnNames = null;
             var request = this.dbConnection.mComm.GetRequestPacket();
             byte currentSQLMode = request.SwitchSqlMode((byte)SqlMode.Internal);
@@ -894,7 +894,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 this.dbConnection.mLogger.SqlTrace(DateTime.Now, "::DESCRIBE CURSOR " + this.strCursorName);
                 // <<< SQL TRACE
 
-                MaxDBReplyPacket reply = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, request, this, GCMode.GC_ALLOWED);
+                MaxDBReplyPacket reply = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, request, this, GCMode.ALLOWED);
                 reply.ClearPartOffset();
                 for (int i = 0; i < reply.PartCount; i++)
                 {
@@ -963,7 +963,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
             try
             {
-                return this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, request, this, GCMode.GC_DELAYED);
+                return this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, request, this, GCMode.DELAYED);
             }
             finally
             {
@@ -971,7 +971,7 @@ namespace MaxDB.Data.MaxDBProtocol
             }
         }
 
-        public DBTechTranslator GetColumnInfo(int index)
+        public MaxDBTranslators.DBTechTranslator GetColumnInfo(int index)
         {
             if (this.mColumnInfo == null)
             {

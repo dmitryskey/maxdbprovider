@@ -143,7 +143,7 @@ namespace MaxDB.Data
         public Encoding DatabaseEncoding => this.mComm.Encoding;
 
         /// <summary>
-        /// MaxDB database SQL mode (<see cref="SqlMode"/>). 
+        /// MaxDB database SQL mode (<see cref="SqlMode"/>).
         /// </summary>
         public SqlMode SqlMode
         {
@@ -186,7 +186,8 @@ namespace MaxDB.Data
                 {
                     this.mLogger.SqlTrace(DateTime.Now, "::SET AUTOCOMMIT " + (value ? "ON" : "OFF"));
                 }
-                // <<< SQL TRACE                
+
+                // <<< SQL TRACE
 
                 this.mComm.AutoCommit = value;
             }
@@ -251,7 +252,7 @@ namespace MaxDB.Data
                 requestPacket.InitDbsCommand(this.mComm.AutoCommit, cmd);
                 try
                 {
-                    this.mComm.Execute(this.mConnArgs, requestPacket, this, GCMode.GC_ALLOWED);
+                    this.mComm.Execute(this.mConnArgs, requestPacket, this, GCMode.ALLOWED);
                 }
                 catch (MaxDBTimeoutException)
                 {
@@ -296,7 +297,7 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// Initiate a local transaction 
+        /// Initiate a local transaction
         /// </summary>
         /// <returns>A <see cref="MaxDBTransaction"/> object.</returns>
         public new MaxDBTransaction BeginTransaction() => new MaxDBTransaction(this);
@@ -323,6 +324,7 @@ namespace MaxDB.Data
                 {
                     this.mLogger.SqlTrace(DateTime.Now, "::CLOSE CONNECTION");
                 }
+
                 // <<< SQL TRACE
 
                 this.mLogger.Flush();
@@ -349,7 +351,7 @@ namespace MaxDB.Data
         /// </summary>
         /// <remarks>
         /// <para>
-        /// The <b>ConnectionString</b> always returns exactly what the user set. 
+        /// The <b>ConnectionString</b> always returns exactly what the user set.
         /// Security-sensitive information may be removed.
         /// </para>
         /// <para>
@@ -357,7 +359,7 @@ namespace MaxDB.Data
         /// The following example illustrates a typical connection string.
         /// <c>"Server=MyServer;Database=MyDB;User ID=MyLogin;Password=MyPassword;"</c>
         /// </para>
-        /// <para>To connect to a local machine, specify "localhost" or "127.0.0.1" for the server. 
+        /// <para>To connect to a local machine, specify "localhost" or "127.0.0.1" for the server.
         /// If you do not specify a server, localhost is assumed.
         /// </para>
         /// </remarks>
@@ -470,7 +472,7 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// Returns schema information for the data source of this <see cref="MaxDBConnection"/>. 
+        /// Returns schema information for the data source of this <see cref="MaxDBConnection"/>.
         /// </summary>
         /// <returns>A <see cref="DataTable"/> that contains schema information. </returns>
         public override DataTable GetSchema()
@@ -480,7 +482,7 @@ namespace MaxDB.Data
 
         /// <summary>
         /// Returns schema information for the data source of this <see cref="MaxDBConnection"/>
-        /// using the specified string for the schema name. 
+        /// using the specified string for the schema name.
         /// </summary>
         /// <returns>A <see cref="DataTable"/> that contains schema information.</returns>
         public override DataTable GetSchema(string collectionName)
@@ -490,8 +492,8 @@ namespace MaxDB.Data
 
         /// <summary>
         /// Returns schema information for the data source of this <see cref="MaxDBConnection"/>
-        /// using the specified string for the schema name and 
-        /// the specified string array for the restriction values. 
+        /// using the specified string for the schema name and
+        /// the specified string array for the restriction values.
         /// </summary>
         /// <returns>A <see cref="DataTable"/> that contains schema information.</returns>
         public override DataTable GetSchema(string collectionName, string[] restrictionValues)
@@ -715,7 +717,8 @@ namespace MaxDB.Data
                         TimePattern = "HHHHMMSS";
                         TimestampPattern = "YYYYMMDDHHMMSSMMMMMM";
                         break;
-                };
+                }
+;
 
                 dt.Rows.Add(new object[]{"DATE", MaxDBType.Date, DatePattern.Length, "DATE", DBNull.Value, typeof(DateTime).ToString(),
                     false, true, false, true, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
@@ -1143,7 +1146,7 @@ namespace MaxDB.Data
         /// Opens a database connection with the property settings specified by the ConnectionString.
         /// </summary>
         /// <remarks>
-        /// <para>The <see cref="MaxDBConnection"/> draws an open connection from the connection pool if one is available. 
+        /// <para>The <see cref="MaxDBConnection"/> draws an open connection from the connection pool if one is available.
         /// Otherwise, it establishes a new connection to an instance of MaxDB.</para>
         /// </remarks>
         public override void Open()
@@ -1177,7 +1180,7 @@ namespace MaxDB.Data
         public static void ClearPool(MaxDBConnection connection) => MaxDBConnectionPool.ClearEntry(connection);
 
         /// <summary>
-        /// Empties the connection pool. 
+        /// Empties the connection pool.
         /// </summary>
         public static void ClearAllPools()
         {

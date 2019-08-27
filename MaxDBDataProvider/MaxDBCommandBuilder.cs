@@ -60,7 +60,7 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MaxDBCommandBuilder"/> class 
+        /// Initializes a new instance of the <see cref="MaxDBCommandBuilder"/> class
         /// with the associated <see cref="MaxDBDataAdapter"/> object.
         /// </summary>
         /// <param name="adapter">Given <see cref="MaxDBDataAdapter"/> to use.</param>
@@ -70,8 +70,8 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// Gets or sets the beginning character or characters to use when specifying MaxDB 
-        /// database objects (for example, tables or columns) whose names contain 
+        /// Gets or sets the beginning character or characters to use when specifying MaxDB
+        /// database objects (for example, tables or columns) whose names contain
         /// characters such as spaces or reserved tokens.
         /// </summary>
         /// <value>
@@ -90,8 +90,8 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// Gets or sets the ending character or characters to use when specifying MaxDB 
-        /// database objects (for example, tables or columns) whose names contain 
+        /// Gets or sets the ending character or characters to use when specifying MaxDB
+        /// database objects (for example, tables or columns) whose names contain
         /// characters such as spaces or reserved tokens.
         /// </summary>
         /// <value>
@@ -145,7 +145,7 @@ namespace MaxDB.Data
         /// </summary>
         /// <remarks>
         /// <para>
-        /// An application should call <B>RefreshSchema</B> whenever the SELECT statement or the 
+        /// An application should call <B>RefreshSchema</B> whenever the SELECT statement or the
         /// <see cref="MaxDBDataAdapter.SelectCommand"/> value of the <see cref="MaxDBDataAdapter"/>
         /// associated with the <see cref="MaxDBCommandBuilder"/> changes.
         /// </para>
@@ -255,18 +255,18 @@ namespace MaxDB.Data
         /// </summary>
         /// <remarks>
         /// <para>
-        /// An application can use the <B>GetDeleteCommand</B> method for informational or troubleshooting purposes because 
+        /// An application can use the <B>GetDeleteCommand</B> method for informational or troubleshooting purposes because
         /// it returns the <see cref="MaxDBCommand"/> object to be executed.
         /// </para>
         /// <para>
-        /// You can also use <B>GetDeleteCommand</B> as the basis of a modified command. For example, you might call 
-        /// <B>GetDeleteCommand</B> and modify the <see cref="MaxDBCommand.CommandTimeout"/> value, and then explicitly set that on the 
+        /// You can also use <B>GetDeleteCommand</B> as the basis of a modified command. For example, you might call
+        /// <B>GetDeleteCommand</B> and modify the <see cref="MaxDBCommand.CommandTimeout"/> value, and then explicitly set that on the
         /// <see cref="MaxDBDataAdapter"/>.
         /// </para>
         /// <para>
-        /// After the SQL statement is first generated, the application must explicitly call <see cref="RefreshSchema"/> 
-        /// if it changes the statement in any way. Otherwise, the <B>GetDeleteCommand</B> will be still be using information 
-        /// from the previous statement, which might not be correct. The SQL statements are first generated either when the application calls 
+        /// After the SQL statement is first generated, the application must explicitly call <see cref="RefreshSchema"/>
+        /// if it changes the statement in any way. Otherwise, the <B>GetDeleteCommand</B> will be still be using information
+        /// from the previous statement, which might not be correct. The SQL statements are first generated either when the application calls
         /// <see cref="System.Data.Common.DataAdapter.Update"/> or <B>GetDeleteCommand</B>.
         /// </para>
         /// </remarks>
@@ -320,18 +320,18 @@ namespace MaxDB.Data
         /// </summary>
         /// <remarks>
         /// <para>
-        /// An application can use the <B>GetInsertCommand</B> method for informational or troubleshooting purposes because 
+        /// An application can use the <B>GetInsertCommand</B> method for informational or troubleshooting purposes because
         /// it returns the <see cref="MaxDBCommand"/> object to be executed.
         /// </para>
         /// <para>
-        /// You can also use <B>GetInsertCommand</B> as the basis of a modified command. For example, you might call 
-        /// <B>GetInsertCommand</B> and modify the <see cref="MaxDBCommand.CommandTimeout"/> value, and then explicitly set that on the 
+        /// You can also use <B>GetInsertCommand</B> as the basis of a modified command. For example, you might call
+        /// <B>GetInsertCommand</B> and modify the <see cref="MaxDBCommand.CommandTimeout"/> value, and then explicitly set that on the
         /// <see cref="MaxDBDataAdapter"/>.
         /// </para>
         /// <para>
-        /// After the SQL statement is first generated, the application must explicitly call <see cref="RefreshSchema"/> 
-        /// if it changes the statement in any way. Otherwise, the <B>GetInsertCommand</B> will be still be using information 
-        /// from the previous statement, which might not be correct. The SQL statements are first generated either when the application calls 
+        /// After the SQL statement is first generated, the application must explicitly call <see cref="RefreshSchema"/>
+        /// if it changes the statement in any way. Otherwise, the <B>GetInsertCommand</B> will be still be using information
+        /// from the previous statement, which might not be correct. The SQL statements are first generated either when the application calls
         /// <see cref="System.Data.Common.DataAdapter.Update"/> or <B>GetInsertCommand</B>.
         /// </para>
         /// </remarks>
@@ -384,18 +384,18 @@ namespace MaxDB.Data
         /// </summary>
         /// <remarks>
         /// <para>
-        /// An application can use the <B>GetUpdateCommand</B> method for informational or troubleshooting purposes because 
+        /// An application can use the <B>GetUpdateCommand</B> method for informational or troubleshooting purposes because
         /// it returns the <see cref="MaxDBCommand"/> object to be executed.
         /// </para>
         /// <para>
-        /// You can also use <B>GetUpdateCommand</B> as the basis of a modified command. For example, you might call 
-        /// <B>GetUpdateCommand</B> and modify the <see cref="MaxDBCommand.CommandTimeout"/> value, and then explicitly set that on the 
+        /// You can also use <B>GetUpdateCommand</B> as the basis of a modified command. For example, you might call
+        /// <B>GetUpdateCommand</B> and modify the <see cref="MaxDBCommand.CommandTimeout"/> value, and then explicitly set that on the
         /// <see cref="MaxDBDataAdapter"/>.
         /// </para>
         /// <para>
-        /// After the SQL statement is first generated, the application must explicitly call <see cref="RefreshSchema"/> 
-        /// if it changes the statement in any way. Otherwise, the <B>GetUpdateCommand</B> will be still be using information 
-        /// from the previous statement, which might not be correct. The SQL statements are first generated either when the application calls 
+        /// After the SQL statement is first generated, the application must explicitly call <see cref="RefreshSchema"/>
+        /// if it changes the statement in any way. Otherwise, the <B>GetUpdateCommand</B> will be still be using information
+        /// from the previous statement, which might not be correct. The SQL statements are first generated either when the application calls
         /// <see cref="System.Data.Common.DataAdapter.Update"/> or <B>GetInsertCommand</B>.
         /// </para>
         /// </remarks>

@@ -23,61 +23,192 @@ namespace MaxDB.Data.MaxDBProtocol
 
     #region "Offsets"
 
+    /// <summary>
+    /// Package header offsets.
+    /// </summary>
     internal struct HeaderOffset
     {
-        public const byte
-            ActSendLen = 0,   // INT4
-            ProtocolID = 4,   // INT1
-            MessClass = 5,   // INT1
-            RTEFlags = 6,   // INT1
-            ResidualPackets = 7,   // INT1
-            SenderRef = 8,   // INT4
-            ReceiverRef = 12,   // INT4
-            RTEReturnCode = 16,   // INT2
-            Filler = 18,   // INT2
-            MaxSendLen = 20,   // INT4
-            END = 24;
+        /// <summary>
+        /// Actual package length.
+        /// </summary>
+        /// <remarks>INT4.</remarks>
+        public const byte ActSendLen = 0;
+
+        /// <summary>
+        /// Protocol ID (always set to 3).
+        /// </summary>
+        /// <remarks>INT1.</remarks>
+        public const byte ProtocolID = 4;
+
+        /// <summary>
+        /// Message class (<see cref="RSQLTypes"/>).
+        /// </summary>
+        /// <remarks>INT1.</remarks>
+        public const byte MessClass = 5;
+
+        /// <summary>
+        /// RTE flags (always set to 0).
+        /// </summary>
+        /// <remarks>INT1.</remarks>
+        public const byte RTEFlags = 6;
+
+        /// <summary>
+        /// Residual packets (always set to 0).
+        /// </summary>
+        /// <remarks>INT1.</remarks>
+        public const byte ResidualPackets = 7;
+
+        /// <summary>
+        /// Sender reference.
+        /// </summary>
+        /// <remarks>INT4.</remarks>
+        public const byte SenderRef = 8;
+
+        /// <summary>
+        /// Receiver reference.
+        /// </summary>
+        /// <remarks>INT4.</remarks>
+        public const byte ReceiverRef = 12;
+
+        /// <summary>
+        /// RTE return code.
+        /// </summary>
+        /// <remarks>INT2.</remarks>
+        public const byte RTEReturnCode = 16;
+
+        /// <summary>
+        /// Filler (always set to 0).
+        /// </summary>
+        /// <remarks>INT2.</remarks>
+        public const byte Filler = 18;
+
+        /// <summary>
+        /// Max length of data to send.
+        /// </summary>
+        /// <remarks>INT4.</remarks>
+        public const byte MaxSendLen = 20;
+
+        /// <summary>
+        /// End of header.
+        /// </summary>
+        public const byte END = 24;
     }
 
+    /// <summary>
+    /// Connection packet offsets.
+    /// </summary>
     internal struct ConnectPacketOffset
     {
-        public const int
-            MessCode = 0,   // C2
-            ConnectLength = 2,   // INT2
-            ServiceType = 4,   // INT1
-            OSType = 5,   // INT1
-            Filler1 = 6,   // INT1
-            Filler2 = 7,   // INT1
-            MaxSegmentSize = 8,   // INT4
-            MaxDataLen = 12,   // INT4
-            PacketSize = 16,   // INT4
-            MinReplySize = 20,   // INT4
-            ServerDB = 24,   // C8
-            ClientDB = 32,   // C8
-            VarPart = 40,   // C256
-            END = 296,
-            // other connect header constants
-            DBNameSize = 8,
-            MinSize = 64;   // for Unix vserver
+        /// <summary>
+        /// LE/BE message code (<see cref="SwapMode"/>).
+        /// </summary>
+        /// <remarks>C2.</remarks>
+        public const int MessCode = 0;
+
+        /// <summary>
+        /// Connction packet length.
+        /// </summary>
+        /// <remarks>INT2.</remarks>
+        public const int ConnectLength = 2;
+
+        /// <summary>
+        /// Service type (<see cref="SqlType"/>).
+        /// </summary>
+        /// <remarks>INT1.</remarks>
+        public const int ServiceType = 4;
+
+        /// <summary>
+        /// OS type (always set to RSQL_DOTNET = 13).
+        /// </summary>
+        /// <remarks>INT1.</remarks>
+        public const int OSType = 5;
+
+        /// <summary>
+        /// First filler (always set to 0).
+        /// </summary>
+        /// <remarks>INT1.</remarks>
+        public const int Filler1 = 6;
+
+        /// <summary>
+        /// Second filler (always set to 0).
+        /// </summary>
+        /// <remarks>INT1.</remarks>
+        public const int Filler2 = 7;
+
+        /// <summary>
+        /// Max segment size.
+        /// </summary>
+        /// <remarks>INT4.</remarks>
+        public const int MaxSegmentSize = 8;
+
+        /// <summary>
+        /// Max packet size.
+        /// </summary>
+        /// <remarks>INT4.</remarks>
+        public const int MaxDataLen = 12;
+
+        /// <summary>
+        /// Packet size.
+        /// </summary>
+        /// <remarks>INT4.</remarks>
+        public const int PacketSize = 16;
+
+        /// <summary>
+        /// Min reply size.
+        /// </summary>
+        /// <remarks>INT4.</remarks>
+        public const int MinReplySize = 20;
+
+        /// <summary>
+        /// Server Database Name.
+        /// </summary>
+        /// <remarks>C8.</remarks>
+        public const int ServerDB = 24;
+
+        /// <summary>
+        /// Client Database Name.
+        /// </summary>
+        /// <remarks>C8.</remarks>
+        public const int ClientDB = 32;
+
+        /// <summary>
+        /// Variable part of the connection packet used for the auxiliary info.
+        /// </summary>
+        /// <remarks>C256.</remarks>
+        public const int VarPart = 40;
+
+        /// <summary>
+        /// End of header offset.
+        /// </summary>
+        public const int END = 296;
+
+        /// <summary>
+        /// Other connect header constants for Unix vserver.
+        /// </summary>
+        public const int DBNameSize = 8;
+
+        /// <summary>
+        /// Minimal size.
+        /// </summary>
+        public const int MinSize = 64;
     }
 
-    //
-    // offsets of vsp001::tsp1_packet
-    //
+    /// <summary>
+    /// Offsets of vsp001::tsp1_packet.
+    /// </summary>
     internal struct PacketHeaderOffset
     {
-        public const byte
-            MessCode = 0,  // enum1
-            MessSwap = 1,  // enum1
-            Filler1 = 2,  // int2
-            ApplVersion = 4,  // c5
-            Appl = 9,  // c3
-            VarPartSize = 12, // int4
-            VarPartLen = 16, // int4
-            Filler2 = 20, // int2
-            NoOfSegm = 22, // int2
-            Filler3 = 24, // c8
-            Segment = 32;
+        public const byte MessCode = 0;  // enum1
+        public const byte MessSwap = 1;  // enum1
+        public const byte Filler1 = 2;  // int2
+        public const byte ApplVersion = 4;  // c5
+        public const byte Appl = 9;  // c3
+        public const byte VarPartSize = 12; // int4
+        public const byte VarPartLen = 16; // int4
+        public const byte Filler2 = 20; // int2
+        public const byte NoOfSegm = 22; // int2
+        public const byte Filler3 = 24; // c8
+        public const byte Segment = 32;
     }
 
     //
@@ -86,32 +217,75 @@ namespace MaxDB.Data.MaxDBProtocol
     internal struct SegmentHeaderOffset
     {
         // common header
-        public const byte
-            Len = 0,  // int4
-            Offset = 4,  // int4
-            NoOfParts = 8,  // int2
-            OwnIndex = 10, // int2
-            SegmKind = 12, // enum1
-                           // request segment
-            MessType = 13, // enum1
-            SqlMode = 14, // enum1
-            Producer = 15, // enum1
-            CommitImmediately = 16, // bool
-            IgnoreCostwarning = 17, // bool
-            Prepare = 18, // bool
-            WithInfo = 19, // bool
-            MassCmd = 20, // bool
-            ParsingAgain = 21, // bool
-            CommandOptions = 22, // enum1
-                                 // reply segment
-            SqlState = 13, // c5
-            ReturnCode = 18, // int2
-            ErrorPos = 20, // int4
-            ExternWarning = 24, // set2
-            InternWarning = 26, // set2
-            FunctionCode = 28, // int2
-            TraceLevel = 30, // int1
-            Part = 40;
+        public const byte Len = 0;  // int4
+
+        // common header
+        public const byte Offset = 4;  // int4
+
+        // common header
+        public const byte NoOfParts = 8;  // int2
+
+        // common header
+        public const byte OwnIndex = 10; // int2
+
+        // common header
+        public const byte SegmKind = 12; // enum1
+
+        // common header
+        public const byte // request segment
+MessType = 13; // enum1
+
+        // common header
+        public const byte SqlMode = 14; // enum1
+
+        // common header
+        public const byte Producer = 15; // enum1
+
+        // common header
+        public const byte CommitImmediately = 16; // bool
+
+        // common header
+        public const byte IgnoreCostwarning = 17; // bool
+
+        // common header
+        public const byte Prepare = 18; // bool
+
+        // common header
+        public const byte WithInfo = 19; // bool
+
+        // common header
+        public const byte MassCmd = 20; // bool
+
+        // common header
+        public const byte ParsingAgain = 21; // bool
+
+        // common header
+        public const byte CommandOptions = 22; // enum1
+
+        // common header
+        public const byte // reply segment
+SqlState = 13; // c5
+
+        // common header
+        public const byte ReturnCode = 18; // int2
+
+        // common header
+        public const byte ErrorPos = 20; // int4
+
+        // common header
+        public const byte ExternWarning = 24; // set2
+
+        // common header
+        public const byte InternWarning = 26; // set2
+
+        // common header
+        public const byte FunctionCode = 28; // int2
+
+        // common header
+        public const byte TraceLevel = 30; // int1
+
+        // common header
+        public const byte Part = 40;
     }
 
     //
@@ -119,14 +293,13 @@ namespace MaxDB.Data.MaxDBProtocol
     //
     internal struct PartHeaderOffset
     {
-        public const byte
-            PartKind = 0,   // enum1
-            Attributes = 1,   // set1
-            ArgCount = 2,   // int2
-            SegmOffset = 4,   // int4
-            BufLen = 8,   // int4
-            BufSize = 12,  // int4
-            Data = 16;
+        public const byte PartKind = 0;   // enum1
+        public const byte Attributes = 1;   // set1
+        public const byte ArgCount = 2;   // int2
+        public const byte SegmOffset = 4;   // int4
+        public const byte BufLen = 8;   // int4
+        public const byte BufSize = 12;  // int4
+        public const byte Data = 16;
     }
 
     #endregion
@@ -136,20 +309,18 @@ namespace MaxDB.Data.MaxDBProtocol
     //
     internal struct SegmKind
     {
-        public const byte
-            Nil = 0,
-            Cmd = 1,
-            Return = 2,
-            Proccall = 3,
-            Procreply = 4,
-            LastSegmentKind = 5;
+        public const byte Nil = 0;
+        public const byte Cmd = 1;
+        public const byte Return = 2;
+        public const byte Proccall = 3;
+        public const byte Procreply = 4;
+        public const byte LastSegmentKind = 5;
     }
 
     internal struct SegmentCmdOption
     {
-        public const byte
-            selfetch_off = 1,
-            scrollable_cursor_on = 2;
+        public const byte selfetch_off = 1;
+        public const byte scrollable_cursor_on = 2;
     }
 
     //
@@ -157,12 +328,11 @@ namespace MaxDB.Data.MaxDBProtocol
     //
     internal struct Producer
     {
-        public const byte
-            Nil = 0,
-            UserCmd = 1,
-            InternalCmd = 2,
-            Kernel = 3,
-            Installation = 4;
+        public const byte Nil = 0;
+        public const byte UserCmd = 1;
+        public const byte InternalCmd = 2;
+        public const byte Kernel = 3;
+        public const byte Installation = 4;
     }
 
     //
@@ -170,131 +340,131 @@ namespace MaxDB.Data.MaxDBProtocol
     //
     internal struct CmdMessType
     {
-        public const byte
-            Nil = 0,
-            CmdLowerBound = 1,
-            Dbs = 2,
-            Parse = 3,
-            Getparse = 4,
-            Syntax = 5,
-            Cfill1 = 6,
-            Cfill2 = 7,
-            Cfill3 = 8,
-            Cfill4 = 9,
-            Cfill5 = 10,
-            CmdUpperBound = 11,
-            NoCmdLowerBound = 12,
-            Execute = 13,
-            GetExecute = 14,
-            PutValue = 15,
-            GetValue = 16,
-            Load = 17,
-            Unload = 18,
-            Ncfill1 = 19,
-            Ncfill2 = 20,
-            Ncfill3 = 21,
-            Ncfill4 = 22,
-            Ncfill5 = 23,
-            NoCmdUpperBound = 24,
-            Hello = 25,
-            UtilLowerBound = 26,
-            Utility = 27,
-            Incopy = 28,
-            Ufill1 = 29,
-            Outcopy = 30,
-            DiagOutcopy = 31,
-            Ufill3 = 32,
-            Ufill4 = 33,
-            Ufill5 = 34,
-            Ufill6 = 35,
-            Ufill7 = 36,
-            UtilUpperBound = 37,
-            SpecialsLowerBound = 38,
-            Switch = 39,
-            Switchlimit = 40,
-            Buflength = 41,
-            Minbuf = 42,
-            Maxbuf = 43,
-            StateUtility = 44,
-            Sfill2 = 45,
-            Sfill3 = 46,
-            Sfill4 = 47,
-            Sfill5 = 48,
-            SpecialsUpperBound = 49,
-            WaitForEvent = 50,
-            ProcservLowerBound = 51,
-            ProcservCall = 52,
-            ProcservReply = 53,
-            ProcservFill1 = 54,
-            ProcservFill2 = 55,
-            ProcservFill3 = 56,
-            ProcservFill4 = 57,
-            ProcservFill5 = 58,
-            ProcservUpperBound = 59,
-            LastCmdMessType = 60;
+        public const byte Nil = 0;
+        public const byte CmdLowerBound = 1;
+        public const byte Dbs = 2;
+        public const byte Parse = 3;
+        public const byte Getparse = 4;
+        public const byte Syntax = 5;
+        public const byte Cfill1 = 6;
+        public const byte Cfill2 = 7;
+        public const byte Cfill3 = 8;
+        public const byte Cfill4 = 9;
+        public const byte Cfill5 = 10;
+        public const byte CmdUpperBound = 11;
+        public const byte NoCmdLowerBound = 12;
+        public const byte Execute = 13;
+        public const byte GetExecute = 14;
+        public const byte PutValue = 15;
+        public const byte GetValue = 16;
+        public const byte Load = 17;
+        public const byte Unload = 18;
+        public const byte Ncfill1 = 19;
+        public const byte Ncfill2 = 20;
+        public const byte Ncfill3 = 21;
+        public const byte Ncfill4 = 22;
+        public const byte Ncfill5 = 23;
+        public const byte NoCmdUpperBound = 24;
+        public const byte Hello = 25;
+        public const byte UtilLowerBound = 26;
+        public const byte Utility = 27;
+        public const byte Incopy = 28;
+        public const byte Ufill1 = 29;
+        public const byte Outcopy = 30;
+        public const byte DiagOutcopy = 31;
+        public const byte Ufill3 = 32;
+        public const byte Ufill4 = 33;
+        public const byte Ufill5 = 34;
+        public const byte Ufill6 = 35;
+        public const byte Ufill7 = 36;
+        public const byte UtilUpperBound = 37;
+        public const byte SpecialsLowerBound = 38;
+        public const byte Switch = 39;
+        public const byte Switchlimit = 40;
+        public const byte Buflength = 41;
+        public const byte Minbuf = 42;
+        public const byte Maxbuf = 43;
+        public const byte StateUtility = 44;
+        public const byte Sfill2 = 45;
+        public const byte Sfill3 = 46;
+        public const byte Sfill4 = 47;
+        public const byte Sfill5 = 48;
+        public const byte SpecialsUpperBound = 49;
+        public const byte WaitForEvent = 50;
+        public const byte ProcservLowerBound = 51;
+        public const byte ProcservCall = 52;
+        public const byte ProcservReply = 53;
+        public const byte ProcservFill1 = 54;
+        public const byte ProcservFill2 = 55;
+        public const byte ProcservFill3 = 56;
+        public const byte ProcservFill4 = 57;
+        public const byte ProcservFill5 = 58;
+        public const byte ProcservUpperBound = 59;
+        public const byte LastCmdMessType = 60;
 
-        public static readonly string[] Name = {
-                "nil",
-                "cmd_lower_bound",
-                "dbs",
-                "parse",
-                "getparse",
-                "syntax",
-                "cfill1",
-                "cfill2",
-                "cfill3",
-                "cfill4",
-                "cfill5",
-                "cmd_upper_bound",
-                "no_cmd_lower_bound",
-                "execute",
-                "getexecute",
-                "putval",
-                "getval",
-                "load",
-                "unload",
-                "ncfill1",
-                "ncfill2",
-                "ncfill3",
-                "ncfill4",
-                "ncfill5",
-                "no_cmd_upper_bound",
-                "hello",
-                "util_lower_bound",
-                "utility",
-                "incopy",
-                "ufill1",
-                "outcopy",
-                "diag_outcopy",
-                "ufill3",
-                "ufill4",
-                "ufill5",
-                "ufill6",
-                "ufill7",
-                "util_upper_bound",
-                "specials_lower_bound",
-                "switch",
-                "switchlimit",
-                "buflength",
-                "minbuf",
-                "maxbuf",
-                "state_utility",
-                "sfill2",
-                "sfill3",
-                "sfill4",
-                "sfill5",
-                "specials_upper_bound",
-                "wait_for_event",
-                "procserv_lower_bound",
-                "procserv_call",
-                "procserv_reply",
-                "procserv_fill1",
-                "procserv_fill2",
-                "procserv_fill3",
-                "procserv_fill4",
-                "procserv_fill5",
-                "procserv_upper_bound"
-            };
+        public static readonly string[] Name =
+        {
+            "nil",
+            "cmd_lower_bound",
+            "dbs",
+            "parse",
+            "getparse",
+            "syntax",
+            "cfill1",
+            "cfill2",
+            "cfill3",
+            "cfill4",
+            "cfill5",
+            "cmd_upper_bound",
+            "no_cmd_lower_bound",
+            "execute",
+            "getexecute",
+            "putval",
+            "getval",
+            "load",
+            "unload",
+            "ncfill1",
+            "ncfill2",
+            "ncfill3",
+            "ncfill4",
+            "ncfill5",
+            "no_cmd_upper_bound",
+            "hello",
+            "util_lower_bound",
+            "utility",
+            "incopy",
+            "ufill1",
+            "outcopy",
+            "diag_outcopy",
+            "ufill3",
+            "ufill4",
+            "ufill5",
+            "ufill6",
+            "ufill7",
+            "util_upper_bound",
+            "specials_lower_bound",
+            "switch",
+            "switchlimit",
+            "buflength",
+            "minbuf",
+            "maxbuf",
+            "state_utility",
+            "sfill2",
+            "sfill3",
+            "sfill4",
+            "sfill5",
+            "specials_upper_bound",
+            "wait_for_event",
+            "procserv_lower_bound",
+            "procserv_call",
+            "procserv_reply",
+            "procserv_fill1",
+            "procserv_fill2",
+            "procserv_fill3",
+            "procserv_fill4",
+            "procserv_fill5",
+            "procserv_upper_bound",
+        };
     }
 
     //
@@ -302,45 +472,45 @@ namespace MaxDB.Data.MaxDBProtocol
     //
     internal struct PartKind
     {
-        public const byte
-            Nil = 0,
-            ApplParameterDescription = 1,
-            ColumnNames = 2,
-            Command = 3,
-            ConvTablesReturned = 4,
-            Data = 5,
-            ErrorText = 6,
-            GetInfo = 7,
-            Modulname = 8,
-            Page = 9,
-            ParseId = 10,
-            ParsidOfSelect = 11,
-            ResultCount = 12,
-            ResultTableName = 13,
-            ShortInfo = 14,
-            UserInfoReturned = 15,
-            Surrogate = 16,
-            Bdinfo = 17,
-            LongData = 18,
-            TableName = 19,
-            SessionInfoReturned = 20,
-            OutputColsNoParameter = 21,
-            Key = 22,
-            Serial = 23,
-            RelativePos = 24,
-            AbapIStream = 25,
-            AbapOStream = 26,
-            AbapInfo = 27,
-            CheckpointInfo = 28,
-            Procid = 29,
-            LongDemand = 30,
-            MessageList = 31,
-            VardataShortInfo = 32,
-            Vardata = 33,
-            Feature = 34,
-            ClientId = 35;
+        public const byte Nil = 0;
+        public const byte ApplParameterDescription = 1;
+        public const byte ColumnNames = 2;
+        public const byte Command = 3;
+        public const byte ConvTablesReturned = 4;
+        public const byte Data = 5;
+        public const byte ErrorText = 6;
+        public const byte GetInfo = 7;
+        public const byte Modulname = 8;
+        public const byte Page = 9;
+        public const byte ParseId = 10;
+        public const byte ParsidOfSelect = 11;
+        public const byte ResultCount = 12;
+        public const byte ResultTableName = 13;
+        public const byte ShortInfo = 14;
+        public const byte UserInfoReturned = 15;
+        public const byte Surrogate = 16;
+        public const byte Bdinfo = 17;
+        public const byte LongData = 18;
+        public const byte TableName = 19;
+        public const byte SessionInfoReturned = 20;
+        public const byte OutputColsNoParameter = 21;
+        public const byte Key = 22;
+        public const byte Serial = 23;
+        public const byte RelativePos = 24;
+        public const byte AbapIStream = 25;
+        public const byte AbapOStream = 26;
+        public const byte AbapInfo = 27;
+        public const byte CheckpointInfo = 28;
+        public const byte Procid = 29;
+        public const byte LongDemand = 30;
+        public const byte MessageList = 31;
+        public const byte VardataShortInfo = 32;
+        public const byte Vardata = 33;
+        public const byte Feature = 34;
+        public const byte ClientId = 35;
 
-        public static readonly string[] Name ={
+        public static readonly string[] Name =
+        {
             "Nil",
             "ApplParameterDescription",
             "ColumnNames",
@@ -376,13 +546,13 @@ namespace MaxDB.Data.MaxDBProtocol
             "VardataShortinfo",
             "Vardata",
             "Feature",
-            "Clientid"};
+            "Clientid",
+        };
     }
 
     internal struct Feature
     {
-        public const byte
-            MultipleDropParseid = 1,
+        public const byte MultipleDropParseid = 1,
             SpaceOption = 2,
             VariableInput = 3,
             OptimizedStreams = 4,
@@ -396,8 +566,7 @@ namespace MaxDB.Data.MaxDBProtocol
     //
     internal struct PartAttributes
     {
-        public const byte
-            LastPacket = 0,
+        public const byte LastPacket = 0,
             NextPacket = 1,
             FirstPacket = 2,
             Fill3 = 3,
@@ -416,8 +585,7 @@ namespace MaxDB.Data.MaxDBProtocol
     internal struct LongDesc
     {
         // tsp00_LdbChange
-        public const byte
-            UseTermchar = 0,
+        public const byte UseTermchar = 0,
             UseConversion = 1,
             UseToAscii = 2,
             UseUCS2_Swap = 3,
@@ -473,8 +641,7 @@ namespace MaxDB.Data.MaxDBProtocol
     internal struct Packet
     {
         // indicators for fields with variable length
-        public const byte
-            MaxOneByteLength = 245,
+        public const byte MaxOneByteLength = 245,
             Ignored = 250,
             SpecialNull = 251,
             BlobDescription = 252,
@@ -486,29 +653,35 @@ namespace MaxDB.Data.MaxDBProtocol
         public const string MaxPasswordLenTag = "maxpasswordlen";
     }
 
+    /// <summary>
+    /// Garbage collection mode.
+    /// </summary>
     internal struct GCMode
     {
-        public const int
+        /// <summary>
+        /// Control flag for garbage collection on execute. If this is
+        /// set, old cursors/parse ids are sent <i>together with</i> the current
+        /// statement for being dropped.
+        /// </summary>
+        public const int ALLOWED = 1;
 
-            // Control flag for garbage collection on execute. If this is
-            // set, old cursors/parse ids are sent <i>together with</i> the current
-            // statement for being dropped.
-            GC_ALLOWED = 1,
+        /// <summary>
+        /// Control flag for garbage collection on execute. If this is
+        /// set, old cursors/parse ids are sent <i>after</i> the current
+        /// statement for being dropped.
+        /// </summary>
+        public const int DELAYED = 2;
 
-            // Control flag for garbage collection on execute. If this is
-            // set, old cursors/parse ids are sent <i>after</i> the current
-            // statement for being dropped.
-            GC_DELAYED = 2,
-
-            // Control flag for garbage collection on execute. If this is
-            // set, nothing is done to drop cursors or parse ids.
-            GC_NONE = 3;
+        /// <summary>
+        /// Control flag for garbage collection on execute. If this is
+        /// set, nothing is done to drop cursors or parse ids.
+        /// </summary>
+        public const int NONE = 3;
     }
 
     internal struct FunctionCode
     {
-        public const int
-            Nil = 0,
+        public const int Nil = 0,
             CreateTable = 1,
             SetRole = 2,
             Insert = 3,
@@ -570,21 +743,18 @@ namespace MaxDB.Data.MaxDBProtocol
             mselect_found,
             for_upd_mselect_found,
             reuse_mselect_found,
-            reuse_upd_mselect_found
+            reuse_upd_mselect_found,
         };
 
-        public static bool IsQuery(int code)
-        {
-            return (code == FunctionCode.Select || code == FunctionCode.Show || code == FunctionCode.DBProcWithResultSetExecute || code == FunctionCode.Explain);
-        }
+        public static bool IsQuery(int code) =>
+            code == FunctionCode.Select || code == FunctionCode.Show || code == FunctionCode.DBProcWithResultSetExecute || code == FunctionCode.Explain;
     }
 
     internal struct Ports
     {
-        public const int
-            Default = 7210,
-            DefaultSecure = 7270,
-            DefaultNI = 7269;
+        public const int Default = 7210;
+        public const int DefaultSecure = 7270;
+        public const int DefaultNI = 7269;
     }
 
     internal struct CommError
@@ -604,35 +774,60 @@ namespace MaxDB.Data.MaxDBProtocol
             MaxDBMessages.Extract(MaxDBError.COMMRELEASED),
             MaxDBMessages.Extract(MaxDBError.COMMWOULDBLOCK),
             MaxDBMessages.Extract(MaxDBError.COMMUNKNOWNREQUEST),
-            MaxDBMessages.Extract(MaxDBError.COMMSERVERDBUNKNOWN)
+            MaxDBMessages.Extract(MaxDBError.COMMSERVERDBUNKNOWN),
         };
     }
 
     internal struct RTEReturnCodes
     {
+
         // rte return codes
-        public const byte
-            SQLOK = 0,
-            SQLNOTOK = 1,
-            SQLTASKLIMIT = 2,
-            SQLTIMEOUT = 3,
-            SQLCRASH = 4,
-            SQLSTART_REQUIRED = 5,
-            SQLSHUTDOWN = 6,
-            SQLSEND_LINE_DOWN = 7,
-            SQLRECEIVE_LINE_DOWN = 8,
-            SQLPACKETLIMIT = 9,
-            SQLRELEASED = 10,
-            SQLWOULDBLOCK = 11,
-            SQLUNKNOWN_REQUEST = 12,
-            SQLSERVER_DB_UNKNOWN = 13;
+        public const byte SQLOK = 0;
+
+        // rte return codes
+        public const byte SQLNOTOK = 1;
+
+        // rte return codes
+        public const byte SQLTASKLIMIT = 2;
+
+        // rte return codes
+        public const byte SQLTIMEOUT = 3;
+
+        // rte return codes
+        public const byte SQLCRASH = 4;
+
+        // rte return codes
+        public const byte SQLSTART_REQUIRED = 5;
+
+        // rte return codes
+        public const byte SQLSHUTDOWN = 6;
+
+        // rte return codes
+        public const byte SQLSEND_LINE_DOWN = 7;
+
+        // rte return codes
+        public const byte SQLRECEIVE_LINE_DOWN = 8;
+
+        // rte return codes
+        public const byte SQLPACKETLIMIT = 9;
+
+        // rte return codes
+        public const byte SQLRELEASED = 10;
+
+        // rte return codes
+        public const byte SQLWOULDBLOCK = 11;
+
+        // rte return codes
+        public const byte SQLUNKNOWN_REQUEST = 12;
+
+        // rte return codes
+        public const byte SQLSERVER_DB_UNKNOWN = 13;
     }
 
     internal struct RSQLTypes
     {
         // request/reply types
-        public const byte
-            RTE_PROT_TCP = 3,
+        public const byte RTE_PROT_TCP = 3,
             INFO_REQUEST_KEEP_ALIVE = 50,
             INFO_REQUEST = 51,
             INFO_REPLY = 52,
@@ -654,12 +849,24 @@ namespace MaxDB.Data.MaxDBProtocol
             NORMAL = 0;
     }
 
+    /// <summary>
+    /// Little Endian/Big Endian byte order.
+    /// </summary>
     internal struct SwapMode
     {
-        public const byte
-            NotSwapped = 1,
-            Swapped = 2;
+        /// <summary>
+        /// Not Swapped order (BE).
+        /// </summary>
+        public const byte NotSwapped = 1;
 
+        /// <summary>
+        /// Swapped order (LE).
+        /// </summary>
+        public const byte Swapped = 2;
+
+        /// <summary>
+        /// Swap type description.
+        /// </summary>
         public static readonly string[] SwapType = { "dummy", "normal", "full", "part" };
     }
 
@@ -669,84 +876,121 @@ namespace MaxDB.Data.MaxDBProtocol
     }
 
     /// <summary>
-    /// SQL Mode name
+    /// SQL Mode name.
     /// </summary>
     internal struct SqlModeName
     {
         public static readonly string[] Value = { "NULL", "SESSION", "INTERNAL", "ANSI", "DB2", "ORACLE", "SAPR3" };
     }
 
+    /// <summary>
+    /// SQL User type.
+    /// </summary>
     internal struct SqlType
     {
-        // user types
-        public const byte
-            USER = 0,
-            ASYNC_USER = 1,
-            UTILITY = 2,
-            DISTRIBUTION = 3,
-            CONTROL = 4,
-            EVENT = 5;
+        /// <summary>
+        /// Regular User.
+        /// </summary>
+        public const byte USER = 0;
+
+        /// <summary>
+        /// Async user.
+        /// </summary>
+        public const byte ASYNCUSER = 1;
+
+        /// <summary>
+        /// Utility.
+        /// </summary>
+        public const byte UTILITY = 2;
+
+        /// <summary>
+        /// Distribution.
+        /// </summary>
+        public const byte DISTRIBUTION = 3;
+
+        /// <summary>
+        /// Control.
+        /// </summary>
+        public const byte CONTROL = 4;
+
+        /// <summary>
+        /// Event.
+        /// </summary>
+        public const byte EVENT = 5;
     }
 
     internal struct ArgType
     {
+
         // geo03.h
-        public const byte
-            PORT_NO = 0x50,   // = P
-            REM_PID = 0x49,   // = I
-            ACKNOWLEDGE = 0x52,   // = R
-            NODE = 0x3E,   // = N
-            DBROOT = 0x64,   // = d
-            SERVERPGM = 0x70,   // = p
-            AUTH_ALLOW = 0x61,   // = a
-            OMIT_REPLY_PART = 0x72;   // = r
+        public const byte PORT_NO = 0x50;   // = P
+
+        // geo03.h
+        public const byte REM_PID = 0x49;   // = I
+
+        // geo03.h
+        public const byte ACKNOWLEDGE = 0x52;   // = R
+
+        // geo03.h
+        public const byte NODE = 0x3E;   // = N
+
+        // geo03.h
+        public const byte DBROOT = 0x64;   // = d
+
+        // geo03.h
+        public const byte SERVERPGM = 0x70;   // = p
+
+        // geo03.h
+        public const byte AUTH_ALLOW = 0x61;   // = a
+
+        // geo03.h
+        public const byte OMIT_REPLY_PART = 0x72;   // = r
     }
 
     internal struct DataType
     {
-        public const byte
-            MIN = 0,
-            FIXED = MIN,
-            FLOAT = 1,
-            CHA = 2,
-            CHE = 3,
-            CHB = 4,
-            ROWID = 5,
-            STRA = 6,
-            STRE = 7,
-            STRB = 8,
-            STRDB = 9,
-            DATE = 10,
-            TIME = 11,
-            VFLOAT = 12,
-            TIMESTAMP = 13,
-            UNKNOWN = 14,
-            NUMBER = 15,
-            NONUMBER = 16,
-            DURATION = 17,
-            DBYTEEBCDIC = 18,
-            LONGA = 19,
-            LONGE = 20,
-            LONGB = 21,
-            LONGDB = 22,
-            BOOLEAN = 23,
-            UNICODE = 24,
-            DTFILLER1 = 25,
-            DTFILLER2 = 26,
-            DTFILLER3 = 27,
-            DTFILLER4 = 28,
-            SMALLINT = 29,
-            INTEGER = 30,
-            VARCHARA = 31,
-            VARCHARE = 32,
-            VARCHARB = 33,
-            STRUNI = 34,
-            LONGUNI = 35,
-            VARCHARUNI = 36,
-            UDT = 37,
-            ABAPTABHANDLE = 38,
-            DWYDE = 39,
-            MAX = DWYDE;
+        public const byte MIN = 0;
+        public const byte FIXED = MIN;
+        public const byte FLOAT = 1;
+        public const byte CHA = 2;
+        public const byte CHE = 3;
+        public const byte CHB = 4;
+        public const byte ROWID = 5;
+        public const byte STRA = 6;
+        public const byte STRE = 7;
+        public const byte STRB = 8;
+        public const byte STRDB = 9;
+        public const byte DATE = 10;
+        public const byte TIME = 11;
+        public const byte VFLOAT = 12;
+        public const byte TIMESTAMP = 13;
+        public const byte UNKNOWN = 14;
+        public const byte NUMBER = 15;
+        public const byte NONUMBER = 16;
+        public const byte DURATION = 17;
+        public const byte DBYTEEBCDIC = 18;
+        public const byte LONGA = 19;
+        public const byte LONGE = 20;
+        public const byte LONGB = 21;
+        public const byte LONGDB = 22;
+        public const byte BOOLEAN = 23;
+        public const byte UNICODE = 24;
+        public const byte DTFILLER1 = 25;
+        public const byte DTFILLER2 = 26;
+        public const byte DTFILLER3 = 27;
+        public const byte DTFILLER4 = 28;
+        public const byte SMALLINT = 29;
+        public const byte INTEGER = 30;
+        public const byte VARCHARA = 31;
+        public const byte VARCHARE = 32;
+        public const byte VARCHARB = 33;
+        public const byte STRUNI = 34;
+        public const byte LONGUNI = 35;
+        public const byte VARCHARUNI = 36;
+        public const byte UDT = 37;
+        public const byte ABAPTABHANDLE = 38;
+        public const byte DWYDE = 39;
+        public const byte MAX = DWYDE;
 
         public static readonly string[] StrValues =
         {
@@ -796,74 +1040,107 @@ namespace MaxDB.Data.MaxDBProtocol
     // copies of tsp1_param_opt_type, tsp1_param_io_type, tsp1_param_info
     internal struct ParamInfo
     {
+
         // param modes, declared as set values
-        public const int
-            Mandatory = 1,
-            Optional = 2,
-            Default = 4,
-            EscapeChar = 8,
-            // param io types
-            Input = 0,
-            Output = 1,
-            InOut = 2,
-            // layout of tsp1_param_info
-            ModeOffset = 0,  // Set 1
-            IOTypeOffset = 1,  // enum 1
-            DataTypeOffset = 2,  // enum1
-            FracOffset = 3,  // int1
-            LengthOffset = 4,  // int2
-            InOutLenOffset = 6,  // int2
-            BufPosOffset = 8,  // int4
-            ParamNoOffset = 8,  // int2
-            ReadOnlyOffset = 10, // int1
-            SerialOffset = 11, // int1
-                               // The size of tsp1_param_info 
-            END = 12;
+        public const int Mandatory = 1;
+
+        // param modes, declared as set values
+        public const int Optional = 2;
+
+        // param modes, declared as set values
+        public const int Default = 4;
+
+        // param modes, declared as set values
+        public const int EscapeChar = 8;
+
+        // param modes, declared as set values
+        public const int // param io types
+Input = 0;
+
+        // param modes, declared as set values
+        public const int Output = 1;
+
+        // param modes, declared as set values
+        public const int InOut = 2;
+
+        // param modes, declared as set values
+        public const int // layout of tsp1_param_info
+ModeOffset = 0;  // Set 1
+
+        // param modes, declared as set values
+        public const int IOTypeOffset = 1;  // enum 1
+
+        // param modes, declared as set values
+        public const int DataTypeOffset = 2;  // enum1
+
+        // param modes, declared as set values
+        public const int FracOffset = 3;  // int1
+
+        // param modes, declared as set values
+        public const int LengthOffset = 4;  // int2
+
+        // param modes, declared as set values
+        public const int InOutLenOffset = 6;  // int2
+
+        // param modes, declared as set values
+        public const int BufPosOffset = 8;  // int4
+
+        // param modes, declared as set values
+        public const int ParamNoOffset = 8;  // int2
+
+        // param modes, declared as set values
+        public const int ReadOnlyOffset = 10; // int1
+
+        // param modes, declared as set values
+        public const int SerialOffset = 11; // int1
+
+        // param modes, declared as set values
+        public const int // The size of tsp1_param_info
+END = 12;
     }
 
     internal struct StreamHandle
     {
-        public const int
-            Header_Length = 20,
-            RowDef = 0,
-            TabHandle = 4,
-
-            TabHandle_Reserved = 4,
-            TabHandle_Rowsize = 8,
-            TabHandle_ColCount = 10,
-            TabHandle_RowCount = 12,
-            TabHandle_ABAPTabID = 16,
-            TabHandle_ColDesc_0 = 20,
-
-            ColDesc_InOut = 0,
-            ColDesc_ABAPType = 1,
-            ColDesc_Dec = 2,
-            ColDesc_Length = 4,
-            ColDesc_Offset = 6,
-
-            ColDesc_Size = 8,
-
-            StreamType_Bool = 0,
-            StreamType_Int1 = 1,
-            StreamType_UInt1 = 2,
-            StreamType_Int2 = 3,
-            StreamType_UInt2 = 4,
-            StreamType_Int4 = 5,
-            StreamType_UInt4 = 6,
-            StreamType_Int8 = 7,
-            StreamType_UInt8 = 8,
-            StreamType_Float = 9,
-            StreamType_Double = 10,
-            StreamType_Int = 12,
-            StreamType_UInt = 13,
-            StreamType_Char = 14,
-            StreamType_WChar = 15,
-            StreamType_UDT = 16,
-            StreamType_WYDE = 17,
-
-            Stream_IN = 0,
-            Stream_OUT = 1,
-            Stream_INOUT = 2;
+        public const int Header_Length = 20;
+        public const int RowDef = 0;
+        public const int TabHandle = 4;
+        public const int 
+TabHandle_Reserved = 4;
+        public const int TabHandle_Rowsize = 8;
+        public const int TabHandle_ColCount = 10;
+        public const int TabHandle_RowCount = 12;
+        public const int TabHandle_ABAPTabID = 16;
+        public const int TabHandle_ColDesc_0 = 20;
+        public const int 
+ColDesc_InOut = 0;
+        public const int ColDesc_ABAPType = 1;
+        public const int ColDesc_Dec = 2;
+        public const int ColDesc_Length = 4;
+        public const int ColDesc_Offset = 6;
+        public const int 
+ColDesc_Size = 8;
+        public const int 
+StreamType_Bool = 0;
+        public const int StreamType_Int1 = 1;
+        public const int StreamType_UInt1 = 2;
+        public const int StreamType_Int2 = 3;
+        public const int StreamType_UInt2 = 4;
+        public const int StreamType_Int4 = 5;
+        public const int StreamType_UInt4 = 6;
+        public const int StreamType_Int8 = 7;
+        public const int StreamType_UInt8 = 8;
+        public const int StreamType_Float = 9;
+        public const int StreamType_Double = 10;
+        public const int StreamType_Int = 12;
+        public const int StreamType_UInt = 13;
+        public const int StreamType_Char = 14;
+        public const int StreamType_WChar = 15;
+        public const int StreamType_UDT = 16;
+        public const int StreamType_WYDE = 17;
+        public const int 
+Stream_IN = 0;
+        public const int Stream_OUT = 1;
+        public const int Stream_INOUT = 2;
     }
 
     internal enum FetchType

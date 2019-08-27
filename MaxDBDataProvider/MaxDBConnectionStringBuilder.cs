@@ -49,12 +49,12 @@ namespace MaxDB.Data
         public MaxDBConnectionStringBuilder(string connectionString) => this.ConnectionString = connectionString;
 
         /// <summary>
-        /// Gets or sets a value that indicates whether the <see cref="ConnectionString"/> property is visible in Visual Studio designers. 
+        /// Gets or sets a value that indicates whether the <see cref="ConnectionString"/> property is visible in Visual Studio designers.
         /// </summary>
         public new bool BrowsableConnectionString { get; set; } = true;
 
         /// <summary>
-        /// Append a key and value to an existing <see cref="StringBuilder"/> object. 
+        /// Append a key and value to an existing <see cref="StringBuilder"/> object.
         /// </summary>
         /// <param name="builder">The <see cref="StringBuilder"/> to which to add the key/value pair.</param>
         /// <param name="keyword">Key value.</param>
@@ -70,7 +70,7 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// Indicates whether the specified key exists in this <see cref="MaxDBConnectionStringBuilder"/> instance. 
+        /// Indicates whether the specified key exists in this <see cref="MaxDBConnectionStringBuilder"/> instance.
         /// </summary>
         /// <param name="keyword">Key value.</param>
         /// <returns>true if an entry with the specified key was found and false otherwise.</returns>
@@ -230,6 +230,7 @@ namespace MaxDB.Data
                                 {
                                     this.mKeyValuePairs[ConnectionStringParams.ENCRYPT] = true;
                                 }
+
                                 break;
                             case ConnectionStringParams.MODE:
                                 isModeSet = true;
@@ -295,7 +296,7 @@ namespace MaxDB.Data
         /// </summary>
         /// <remarks>
         /// <para>
-        /// To connect to a local machine, specify "localhost" or "127.0.0.1" for the server. 
+        /// To connect to a local machine, specify "localhost" or "127.0.0.1" for the server.
         /// If you do not specify a server, localhost is returned.
         /// </para>
         ///</remarks>
@@ -351,7 +352,7 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether character values contain at least 1 blank, or are NULL. 
+        /// Gets or sets a value indicating whether character values contain at least 1 blank, or are NULL.
         /// </summary>
         public bool SpaceOption
         {
@@ -379,7 +380,7 @@ namespace MaxDB.Data
 
         /// <summary>
         /// Gets or sets the property that indicates what kind of SQL statements has to cached. This property is the string of the
-        /// form [s][i][u][d][all] where 
+        /// form [s][i][u][d][all] where
         /// <list type="bullet">
         /// <item>s - cache SELECT statements</item>
         /// <item>i - cache INSERT statements</item>
@@ -468,7 +469,7 @@ namespace MaxDB.Data
         public new void Add(string key, object value) => this.mKeyValuePairs[key] = value;
 
         /// <summary>
-        /// Remove all key/value pairs. 
+        /// Remove all key/value pairs.
         /// </summary>
         public override void Clear() => this.mKeyValuePairs.Clear();
 
@@ -480,7 +481,7 @@ namespace MaxDB.Data
         public bool Contains(object key) => this.mKeyValuePairs.ContainsKey(key);
 
         /// <summary>
-        /// Returns an enumerator to support iterating through the collection. 
+        /// Returns an enumerator to support iterating through the collection.
         /// </summary>
         /// <returns>An enumerator object.</returns>
         public IDictionaryEnumerator GetEnumerator() => this.mKeyValuePairs.GetEnumerator();
@@ -496,7 +497,7 @@ namespace MaxDB.Data
         public new bool IsReadOnly => this.mKeyValuePairs.IsReadOnly;
 
         /// <summary>
-        /// The collection of keys. 
+        /// The collection of keys.
         /// </summary>
         public override ICollection Keys => this.mKeyValuePairs.Keys;
 
@@ -522,7 +523,7 @@ namespace MaxDB.Data
         public override ICollection Values => this.mKeyValuePairs.Values;
 
         /// <summary>
-        /// Gets or sets the value associated with the specified key. 
+        /// Gets or sets the value associated with the specified key.
         /// </summary>
         /// <param name="keyword">The key of the item.</param>
         /// <returns>The value associated with the specified key.</returns>
@@ -561,7 +562,7 @@ namespace MaxDB.Data
         public bool IsSynchronized => this.mKeyValuePairs.IsSynchronized;
 
         /// <summary>
-        /// Gets an object that can be used to synchronize access to the collection. 
+        /// Gets an object that can be used to synchronize access to the collection.
         /// </summary>
         public object SyncRoot => this.mKeyValuePairs.SyncRoot;
 

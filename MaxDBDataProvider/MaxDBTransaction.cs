@@ -25,7 +25,7 @@ namespace MaxDB.Data
     /// </summary>
     /// <remarks>
     /// The application creates a <B>MaxDBTransaction</B> object by calling <see cref="MaxDBConnection.BeginTransaction()"/>
-    /// on the <see cref="MaxDBConnection"/> object. All subsequent operations associated with the 
+    /// on the <see cref="MaxDBConnection"/> object. All subsequent operations associated with the
     /// transaction (for example, committing or aborting the transaction), are performed on the  <B>MaxDBTransaction</B> object.
     /// </remarks>
     public sealed class MaxDBTransaction : DbTransaction
@@ -57,14 +57,14 @@ namespace MaxDB.Data
         protected override DbConnection DbConnection => this.Connection;
 
         /// <summary>
-        /// Gets the <see cref="MaxDBConnection"/> object associated with the transaction, or a null reference (Nothing in Visual Basic) 
+        /// Gets the <see cref="MaxDBConnection"/> object associated with the transaction, or a null reference (Nothing in Visual Basic)
         /// if the transaction is no longer valid.
         /// </summary>
         /// <value>The <see cref="MaxDBConnection"/> object associated with this transaction.</value>
         /// <remarks>
-        /// A single application may have multiple database connections, each 
-        /// with zero or more transactions. This property enables you to 
-        /// determine the connection object associated with a particular 
+        /// A single application may have multiple database connections, each
+        /// with zero or more transactions. This property enables you to
+        /// determine the connection object associated with a particular
         /// transaction created by <see cref="MaxDBConnection.BeginTransaction()"/>.
         /// </remarks>
         public new MaxDBConnection Connection { get; }
