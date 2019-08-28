@@ -209,10 +209,7 @@ namespace MaxDB.Data
         /// </summary>
         /// <param name="index">Collection index.</param>
         /// <param name="value">Object to insert.</param>
-        public override void Insert(int index, object value)
-        {
-            this.Insert(index, (MaxDBParameter)value);
-        }
+        public override void Insert(int index, object value) => this.Insert(index, (MaxDBParameter)value);
 
         /// <summary>
         /// Gets a value indicating whether the collection has fixed size.
@@ -228,10 +225,7 @@ namespace MaxDB.Data
         /// Removes the specified <see cref="MaxDBParameter"/> from the collection.
         /// </summary>
         /// <param name="value">Object to remove</param>
-        public override void Remove(object value)
-        {
-            this.Remove((MaxDBParameter)value);
-        }
+        public override void Remove(object value) => this.Remove((MaxDBParameter)value);
 
         /// <summary>
         /// Removes the specified <see cref="MaxDBParameter"/> from the collection.
@@ -248,15 +242,9 @@ namespace MaxDB.Data
 
         object IList.this[int index]
         {
-            get
-            {
-                return this.mCollection[index];
-            }
+            get => this.mCollection[index];
 
-            set
-            {
-                this.mCollection[index] = (MaxDBParameter)value;
-            }
+            set => this.mCollection[index] = (MaxDBParameter)value;
         }
 
         #endregion
@@ -268,15 +256,9 @@ namespace MaxDB.Data
         /// <returns>The <see cref="MaxDBParameter"/> object.</returns>
         public new MaxDBParameter this[int index]
         {
-            get
-            {
-                return this.mCollection[index];
-            }
+            get => this.mCollection[index];
 
-            set
-            {
-                this.mCollection[index] = value;
-            }
+            set => this.mCollection[index] = value;
         }
 
         /// <summary>
@@ -288,7 +270,7 @@ namespace MaxDB.Data
         {
             if (value == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(value)));
             }
 
             if (value.ParameterName != null)
@@ -311,10 +293,7 @@ namespace MaxDB.Data
         /// <param name="parameterName">The name of the <see cref="MaxDBParameter"/>.</param>
         /// <param name="type">The <see cref="MaxDBType"/> of the <see cref="MaxDBParameter"/>.</param>
         /// <returns>The newly added <see cref="MaxDBParameter"/> object.</returns>
-        public MaxDBParameter Add(string parameterName, MaxDBType type)
-        {
-            return this.Add(new MaxDBParameter(parameterName, type));
-        }
+        public MaxDBParameter Add(string parameterName, MaxDBType type) => this.Add(new MaxDBParameter(parameterName, type));
 
         /// <summary>
         /// Adds a <see cref="MaxDBParameter"/> to the <see cref="MaxDBParameterCollection"/> given the specified parameter name and value.
@@ -322,10 +301,7 @@ namespace MaxDB.Data
         /// <param name="parameterName">The name of the <see cref="MaxDBParameter"/>.</param>
         /// <param name="value">The <see cref="MaxDBParameter.Value"/> of the <see cref="MaxDBParameter"/> to add to the collection.</param>
         /// <returns>The newly added <see cref="MaxDBParameter"/> object.</returns>
-        public MaxDBParameter Add(string parameterName, object value)
-        {
-            return this.Add(new MaxDBParameter(parameterName, value));
-        }
+        public MaxDBParameter Add(string parameterName, object value) => this.Add(new MaxDBParameter(parameterName, value));
 
         /// <summary>
         /// Adds a <see cref="MaxDBParameter"/> to the <see cref="MaxDBParameterCollection"/> given the specified parameter name, type and size.
@@ -334,10 +310,7 @@ namespace MaxDB.Data
         /// <param name="type">The <see cref="MaxDBType"/> of the <see cref="MaxDBParameter"/>.</param>
         /// <param name="size">The size of the <see cref="MaxDBParameter"/>.</param>
         /// <returns>The newly added <see cref="MaxDBParameter"/> object.</returns>
-        public MaxDBParameter Add(string parameterName, MaxDBType type, int size)
-        {
-            return this.Add(new MaxDBParameter(parameterName, type, size));
-        }
+        public MaxDBParameter Add(string parameterName, MaxDBType type, int size) => this.Add(new MaxDBParameter(parameterName, type, size));
 
         /// <summary>
         /// Adds a <see cref="MaxDBParameter"/> to the <see cref="MaxDBParameterCollection"/> given the specified parameter name, type, size
@@ -348,10 +321,7 @@ namespace MaxDB.Data
         /// <param name="size">The size of the <see cref="MaxDBParameter"/>.</param>
         /// <param name="sourceColumn">The source column of the <see cref="MaxDBParameter"/>.</param>
         /// <returns>The newly added <see cref="MaxDBParameter"/> object.</returns>
-        public MaxDBParameter Add(string parameterName, MaxDBType type, int size, string sourceColumn)
-        {
-            return this.Add(new MaxDBParameter(parameterName, type, size, sourceColumn));
-        }
+        public MaxDBParameter Add(string parameterName, MaxDBType type, int size, string sourceColumn) => this.Add(new MaxDBParameter(parameterName, type, size, sourceColumn));
 
         /// <summary>
         /// Adds a <see cref="MaxDBParameter"/> to the <see cref="MaxDBParameterCollection"/>.
@@ -367,11 +337,18 @@ namespace MaxDB.Data
         /// <param name="sourceVersion">The row version of the <see cref="MaxDBParameter"/>.</param>
         /// <param name="value">The <see cref="MaxDBParameter.Value"/> of the <see cref="MaxDBParameter"/> to add to the collection.</param>
         /// <returns>The newly added <see cref="MaxDBParameter"/> object.</returns>
-        public MaxDBParameter Add(string parameterName, MaxDBType type, int size, ParameterDirection direction,
-            bool isNullable, byte precision, byte scale, string sourceColumn, DataRowVersion sourceVersion, object value)
-        {
-            return this.Add(new MaxDBParameter(parameterName, type, size, direction, isNullable, precision, scale, sourceColumn, sourceVersion, value));
-        }
+        public MaxDBParameter Add(
+            string parameterName,
+            MaxDBType type,
+            int size,
+            ParameterDirection direction,
+            bool isNullable,
+            byte precision,
+            byte scale,
+            string sourceColumn,
+            DataRowVersion sourceVersion,
+            object value) =>
+            this.Add(new MaxDBParameter(parameterName, type, size, direction, isNullable, precision, scale, sourceColumn, sourceVersion, value));
 
         /// <summary>
         /// Adds elements to the end of the <see cref="MaxDBParameterCollection"/>.
@@ -381,7 +358,7 @@ namespace MaxDB.Data
         {
             if (values == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(values)));
             }
 
             foreach (MaxDBParameter param in values)
@@ -399,7 +376,7 @@ namespace MaxDB.Data
         {
             if (values == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(values)));
             }
 
             foreach (MaxDBParameter param in values)
@@ -413,47 +390,32 @@ namespace MaxDB.Data
         /// </summary>
         /// <param name="index">The index of the <see cref="DbParameter"/>.</param>
         /// <returns>The <see cref="DbParameter"/> object.</returns>
-        protected override DbParameter GetParameter(int index)
-        {
-            return this[index];
-        }
+        protected override DbParameter GetParameter(int index) => this[index];
 
         /// <summary>
         /// This method is intended for internal use and can not to be called directly from your code.
         /// </summary>
         /// <param name="parameterName">The name of the <see cref="DbParameter"/>.</param>
         /// <returns>The <see cref="DbParameter"/> object.</returns>
-        protected override DbParameter GetParameter(string parameterName)
-        {
-            return this[parameterName];
-        }
+        protected override DbParameter GetParameter(string parameterName) => this[parameterName];
 
         /// <summary>
         /// This method is intended for internal use and can not to be called directly from your code.
         /// </summary>
         /// <param name="index">The index of the <see cref="DbParameter"/>.</param>
         /// <param name="value">The <see cref="MaxDBParameter.Value"/> of the <see cref="MaxDBParameter"/> to set.</param>
-        protected override void SetParameter(int index, DbParameter value)
-        {
-            this[index] = (MaxDBParameter)value;
-        }
+        protected override void SetParameter(int index, DbParameter value) => this[index] = (MaxDBParameter)value;
 
         /// <summary>
         /// This method is intended for internal use and can not to be called directly from your code.
         /// </summary>
         /// <param name="parameterName">The name of the <see cref="DbParameter"/>.</param>
         /// <param name="value">The <see cref="MaxDBParameter.Value"/> of the <see cref="MaxDBParameter"/> to set.</param>
-        protected override void SetParameter(string parameterName, DbParameter value)
-        {
-            this[parameterName] = (MaxDBParameter)value;
-        }
+        protected override void SetParameter(string parameterName, DbParameter value) => this[parameterName] = (MaxDBParameter)value;
 
         #region ICloneable Members
 
-        object ICloneable.Clone()
-        {
-            return this.Clone();
-        }
+        object ICloneable.Clone() => this.Clone();
 
         /// <summary>
         /// Clone <see cref="MaxDBParameterCollection"/> object.

@@ -894,9 +894,9 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 request.InitDbsCommand(false, "DESCRIBE \"" + this.strCursorName + "\"");
 
-                // >>> SQL TRACE
+                //// >>> SQL TRACE
                 this.dbConnection.mLogger.SqlTrace(DateTime.Now, "::DESCRIBE CURSOR " + this.strCursorName);
-                // <<< SQL TRACE
+                //// <<< SQL TRACE
 
                 MaxDBReplyPacket reply = this.dbConnection.mComm.Execute(this.dbConnection.mConnArgs, request, this, GCMode.ALLOWED);
                 reply.ClearPartOffset();
@@ -953,10 +953,10 @@ namespace MaxDB.Data.MaxDBProtocol
             string cmd = "FETCH NEXT \"" + this.strCursorName + "\" INTO " + this.strFetchParamString;
 
             DateTime dt = DateTime.Now;
-            // >>> SQL TRACE
+            //// >>> SQL TRACE
             this.dbConnection.mLogger.SqlTrace(dt, "::FETCH NEXT " + this.strCursorName);
             this.dbConnection.mLogger.SqlTrace(dt, "SQL COMMAND: " + cmd);
-            // <<< SQL TRACE
+            //// <<< SQL TRACE
 
             var request = this.dbConnection.mComm.GetRequestPacket();
             byte currentSQLMode = request.SwitchSqlMode((byte)SqlMode.Internal);
@@ -1007,10 +1007,6 @@ namespace MaxDB.Data.MaxDBProtocol
 
     internal class GeneralColumnInfo
     {
-        private GeneralColumnInfo()
-        {
-        }
-
         public static bool IsLong(int columnType)
         {
             switch (columnType)
@@ -1249,4 +1245,3 @@ namespace MaxDB.Data.MaxDBProtocol
 
     #endregion
 }
-
