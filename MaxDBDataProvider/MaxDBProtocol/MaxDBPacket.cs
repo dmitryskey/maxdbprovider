@@ -266,11 +266,11 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 dump.Append((i * 0x10).ToString("x", CultureInfo.InvariantCulture).PadLeft(8)).Append("  ");
 
-                int tailLen = Math.Min(0x10, 0x10 - ((i + 1) * 0x10 - data.Length));
+                int tailLen = Math.Min(0x10, 0x10 - (((i + 1) * 0x10) - data.Length));
 
                 for (int k = 0; k < tailLen; k++)
                 {
-                    dump.Append(data[i * 0x10 + k].ToString("x2", CultureInfo.InvariantCulture)).Append(" ");
+                    dump.Append(data[(i * 0x10) + k].ToString("x2", CultureInfo.InvariantCulture)).Append(" ");
                 }
 
                 dump.Append("  |".PadLeft((0x10 - tailLen + 1) * 3));
@@ -975,7 +975,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 this.WriteBytes(Encoding.BigEndianUnicode.GetBytes(data), this.DataPos + 1, data.Length * Consts.UnicodeWidth, Consts.BlankUnicodeBytes);
             }
 
-            this.iPartLength += data.Length * Consts.UnicodeWidth + 1;
+            this.iPartLength += (data.Length * Consts.UnicodeWidth) + 1;
         }
 
         public override void AddString(string data)

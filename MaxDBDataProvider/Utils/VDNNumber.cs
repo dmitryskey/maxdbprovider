@@ -229,10 +229,10 @@ namespace MaxDB.Data.Utilities
                         val = ((char)rawNumber[i]) & 0x0f;
                         if (val != 0)
                         {
-                            lastSignificant = i * 2 + 1;
+                            lastSignificant = (i * 2) + 1;
                         }
 
-                        digits[i * 2 + 1] = (byte)(iTensComplement - val + '0');
+                        digits[(i * 2) + 1] = (byte)(iTensComplement - val + '0');
                     }
 
                     digits[lastSignificant]++;
@@ -255,10 +255,10 @@ namespace MaxDB.Data.Utilities
                         val = ((char)rawNumber[i]) & 0x0f;
                         if (val != 0)
                         {
-                            lastSignificant = i * 2 + 1;
+                            lastSignificant = (i * 2) + 1;
                         }
 
-                        digits[i * 2 + 1] = (byte)(val + '0');
+                        digits[(i * 2) + 1] = (byte)(val + '0');
                     }
                 }
 
@@ -278,7 +278,7 @@ namespace MaxDB.Data.Utilities
             int characteristic;
             int exponent;
             bool isNegative;
-            int numberDigits = rawNumber.Length * 2 - 2;
+            int numberDigits = (rawNumber.Length * 2) - 2;
 
             characteristic = rawNumber[0] & 0xFF;
             if (characteristic == iZeroExpValue)
@@ -297,7 +297,7 @@ namespace MaxDB.Data.Utilities
                 isNegative = true;
                 for (int i = 0; i < exponent; i++)
                 {
-                    int val = rawNumber[i / 2 + 1];
+                    int val = rawNumber[(i / 2) + 1];
                     if ((i % 2) == 0)
                     {
                         val &= 0xF0;
@@ -325,7 +325,7 @@ namespace MaxDB.Data.Utilities
                 isNegative = false;
                 for (int i = 0; i < exponent; i++)
                 {
-                    int val = rawNumber[i / 2 + 1];
+                    int val = rawNumber[(i / 2) + 1];
                     if ((i % 2) == 0)
                     {
                         val &= 0xF0;
@@ -415,7 +415,7 @@ namespace MaxDB.Data.Utilities
                     exponent = -(characteristic - 64);
                     for (int i = 0; i < logicalLength; i++)
                     {
-                        int v1 = i % 2 == 0 ? (number[1 + i / 2] & 0xFF) >> 4 : number[1 + i / 2] & 0xF;
+                        int v1 = i % 2 == 0 ? (number[1 + (i / 2)] & 0xFF) >> 4 : number[1 + (i / 2)] & 0xF;
                         if (v1 != 0)
                         {
                             lastsignificant = i;
@@ -431,7 +431,7 @@ namespace MaxDB.Data.Utilities
                     exponent = characteristic - 192;
                     for (int i = 0; i < logicalLength; i++)
                     {
-                        int v1 = i % 2 == 0 ? (number[1 + i / 2] & 0xFF) >> 4 : number[1 + i / 2] & 0xF;
+                        int v1 = i % 2 == 0 ? (number[1 + (i / 2)] & 0xFF) >> 4 : number[1 + (i / 2)] & 0xF;
                         if (v1 != 0)
                         {
                             lastsignificant = i;

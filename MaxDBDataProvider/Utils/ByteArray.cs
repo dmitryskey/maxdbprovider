@@ -147,7 +147,7 @@ namespace MaxDB.Data.Utilities
             offset += this.iOffset;
             return BitConverter.IsLittleEndian == this.bSwapMode
                 ? BitConverter.ToUInt16(this.byData, offset)
-                : this.bSwapMode ? (ushort)(this.byData[offset + 1] * 0x100 + this.byData[offset]) : (ushort)(this.byData[offset] * 0x100 + this.byData[offset + 1]);
+                : this.bSwapMode ? (ushort)((this.byData[offset + 1] * 0x100) + this.byData[offset]) : (ushort)((this.byData[offset] * 0x100) + this.byData[offset + 1]);
         }
 
         public void WriteUInt16(ushort value, int offset) => this.WriteValue(value, offset, 2);
@@ -157,7 +157,7 @@ namespace MaxDB.Data.Utilities
         public void WriteInt16(short value, int offset) => this.WriteValue(value, offset, 2);
 
         public uint ReadUInt32(int offset) => BitConverter.IsLittleEndian == this.bSwapMode ? BitConverter.ToUInt32(this.byData, offset + this.iOffset) :
-                this.bSwapMode ? (uint)(this.ReadUInt16(offset + 2) * 0x10000 + this.ReadUInt16(offset)) : (uint)(this.ReadUInt16(offset) * 0x10000 + this.ReadUInt16(offset + 2));
+                this.bSwapMode ? (uint)((this.ReadUInt16(offset + 2) * 0x10000) + this.ReadUInt16(offset)) : (uint)((this.ReadUInt16(offset) * 0x10000) + this.ReadUInt16(offset + 2));
 
         public void WriteUInt32(uint value, int offset) => this.WriteValue(value, offset, 4);
 
@@ -166,7 +166,7 @@ namespace MaxDB.Data.Utilities
         public void WriteInt32(int value, int offset) => this.WriteValue(value, offset, 4);
 
         public ulong ReadUInt64(int offset) => BitConverter.IsLittleEndian == this.bSwapMode ? BitConverter.ToUInt64(this.byData, offset + this.iOffset) :
-                this.bSwapMode ? (ulong)(this.ReadUInt32(offset + 4) * 0x100000000 + this.ReadUInt32(offset)) : (ulong)(this.ReadUInt32(offset) * 0x100000000 + this.ReadUInt32(offset + 4));
+                this.bSwapMode ? (ulong)((this.ReadUInt32(offset + 4) * 0x100000000) + this.ReadUInt32(offset)) : (ulong)((this.ReadUInt32(offset) * 0x100000000) + this.ReadUInt32(offset + 4));
 
         public long ReadInt64(int offset) => BitConverter.IsLittleEndian == this.bSwapMode ? BitConverter.ToInt64(this.byData, offset + this.iOffset) : (long)this.ReadUInt64(offset);
 

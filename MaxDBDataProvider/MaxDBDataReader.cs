@@ -266,7 +266,7 @@ namespace MaxDB.Data
         {
             var schema = new DataTable("SchemaTable")
             {
-                Locale = CultureInfo.InvariantCulture
+                Locale = CultureInfo.InvariantCulture,
             };
 
             var dtMetaData = new DataTable
@@ -283,7 +283,7 @@ namespace MaxDB.Data
             var dcID = new DataColumn("id", typeof(int))
             {
                 AutoIncrement = true,
-                AutoIncrementSeed = 1
+                AutoIncrementSeed = 1,
             };
 
             schema.Columns.Add(dcID);
@@ -330,8 +330,10 @@ namespace MaxDB.Data
                             {
                                 while (reader.Read())
                                 {
-                                    dtMetaData.Rows.Add(new object[]{
-                                        reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3)});
+                                    dtMetaData.Rows.Add(new object[]
+                                    {
+                                        reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3),
+                                    });
                                 }
                             }
                         }

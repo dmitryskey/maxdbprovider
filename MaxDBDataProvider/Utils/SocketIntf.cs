@@ -30,12 +30,17 @@ namespace MaxDB.Data.Utilities
     internal interface IMaxDBSocket
     {
         bool ReopenSocketAfterInfoPacket { get; }
+
         bool DataAvailable { get; }
+
         Stream Stream { get; }
+
         string Host { get; }
+
         int Port { get; }
 
         IMaxDBSocket Clone();
+
         void Close();
     }
 
@@ -92,7 +97,7 @@ namespace MaxDB.Data.Utilities
 
                 this.Client = new TcpClient(host, port)
                 {
-                    ReceiveTimeout = this.Timeout * 1000
+                    ReceiveTimeout = this.Timeout * 1000,
                 };
             }
             catch (Exception ex)

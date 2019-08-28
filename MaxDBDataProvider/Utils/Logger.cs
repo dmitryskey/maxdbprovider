@@ -25,7 +25,7 @@ namespace MaxDB.Data.Utilities
     {
         None = 0,
         SqlOnly = 1,
-        Full = 2
+        Full = 2,
     }
 
     internal class MaxDBTraceSwitch : Switch
@@ -62,12 +62,16 @@ namespace MaxDB.Data.Utilities
     {
         public const int
 NumSize = 4;
+
         public const int
 TypeSize = 16;
+
         public const int
 LenSize = 10;
+
         public const int
 InputSize = 10;
+
         public const int
 DataSize = 256;
 
