@@ -306,7 +306,7 @@ namespace MaxDB.Data
         }
 
         public MaxDBConnectionException(MaxDBException ex)
-            : base((ex == null ? string.Empty : ex.Message), "08000", (ex == null ? -1 : ex.ErrorCode))
+            : base(ex == null ? string.Empty : ex.Message, "08000", ex == null ? -1 : ex.ErrorCode)
         {
         }
 

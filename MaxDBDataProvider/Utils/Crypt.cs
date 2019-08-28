@@ -183,7 +183,7 @@ namespace MaxDB.Data.Utilities
         {
             var md5 = new MD5CryptoServiceProvider();
 
-            byte[] salted_pass = (new HMACMD5(password)).ComputeHash(salt);
+            byte[] salted_pass = new HMACMD5(password).ComputeHash(salt);
             byte[] client_key = md5.ComputeHash(salted_pass);
             byte[] client_verifier = md5.ComputeHash(client_key);
 
@@ -195,7 +195,7 @@ namespace MaxDB.Data.Utilities
             Buffer.BlockCopy(serverkey, 0, content, saltLen, serverkeyLen);
             Buffer.BlockCopy(clientkey, 0, content, saltLen + serverkeyLen, clientkey.Length);
 
-            byte[] shared_key = (new HMACMD5(client_verifier)).ComputeHash(content);
+            byte[] shared_key = new HMACMD5(client_verifier).ComputeHash(content);
 
             byte[] client_proof = new byte[shared_key.Length];
             for (int i = shared_key.Length - 1; i >= 0; i--)

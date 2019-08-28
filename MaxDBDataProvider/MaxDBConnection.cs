@@ -202,7 +202,7 @@ namespace MaxDB.Data
             {
                 int version = this.mComm.KernelVersion;
                 int correction_level = version % 100;
-                int minor_release = ((version - correction_level) % 10000) / 100;
+                int minor_release = (version - correction_level) % 10000 / 100;
                 int mayor_release = (version - minor_release * 100 - correction_level) / 10000;
                 return mayor_release.ToString(CultureInfo.InvariantCulture) + "." +
                     minor_release.ToString(CultureInfo.InvariantCulture) + "." +
@@ -607,7 +607,7 @@ namespace MaxDB.Data
                 dt.Columns.Add(new DataColumn("LiteralPrefix", typeof(string)));
                 dt.Columns.Add(new DataColumn("LitteralSuffix", typeof(string)));
 
-                bool isUnicode = (this.DatabaseEncoding == Encoding.Unicode);
+                bool isUnicode = this.DatabaseEncoding == Encoding.Unicode;
 
                 dt.Rows.Add(new object[]{"CHAR", MaxDBType.CharA, 8000, "CHAR({0})", "length", typeof(string).ToString(),
                     false, !isUnicode, true, false, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
@@ -936,12 +936,12 @@ namespace MaxDB.Data
 
             if (string.Compare(collectionName, "Indexes", true, CultureInfo.InvariantCulture) == 0)
             {
-                bool unique = (restrictionValues != null && restrictionValues.Length > 2 && restrictionValues[2] != null) &&
+                bool unique = restrictionValues != null && restrictionValues.Length > 2 && restrictionValues[2] != null &&
                         (string.Compare(restrictionValues[2].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
                          string.Compare(restrictionValues[2].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
                          restrictionValues[2].Trim() == "1");
 
-                bool approximate = (restrictionValues != null && restrictionValues.Length > 3 && restrictionValues[3] != null) &&
+                bool approximate = restrictionValues != null && restrictionValues.Length > 3 && restrictionValues[3] != null &&
                         (string.Compare(restrictionValues[3].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
                          string.Compare(restrictionValues[3].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
                          restrictionValues[3].Trim() == "1");

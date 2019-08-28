@@ -57,7 +57,7 @@ namespace MaxDB.UnitTesting
 
                 DropTestTable();
 
-                (new MaxDBCommand(DDLQuery, mconn)).ExecuteNonQuery();
+                new MaxDBCommand(DDLQuery, mconn).ExecuteNonQuery();
             }
             catch (Exception ex)
             {

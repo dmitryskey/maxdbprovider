@@ -48,7 +48,7 @@ namespace MaxDB.Data.Utilities
             else
             {
                 string unsignedIntVal = BigInteger.Abs(val.UnscaledValue).ToString();
-                string prefix = (val < 0 ? "-0." : "0.");
+                string prefix = val < 0 ? "-0." : "0.";
                 int pointPos = unsignedIntVal.Length - scale;
                 if (pointPos == 0)
                 {
@@ -226,7 +226,7 @@ namespace MaxDB.Data.Utilities
                         }
 
                         digits[i * 2] = (byte)(iTensComplement - val + '0');
-                        val = (((char)rawNumber[i]) & 0x0f);
+                        val = ((char)rawNumber[i]) & 0x0f;
                         if (val != 0)
                         {
                             lastSignificant = i * 2 + 1;
@@ -252,7 +252,7 @@ namespace MaxDB.Data.Utilities
                         }
 
                         digits[i * 2] = (byte)(val + '0');
-                        val = (((char)rawNumber[i]) & 0x0f);
+                        val = ((char)rawNumber[i]) & 0x0f;
                         if (val != 0)
                         {
                             lastSignificant = i * 2 + 1;
@@ -291,7 +291,7 @@ namespace MaxDB.Data.Utilities
                 exponent = -(characteristic - 64);
                 if (exponent < 0 || exponent > numberDigits)
                 {
-                    return (long)(Number2BigDecimal(rawNumber));
+                    return (long)Number2BigDecimal(rawNumber);
                 }
 
                 isNegative = true;
@@ -421,7 +421,7 @@ namespace MaxDB.Data.Utilities
                             lastsignificant = i;
                         }
 
-                        digits[i] = (char)((9 - v1) + '0');
+                        digits[i] = (char)(9 - v1 + '0');
                     }
 
                     digits[lastsignificant]++;
@@ -437,11 +437,11 @@ namespace MaxDB.Data.Utilities
                             lastsignificant = i;
                         }
 
-                        digits[i] = (char)((v1) + '0');
+                        digits[i] = (char)(v1 + '0');
                     }
                 }
 
-                string sign = (isnegative ? "-" : string.Empty);
+                string sign = isnegative ? "-" : string.Empty;
                 string numberstr = new string(digits, 0, lastsignificant + 1);
                 if (fixedtype)
                 {

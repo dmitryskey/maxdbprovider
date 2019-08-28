@@ -154,12 +154,12 @@ namespace MaxDB.Data.MaxDBProtocol
                     dump.Append("  producer: ").Append(ProducerType.Name[this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Producer)]);
 
                     dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture)).Append("        Options: ");
-                    dump.Append((this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : ""));
-                    dump.Append((this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : ""));
-                    dump.Append((this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : ""));
-                    dump.Append((this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : ""));
-                    dump.Append((this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : ""));
-                    dump.Append((this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : ""));
+                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : string.Empty);
+                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : string.Empty);
+                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : string.Empty);
+                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : string.Empty);
+                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : string.Empty);
+                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : string.Empty);
                     break;
                 case SegmKind.Return:
                 case SegmKind.Procreply:
@@ -180,12 +180,12 @@ namespace MaxDB.Data.MaxDBProtocol
                     dump.Append("  producer: ").Append(ProducerType.Name[this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Producer)]);
 
                     dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture)).Append("        Options: ");
-                    dump.Append((this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : ""));
-                    dump.Append((this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : ""));
-                    dump.Append((this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : ""));
-                    dump.Append((this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : ""));
-                    dump.Append((this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : ""));
-                    dump.Append((this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : ""));
+                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : string.Empty);
+                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : string.Empty);
+                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : string.Empty);
+                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : string.Empty);
+                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : string.Empty);
+                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : string.Empty);
 
                     dump.Append("        RC: ").Append(this.ReadInt16(this.iSegmentOffset +
                         SegmentHeaderOffset.ReturnCode).ToString(CultureInfo.InvariantCulture));
@@ -1329,7 +1329,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 try
                 {
                     this.FindPart(PartKind.SessionInfoReturned);
-                    return (this.ReadByte(this.PartDataPos) == 1);
+                    return this.ReadByte(this.PartDataPos) == 1;
                 }
                 catch (PartNotFoundException)
                 {

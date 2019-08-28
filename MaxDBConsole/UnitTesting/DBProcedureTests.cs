@@ -102,7 +102,7 @@ namespace MaxDB.UnitTesting
             {
                 DropDbProcedure("spTest");
 
-                string mSchema = (new MaxDBConnectionStringBuilder(mconn.ConnectionString)).UserId;
+                string mSchema = new MaxDBConnectionStringBuilder(mconn.ConnectionString).UserId;
 
                 ExecuteNonQuery("CREATE DBPROC spTest(IN val INTEGER) AS INSERT INTO " + mSchema + ".Test VALUES(:val, 'Test');");
 

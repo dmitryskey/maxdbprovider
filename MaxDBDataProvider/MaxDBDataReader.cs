@@ -626,7 +626,7 @@ namespace MaxDB.Data
                 byte[] logs = new byte[Math.Min(MaxDBLogger.DataSize / 2, length)];
                 Buffer.BlockCopy(buffer, bufferoffset, logs, 0, logs.Length);
 
-                this.LogValue(i + 1, transl, "BYTES", logs.Length, 0, Consts.ToHexString(logs) + (logs.Length < length ? "..." : ""));
+                this.LogValue(i + 1, transl, "BYTES", logs.Length, 0, Consts.ToHexString(logs) + (logs.Length < length ? "..." : string.Empty));
             }
 
             // <<< SQL TRACE
@@ -680,7 +680,7 @@ namespace MaxDB.Data
                 char[] logs = new char[Math.Min(MaxDBLogger.DataSize, length)];
                 Buffer.BlockCopy(buffer, bufferoffset, logs, 0, logs.Length);
 
-                this.LogValue(i + 1, transl, "CHARS", logs.Length, 0, new string(logs) + (logs.Length < length ? "..." : ""));
+                this.LogValue(i + 1, transl, "CHARS", logs.Length, 0, new string(logs) + (logs.Length < length ? "..." : string.Empty));
             }
 
             // <<< SQL TRACE
@@ -847,7 +847,7 @@ namespace MaxDB.Data
                 if (str_value != null)
                 {
                     this.LogValue(i + 1, transl, "STRING", str_value.Length, 1,
-                        (str_value.Length <= MaxDBLogger.DataSize ? str_value : str_value.Substring(0, MaxDBLogger.DataSize) + "..."));
+                        str_value.Length <= MaxDBLogger.DataSize ? str_value : str_value.Substring(0, MaxDBLogger.DataSize) + "...");
                 }
                 else
                 {

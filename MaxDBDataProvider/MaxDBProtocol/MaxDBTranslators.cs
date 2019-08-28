@@ -1400,7 +1400,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 int minute = dt.Minute;
                 int second = dt.Second;
                 int milli = dt.Millisecond;
-                long nano = (dt.Ticks % TimeSpan.TicksPerMillisecond) / (TimeSpan.TicksPerMillisecond / 1000);
+                long nano = dt.Ticks % TimeSpan.TicksPerMillisecond / (TimeSpan.TicksPerMillisecond / 1000);
 
                 formattedTimestamp[0] = (byte)('0' + (year / 1000));
                 year %= 1000;
@@ -1408,7 +1408,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 year %= 100;
                 formattedTimestamp[2] = (byte)('0' + (year / 10));
                 year %= 10;
-                formattedTimestamp[3] = (byte)('0' + (year));
+                formattedTimestamp[3] = (byte)('0' + year);
                 formattedTimestamp[4] = (byte)'-';
 
                 formattedTimestamp[5] = (byte)HighTime[month];

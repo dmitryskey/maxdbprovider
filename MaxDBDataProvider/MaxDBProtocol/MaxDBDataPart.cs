@@ -471,9 +471,9 @@ namespace MaxDB.Data.MaxDBProtocol
             }
 
             bool streamExhausted = false;
-            int maxDataSize = (this.MaxDataSize / 2) * 2;
+            int maxDataSize = this.MaxDataSize / 2 * 2;
 
-            int readBufSize = (4096 / 2) * 2;
+            int readBufSize = 4096 / 2 * 2;
             if (readBufSize == 0)
             {
                 readBufSize = 2;
