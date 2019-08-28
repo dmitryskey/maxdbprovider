@@ -274,6 +274,7 @@ namespace MaxDB.Data
                         return DbType.Binary;
                 }
             }
+
             set
             {
                 switch (value)
@@ -342,6 +343,7 @@ namespace MaxDB.Data
             {
                 return this.objValue ?? DBNull.Value;
             }
+
             set
             {
                 this.objInputValue = this.objValue = value;

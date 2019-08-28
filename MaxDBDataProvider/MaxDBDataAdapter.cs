@@ -166,6 +166,7 @@ namespace MaxDB.Data
             {
                 this.Events.AddHandler(EventRowUpdating, value);
             }
+
             remove
             {
                 this.Events.RemoveHandler(EventRowUpdating, value);
@@ -181,6 +182,7 @@ namespace MaxDB.Data
             {
                 this.Events.AddHandler(EventRowUpdated, value);
             }
+
             remove
             {
                 this.Events.RemoveHandler(EventRowUpdated, value);

@@ -83,6 +83,7 @@ namespace MaxDB.Data
             {
                 return this.strPrefix;
             }
+
             set
             {
                 this.strPrefix = value;
@@ -103,6 +104,7 @@ namespace MaxDB.Data
             {
                 return this.strSuffix;
             }
+
             set
             {
                 this.strSuffix = value;

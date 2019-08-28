@@ -181,29 +181,36 @@ namespace MaxDB.Data.Utilities
         // csecinfo, server-key) (4) server -> client: server-proof
         public static byte[] ScrammMD5(byte[] salt, byte[] password, byte[] clientkey, byte[] serverkey)
         {
-            var md5 = new MD5CryptoServiceProvider();
-
-            byte[] salted_pass = new HMACMD5(password).ComputeHash(salt);
-            byte[] client_key = md5.ComputeHash(salted_pass);
-            byte[] client_verifier = md5.ComputeHash(client_key);
-
-            int saltLen = salt.Length;
-            int serverkeyLen = serverkey.Length;
-            int clientkeyLen = clientkey.Length;
-            byte[] content = new byte[saltLen + serverkeyLen + clientkeyLen];
-            Buffer.BlockCopy(salt, 0, content, 0, saltLen);
-            Buffer.BlockCopy(serverkey, 0, content, saltLen, serverkeyLen);
-            Buffer.BlockCopy(clientkey, 0, content, saltLen + serverkeyLen, clientkey.Length);
-
-            byte[] shared_key = new HMACMD5(client_verifier).ComputeHash(content);
-
-            byte[] client_proof = new byte[shared_key.Length];
-            for (int i = shared_key.Length - 1; i >= 0; i--)
+            using (var md5 = new MD5CryptoServiceProvider())
             {
-                client_proof[i] = (byte)(shared_key[i] ^ client_key[i]);
-            }
+                using (var passwordHash = new HMACMD5(password))
+                {
+                    byte[] salted_pass = passwordHash.ComputeHash(salt);
+                    byte[] client_key = md5.ComputeHash(salted_pass);
+                    byte[] client_verifier = md5.ComputeHash(client_key);
 
-            return client_proof;
+                    int saltLen = salt.Length;
+                    int serverkeyLen = serverkey.Length;
+                    int clientkeyLen = clientkey.Length;
+                    byte[] content = new byte[saltLen + serverkeyLen + clientkeyLen];
+                    Buffer.BlockCopy(salt, 0, content, 0, saltLen);
+                    Buffer.BlockCopy(serverkey, 0, content, saltLen, serverkeyLen);
+                    Buffer.BlockCopy(clientkey, 0, content, saltLen + serverkeyLen, clientkey.Length);
+
+                    using (var clientHash = new HMACMD5(client_verifier))
+                    {
+                        byte[] shared_key = clientHash.ComputeHash(content);
+
+                        byte[] client_proof = new byte[shared_key.Length];
+                        for (int i = shared_key.Length - 1; i >= 0; i--)
+                        {
+                            client_proof[i] = (byte)(shared_key[i] ^ client_key[i]);
+                        }
+
+                        return client_proof;
+                    }
+                }
+            }
         }
 
         public static byte[] Mangle(string passwd, bool isUnicode)
@@ -231,19 +238,19 @@ namespace MaxDB.Data.Utilities
 
             for (int i = 1; i <= 6; ++i)
             {
-                crypt[i - 1] = passwdBytes.ReadByte(3 * i - 3) * vp3 + passwdBytes.ReadByte(3 * i - 2) * vp2 + passwdBytes.ReadByte(3 * i - 1) * vp1;
+                crypt[i - 1] = (passwdBytes.ReadByte((3 * i) - 3) * vp3) + (passwdBytes.ReadByte((3 * i) - 2) * vp2) + (passwdBytes.ReadByte((3 * i) - 1) * vp1);
             }
 
             for (int i = 1; i <= 6; ++i)
             {
                 left = i > 1 ? crypt[i - 2] : vp3;
-                crypt[i - 1] += left % 61 * (vp3 * 126 - 1);
+                crypt[i - 1] += (left % 61) * ((vp3 * 126) - 1);
             }
 
             for (int i = 6; i >= 1; --i)
             {
                 right = i < 5 ? crypt[i] : vp2;
-                crypt[i - 1] += right % 61 * (vp3 * 128 - 1);
+                crypt[i - 1] += (right % 61) * ((vp3 * 128) - 1);
             }
 
             for (int i = 0; i < 6; ++i)

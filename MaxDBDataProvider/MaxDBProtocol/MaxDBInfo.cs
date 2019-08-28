@@ -88,7 +88,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public string SqlCommand { get; }
 
-        void DescribeProcedureCall()
+        private void DescribeProcedureCall()
         {
             // Syntax is one of
             // { CALL <procedure-name>(...) }
@@ -96,7 +96,6 @@ namespace MaxDB.Data.MaxDBProtocol
             // where procedure-name is something like IDENTIFIER, "IDENTIFIER",
             // "OWNER"."IDENTIFIER" etc.
             // we always simply give up if we find nothing that helps our needs
-            //
             char[] cmdchars = this.SqlCommand.Trim().ToCharArray();
             int i = 0;
             int cmdchars_len = cmdchars.Length;
@@ -148,10 +147,14 @@ namespace MaxDB.Data.MaxDBProtocol
             if (cmdchars[i] == 'L' || cmdchars[i] == 'l')
             {
                 if (++i == cmdchars_len)
+                {
                     return;
+                }
             }
             else
+            {
                 return;
+            }
 
             if (cmdchars[i] == 'L' || cmdchars[i] == 'l')
             {
@@ -815,6 +818,7 @@ namespace MaxDB.Data.MaxDBProtocol
     internal interface ISqlParameterController
     {
         MaxDBConnection Connection { get; }
+
         ByteArray ReplyData { get; }
     }
 

@@ -1,5 +1,8 @@
-// Copyright © 2005-2018 Dmitry S. Kataev
-// Copyright © 2002-2003 SAP AG
+//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBDataPart.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -21,22 +24,26 @@ namespace MaxDB.Data.MaxDBProtocol
     using System.IO;
     using MaxDB.Data.Utilities;
 
-    #region "DataPart class"
-
+    /// <summary>
+    /// DataPart class.
+    /// </summary>
     internal abstract class DataPart
     {
-        private const int iMaxArgCount = short.MaxValue;
-        protected short sArgCount;
-        protected int iExtent;
+        protected short argCount;
         protected int iMassExtent;
         internal ByteArray baData;
         internal ByteArray baOrigData;
-
         internal MaxDBRequestPacket reqPacket;
 
-        virtual protected internal int MaxDataSize => this.baOrigData.Length - this.baOrigData.Offset - this.iExtent - 8;
+        private const int MaxArgCount = short.MaxValue;
 
-        virtual public int Extent => this.iExtent;
+        protected virtual int MaxDataSize => this.baOrigData.Length - this.baOrigData.Offset - this.Extent - 8;
+
+        public virtual int Extent
+        {
+            get;
+            protected set;
+        }
 
         public int Length => this.baOrigData != null ? this.baOrigData.Length : 0;
 
@@ -51,19 +58,19 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public virtual void Close()
         {
-            this.baOrigData.WriteInt16(this.sArgCount, -PartHeaderOffset.Data + PartHeaderOffset.ArgCount);
-            this.reqPacket.ClosePart(this.iMassExtent + this.iExtent, this.sArgCount);
+            this.baOrigData.WriteInt16(this.argCount, -PartHeaderOffset.Data + PartHeaderOffset.ArgCount);
+            this.reqPacket.ClosePart(this.iMassExtent + this.Extent, this.argCount);
         }
 
         public virtual void CloseArrayPart(short rows)
         {
             this.baData.WriteInt16(rows, -PartHeaderOffset.Data + PartHeaderOffset.ArgCount);
-            this.reqPacket.ClosePart(this.iMassExtent + this.iExtent * rows, rows);
+            this.reqPacket.ClosePart(this.iMassExtent + (this.Extent * rows), rows);
         }
 
-        public virtual bool HasRoomFor(int recordSize, int reserve) => this.sArgCount < iMaxArgCount && (this.baOrigData.Length - this.baOrigData.Offset - this.iExtent) > (recordSize + reserve);
+        public virtual bool HasRoomFor(int recordSize, int reserve) => this.argCount < MaxArgCount && (this.baOrigData.Length - this.baOrigData.Offset - this.Extent) > (recordSize + reserve);
 
-        public virtual bool HasRoomFor(int recordSize) => this.sArgCount < iMaxArgCount && (this.baOrigData.Length - this.baOrigData.Offset - this.iExtent) > recordSize;
+        public virtual bool HasRoomFor(int recordSize) => this.argCount < MaxArgCount && (this.baOrigData.Length - this.baOrigData.Offset - this.Extent) > recordSize;
 
         public virtual void SetFirstPart() => this.reqPacket.AddPartAttr(PartAttributes.FirstPacket);
 
@@ -71,9 +78,9 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public void MoveRecordBase()
         {
-            this.baOrigData.Offset += this.iExtent;
-            this.iMassExtent += this.iExtent;
-            this.iExtent = 0;
+            this.baOrigData.Offset += this.Extent;
+            this.iMassExtent += this.Extent;
+            this.Extent = 0;
         }
 
         public abstract void WriteDefineByte(byte value, int offset);
@@ -104,11 +111,11 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (descriptionMark == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "descriptionMark"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(descriptionMark)));
             }
 
             descriptionMark.WriteByte(LongDesc.LastData, LongDesc.ValMode);
-            descriptionMark.WriteInt32(this.iMassExtent + this.iExtent + 1, LongDesc.ValPos);
+            descriptionMark.WriteInt32(this.iMassExtent + this.Extent + 1, LongDesc.ValPos);
             descriptionMark.WriteInt32(0, LongDesc.ValLen);
         }
 
@@ -128,17 +135,17 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (stream == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "stream"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(stream)));
             }
 
             if (descriptionMark == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "descriptionMark"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(descriptionMark)));
             }
 
             if (putValue == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "putValue"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(putValue)));
             }
 
             // not exact, but enough to prevent an overflow - adding this
@@ -152,7 +159,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 return false;
             }
 
-            int dataStart = this.iExtent;
+            int dataStart = this.Extent;
             int bytesRead;
             byte[] readBuf = new byte[4096];
             bool streamExhausted = false;
@@ -163,8 +170,8 @@ namespace MaxDB.Data.MaxDBProtocol
                     bytesRead = stream.Read(readBuf, 0, Math.Min(maxDataSize, readBuf.Length));
                     if (bytesRead > 0)
                     {
-                        this.baOrigData.WriteBytes(readBuf, this.iExtent, bytesRead);
-                        this.iExtent += bytesRead;
+                        this.baOrigData.WriteBytes(readBuf, this.Extent, bytesRead);
+                        this.Extent += bytesRead;
                         maxDataSize -= bytesRead;
                     }
                     else
@@ -189,8 +196,8 @@ namespace MaxDB.Data.MaxDBProtocol
             }
 
             descriptionMark.WriteInt32(this.iMassExtent + dataStart + 1, LongDesc.ValPos);
-            descriptionMark.WriteInt32(this.iExtent - dataStart, LongDesc.ValLen);
-            putValue.MarkRequestedChunk(this.baOrigData.Clone(dataStart), this.iExtent - dataStart);
+            descriptionMark.WriteInt32(this.Extent - dataStart, LongDesc.ValLen);
+            putValue.MarkRequestedChunk(this.baOrigData.Clone(dataStart), this.Extent - dataStart);
             return streamExhausted;
         }
 
@@ -198,30 +205,30 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (reader == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "reader"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(reader)));
             }
 
             if (descriptionMark == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "descriptionMark"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(descriptionMark)));
             }
 
             if (putValue == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "putValue"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(putValue)));
             }
 
             // not exact, but enough to prevent an overflow - adding this
             // part to the packet may at most eat up 8 bytes more, if
             // the size is weird.
-            int maxDataSize = (this.baOrigData.Length - this.baOrigData.Offset - this.iExtent - 8) / Consts.UnicodeWidth;
+            int maxDataSize = (this.baOrigData.Length - this.baOrigData.Offset - this.Extent - 8) / Consts.UnicodeWidth;
             if (maxDataSize <= 1)
             {
                 descriptionMark.WriteByte(LongDesc.NoData, LongDesc.ValMode);
                 return false;
             }
 
-            int dataStart = this.iExtent;
+            int dataStart = this.Extent;
             int charsRead;
             char[] readBuf = new char[4096];
             bool streamExhausted = false;
@@ -232,8 +239,8 @@ namespace MaxDB.Data.MaxDBProtocol
                     charsRead = reader.Read(readBuf, 0, Math.Min(maxDataSize, readBuf.Length));
                     if (charsRead > 0)
                     {
-                        this.baOrigData.WriteUnicode(new string(readBuf, 0, charsRead), this.iExtent);
-                        this.iExtent += charsRead * Consts.UnicodeWidth;
+                        this.baOrigData.WriteUnicode(new string(readBuf, 0, charsRead), this.Extent);
+                        this.Extent += charsRead * Consts.UnicodeWidth;
                         maxDataSize -= charsRead;
                     }
                     else
@@ -258,16 +265,15 @@ namespace MaxDB.Data.MaxDBProtocol
             }
 
             descriptionMark.WriteInt32(this.iMassExtent + dataStart + 1, LongDesc.ValPos);
-            descriptionMark.WriteInt32(this.iExtent - dataStart, LongDesc.ValLen);
-            putValue.MarkRequestedChunk(this.baOrigData.Clone(dataStart), this.iExtent - dataStart);
+            descriptionMark.WriteInt32(this.Extent - dataStart, LongDesc.ValLen);
+            putValue.MarkRequestedChunk(this.baOrigData.Clone(dataStart), this.Extent - dataStart);
             return streamExhausted;
         }
     }
 
-    #endregion
-
-    #region "Variable Data Part class"
-
+    /// <summary>
+    /// Variable Data Part class.
+    /// </summary>
     internal class DataPartVariable : DataPart
     {
         private int iFieldCount;
@@ -280,18 +286,18 @@ namespace MaxDB.Data.MaxDBProtocol
         }
 
         public DataPartVariable(ByteArray data, short argCount)
-            : base(data, null) => this.sArgCount = argCount;
+            : base(data, null) => this.argCount = argCount;
 
         public bool NextRow()
         {
-            if (this.iCurrentArgCount >= this.sArgCount)
+            if (this.iCurrentArgCount >= this.argCount)
             {
                 return false;
             }
 
             this.iCurrentArgCount++;
-            this.iFieldCount = this.baOrigData.ReadInt16(this.iExtent);
-            this.iExtent += 2;
+            this.iFieldCount = this.baOrigData.ReadInt16(this.Extent);
+            this.Extent += 2;
             this.iCurrentFieldCount = 0;
             this.CurrentFieldLen = 0;
             return true;
@@ -305,22 +311,22 @@ namespace MaxDB.Data.MaxDBProtocol
             }
 
             this.iCurrentFieldCount++;
-            this.iExtent += this.CurrentFieldLen;
-            this.CurrentFieldLen = this.ReadFieldLength(this.iExtent);
-            this.iExtent += (this.CurrentFieldLen > 250) ? 3 : 1;
+            this.Extent += this.CurrentFieldLen;
+            this.CurrentFieldLen = this.ReadFieldLength(this.Extent);
+            this.Extent += (this.CurrentFieldLen > 250) ? 3 : 1;
             return true;
         }
 
         public int CurrentFieldLen { get; private set; }
 
-        public int CurrentOffset => this.iExtent;
+        public int CurrentOffset => this.Extent;
 
-        public override void AddArg(int pos, int len) => this.sArgCount++;
+        public override void AddArg(int pos, int len) => this.argCount++;
 
         public override void AddRow(short fieldCount)
         {
-            this.baOrigData.WriteInt16(fieldCount, this.iExtent);
-            this.iExtent += 2;
+            this.baOrigData.WriteInt16(fieldCount, this.Extent);
+            this.Extent += 2;
         }
 
         public int ReadFieldLength(int offset)
@@ -354,19 +360,19 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (value == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(value)));
             }
 
-            this.iExtent += this.WriteFieldLength(len, this.iExtent);
-            this.baOrigData.WriteBytes(value, this.iExtent, len);
-            this.iExtent += len;
+            this.Extent += this.WriteFieldLength(len, this.Extent);
+            this.baOrigData.WriteBytes(value, this.Extent, len);
+            this.Extent += len;
         }
 
         public override void WriteBytes(byte[] value, int offset)
         {
             if (value == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(value)));
             }
 
             this.WriteBytes(value, offset, value.Length);
@@ -375,46 +381,46 @@ namespace MaxDB.Data.MaxDBProtocol
         public override void WriteByte(byte value, int offset)
         {
             int len = 1;
-            this.iExtent += this.WriteFieldLength(len, this.iExtent);
-            this.baOrigData.WriteByte(value, this.iExtent);
-            this.iExtent += len;
+            this.Extent += this.WriteFieldLength(len, this.Extent);
+            this.baOrigData.WriteByte(value, this.Extent);
+            this.Extent += len;
         }
 
         public override void WriteInt16(short value, int offset)
         {
             int len = 2;
-            this.iExtent += this.WriteFieldLength(len, this.iExtent);
-            this.baOrigData.WriteInt16(value, this.iExtent);
-            this.iExtent += len;
+            this.Extent += this.WriteFieldLength(len, this.Extent);
+            this.baOrigData.WriteInt16(value, this.Extent);
+            this.Extent += len;
         }
 
         public override void WriteInt32(int value, int offset)
         {
             int len = 4;
-            this.iExtent += this.WriteFieldLength(len, this.iExtent);
-            this.baOrigData.WriteInt32(value, this.iExtent);
-            this.iExtent += len;
+            this.Extent += this.WriteFieldLength(len, this.Extent);
+            this.baOrigData.WriteInt32(value, this.Extent);
+            this.Extent += len;
         }
 
         public override void WriteInt64(long value, int offset)
         {
             int len = 8;
-            this.iExtent += this.WriteFieldLength(len, this.iExtent);
-            this.baOrigData.WriteInt64(value, this.iExtent);
-            this.iExtent += len;
+            this.Extent += this.WriteFieldLength(len, this.Extent);
+            this.baOrigData.WriteInt64(value, this.Extent);
+            this.Extent += len;
         }
 
         public override void WriteNull(int pos, int len)
         {
-            this.baOrigData.WriteByte(Packet.NullValue, this.iExtent);
-            this.iExtent++;
+            this.baOrigData.WriteByte(Packet.NullValue, this.Extent);
+            this.Extent++;
             this.AddArg(pos, len);
         }
 
         public override ByteArray WriteDescriptor(int pos, byte[] descriptor)
         {
-            int offset = this.iExtent + 1;
-            this.baOrigData.WriteBytes(descriptor, this.iExtent);
+            int offset = this.Extent + 1;
+            this.baOrigData.WriteBytes(descriptor, this.Extent);
             return this.baOrigData.Clone(offset);
         }
 
@@ -425,10 +431,9 @@ namespace MaxDB.Data.MaxDBProtocol
         public override bool FillWithProcedureStream(Stream stream, short rowCount) => throw new NotImplementedException();
     }
 
-    #endregion
-
-    #region "Fixed Data Part class"
-
+    /// <summary>
+    /// Fixed Data Part class.
+    /// </summary>
     internal class DataPartFixed : DataPart
     {
         public DataPartFixed(ByteArray rawMemory, MaxDBRequestPacket requestPacket)
@@ -445,8 +450,8 @@ namespace MaxDB.Data.MaxDBProtocol
 
         public override void AddArg(int pos, int len)
         {
-            this.sArgCount++;
-            this.iExtent = Math.Max(this.iExtent, pos + len);
+            this.argCount++;
+            this.Extent = Math.Max(this.Extent, pos + len);
         }
 
         public override void WriteNull(int pos, int len)
@@ -467,7 +472,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (reader == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "reader"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(reader)));
             }
 
             bool streamExhausted = false;
@@ -480,14 +485,13 @@ namespace MaxDB.Data.MaxDBProtocol
             }
 
             char[] readBuf = new char[readBufSize];
-            int charsRead = 0;
             int bytesWritten = 0;
             while (!streamExhausted && maxDataSize > 0)
             {
-                charsRead = 0;
+                int charsRead = 0;
                 int startPos = 0;
                 int charsToRead = Math.Min(maxDataSize / 2, readBufSize);
-                int currCharsRead = 0;
+                int currCharsRead;
                 while (charsToRead != 0)
                 {
                     try
@@ -523,14 +527,14 @@ namespace MaxDB.Data.MaxDBProtocol
                     }
                 }
 
-                this.WriteUnicode(new string(readBuf), this.iExtent, charsRead);
-                this.iExtent += charsRead * Consts.UnicodeWidth;
+                this.WriteUnicode(new string(readBuf), this.Extent, charsRead);
+                this.Extent += charsRead * Consts.UnicodeWidth;
                 maxDataSize -= charsRead * Consts.UnicodeWidth;
                 bytesWritten += charsRead * Consts.UnicodeWidth;
             }
 
             // The number of arguments is the number of rows
-            this.sArgCount = (short)(bytesWritten / Consts.UnicodeWidth);
+            this.argCount = (short)(bytesWritten / Consts.UnicodeWidth);
 
             // the data must be marked as 'last part' in case it is a last part.
             if (streamExhausted)
@@ -545,13 +549,12 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (stream == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "stream"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(stream)));
             }
 
             // We have to:
             // - read and write only multiples of 'rowSize'
             // - but up to maxReadLength
-
             bool streamExhausted = false;
             int maxDataSize = this.MaxDataSize;
             int readBufSize = 4096;
@@ -562,14 +565,13 @@ namespace MaxDB.Data.MaxDBProtocol
                 expandbuf = new byte[readBufSize * 2];
             }
 
-            int bytesRead = 0;
             int bytesWritten = 0;
             while (!streamExhausted && maxDataSize > (asciiForUnicode ? 1 : 0))
             {
-                bytesRead = 0;
+                int bytesRead = 0;
                 int startPos = 0;
                 int bytesToRead = Math.Min(maxDataSize / (asciiForUnicode ? 2 : 1), readBufSize);
-                int currBytesRead = 0;
+                int currBytesRead;
                 while (bytesToRead != 0)
                 {
                     try
@@ -599,25 +601,25 @@ namespace MaxDB.Data.MaxDBProtocol
                     for (int i = 0; i < bytesRead; ++i)
                     {
                         expandbuf[i * 2] = 0;
-                        expandbuf[i * 2 + 1] = readBuf[i];
+                        expandbuf[(i * 2) + 1] = readBuf[i];
                     }
 
-                    this.WriteBytes(expandbuf, this.iExtent, bytesRead * 2);
-                    this.iExtent += bytesRead * 2;
+                    this.WriteBytes(expandbuf, this.Extent, bytesRead * 2);
+                    this.Extent += bytesRead * 2;
                     maxDataSize -= bytesRead * 2;
                     bytesWritten += bytesRead * 2;
                 }
                 else
                 {
-                    this.WriteBytes(readBuf, this.iExtent, bytesRead);
-                    this.iExtent += bytesRead;
+                    this.WriteBytes(readBuf, this.Extent, bytesRead);
+                    this.Extent += bytesRead;
                     maxDataSize -= bytesRead;
                     bytesWritten += bytesRead;
                 }
             }
 
             // The number of arguments is the number of rows
-            this.sArgCount = (short)(bytesWritten / (asciiForUnicode ? 2 : 1));
+            this.argCount = (short)(bytesWritten / (asciiForUnicode ? 2 : 1));
 
             // the data must be marked as 'last part' in case it is a last part.
             if (streamExhausted)
@@ -632,7 +634,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (stream == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "stream"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(stream)));
             }
 
             bool streamExhausted = false;
@@ -643,15 +645,14 @@ namespace MaxDB.Data.MaxDBProtocol
             }
 
             int rowsize = 1;
-            int bytesRead = 0;
             int bytesWritten = 0;
             int readBufferSize = 4096;
             byte[] readBuffer = new byte[4096];
             while (!streamExhausted & maxDataSize > rowsize)
             {
-                bytesRead = 0;
+                int bytesRead = 0;
                 int startPos = 0;
-                int currBytesRead = 0;
+                int currBytesRead;
                 int bytesToRead = Math.Min(maxDataSize / rowsize, readBufferSize);
                 while (bytesToRead != 0)
                 {
@@ -676,13 +677,13 @@ namespace MaxDB.Data.MaxDBProtocol
                     }
                 }
 
-                this.WriteBytes(readBuffer, this.iExtent, bytesRead);
-                this.iExtent += bytesRead;
+                this.WriteBytes(readBuffer, this.Extent, bytesRead);
+                this.Extent += bytesRead;
                 maxDataSize -= bytesRead;
                 bytesWritten += bytesRead;
             }
 
-            this.sArgCount = (short)(bytesWritten / rowsize);
+            this.argCount = (short)(bytesWritten / rowsize);
 
             if (streamExhausted)
             {
@@ -692,6 +693,4 @@ namespace MaxDB.Data.MaxDBProtocol
             return streamExhausted;
         }
     }
-
-    #endregion
 }

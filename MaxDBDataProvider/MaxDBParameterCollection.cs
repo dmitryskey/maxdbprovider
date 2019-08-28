@@ -252,6 +252,7 @@ namespace MaxDB.Data
             {
                 return this.mCollection[index];
             }
+
             set
             {
                 this.mCollection[index] = (MaxDBParameter)value;
@@ -271,6 +272,7 @@ namespace MaxDB.Data
             {
                 return this.mCollection[index];
             }
+
             set
             {
                 this.mCollection[index] = value;

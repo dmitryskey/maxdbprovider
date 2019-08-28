@@ -168,6 +168,7 @@ namespace MaxDB.Data
 
                 return builder.ToString();
             }
+
             set
             {
                 bool isModeSet = false;
@@ -514,7 +515,9 @@ namespace MaxDB.Data
                 return true;
             }
             else
+            {
                 return false;
+            }
         }
 
         /// <summary>

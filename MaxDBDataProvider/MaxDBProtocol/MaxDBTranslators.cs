@@ -1218,9 +1218,9 @@ namespace MaxDB.Data.MaxDBProtocol
                 {
                     byte[] raw = mem.ReadBytes(this.iBufferPosition, this.iPhysicalLength - 1);
 
-                    int hour = (raw[0] - '0') * 10 + (raw[1] - '0');
-                    int min = (raw[3] - '0') * 10 + (raw[4] - '0');
-                    int sec = (raw[6] - '0') * 10 + (raw[7] - '0');
+                    int hour = ((raw[0] - '0') * 10) + (raw[1] - '0');
+                    int min = ((raw[3] - '0') * 10) + (raw[4] - '0');
+                    int sec = ((raw[6] - '0') * 10) + (raw[7] - '0');
 
                     return new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, hour, min, sec);
                 }
@@ -1312,9 +1312,9 @@ namespace MaxDB.Data.MaxDBProtocol
 
                     int offset = this.mEncoding == Encoding.Unicode ? 1 : 0;
 
-                    int hour = (raw[1 - offset] - '0') * 10 + (raw[3 - offset] - '0');
-                    int min = (raw[7 - offset] - '0') * 10 + (raw[9 - offset] - '0');
-                    int sec = (raw[13 - offset] - '0') * 10 + (raw[15 - offset] - '0');
+                    int hour = ((raw[1 - offset] - '0') * 10) + (raw[3 - offset] - '0');
+                    int min = ((raw[7 - offset] - '0') * 10) + (raw[9 - offset] - '0');
+                    int sec = ((raw[13 - offset] - '0') * 10) + (raw[15 - offset] - '0');
 
                     return new DateTime(DateTime.MinValue.Year, DateTime.MinValue.Month, DateTime.MinValue.Day, hour, min, sec);
                 }
@@ -1370,14 +1370,14 @@ namespace MaxDB.Data.MaxDBProtocol
                 {
                     byte[] raw = mem.ReadBytes(this.iBufferPosition, this.iPhysicalLength - 1);
 
-                    int year = (raw[0] - '0') * 1000 + (raw[1] - '0') * 100 + (raw[2] - '0') * 10 + (raw[3] - '0');
-                    int month = (raw[5] - '0') * 10 + (raw[6] - '0');
-                    int day = (raw[8] - '0') * 10 + (raw[9] - '0');
-                    int hour = (raw[11] - '0') * 10 + (raw[12] - '0');
-                    int min = (raw[14] - '0') * 10 + (raw[15] - '0');
-                    int sec = (raw[17] - '0') * 10 + (raw[18] - '0');
-                    int milli = (raw[20] - '0') * 100 + (raw[21] - '0') * 10 + (raw[22] - '0');
-                    int nano = (raw[23] - '0') * 100 + (raw[24] - '0') * 10 + (raw[25] - '0');
+                    int year = ((raw[0] - '0') * 1000) + ((raw[1] - '0') * 100) + ((raw[2] - '0') * 10) + (raw[3] - '0');
+                    int month = ((raw[5] - '0') * 10) + (raw[6] - '0');
+                    int day = ((raw[8] - '0') * 10) + (raw[9] - '0');
+                    int hour = ((raw[11] - '0') * 10) + (raw[12] - '0');
+                    int min = ((raw[14] - '0') * 10) + (raw[15] - '0');
+                    int sec = ((raw[17] - '0') * 10) + (raw[18] - '0');
+                    int milli = ((raw[20] - '0') * 100) + ((raw[21] - '0') * 10) + (raw[22] - '0');
+                    int nano = ((raw[23] - '0') * 100) + ((raw[24] - '0') * 10) + (raw[25] - '0');
 
                     return new DateTime(year, month, day, hour, min, sec, milli).AddTicks(nano * TimeSpan.TicksPerMillisecond / 1000);
                 }
@@ -1400,7 +1400,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 int minute = dt.Minute;
                 int second = dt.Second;
                 int milli = dt.Millisecond;
-                long nano = dt.Ticks % TimeSpan.TicksPerMillisecond / (TimeSpan.TicksPerMillisecond / 1000);
+                long nano = (dt.Ticks % TimeSpan.TicksPerMillisecond) / (TimeSpan.TicksPerMillisecond / 1000);
 
                 formattedTimestamp[0] = (byte)('0' + (year / 1000));
                 year %= 1000;
@@ -1498,15 +1498,15 @@ namespace MaxDB.Data.MaxDBProtocol
 
                     int offset = this.mEncoding == Encoding.Unicode ? 1 : 0;
 
-                    int year = (raw[1 - offset] - '0') * 1000 + (raw[3 - offset] - '0') * 100 +
-                        (raw[5 - offset] - '0') * 10 + (raw[7 - offset] - '0');
-                    int month = (raw[11 - offset] - '0') * 10 + (raw[13 - offset] - '0');
-                    int day = (raw[17 - offset] - '0') * 10 + (raw[19 - offset] - '0');
-                    int hour = (raw[23 - offset] - '0') * 10 + (raw[25 - offset] - '0');
-                    int min = (raw[29 - offset] - '0') * 10 + (raw[31 - offset] - '0');
-                    int sec = (raw[35 - offset] - '0') * 10 + (raw[37 - offset] - '0');
-                    int milli = (raw[41 - offset] - '0') * 100 + (raw[43 - offset] - '0') * 10 + (raw[45 - offset] - '0');
-                    int nano = (raw[47 - offset] - '0') * 100 + (raw[49 - offset] - '0') * 10 + (raw[51 - offset] - '0');
+                    int year = ((raw[1 - offset] - '0') * 1000) + ((raw[3 - offset] - '0') * 100) +
+                        ((raw[5 - offset] - '0') * 10) + (raw[7 - offset] - '0');
+                    int month = ((raw[11 - offset] - '0') * 10) + (raw[13 - offset] - '0');
+                    int day = ((raw[17 - offset] - '0') * 10) + (raw[19 - offset] - '0');
+                    int hour = ((raw[23 - offset] - '0') * 10) + (raw[25 - offset] - '0');
+                    int min = ((raw[29 - offset] - '0') * 10) + (raw[31 - offset] - '0');
+                    int sec = ((raw[35 - offset] - '0') * 10) + (raw[37 - offset] - '0');
+                    int milli = ((raw[41 - offset] - '0') * 100) + ((raw[43 - offset] - '0') * 10) + (raw[45 - offset] - '0');
+                    int nano = ((raw[47 - offset] - '0') * 100) + ((raw[49 - offset] - '0') * 10) + (raw[51 - offset] - '0');
 
                     return new DateTime(year, month, day, hour, min, sec, milli).AddTicks(nano * TimeSpan.TicksPerMillisecond / 1000);
                 }
@@ -1560,9 +1560,9 @@ namespace MaxDB.Data.MaxDBProtocol
                 {
                     byte[] raw = mem.ReadBytes(this.iBufferPosition, this.iPhysicalLength - 1);
 
-                    int year = (raw[0] - '0') * 1000 + (raw[1] - '0') * 100 + (raw[2] - '0') * 10 + (raw[3] - '0');
-                    int month = (raw[5] - '0') * 10 + (raw[6] - '0');
-                    int day = (raw[8] - '0') * 10 + (raw[9] - '0');
+                    int year = ((raw[0] - '0') * 1000) + ((raw[1] - '0') * 100) + ((raw[2] - '0') * 10) + (raw[3] - '0');
+                    int month = ((raw[5] - '0') * 10) + (raw[6] - '0');
+                    int day = ((raw[8] - '0') * 10) + (raw[9] - '0');
 
                     return new DateTime(year, month, day);
                 }
@@ -1652,10 +1652,10 @@ namespace MaxDB.Data.MaxDBProtocol
 
                     int offset = this.mEncoding == Encoding.Unicode ? 1 : 0;
 
-                    int year = (raw[1 - offset] - '0') * 1000 + (raw[3 - offset] - '0') * 100 +
-                        (raw[5 - offset] - '0') * 10 + (raw[7 - offset] - '0');
-                    int month = (raw[11 - offset] - '0') * 10 + (raw[13 - offset] - '0');
-                    int day = (raw[17 - offset] - '0') * 10 + (raw[19 - offset] - '0');
+                    int year = ((raw[1 - offset] - '0') * 1000) + ((raw[3 - offset] - '0') * 100) +
+                        ((raw[5 - offset] - '0') * 10) + (raw[7 - offset] - '0');
+                    int month = ((raw[11 - offset] - '0') * 10) + (raw[13 - offset] - '0');
+                    int day = ((raw[17 - offset] - '0') * 10) + (raw[19 - offset] - '0');
 
                     return new DateTime(year, month, day);
                 }
@@ -2333,7 +2333,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         return null;
                     }
 
-                    return new BinaryProcedurePutValue(this , stream, length);
+                    return new BinaryProcedurePutValue(this, stream, length);
                 }
                 else
                 {
@@ -2441,7 +2441,6 @@ namespace MaxDB.Data.MaxDBProtocol
             public override byte[] GetBytes(ISqlParameterController controller, ByteArray mem)
             {
                 Stream blobStream;
-                MemoryStream tmpStream;
 
                 blobStream = this.GetBinaryStream(controller, mem, controller.ReplyData);
                 if (blobStream == null)
@@ -2455,17 +2454,21 @@ namespace MaxDB.Data.MaxDBProtocol
                     byte[] buf = new byte[bufSize];
                     int readLen;
 
-                    tmpStream = new MemoryStream();
-                    readLen = blobStream.Read(buf, 0, buf.Length);
-                    while (readLen > 0)
+                    using (var tmpStream = new MemoryStream())
                     {
-                        tmpStream.Write(buf, 0, readLen);
-                        if (readLen < bufSize)
+                        readLen = blobStream.Read(buf, 0, buf.Length);
+                        while (readLen > 0)
                         {
-                            break;
+                            tmpStream.Write(buf, 0, readLen);
+                            if (readLen < bufSize)
+                            {
+                                break;
+                            }
+
+                            readLen = blobStream.Read(buf, 0, buf.Length);
                         }
 
-                        readLen = blobStream.Read(buf, 0, buf.Length);
+                        return tmpStream.ToArray();
                     }
                 }
                 catch (StreamIOException sqlExc)
@@ -2477,7 +2480,7 @@ namespace MaxDB.Data.MaxDBProtocol
                     throw new DataException(ioExc.Message, ioExc);
                 }
 
-                return tmpStream.ToArray();
+                return null;
             }
 
             public virtual TextReader GetCharacterStream(ISqlParameterController controller, ByteArray mem, ByteArray longData)

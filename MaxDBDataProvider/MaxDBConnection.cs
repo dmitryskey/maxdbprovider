@@ -202,8 +202,8 @@ namespace MaxDB.Data
             {
                 int version = this.mComm.KernelVersion;
                 int correction_level = version % 100;
-                int minor_release = (version - correction_level) % 10000 / 100;
-                int mayor_release = (version - minor_release * 100 - correction_level) / 10000;
+                int minor_release = ((version - correction_level) % 10000) / 100;
+                int mayor_release = (version - (minor_release * 100) - correction_level) / 10000;
                 return mayor_release.ToString(CultureInfo.InvariantCulture) + "." +
                     minor_release.ToString(CultureInfo.InvariantCulture) + "." +
                     correction_level.ToString("d2", CultureInfo.InvariantCulture);
@@ -447,12 +447,10 @@ namespace MaxDB.Data
                         }
                     }
 
-                    var da = new MaxDBDataAdapter
+                    using (var da = new MaxDBDataAdapter { SelectCommand = cmd, })
                     {
-                        SelectCommand = cmd
-                    };
-
-                    da.Fill(dt);
+                        da.Fill(dt);
+                    }
                 }
             }
             finally
@@ -500,7 +498,7 @@ namespace MaxDB.Data
         {
             var dt = new DataTable("SchemaTable")
             {
-                Locale = CultureInfo.InvariantCulture
+                Locale = CultureInfo.InvariantCulture,
             };
 
             if (string.Compare(collectionName, "MetaDataCollections", true, CultureInfo.InvariantCulture) == 0)
@@ -609,75 +607,141 @@ namespace MaxDB.Data
 
                 bool isUnicode = this.DatabaseEncoding == Encoding.Unicode;
 
-                dt.Rows.Add(new object[]{"CHAR", MaxDBType.CharA, 8000, "CHAR({0})", "length", typeof(string).ToString(),
+                dt.Rows.Add(new object[]
+                {
+                    "CHAR", MaxDBType.CharA, 8000, "CHAR({0})", "length", typeof(string).ToString(),
                     false, !isUnicode, true, false, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    true, "'", "'"});
-                dt.Rows.Add(new object[]{"CHAR ASCII", MaxDBType.CharA, 8000, "CHAR({0}) ASCII", "length", typeof(string).ToString(),
+                    true, "'", "'",
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "CHAR ASCII", MaxDBType.CharA, 8000, "CHAR({0}) ASCII", "length", typeof(string).ToString(),
                     false, false, true, false, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    true, "'", "'"});
+                    true, "'", "'",
+                });
                 if (isUnicode)
-                    dt.Rows.Add(new object[]{"CHAR UNICODE", MaxDBType.Unicode, 4000, "CHAR({0}) UNICODE", "length", typeof(string).ToString(),
+                    dt.Rows.Add(new object[]
+                    {
+                        "CHAR UNICODE", MaxDBType.Unicode, 4000, "CHAR({0}) UNICODE", "length", typeof(string).ToString(),
                         false, true, true, false, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                        true, "'", "'"});
-                dt.Rows.Add(new object[]{"CHAR BYTE", MaxDBType.CharB, 8000, "CHAR({0}) BYTE", "length", typeof(byte[]).ToString(),
+                        true, "'", "'",
+                    });
+                dt.Rows.Add(new object[]
+                {
+                    "CHAR BYTE", MaxDBType.CharB, 8000, "CHAR({0}) BYTE", "length", typeof(byte[]).ToString(),
                     false, true, true, false, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    true, "X'", "X'"});
-                dt.Rows.Add(new object[]{"VARCHAR", MaxDBType.VarCharA, 8000, "VARCHAR({0})", "length", typeof(string).ToString(),
+                    true, "X'", "X'",
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "VARCHAR", MaxDBType.VarCharA, 8000, "VARCHAR({0})", "length", typeof(string).ToString(),
                     false, !isUnicode, true, false, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    true, "'", "'"});
-                dt.Rows.Add(new object[]{"VARCHAR ASCII", MaxDBType.VarCharA, 8000, "VARCHAR({0}) ASCII", "length", typeof(string).ToString(),
+                    true, "'", "'",
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "VARCHAR ASCII", MaxDBType.VarCharA, 8000, "VARCHAR({0}) ASCII", "length", typeof(string).ToString(),
                     false, false, true, false, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    true, "'", "'"});
+                    true, "'", "'",
+                });
                 if (isUnicode)
-                    dt.Rows.Add(new object[]{"VARCHAR UNICODE", MaxDBType.VarCharUni, 4000, "VARCHAR({0}) UNICODE", "length", typeof(string).ToString(),
+                    dt.Rows.Add(new object[]
+                    {
+                        "VARCHAR UNICODE", MaxDBType.VarCharUni, 4000, "VARCHAR({0}) UNICODE", "length", typeof(string).ToString(),
                         false, true, true, false, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                        true, string.Empty, string.Empty});
-                dt.Rows.Add(new object[]{"VARCHAR BYTE", MaxDBType.VarCharB, 8000, "VARCHAR({0}) BYTE", "length", typeof(byte[]).ToString(),
+                        true, string.Empty, string.Empty,
+                    });
+                dt.Rows.Add(new object[]
+                {
+                    "VARCHAR BYTE", MaxDBType.VarCharB, 8000, "VARCHAR({0}) BYTE", "length", typeof(byte[]).ToString(),
                     false, true, true, false, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    true, "X'", "X'"});
-                dt.Rows.Add(new object[]{"LONG", MaxDBType.LongA, 2147483648, "LONG", DBNull.Value, typeof(string).ToString(),
+                    true, "X'", "X'",
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "LONG", MaxDBType.LongA, 2147483648, "LONG", DBNull.Value, typeof(string).ToString(),
                     false, !isUnicode, true, false, false, true, false, false, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    true, "'", "'"});
-                dt.Rows.Add(new object[]{"LONG VARCHAR", MaxDBType.LongA, 2147483648, "LONG VARCHAR", DBNull.Value, typeof(string).ToString(),
+                    true, "'", "'",
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "LONG VARCHAR", MaxDBType.LongA, 2147483648, "LONG VARCHAR", DBNull.Value, typeof(string).ToString(),
                     false, false, true, false, false, true, false, false, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    true, "'", "'"});
-                dt.Rows.Add(new object[]{"LONG ASCII", MaxDBType.LongA, 2147483648, "LONG ASCII", DBNull.Value, typeof(string).ToString(),
+                    true, "'", "'",
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "LONG ASCII", MaxDBType.LongA, 2147483648, "LONG ASCII", DBNull.Value, typeof(string).ToString(),
                     false, false, true, false, false, true, false, false, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    true, "'", "'"});
+                    true, "'", "'",
+                });
                 if (isUnicode)
-                    dt.Rows.Add(new object[]{"LONG UNICODE", MaxDBType.LongUni, 1073741824, "LONG UNICODE", DBNull.Value, typeof(string).ToString(),
+                    dt.Rows.Add(new object[]
+                    {
+                        "LONG UNICODE", MaxDBType.LongUni, 1073741824, "LONG UNICODE", DBNull.Value, typeof(string).ToString(),
                         false, true, true, false, false, true, false, false, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                        true, "'", "'"});
-                dt.Rows.Add(new object[]{"LONG BYTE", MaxDBType.LongB, 2147483648, "LONG BYTE", DBNull.Value, typeof(byte[]).ToString(),
+                        true, "'", "'",
+                    });
+                dt.Rows.Add(new object[]
+                {
+                    "LONG BYTE", MaxDBType.LongB, 2147483648, "LONG BYTE", DBNull.Value, typeof(byte[]).ToString(),
                     false, true, true, false, false, true, false, false, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    true, "X'", "X'"});
-                dt.Rows.Add(new object[]{"BOOLEAN", MaxDBType.Boolean, 1, "BOOLEAN", DBNull.Value, typeof(bool).ToString(),
+                    true, "X'", "X'",
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "BOOLEAN", MaxDBType.Boolean, 1, "BOOLEAN", DBNull.Value, typeof(bool).ToString(),
                     false, true, false, true, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    true, DBNull.Value, DBNull.Value});
-                dt.Rows.Add(new object[]{"FIXED", MaxDBType.Fixed, 38, "FIXED({0},{1})", "precision,scale", typeof(decimal).ToString(),
+                    true, DBNull.Value, DBNull.Value,
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "FIXED", MaxDBType.Fixed, 38, "FIXED({0},{1})", "precision,scale", typeof(decimal).ToString(),
                     true, true, false, true, false, false, true, true, false, false, 38, 0, false,
-                    DBNull.Value, DBNull.Value, DBNull.Value});
-                dt.Rows.Add(new object[]{"NUMERIC", MaxDBType.Number, 38, "NUMERIC({0},{1})", "precision,scale", typeof(decimal).ToString(),
+                    DBNull.Value, DBNull.Value, DBNull.Value,
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "NUMERIC", MaxDBType.Number, 38, "NUMERIC({0},{1})", "precision,scale", typeof(decimal).ToString(),
                     true, false, false, true, false, false, true, true, false, false, 38, 0, false,
-                    DBNull.Value, DBNull.Value, DBNull.Value});
-                dt.Rows.Add(new object[]{"DECIMAL", MaxDBType.VFloat, 38, "DECIMAL({0},{1})", "precision,scale", typeof(decimal).ToString(),
+                    DBNull.Value, DBNull.Value, DBNull.Value,
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "DECIMAL", MaxDBType.VFloat, 38, "DECIMAL({0},{1})", "precision,scale", typeof(decimal).ToString(),
                     true, false, false, true, false, false, true, true, false, false, 38, 0, false,
-                    DBNull.Value, DBNull.Value, DBNull.Value});
-                dt.Rows.Add(new object[]{"FLOAT", MaxDBType.Float, 38, "FLOAT({0})", "precision", typeof(decimal).ToString(),
+                    DBNull.Value, DBNull.Value, DBNull.Value,
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "FLOAT", MaxDBType.Float, 38, "FLOAT({0})", "precision", typeof(decimal).ToString(),
                     false, true, false, true, false, false, true, true, false, false, 38, 0, false,
-                    DBNull.Value, DBNull.Value, DBNull.Value});
-                dt.Rows.Add(new object[]{"REAL", MaxDBType.Float, 38, "REAL({0})", "precision", typeof(decimal).ToString(),
+                    DBNull.Value, DBNull.Value, DBNull.Value,
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "REAL", MaxDBType.Float, 38, "REAL({0})", "precision", typeof(decimal).ToString(),
                     false, true, false, true, false, false, true, true, false, false, 38, 0, false,
-                    DBNull.Value, DBNull.Value, DBNull.Value});
-                dt.Rows.Add(new object[]{"DOUBLE PRECISION", MaxDBType.VFloat, 38, "DOUBLE PRECISION", "precision", typeof(decimal).ToString(),
+                    DBNull.Value, DBNull.Value, DBNull.Value,
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "DOUBLE PRECISION", MaxDBType.VFloat, 38, "DOUBLE PRECISION", "precision", typeof(decimal).ToString(),
                     false, true, false, true, false, false, true, true, false, false, 38, 0, false,
-                    DBNull.Value, DBNull.Value, DBNull.Value});
-                dt.Rows.Add(new object[]{"INTEGER", MaxDBType.Integer, 10, "INTEGER", DBNull.Value, typeof(int).ToString(),
+                    DBNull.Value, DBNull.Value, DBNull.Value,
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "INTEGER", MaxDBType.Integer, 10, "INTEGER", DBNull.Value, typeof(int).ToString(),
                     true, true, false, true, true, false, true, true, false, false, DBNull.Value, DBNull.Value, false,
-                    DBNull.Value, DBNull.Value, DBNull.Value});
-                dt.Rows.Add(new object[]{"SMALLINT", MaxDBType.SmallInt, 5, "SMALLINT", DBNull.Value, typeof(short).ToString(),
+                    DBNull.Value, DBNull.Value, DBNull.Value,
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "SMALLINT", MaxDBType.SmallInt, 5, "SMALLINT", DBNull.Value, typeof(short).ToString(),
                     true, true, false, true, true, false, true, true, false, false, DBNull.Value, DBNull.Value, false,
-                    DBNull.Value, DBNull.Value, DBNull.Value});
+                    DBNull.Value, DBNull.Value, DBNull.Value,
+                });
 
                 string DatePattern;
                 string TimePattern;
@@ -718,17 +782,25 @@ namespace MaxDB.Data
                         TimestampPattern = "YYYYMMDDHHMMSSMMMMMM";
                         break;
                 }
-;
 
-                dt.Rows.Add(new object[]{"DATE", MaxDBType.Date, DatePattern.Length, "DATE", DBNull.Value, typeof(DateTime).ToString(),
+                dt.Rows.Add(new object[]
+                {
+                    "DATE", MaxDBType.Date, DatePattern.Length, "DATE", DBNull.Value, typeof(DateTime).ToString(),
                     false, true, false, true, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    DBNull.Value, DBNull.Value, DBNull.Value});
-                dt.Rows.Add(new object[]{"TIME", MaxDBType.Time, TimePattern.Length, "TIME", DBNull.Value, typeof(DateTime).ToString(),
+                    DBNull.Value, DBNull.Value, DBNull.Value,
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "TIME", MaxDBType.Time, TimePattern.Length, "TIME", DBNull.Value, typeof(DateTime).ToString(),
                     false, true, false, true, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    DBNull.Value, DBNull.Value, DBNull.Value});
-                dt.Rows.Add(new object[]{"TIMESTAMP", MaxDBType.Timestamp, TimestampPattern.Length, "TIMESTAMP", DBNull.Value, typeof(DateTime).ToString(),
+                    DBNull.Value, DBNull.Value, DBNull.Value,
+                });
+                dt.Rows.Add(new object[]
+                {
+                    "TIMESTAMP", MaxDBType.Timestamp, TimestampPattern.Length, "TIMESTAMP", DBNull.Value, typeof(DateTime).ToString(),
                     false, true, false, true, false, false, true, true, true, DBNull.Value, DBNull.Value, DBNull.Value, false,
-                    DBNull.Value, DBNull.Value, DBNull.Value});
+                    DBNull.Value, DBNull.Value, DBNull.Value,
+                });
             }
 
             if (string.Compare(collectionName, "Restrictions", true, CultureInfo.InvariantCulture) == 0)
@@ -774,7 +846,8 @@ namespace MaxDB.Data
             {
                 dt.Columns.Add(new DataColumn("ReservedWord", typeof(string)));
 
-                var keywords = new List<string> {
+                var keywords = new List<string>
+                {
                     "ABS", "ABSOLUTE", "ACOS", "ADDDATE", "ADDTIME", "ALL", "ALPHA", "ALTER", "ANY", "ASCII", "ASIN",
                     "ATAN", "ATAN2", "AVG", "BINARY", "BIT", "BOOLEAN", "BYTE", "CASE", "CEIL", "CEILING", "CHAR",
                     "CHARACTER", "CHECK", "CHR", "COLUMN", "CONCAT", "CONSTRAINT", "COS", "COSH", "COT", "COUNT",
@@ -794,7 +867,8 @@ namespace MaxDB.Data
                     "SUBTIME", "SUM", "SYSDBA", "TABLE", "TAN", "TANH", "TIME", "TIMEDIFF", "TIMESTAMP", "TIMEZONE", "TO",
                     "TOIDENTIFIER", "TRANSACTION", "TRANSLATE", "TRIM", "TRUNC", "TRUNCATE", "UCASE", "UID", "UNICODE", "UNION",
                     "UPDATE", "UPPER", "USER", "USERGROUP", "USING", "UTCDATE", "UTCDIFF", "VALUE", "VALUES", "VARCHAR",
-                    "VARGRAPHIC", "VARIANCE", "WEEK", "WEEKOFYEAR", "WHEN", "WHERE", "WITH", "YEAR", "ZONED" };
+                    "VARGRAPHIC", "VARIANCE", "WEEK", "WEEKOFYEAR", "WHEN", "WHERE", "WITH", "YEAR", "ZONED",
+                };
 
                 keywords.ForEach(keyword => dt.Rows.Add(keyword));
             }
@@ -1159,7 +1233,7 @@ namespace MaxDB.Data
             {
                 this.mComm = new MaxDBComm(this.mLogger)
                 {
-                    ConnStrBuilder = this.mConnStrBuilder
+                    ConnStrBuilder = this.mConnStrBuilder,
                 };
 
                 this.mComm.Open(this.mConnArgs);

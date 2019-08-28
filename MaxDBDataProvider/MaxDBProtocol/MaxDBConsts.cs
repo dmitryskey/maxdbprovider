@@ -1,5 +1,8 @@
-// Copyright © 2005-2018 Dmitry S. Kataev
-// Copyright © 2002-2003 SAP AG
+//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBConsts.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -1033,7 +1036,7 @@ SqlState = 13; // c5
             "VARCHAR UNICODE",
             "UDT",
             "ABAP STREAM",
-            "DWYDE"
+            "DWYDE",
         };
     }
 
@@ -1106,6 +1109,7 @@ END = 12;
         public const int TabHandle = 4;
         public const int 
 TabHandle_Reserved = 4;
+
         public const int TabHandle_Rowsize = 8;
         public const int TabHandle_ColCount = 10;
         public const int TabHandle_RowCount = 12;
@@ -1113,14 +1117,17 @@ TabHandle_Reserved = 4;
         public const int TabHandle_ColDesc_0 = 20;
         public const int 
 ColDesc_InOut = 0;
+
         public const int ColDesc_ABAPType = 1;
         public const int ColDesc_Dec = 2;
         public const int ColDesc_Length = 4;
         public const int ColDesc_Offset = 6;
         public const int 
 ColDesc_Size = 8;
+
         public const int 
 StreamType_Bool = 0;
+
         public const int StreamType_Int1 = 1;
         public const int StreamType_UInt1 = 2;
         public const int StreamType_Int2 = 3;
@@ -1139,6 +1146,7 @@ StreamType_Bool = 0;
         public const int StreamType_WYDE = 17;
         public const int 
 Stream_IN = 0;
+
         public const int Stream_OUT = 1;
         public const int Stream_INOUT = 2;
     }
@@ -1150,7 +1158,7 @@ Stream_IN = 0;
         ABSOLUTE_UP = 3,    // The fetch operation type of a FETCH ABSOLUTE with an argument >1.
         ABSOLUTE_DOWN = 4,  // The fetch operation type of a FETCH ABSOLUTE with an argument <1.
         RELATIVE_UP = 5,    // The fetch operation type of a FETCH RELATIVE with an argument >1.
-        RELATIVE_DOWN = 6       // The fetch operation type of a FETCH RELATIVE with an argument <1.
+        RELATIVE_DOWN = 6,       // The fetch operation type of a FETCH RELATIVE with an argument <1.
     }
 
     internal enum PositionType
@@ -1158,7 +1166,7 @@ Stream_IN = 0;
         BEFORE_FIRST = 1,   // Constant indicating that the current position is <i>before the first row
         INSIDE = 2, // Constant indicating that the current position is at the result set.
         AFTER_LAST = 3, // Constant indicating that the current position is behind the last row.
-        NOT_AVAILABLE = 4   // Constant indicating that the current position is not available.
+        NOT_AVAILABLE = 4,   // Constant indicating that the current position is not available.
     }
 
     internal struct ConnectionStringParams
@@ -1209,6 +1217,7 @@ Stream_IN = 0;
 
         public const int FillBufSize = 1024;
         public const string BlankChar = " ";
+
         public static byte[] BlankBytes { get; } = InitializeBlankBytes;
 
         private static byte[] InitializeBlankBytes
@@ -1256,7 +1265,8 @@ Stream_IN = 0;
         public const byte DefinedAscii = 32;
         public const byte DefinedUnicode = 1;
 
-        public static readonly string[] MessageCode = {
+        public static readonly string[] MessageCode =
+        {
             "ascii",
             "ebcdic",
             "codeneutral",
