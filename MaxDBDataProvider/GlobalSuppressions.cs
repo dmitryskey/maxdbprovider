@@ -29,4 +29,5 @@
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "<Pending>", Scope = "member", Target = "~M:MaxDB.Data.Utilities.SocketClass.#ctor(System.String,System.Int32,System.Int32,System.Boolean)")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "<Pending>", Scope = "member", Target = "~M:MaxDB.Data.Utilities.VDNNumber.Number2BigDecimal(System.Byte[])~MaxDB.Data.Utilities.BigDecimal")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "<Pending>", Scope = "member", Target = "~M:MaxDB.Data.Utilities.VDNNumber.Number2String(System.Byte[],System.Boolean,System.Int32,System.Int32)~System.String")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5351:Do Not Use Broken Cryptographic Algorithms", Justification = "<Pending>", Scope = "member", Target = "~M:MaxDB.Data.Utilities.Crypt.ScrammMD5(System.Byte[],System.Byte[],System.Byte[],System.Byte[])~System.Byte[]")]
 

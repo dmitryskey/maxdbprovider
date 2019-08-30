@@ -32,7 +32,7 @@ namespace MaxDB.Data
         public const string
 
 // Connection is not opened
-CONNECTION_NOTOPENED = "connection_notopened";
+CONNECTIONNOTOPENED = "connection_notopened";
 
         public const string
 
@@ -47,22 +47,22 @@ DATABASEEXCEPTION = "databaseexception";
         public const string
 
 // Database exception (without error position).
-DATABASEEXCEPTION_WOERRPOS = "databaseexception_woerrpos";
+DATABASEEXCEPTIONWOERRPOS = "databaseexception_woerrpos";
 
         public const string
 
 // Invalid column index.
-INVALID_COLUMNINDEX = "invalid_columnindex";
+INVALIDCOLUMNINDEX = "invalid_columnindex";
 
         public const string
 
 // Invalid column name.
-INVALID_COLUMNNAME = "invalid_columnname";
+INVALIDCOLUMNNAME = "invalid_columnname";
 
         public const string
 
 // Invalid column name buffer.
-COLUMNNAME_BUFFER = "columnname_buffer";
+COLUMNNAMEBUFFER = "columnname_buffer";
 
         public const string
 
@@ -82,7 +82,7 @@ LONGDATAEXPECTED = "longdata_expected";
         public const string
 
 // Invalid startposition for long data.
-INVALID_STARTPOSITION = "invalid_startposition";
+INVALIDSTARTPOSITION = "invalid_startposition";
 
         public const string
 
@@ -137,37 +137,37 @@ BINARYPUTTOLONG = "binaryputtolong";
         public const string
 
 // Call of cancel occured.
-STATEMENT_CANCELLED = "statement_cancelled";
+STATEMENTCANCELLED = "statement_cancelled";
 
         public const string
 
 // Try to execute null statement.
-SQLSTATEMENT_NULL = "sqlstatement_null";
+SQLSTATEMENTNULL = "sqlstatement_null";
 
         public const string
 
 // Column value is null.
-COLUMNVALUE_NULL = "columnvalue_null";
+COLUMNVALUENULL = "columnvalue_null";
 
         public const string
 
 // Try to use null data adapter
-ADAPTER_NULL = "adapter_null";
+ADAPTERNULL = "adapter_null";
 
         public const string
 
 // Try to use null select command
-SELECT_NULL = "select_null";
+SELECTNULL = "select_null";
 
         public const string
 
 // Base table is not found
-BASETABLE_NOTFOUND = "basetable_notfound";
+BASETABLENOTFOUND = "basetable_notfound";
 
         public const string
 
 // Try to execute too long statement.
-SQLSTATEMENT_TOOLONG = "sqlstatement_toolong";
+SQLSTATEMENTTOOLONG = "sqlstatement_toolong";
 
         public const string
 
@@ -182,7 +182,7 @@ BATCHRESULTSET = "batchresultset";
         public const string
 
 // Statement in batch generated result set.
-BATCHRESULTSET_WITHNUMBER = "batchresultset_withnumber";
+BATCHRESULTSETWITHNUMBER = "batchresultset_withnumber";
 
         public const string
 
@@ -197,27 +197,27 @@ BATCHMISSINGIN = "batchmissingin";
         public const string
 
 // A statement executed as update delivered a result set.
-SQLSTATEMENT_RESULTSET = "sqlstatement_resultset";
+SQLSTATEMENTRESULTSET = "sqlstatement_resultset";
 
         public const string
 
 // SQL command doesn't return a result set.
-SQLCOMMAND_NORESULTSET = "sqlcommand_noresultset";
+SQLCOMMANDNORESULTSET = "sqlcommand_noresultset";
 
         public const string
 
 // A statement assumed to be a procedure call is not one.
-SQLSTATEMENT_NOPROCEDURE = "sqlstatement_noprocedure";
+SQLSTATEMENTNOPROCEDURE = "sqlstatement_noprocedure";
 
         public const string
 
 // Column index not found.
-COLINDEX_NOTFOUND = "colindex_notfound";
+COLINDEXNOTFOUND = "colindex_notfound";
 
         public const string
 
 // Column name not found.
-COLNAME_NOTFOUND = "colname_notfound";
+COLNAMENOTFOUND = "colname_notfound";
 
         public const string
 
@@ -237,102 +237,102 @@ INVALIDPASSWORD = "invalidpassword";
         public const string
 
 // No data found
-NODATA_FOUND = "nodata_found";
+NODATAFOUND = "nodata_found";
 
         public const string
 
 // Invalid data type
-INVALID_DATATYPE = "invalid_datatype";
+INVALIDDATATYPE = "invalid_datatype";
 
         public const string
 
 // Unknown data type
-UNKNOWN_DATATYPE = "unknown_datatype";
+UNKNOWNDATATYPE = "unknown_datatype";
 
         public const string
 
 // Try to get record at position < first.
-RESULTSET_BEFOREFIRST = "resultset_beforefirst";
+RESULTSETBEFOREFIRST = "resultset_beforefirst";
 
         public const string
 
 // Try to get record at position > last.
-RESULTSET_AFTERLAST = "resultset_afterlast";
+RESULTSETAFTERLAST = "resultset_afterlast";
 
         public const string
 
 // Try to retrieve unnamed parameter by name.
-UNNAMED_PARAMETER = "unnamed_parameter";
+UNNAMEDPARAMETER = "unnamed_parameter";
 
         public const string
 
 // No column names delivered from kernel.
-NO_COLUMNNAMES = "no_columnnames";
+NOCOLUMNNAMES = "no_columnnames";
 
         public const string
 
 // Connection field is null.
-INTERNAL_CONNECTIONNULL = "internal_connectionnull";
+INTERNALCONNECTIONNULL = "internal_connectionnull";
 
         public const string
 
 // Cant not set isolation level.
-CONNECTION_ISOLATIONLEVEL = "connection_isolationlevel";
+CONNECTIONISOLATIONLEVEL = "connection_isolationlevel";
 
         public const string
 
 // No more input expected at this place.
-INTERNAL_UNEXPECTEDINPUT = "internal_unexpectedinput";
+INTERNALUNEXPECTEDINPUT = "internal_unexpectedinput";
 
         public const string
 
 // No more output expected at this place.
-INTERNAL_UNEXPECTEDOUTPUT = "internal_unexpectedoutput";
+INTERNALUNEXPECTEDOUTPUT = "internal_unexpectedoutput";
 
         public const string
 
 // Internal error: parse id is null.
-INTERNAL_INVALIDPARSEID = "internal_invalidParseid";
+INTERNALINVALIDPARSEID = "internal_invalidParseid";
 
         public const string
 
 // getObject function failed
-GETOBJECT_FAILED = "getobject_failed";
+GETOBJECTFAILED = "getobject_failed";
 
         public const string
 
 // Fetch operation delivered no data part.
-FETCH_NODATAPART = "fetch_nodatapart";
+FETCHNODATAPART = "fetch_nodatapart";
 
         public const string
 
 // Fetch operation
-FETCH_DATA_FAILED = "fetch_data_failed";
+FETCHDATAFAILED = "fetch_data_failed";
 
         public const string
 
 // Runtime: connect to host failed.
-HOST_CONNECT_FAILED = "host_connect_failed";
+HOSTCONNECTFAILED = "host_connect_failed";
 
         public const string
 
 // Runtime: execution failed.
-EXEC_FAILED = "exec_failed";
+EXECFAILED = "exec_failed";
 
         public const string
 
 // Runtime: receive of connect failed.
-RECV_CONNECT = "recv_connect";
+RECVCONNECT = "recv_connect";
 
         public const string
 
 // Runtime: receive garbled reply
-REPLY_GARBLED = "connectreply_garbled";
+REPLYGARBLED = "connectreply_garbled";
 
         public const string
 
 // Runtime: reconnect on admin session unsupported
-ADMIN_RECONNECT = "admin_reconnect";
+ADMINRECONNECT = "admin_reconnect";
 
         public const string
 
@@ -342,75 +342,75 @@ CHUNKOVERFLOW = "chunkoverflow";
         public const string
 
 // Reading from a stream resulted in an IOException
-STREAM_IOEXCEPTION = "stream_ioexception";
+STREAMIOEXCEPTION = "stream_ioexception";
 
         public const string
 
 // Column nullable unknown
-DBNULL_UNKNOWN = "dbnull_unknown";
+DBNULLUNKNOWN = "dbnull_unknown";
 
         public const string
 
 // Output parameter value truncated
-PARAMETER_TRUNC = "parameter_truncated";
+PARAMETERTRUNC = "parameter_truncated";
 
         public const string
 
 // Parameter is null
-PARAMETER_NULL = "parameter_null";
+PARAMETERNULL = "parameter_null";
 
         public const string
 
 // Index is out if range
-INDEX_OUTOFRANGE = "index_outofrange";
+INDEXOUTOFRANGE = "index_outofrange";
 
         public const string
 
 // Unsupported database features
-SPECIAL_NUMBER_UNSUPPORTED = "special_number_unsupported";
+SPECIALNUMBERUNSUPPORTED = "special_number_unsupported";
 
         public const string
-OMS_UNSUPPORTED = "oms_unsupported";
+OMSUNSUPPORTED = "oms_unsupported";
 
         public const string
-TABLEDIRECT_UNSUPPORTED = "tabledirect_unsupported";
+TABLEDIRECTUNSUPPORTED = "tabledirect_unsupported";
 
         public const string
 
 // Streams
-CONVERSION_STRINGSTREAM = "streamconversion_string";
+CONVERSIONSTRINGSTREAM = "streamconversion_string";
 
         public const string
-CONVERSION_BYTESTREAM = "streamconversion_bytes";
+CONVERSIONBYTESTREAM = "streamconversion_bytes";
 
         public const string
-STREAM_ISATEND = "stream_isatend";
+STREAMISATEND = "stream_isatend";
 
         public const string
-CONVERSION_STRUCTURETYPE = "conversion_structuretype";
+CONVERSIONSTRUCTURETYPE = "conversion_structuretype";
 
         public const string
-STRUCTURE_ARRAYWRONGLENTGH = "structure_arraywronglength";
+STRUCTUREARRAYWRONGLENTGH = "structure_arraywronglength";
 
         public const string
-STRUCT_ELEMENT_NULL = "structure_element_null";
+STRUCTELEMENTNULL = "structure_element_null";
 
         public const string
-STRUCT_ELEMENT_CONVERSION = "structure_element_conversion";
+STRUCTELEMENTCONVERSION = "structure_element_conversion";
 
         public const string
-STRUCT_ELEMENT_OVERFLOW = "structure_element_overflow";
+STRUCTELEMENTOVERFLOW = "structure_element_overflow";
 
         public const string
 
 // Connection
-CONNECTION_WRONGSERVERCHALLENGERECEIVED = "connection_wrongserverchallengereceived";
+CONNECTIONWRONGSERVERCHALLENGERECEIVED = "connection_wrongserverchallengereceived";
 
         public const string
-CONNECTION_CHALLENGERESPONSENOTSUPPORTED = "connection_challengeresponsenotsupported";
+CONNECTIONCHALLENGERESPONSENOTSUPPORTED = "connection_challengeresponsenotsupported";
 
         public const string
-SSL_CERTIFICATE = "ssl_certificate";
+SSLCERTIFICATE = "ssl_certificate";
 
         public const string
 
@@ -459,20 +459,20 @@ COMMSERVERDBUNKNOWN = "commserverdbunknown";
         public const string
 
 // big integer messages
-BIGINT_OVERFLOW = "bigint_overflow";
+BIGINTOVERFLOW = "bigint_overflow";
 
         public const string
-BIGINT_UNDERFLOW = "bigint_underflow";
+BIGINTUNDERFLOW = "bigint_underflow";
 
         public const string
-BIGINT_RADIX_OVERFLOW = "bigint_radix_overflow";
+BIGINTRADIXOVERFLOW = "bigint_radix_overflow";
 
         public const string
 
-HASH_CHANGE_KEY = "hash_change_key";
+HASHCHANGEKEY = "hash_change_key";
 
         public const string
-POOL_NOT_FOUND = "pool_not_found";
+POOLNOTFOUND = "pool_not_found";
 
         public const string
 

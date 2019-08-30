@@ -128,7 +128,7 @@ namespace MaxDB.Data
                     this.mAdapter.RowUpdating -= new EventHandler<MaxDBRowUpdatingEventArgs>(this.OnRowUpdating);
                 }
 
-                this.mAdapter = value ?? throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.ADAPTER_NULL));
+                this.mAdapter = value ?? throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.ADAPTERNULL));
                 this.mAdapter.RowUpdating += new EventHandler<MaxDBRowUpdatingEventArgs>(this.OnRowUpdating);
             }
         }
@@ -156,12 +156,12 @@ namespace MaxDB.Data
         {
             if (this.mAdapter == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.ADAPTER_NULL));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.ADAPTERNULL));
             }
 
             if (this.mAdapter.SelectCommand == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SELECT_NULL));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SELECTNULL));
             }
 
             var dr = this.mAdapter.SelectCommand.ExecuteReader(CommandBehavior.SchemaOnly);
@@ -173,7 +173,7 @@ namespace MaxDB.Data
             }
             else
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BASETABLE_NOTFOUND));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BASETABLENOTFOUND));
             }
         }
 
@@ -197,7 +197,7 @@ namespace MaxDB.Data
         {
             if (parameterOrdinal < 0 || parameterOrdinal >= this.mSchema.Rows.Count)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLINDEX_NOTFOUND));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLINDEXNOTFOUND));
             }
 
             return this.mSchema.Rows[parameterOrdinal]["ColumnName"].ToString();
@@ -218,7 +218,7 @@ namespace MaxDB.Data
                 }
             }
 
-            throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAME_NOTFOUND));
+            throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAMENOTFOUND));
         }
 
         /// <summary>

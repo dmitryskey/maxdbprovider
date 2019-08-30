@@ -42,7 +42,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (communication == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "communication"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "communication"));
             }
 
             if (this.bCurrentEmptyRun)
@@ -81,7 +81,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (requestPacket == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "requestPacket"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "requestPacket"));
             }
 
             if (this.bCurrentEmptyRun2)

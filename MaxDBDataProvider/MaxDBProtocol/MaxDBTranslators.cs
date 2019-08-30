@@ -196,7 +196,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         return true;
                     }
 
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.DBNULL_UNKNOWN));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.DBNULLUNKNOWN));
                 }
             }
 
@@ -294,7 +294,7 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 if (double.IsInfinity(val) || double.IsNaN(val))
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SPECIAL_NUMBER_UNSUPPORTED, val.ToString(CultureInfo.InvariantCulture)));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SPECIALNUMBERUNSUPPORTED, val.ToString(CultureInfo.InvariantCulture)));
                 }
 
                 return this.TransObjectForInput(new BigDecimal(val));
@@ -304,7 +304,7 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 if (float.IsInfinity(val) || float.IsNaN(val))
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SPECIAL_NUMBER_UNSUPPORTED, val.ToString(CultureInfo.InvariantCulture)));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SPECIALNUMBERUNSUPPORTED, val.ToString(CultureInfo.InvariantCulture)));
                 }
 
                 return this.TransObjectForInput(new BigDecimal(val));
@@ -1068,7 +1068,7 @@ namespace MaxDB.Data.MaxDBProtocol
                     // Detect nasty double values, and throw an SQL exception.
                     if (double.IsInfinity(val) || double.IsNaN(val))
                     {
-                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SPECIAL_NUMBER_UNSUPPORTED, val.ToString(CultureInfo.InvariantCulture)));
+                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SPECIALNUMBERUNSUPPORTED, val.ToString(CultureInfo.InvariantCulture)));
                     }
                     else
                     {
@@ -1094,7 +1094,7 @@ namespace MaxDB.Data.MaxDBProtocol
                     // Detect nasty double values, and throw an SQL exception.
                     if (float.IsInfinity(val) || float.IsNaN(val))
                     {
-                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SPECIAL_NUMBER_UNSUPPORTED, val.ToString(CultureInfo.InvariantCulture)));
+                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SPECIALNUMBERUNSUPPORTED, val.ToString(CultureInfo.InvariantCulture)));
                     }
                     else
                     {
@@ -1768,7 +1768,7 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 if (objectArray.Length != this.mStructureConverter.Length)
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCTURE_ARRAYWRONGLENTGH,
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCTUREARRAYWRONGLENTGH,
                         this.mStructureConverter.Length, objectArray.Length));
                 }
 
@@ -1777,7 +1777,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 {
                     if (objectArray[i] == null)
                     {
-                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCT_ELEMENT_NULL, i + 1));
+                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCTELEMENTNULL, i + 1));
                     }
 
                     this.mStructureConverter[i].PutValue(sb, objectArray[i]);
@@ -1881,7 +1881,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
             public abstract void PutValue(ByteArray memory, object obj);
 
-            protected void ThrowConversionError(string srcObj) => throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCT_ELEMENT_CONVERSION, this.mStructElement.SqlTypeName, srcObj));
+            protected void ThrowConversionError(string srcObj) => throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCTELEMENTCONVERSION, this.mStructElement.SqlTypeName, srcObj));
 
             /// <summary>
             /// Creates the translator for a structure.
@@ -1960,7 +1960,7 @@ namespace MaxDB.Data.MaxDBProtocol
                     return new BooleanStructureElementTranslator(s, unicode);
                 }
 
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSION_STRUCTURETYPE, index, s.SqlTypeName));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSTRUCTURETYPE, index, s.SqlTypeName));
             }
 
             /// <summary>
@@ -2163,7 +2163,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         || (obj is double && ((double)obj > short.MaxValue || (double)obj < short.MinValue))
                         || (obj is decimal && ((decimal)obj > short.MaxValue || (decimal)obj < short.MinValue)))
                     {
-                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCT_ELEMENT_OVERFLOW, this.mStructElement.SqlTypeName, obj.ToString()));
+                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCTELEMENTOVERFLOW, this.mStructElement.SqlTypeName, obj.ToString()));
                     }
                     else
                     {
@@ -2201,7 +2201,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         || (obj is double && ((double)obj > int.MaxValue || (double)obj < int.MinValue))
                         || (obj is decimal && ((decimal)obj > int.MaxValue || (decimal)obj < int.MinValue)))
                     {
-                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCT_ELEMENT_OVERFLOW, this.mStructElement.SqlTypeName, obj.ToString()));
+                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCTELEMENTOVERFLOW, this.mStructElement.SqlTypeName, obj.ToString()));
                     }
                     else
                     {
@@ -2239,7 +2239,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         || (obj is double && ((double)obj > long.MaxValue || (double)obj < long.MinValue))
                         || (obj is decimal && ((decimal)obj > long.MaxValue || (decimal)obj < long.MinValue)))
                     {
-                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCT_ELEMENT_OVERFLOW, this.mStructElement.SqlTypeName, obj.ToString()));
+                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCTELEMENTOVERFLOW, this.mStructElement.SqlTypeName, obj.ToString()));
                     }
                     else
                     {
@@ -2275,7 +2275,7 @@ namespace MaxDB.Data.MaxDBProtocol
                     if ((obj is double && ((double)obj > long.MaxValue || (double)obj < float.MinValue))
                         || (obj is decimal && ((decimal)obj > long.MaxValue)))
                     {
-                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCT_ELEMENT_OVERFLOW, this.mStructElement.SqlTypeName, obj.ToString()));
+                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCTELEMENTOVERFLOW, this.mStructElement.SqlTypeName, obj.ToString()));
                     }
                     else
                     {
@@ -2337,7 +2337,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
                 else
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSION_BYTESTREAM));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONBYTESTREAM));
                 }
             }
 
@@ -2354,7 +2354,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
                 else
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSION_STRINGSTREAM));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSTRINGSTREAM));
                 }
             }
 
@@ -2366,7 +2366,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
                 else
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSION_STRINGSTREAM));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSTRINGSTREAM));
                 }
             }
 
@@ -2393,7 +2393,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
                 else
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSION_STRINGSTREAM));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONSTRINGSTREAM));
                 }
             }
 

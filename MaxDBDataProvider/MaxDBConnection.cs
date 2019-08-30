@@ -74,6 +74,7 @@ namespace MaxDB.Data
     /// </summary>
     public sealed class MaxDBConnection : DbConnection
     {
+        private Encoding userAsciiEncoding;
         internal MaxDBConnectionStringBuilder mConnStrBuilder;
         private string strConnection;
 
@@ -83,12 +84,12 @@ namespace MaxDB.Data
         internal MaxDBLogger mLogger;
 
         /// <summary>
-        /// Default constructor
+        /// Initializes a new instance of the <see cref="MaxDBConnection"/> class.
         /// </summary>
         public MaxDBConnection() => this.mLogger = new MaxDBLogger();
 
         /// <summary>
-        /// A constructor that takes a connection string
+        /// Initializes a new instance of the <see cref="MaxDBConnection"/> class.
         /// </summary>
         /// <param name="connectionString">Connection string</param>
         public MaxDBConnection(string connectionString)
@@ -138,12 +139,12 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// MaxDB database encoding (<see cref="Encoding.ASCII"/> or <see cref="Encoding.Unicode"/>).
+        /// Gets MaxDB database encoding (<see cref="Encoding.ASCII"/> or <see cref="Encoding.Unicode"/>).
         /// </summary>
         public Encoding DatabaseEncoding => this.mComm.Encoding;
 
         /// <summary>
-        /// MaxDB database SQL mode (<see cref="SqlMode"/>).
+        /// Gets or sets MaxDB database SQL mode (<see cref="SqlMode"/>).
         /// </summary>
         public SqlMode SqlMode
         {
@@ -160,7 +161,7 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// MaxDB database AutoCommit mode.
+        /// Gets or sets a value indicating whether MaxDB database is in the AutoCommit mode.
         /// </summary>
         public bool AutoCommit
         {
@@ -168,7 +169,7 @@ namespace MaxDB.Data
             {
                 if (this.mComm == null || this.State != ConnectionState.Open)
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_NOTOPENED));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTIONNOTOPENED));
                 }
 
                 return this.mComm.AutoCommit;
@@ -178,23 +179,22 @@ namespace MaxDB.Data
             {
                 if (this.mComm == null || this.State != ConnectionState.Open)
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_NOTOPENED));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTIONNOTOPENED));
                 }
 
-                // >>> SQL TRACE
+                //// >>> SQL TRACE
                 if (this.mLogger.TraceSQL)
                 {
                     this.mLogger.SqlTrace(DateTime.Now, "::SET AUTOCOMMIT " + (value ? "ON" : "OFF"));
                 }
-
-                // <<< SQL TRACE
+                //// <<< SQL TRACE
 
                 this.mComm.AutoCommit = value;
             }
         }
 
         /// <summary>
-        /// MaxDB server version (e.g. 7.6.34)
+        /// Gets MaxDB server version (e.g. 7.6.34).
         /// </summary>
         public override string ServerVersion
         {
@@ -211,8 +211,6 @@ namespace MaxDB.Data
         }
 
         internal int KernelVersion => this.mComm.KernelVersion;
-
-        private Encoding userAsciiEncoding;
 
         /// <summary>
         /// Gets or sets the user encoding.
@@ -297,7 +295,7 @@ namespace MaxDB.Data
         }
 
         /// <summary>
-        /// Initiate a local transaction
+        /// Initiate a local transaction.
         /// </summary>
         /// <returns>A <see cref="MaxDBTransaction"/> object.</returns>
         public new MaxDBTransaction BeginTransaction() => new MaxDBTransaction(this);
@@ -319,13 +317,12 @@ namespace MaxDB.Data
         {
             if (this.State == ConnectionState.Open)
             {
-                // >>> SQL TRACE
+                //// >>> SQL TRACE
                 if (this.mLogger.TraceSQL)
                 {
                     this.mLogger.SqlTrace(DateTime.Now, "::CLOSE CONNECTION");
                 }
-
-                // <<< SQL TRACE
+                //// <<< SQL TRACE
 
                 this.mLogger.Flush();
 
@@ -357,7 +354,7 @@ namespace MaxDB.Data
         /// <para>
         /// You can use this property to connect to a database.
         /// The following example illustrates a typical connection string.
-        /// <c>"Server=MyServer;Database=MyDB;User ID=MyLogin;Password=MyPassword;"</c>
+        /// <c>"Server=MyServer;Database=MyDB;User ID=MyLogin;Password=MyPassword;"</c>.
         /// </para>
         /// <para>To connect to a local machine, specify "localhost" or "127.0.0.1" for the server.
         /// If you do not specify a server, localhost is assumed.

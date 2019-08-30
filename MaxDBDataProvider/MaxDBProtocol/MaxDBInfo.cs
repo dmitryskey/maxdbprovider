@@ -454,7 +454,7 @@ namespace MaxDB.Data.MaxDBProtocol
          * Retrieves whether the statement is already executed during parse. (by
          * checking byte 11 of the parse if for <code>csp1_p_command_executed</code>.
          */
-        public bool IsAlreadyExecuted => this.ParseID != null && this.ParseID[MaxDBParseInfo.iApplCodeByte] == FunctionCode.command_executed;
+        public bool IsAlreadyExecuted => this.ParseID != null && this.ParseID[MaxDBParseInfo.iApplCodeByte] == FunctionCode.commandExecuted;
 
         /**
          * Sets the infos about parameters and result columns.
@@ -515,7 +515,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         {
                             if (paramInfoIdx == this.mParamInfos.Length)
                             {
-                                throw new DataException(MaxDBMessages.Extract(MaxDBError.INTERNAL_UNEXPECTEDINPUT, paramInfoIdx));
+                                throw new DataException(MaxDBMessages.Extract(MaxDBError.INTERNALUNEXPECTEDINPUT, paramInfoIdx));
                             }
 
                             current.ColumnIndex = paramInfoIdx;
@@ -527,7 +527,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         {
                             if (colInfoIdx == this.mColumnInfos.Length)
                             {
-                                throw new DataException(MaxDBMessages.Extract(MaxDBError.INTERNAL_UNEXPECTEDOUTPUT, colInfoIdx));
+                                throw new DataException(MaxDBMessages.Extract(MaxDBError.INTERNALUNEXPECTEDOUTPUT, colInfoIdx));
                             }
 
                             this.mColumnInfos[colInfoIdx] = current;

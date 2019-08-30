@@ -36,6 +36,7 @@ namespace MaxDB.Data
         private readonly Hashtable mKeyValuePairs = new Hashtable();
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="MaxDBConnectionStringBuilder"/> class.
         /// Default constructor.
         /// </summary>
         public MaxDBConnectionStringBuilder()
@@ -43,6 +44,7 @@ namespace MaxDB.Data
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="MaxDBConnectionStringBuilder"/> class.
         /// A constructor that takes a connection string.
         /// </summary>
         /// <param name="connectionString">Connection string.</param>
@@ -63,7 +65,7 @@ namespace MaxDB.Data
         {
             if (builder == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "builder"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "builder"));
             }
 
             builder.Append(keyword).Append("=").Append(value).Append(";");
@@ -184,20 +186,20 @@ namespace MaxDB.Data
                     {
                         switch (param.Split('=')[0].Trim().ToUpper(CultureInfo.InvariantCulture))
                         {
-                            case ConnectionStringParams.DATA_SOURCE:
+                            case ConnectionStringParams.DATASOURCE:
                             case "SERVER":
                             case "ADDRESS":
                             case "ADDR":
                             case "NETWORK ADDRESS":
-                                this.mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] = param.Split('=')[1].Trim();
+                                this.mKeyValuePairs[ConnectionStringParams.DATASOURCE] = param.Split('=')[1].Trim();
                                 break;
-                            case ConnectionStringParams.INITIAL_CATALOG:
+                            case ConnectionStringParams.INITIALCATALOG:
                             case "DATABASE":
-                                this.mKeyValuePairs[ConnectionStringParams.INITIAL_CATALOG] = param.Split('=')[1].Trim();
+                                this.mKeyValuePairs[ConnectionStringParams.INITIALCATALOG] = param.Split('=')[1].Trim();
                                 break;
-                            case ConnectionStringParams.USER_ID:
+                            case ConnectionStringParams.USERID:
                             case "LOGIN":
-                                this.mKeyValuePairs[ConnectionStringParams.USER_ID] = param.Split('=')[1].Trim();
+                                this.mKeyValuePairs[ConnectionStringParams.USERID] = param.Split('=')[1].Trim();
                                 break;
                             case ConnectionStringParams.PASSWORD:
                             case "PWD":
@@ -206,23 +208,23 @@ namespace MaxDB.Data
                             case ConnectionStringParams.TIMEOUT:
                                 this.ParseIntParameter(ConnectionStringParams.TIMEOUT, param);
                                 break;
-                            case ConnectionStringParams.SPACE_OPTION:
+                            case ConnectionStringParams.SPACEOPTION:
                                 if (string.Compare(param.Split('=')[1].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
                                     string.Compare(param.Split('=')[1].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
                                     param.Split('=')[1].Trim() == "1")
                                 {
-                                    this.mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] = true;
+                                    this.mKeyValuePairs[ConnectionStringParams.SPACEOPTION] = true;
                                 }
 
                                 break;
                             case ConnectionStringParams.CACHE:
                                 this.mKeyValuePairs[ConnectionStringParams.CACHE] = param.Split('=')[1].Trim();
                                 break;
-                            case ConnectionStringParams.CACHE_LIMIT:
-                                this.ParseIntParameter(ConnectionStringParams.CACHE_LIMIT, param);
+                            case ConnectionStringParams.CACHELIMIT:
+                                this.ParseIntParameter(ConnectionStringParams.CACHELIMIT, param);
                                 break;
-                            case ConnectionStringParams.CACHE_SIZE:
-                                this.ParseIntParameter(ConnectionStringParams.CACHE_SIZE, param);
+                            case ConnectionStringParams.CACHESIZE:
+                                this.ParseIntParameter(ConnectionStringParams.CACHESIZE, param);
                                 break;
                             case ConnectionStringParams.ENCRYPT:
                                 if (string.Compare(param.Split('=')[1].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
@@ -262,24 +264,24 @@ namespace MaxDB.Data
 
                                 this.mKeyValuePairs[ConnectionStringParams.MODE] = SqlMode.Internal;
                                 break;
-                            case ConnectionStringParams.SSL_CERTIFICATE:
-                                this.mKeyValuePairs[ConnectionStringParams.SSL_CERTIFICATE] = param.Split('=')[1].Trim();
+                            case ConnectionStringParams.SSLCERTIFICATE:
+                                this.mKeyValuePairs[ConnectionStringParams.SSLCERTIFICATE] = param.Split('=')[1].Trim();
                                 break;
                             case ConnectionStringParams.POOLING:
                                 this.ParseBoolParameter(ConnectionStringParams.POOLING, param);
                                 break;
-                            case ConnectionStringParams.CONNECTION_LIFETIME:
+                            case ConnectionStringParams.CONNECTIONLIFETIME:
                             case "LOAD BALANCE TIMEOUT":
-                                this.ParseIntParameter(ConnectionStringParams.CONNECTION_LIFETIME, param);
+                                this.ParseIntParameter(ConnectionStringParams.CONNECTIONLIFETIME, param);
                                 break;
-                            case ConnectionStringParams.MIN_POOL_SIZE:
-                                this.ParseIntParameter(ConnectionStringParams.MIN_POOL_SIZE, param);
+                            case ConnectionStringParams.MINPOOLSIZE:
+                                this.ParseIntParameter(ConnectionStringParams.MINPOOLSIZE, param);
                                 break;
-                            case ConnectionStringParams.MAX_POOL_SIZE:
-                                this.ParseIntParameter(ConnectionStringParams.MAX_POOL_SIZE, param);
+                            case ConnectionStringParams.MAXPOOLSIZE:
+                                this.ParseIntParameter(ConnectionStringParams.MAXPOOLSIZE, param);
                                 break;
-                            case ConnectionStringParams.CODE_PAGE:
-                                this.ParseIntParameter(ConnectionStringParams.CODE_PAGE, param);
+                            case ConnectionStringParams.CODEPAGE:
+                                this.ParseIntParameter(ConnectionStringParams.CODEPAGE, param);
                                 break;
                         }
                     }
@@ -303,8 +305,8 @@ namespace MaxDB.Data
         ///</remarks>
         public string DataSource
         {
-            get => this.mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] as string ?? "localhost";
-            set => this.mKeyValuePairs[ConnectionStringParams.DATA_SOURCE] = value;
+            get => this.mKeyValuePairs[ConnectionStringParams.DATASOURCE] as string ?? "localhost";
+            set => this.mKeyValuePairs[ConnectionStringParams.DATASOURCE] = value;
         }
 
         /// <summary>
@@ -312,8 +314,8 @@ namespace MaxDB.Data
         /// </summary>
         public string InitialCatalog
         {
-            get => (string)this.mKeyValuePairs[ConnectionStringParams.INITIAL_CATALOG];
-            set => this.mKeyValuePairs[ConnectionStringParams.INITIAL_CATALOG] = value;
+            get => (string)this.mKeyValuePairs[ConnectionStringParams.INITIALCATALOG];
+            set => this.mKeyValuePairs[ConnectionStringParams.INITIALCATALOG] = value;
         }
 
         /// <summary>
@@ -321,8 +323,8 @@ namespace MaxDB.Data
         /// </summary>
         public string UserId
         {
-            get => (string)this.mKeyValuePairs[ConnectionStringParams.USER_ID];
-            set => this.mKeyValuePairs[ConnectionStringParams.USER_ID] = value;
+            get => (string)this.mKeyValuePairs[ConnectionStringParams.USERID];
+            set => this.mKeyValuePairs[ConnectionStringParams.USERID] = value;
         }
 
         /// <summary>
@@ -357,8 +359,8 @@ namespace MaxDB.Data
         /// </summary>
         public bool SpaceOption
         {
-            get => this.mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] != null ? (bool)this.mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] : false;
-            set => this.mKeyValuePairs[ConnectionStringParams.SPACE_OPTION] = value;
+            get => this.mKeyValuePairs[ConnectionStringParams.SPACEOPTION] != null ? (bool)this.mKeyValuePairs[ConnectionStringParams.SPACEOPTION] : false;
+            set => this.mKeyValuePairs[ConnectionStringParams.SPACEOPTION] = value;
         }
 
         /// <summary>
@@ -375,8 +377,8 @@ namespace MaxDB.Data
         /// </summary>
         public string SslCertificateName
         {
-            get => (string)this.mKeyValuePairs[ConnectionStringParams.SSL_CERTIFICATE];
-            set => this.mKeyValuePairs[ConnectionStringParams.SSL_CERTIFICATE] = value;
+            get => (string)this.mKeyValuePairs[ConnectionStringParams.SSLCERTIFICATE];
+            set => this.mKeyValuePairs[ConnectionStringParams.SSLCERTIFICATE] = value;
         }
 
         /// <summary>
@@ -401,8 +403,8 @@ namespace MaxDB.Data
         /// </summary>
         public int CacheSize
         {
-            get => this.mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] != null ? (int)this.mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] : 0;
-            set => this.mKeyValuePairs[ConnectionStringParams.CACHE_SIZE] = value;
+            get => this.mKeyValuePairs[ConnectionStringParams.CACHESIZE] != null ? (int)this.mKeyValuePairs[ConnectionStringParams.CACHESIZE] : 0;
+            set => this.mKeyValuePairs[ConnectionStringParams.CACHESIZE] = value;
         }
 
         /// <summary>
@@ -410,8 +412,8 @@ namespace MaxDB.Data
         /// </summary>
         public int CacheLimit
         {
-            get => this.mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] != null ? (int)this.mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] : 0;
-            set => this.mKeyValuePairs[ConnectionStringParams.CACHE_LIMIT] = value;
+            get => this.mKeyValuePairs[ConnectionStringParams.CACHELIMIT] != null ? (int)this.mKeyValuePairs[ConnectionStringParams.CACHELIMIT] : 0;
+            set => this.mKeyValuePairs[ConnectionStringParams.CACHELIMIT] = value;
         }
 
         /// <summary>
@@ -429,8 +431,8 @@ namespace MaxDB.Data
         /// </summary>
         public int ConnectionLifetime
         {
-            get => this.mKeyValuePairs[ConnectionStringParams.CONNECTION_LIFETIME] != null ? (int)this.mKeyValuePairs[ConnectionStringParams.CONNECTION_LIFETIME] : 0;
-            set => this.mKeyValuePairs[ConnectionStringParams.CONNECTION_LIFETIME] = value;
+            get => this.mKeyValuePairs[ConnectionStringParams.CONNECTIONLIFETIME] != null ? (int)this.mKeyValuePairs[ConnectionStringParams.CONNECTIONLIFETIME] : 0;
+            set => this.mKeyValuePairs[ConnectionStringParams.CONNECTIONLIFETIME] = value;
         }
 
         /// <summary>
@@ -438,8 +440,8 @@ namespace MaxDB.Data
         /// </summary>
         public int MinPoolSize
         {
-            get => this.mKeyValuePairs[ConnectionStringParams.MIN_POOL_SIZE] != null ? (int)this.mKeyValuePairs[ConnectionStringParams.MIN_POOL_SIZE] : 0;
-            set => this.mKeyValuePairs[ConnectionStringParams.MIN_POOL_SIZE] = value;
+            get => this.mKeyValuePairs[ConnectionStringParams.MINPOOLSIZE] != null ? (int)this.mKeyValuePairs[ConnectionStringParams.MINPOOLSIZE] : 0;
+            set => this.mKeyValuePairs[ConnectionStringParams.MINPOOLSIZE] = value;
         }
 
         /// <summary>
@@ -447,8 +449,8 @@ namespace MaxDB.Data
         /// </summary>
         public int MaxPoolSize
         {
-            get => this.mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE] != null ? (int)this.mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE] : 100;
-            set => this.mKeyValuePairs[ConnectionStringParams.MAX_POOL_SIZE] = value;
+            get => this.mKeyValuePairs[ConnectionStringParams.MAXPOOLSIZE] != null ? (int)this.mKeyValuePairs[ConnectionStringParams.MAXPOOLSIZE] : 100;
+            set => this.mKeyValuePairs[ConnectionStringParams.MAXPOOLSIZE] = value;
         }
 
         /// <summary>
@@ -456,8 +458,8 @@ namespace MaxDB.Data
         /// </summary>
         public int CodePage
         {
-            get => this.mKeyValuePairs[ConnectionStringParams.CODE_PAGE] != null ? (int)this.mKeyValuePairs[ConnectionStringParams.CODE_PAGE] : 1252;
-            set => this.mKeyValuePairs[ConnectionStringParams.CODE_PAGE] = value;
+            get => this.mKeyValuePairs[ConnectionStringParams.CODEPAGE] != null ? (int)this.mKeyValuePairs[ConnectionStringParams.CODEPAGE] : 1252;
+            set => this.mKeyValuePairs[ConnectionStringParams.CODEPAGE] = value;
         }
 
         #region IDictionary Members

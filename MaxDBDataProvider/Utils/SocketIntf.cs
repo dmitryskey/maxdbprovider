@@ -102,7 +102,7 @@ namespace MaxDB.Data.Utilities
             }
             catch (Exception ex)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HOST_CONNECT_FAILED, this.Host, this.Port), ex);
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HOSTCONNECTFAILED, this.Host, this.Port), ex);
             }
         }
 
@@ -173,7 +173,7 @@ namespace MaxDB.Data.Utilities
                         return true;
                     }
 
-                    this.strCertificateError = MaxDBMessages.Extract(MaxDBError.SSL_CERTIFICATE, sslPolicyErrors);
+                    this.strCertificateError = MaxDBMessages.Extract(MaxDBError.SSLCERTIFICATE, sslPolicyErrors);
 
                     // Do not allow this client to communicate with unauthenticated servers.
                     return false;
@@ -510,12 +510,12 @@ namespace MaxDB.Data.Utilities
         {
             if (buffer == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "buffer"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "buffer"));
             }
 
             if (index < 0 || index > buffer.Length || count < 0 || (index + count) > buffer.Length || (index + count) < 0)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INDEX_OUTOFRANGE, index));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INDEXOUTOFRANGE, index));
             }
 
             if (this.iReadLength >= this.iMaxLength)
@@ -556,7 +556,7 @@ namespace MaxDB.Data.Utilities
         {
             if (buffer == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "buffer"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "buffer"));
             }
 
             try

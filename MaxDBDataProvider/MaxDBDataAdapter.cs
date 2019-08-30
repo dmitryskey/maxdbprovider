@@ -72,7 +72,7 @@ namespace MaxDB.Data
         static private readonly object EventRowUpdating = new object();
 
         /// <summary>
-        /// Initializes a new instance of the MaxDBDataAdapter class.
+        /// Initializes a new instance of the <see cref="MaxDBDataAdapter"/> class.
         /// </summary>
         public MaxDBDataAdapter()
         {
@@ -425,7 +425,7 @@ namespace MaxDB.Data
     public sealed class MaxDBRowUpdatingEventArgs : RowUpdatingEventArgs
     {
         /// <summary>
-        /// Initializes a new instance of the MaxDBRowUpdatingEventArgs class.
+        /// Initializes a new instance of the <see cref="MaxDBRowUpdatingEventArgs"/> class.
         /// </summary>
         /// <param name="row">The <see cref="DataRow"/> to <see cref="DbDataAdapter.Update(System.Data.DataSet)"/>.</param>
         /// <param name="command">The <see cref="IDbCommand"/> to execute during <see cref="DbDataAdapter.Update(System.Data.DataSet)"/>.</param>
@@ -452,7 +452,7 @@ namespace MaxDB.Data
     public sealed class MaxDBRowUpdatedEventArgs : RowUpdatedEventArgs
     {
         /// <summary>
-        /// Initializes a new instance of the MaxDBRowUpdatedEventArgs class.
+        /// Initializes a new instance of the <see cref="MaxDBRowUpdatedEventArgs"/> class.
         /// </summary>
         /// <param name="row">The <see cref="DataRow"/> to <see cref="DbDataAdapter.Update(System.Data.DataSet)"/>.</param>
         /// <param name="command">The <see cref="IDbCommand"/> to execute during <see cref="DbDataAdapter.Update(System.Data.DataSet)"/>.</param>

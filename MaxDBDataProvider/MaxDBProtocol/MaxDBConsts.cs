@@ -322,8 +322,8 @@ SqlState = 13; // c5
 
     internal struct SegmentCmdOption
     {
-        public const byte selfetch_off = 1;
-        public const byte scrollable_cursor_on = 2;
+        public const byte selfetchOff = 1;
+        public const byte scrollableCursorOn = 2;
     }
 
     //
@@ -555,11 +555,11 @@ SqlState = 13; // c5
 
     internal struct Feature
     {
-        public const byte MultipleDropParseid = 1,
-            SpaceOption = 2,
-            VariableInput = 3,
-            OptimizedStreams = 4,
-            CheckScrollableOption = 5;
+        public const byte MultipleDropParseid = 1;
+        public const byte SpaceOption = 2;
+        public const byte VariableInput = 3;
+        public const byte OptimizedStreams = 4;
+        public const byte CheckScrollableOption = 5;
     }
 
     //
@@ -569,17 +569,17 @@ SqlState = 13; // c5
     //
     internal struct PartAttributes
     {
-        public const byte LastPacket = 0,
-            NextPacket = 1,
-            FirstPacket = 2,
-            Fill3 = 3,
-            Fill4 = 4,
-            Fill5 = 5,
-            Fill6 = 6,
-            Fill7 = 7,
-            LastPacket_Ext = 1,
-            NextPacket_Ext = 2,
-            FirstPacket_Ext = 4;
+        public const byte LastPacket = 0;
+        public const byte NextPacket = 1;
+        public const byte FirstPacket = 2;
+        public const byte Fill3 = 3;
+        public const byte Fill4 = 4;
+        public const byte Fill5 = 5;
+        public const byte Fill6 = 6;
+        public const byte Fill7 = 7;
+        public const byte LastPacketExt = 1;
+        public const byte NextPacketExt = 2;
+        public const byte FirstPacketExt = 4;
     }
 
     /// <summary>
@@ -588,71 +588,186 @@ SqlState = 13; // c5
     internal struct LongDesc
     {
         // tsp00_LdbChange
-        public const byte UseTermchar = 0,
-            UseConversion = 1,
-            UseToAscii = 2,
-            UseUCS2_Swap = 3,
+        public const byte UseTermchar = 0;
 
-            // tsp00_ValMode
-            DataPart = 0,
-            AllData = 1,
-            LastData = 2,
-            NoData = 3,
-            NoMoreData = 4,
-            LastPutval = 5,
-            DataTrunc = 6,
-            Close = 7,
-            Error = 8,
-            StartposInvalid = 9,
+        // tsp00_LdbChange
+        public const byte UseConversion = 1;
 
-            // infoset
-            ExTrigger = 1,
-            WithLock = 2,
-            NoCLose = 4,
-            NewRec = 8,
-            IsComment = 16,
-            IsCatalog = 32,
-            Unicode = 64,
+        // tsp00_LdbChange
+        public const byte UseToAscii = 2;
 
-            // state
-            StateUseTermChar = 1,
-            StateStream = 1,
-            StateUseConversion = 2,
-            StateUseToAscii = 4,
-            StateUseUcs2Swap = 8,
-            StateShortScol = 16,
-            StateFirstInsert = 32,
-            StateCopy = 64,
-            StateFirstCall = 128,
+        // tsp00_LdbChange
+        public const byte UseUCS2Swap = 3;
 
-            // tsp00_LongDescBlock = RECORD
-            Descriptor = 0,   // c8
-            Tabid = 8,        // c8
-            MaxLen = 16,      // c4
-            InternPos = 20,   // i4
-            Infoset = 24,     // set1
-            State = 25,       // bool
-            unused1 = 26,     // c1
-            ValMode = 27,     // i1
-            ValInd = 28,      // i2
-            unused = 30,      // i2
-            ValPos = 32,      // i4
-            ValLen = 36,      // i4
-            Size = 40;
+        // tsp00_LdbChange
+        public const byte 
+// tsp00_ValMode
+DataPart = 0;
+
+        // tsp00_LdbChange
+        public const byte AllData = 1;
+
+        // tsp00_LdbChange
+        public const byte LastData = 2;
+
+        // tsp00_LdbChange
+        public const byte NoData = 3;
+
+        // tsp00_LdbChange
+        public const byte NoMoreData = 4;
+
+        // tsp00_LdbChange
+        public const byte LastPutval = 5;
+
+        // tsp00_LdbChange
+        public const byte DataTrunc = 6;
+
+        // tsp00_LdbChange
+        public const byte Close = 7;
+
+        // tsp00_LdbChange
+        public const byte Error = 8;
+
+        // tsp00_LdbChange
+        public const byte StartposInvalid = 9;
+
+        // tsp00_LdbChange
+        public const byte 
+// infoset
+ExTrigger = 1;
+
+        // tsp00_LdbChange
+        public const byte WithLock = 2;
+
+        // tsp00_LdbChange
+        public const byte NoCLose = 4;
+
+        // tsp00_LdbChange
+        public const byte NewRec = 8;
+
+        // tsp00_LdbChange
+        public const byte IsComment = 16;
+
+        // tsp00_LdbChange
+        public const byte IsCatalog = 32;
+
+        // tsp00_LdbChange
+        public const byte Unicode = 64;
+
+        // tsp00_LdbChange
+        public const byte 
+// state
+StateUseTermChar = 1;
+
+        // tsp00_LdbChange
+        public const byte StateStream = 1;
+
+        // tsp00_LdbChange
+        public const byte StateUseConversion = 2;
+
+        // tsp00_LdbChange
+        public const byte StateUseToAscii = 4;
+
+        // tsp00_LdbChange
+        public const byte StateUseUcs2Swap = 8;
+
+        // tsp00_LdbChange
+        public const byte StateShortScol = 16;
+
+        // tsp00_LdbChange
+        public const byte StateFirstInsert = 32;
+
+        // tsp00_LdbChange
+        public const byte StateCopy = 64;
+
+        // tsp00_LdbChange
+        public const byte StateFirstCall = 128;
+
+        // tsp00_LdbChange
+        public const byte 
+// tsp00_LongDescBlock = RECORD
+Descriptor = 0;   // c8
+
+        // tsp00_LdbChange
+        public const byte Tabid = 8;        // c8
+
+        // tsp00_LdbChange
+        public const byte MaxLen = 16;      // c4
+
+        // tsp00_LdbChange
+        public const byte InternPos = 20;   // i4
+
+        // tsp00_LdbChange
+        public const byte Infoset = 24;     // set1
+
+        // tsp00_LdbChange
+        public const byte State = 25;       // bool
+
+        // tsp00_LdbChange
+        public const byte unused1 = 26;     // c1
+
+        // tsp00_LdbChange
+        public const byte ValMode = 27;     // i1
+
+        // tsp00_LdbChange
+        public const byte ValInd = 28;      // i2
+
+        // tsp00_LdbChange
+        public const byte Unused = 30;      // i2
+
+        // tsp00_LdbChange
+        public const byte ValPos = 32;      // i4
+
+        // tsp00_LdbChange
+        public const byte ValLen = 36;      // i4
+
+        // tsp00_LdbChange
+        public const byte Size = 40;
     }
 
+    /// <summary>
+    /// Packet indicators.
+    /// </summary>
     internal struct Packet
     {
-        // indicators for fields with variable length
-        public const byte MaxOneByteLength = 245,
-            Ignored = 250,
-            SpecialNull = 251,
-            BlobDescription = 252,
-            DefaultValue = 253,
-            NullValue = 254,
-            TwiByteLength = 255;
+        /// <summary>
+        /// Indicators for fields with variable length.
+        /// </summary>
+        public const byte MaxOneByteLength = 245;
 
-        // property names used to identify fields
+        /// <summary>
+        /// Indicators for fields with variable length.
+        /// </summary>
+        public const byte Ignored = 250;
+
+        /// <summary>
+        /// Indicators for fields with variable length.
+        /// </summary>
+        public const byte SpecialNull = 251;
+
+        /// <summary>
+        /// Indicators for fields with variable length.
+        /// </summary>
+        public const byte BlobDescription = 252;
+
+        /// <summary>
+        /// Indicators for fields with variable length.
+        /// </summary>
+        public const byte DefaultValue = 253;
+
+        /// <summary>
+        /// Indicators for fields with variable length.
+        /// </summary>
+        public const byte NullValue = 254;
+
+        /// <summary>
+        /// Indicators for fields with variable length.
+        /// </summary>
+        public const byte TwiByteLength = 255;
+
+        /// <summary>
+        /// Property names used to identify fields.
+        /// </summary>
         public const string MaxPasswordLenTag = "maxpasswordlen";
     }
 
@@ -704,7 +819,7 @@ SqlState = 13; // c5
 
             Show = 216,
             Describe = 224,
-            Select_into = 244,
+            SelectInto = 244,
             DBProcWithResultSetExecute = 248,
             MSelect = 1004,
             MDelete = 1009,
@@ -715,38 +830,38 @@ SqlState = 13; // c5
             MFetchPrev = 1209,
             MFetchPos = 1210,
             MFetchSame = 1211,
-            MSelect_into = 1244,
+            MSelectInto = 1244,
             MFetchRelative = 1247,
 
             // copy of application codes coded in the 11th byte of parseid
             none = 0,
-            command_executed = 1,
-            use_adbs = 2,
-            release_found = 10,
-            fast_select_dir_possible = 20,
-            not_allowed_for_program = 30,
-            close_found = 40,
-            describe_found = 41,
-            fetch_found = 42,
-            mfetch_found = 43,
-            mass_select_found = 44,
-            reuse_mass_select_found = 46,
-            mass_command = 70,
-            mselect_found = 114,
-            for_upd_mselect_found = 115,
-            reuse_mselect_found = 116,
-            reuse_upd_mselect_found = 117;
+            commandExecuted = 1,
+            useAdbs = 2,
+            releaseFound = 10,
+            fastSelectDirPossible = 20,
+            notAllowedForProgram = 30,
+            closeFound = 40,
+            describeFound = 41,
+            fetchFound = 42,
+            mfetchFound = 43,
+            massSelectFound = 44,
+            reuseMassSelectFound = 46,
+            massCommand = 70,
+            mselectFound = 114,
+            forUpdMselectFound = 115,
+            reuseMselectFound = 116,
+            reuseUpdMselectFound = 117;
 
         public static readonly int[] massCmdAppCodes =
         {
-            mfetch_found,
-            mass_select_found,
-            reuse_mass_select_found,
-            mass_command,
-            mselect_found,
-            for_upd_mselect_found,
-            reuse_mselect_found,
-            reuse_upd_mselect_found,
+            mfetchFound,
+            massSelectFound,
+            reuseMassSelectFound,
+            massCommand,
+            mselectFound,
+            forUpdMselectFound,
+            reuseMselectFound,
+            reuseUpdMselectFound,
         };
 
         public static bool IsQuery(int code) =>
@@ -800,16 +915,16 @@ SqlState = 13; // c5
         public const byte SQLCRASH = 4;
 
         // rte return codes
-        public const byte SQLSTART_REQUIRED = 5;
+        public const byte SQLSTARTREQUIRED = 5;
 
         // rte return codes
         public const byte SQLSHUTDOWN = 6;
 
         // rte return codes
-        public const byte SQLSEND_LINE_DOWN = 7;
+        public const byte SQLSENDLINEDOWN = 7;
 
         // rte return codes
-        public const byte SQLRECEIVE_LINE_DOWN = 8;
+        public const byte SQLRECEIVELINEDOWN = 8;
 
         // rte return codes
         public const byte SQLPACKETLIMIT = 9;
@@ -821,35 +936,73 @@ SqlState = 13; // c5
         public const byte SQLWOULDBLOCK = 11;
 
         // rte return codes
-        public const byte SQLUNKNOWN_REQUEST = 12;
+        public const byte SQLUNKNOWNREQUEST = 12;
 
         // rte return codes
-        public const byte SQLSERVER_DB_UNKNOWN = 13;
+        public const byte SQLSERVERDBUNKNOWN = 13;
     }
 
     internal struct RSQLTypes
     {
         // request/reply types
-        public const byte RTE_PROT_TCP = 3,
-            INFO_REQUEST_KEEP_ALIVE = 50,
-            INFO_REQUEST = 51,
-            INFO_REPLY = 52,
-            USER_CONN_REQUEST = 61,
-            USER_CONN_REPLY = 62,
-            USER_DATA_REQUEST = 63,
-            USER_DATA_REPLY = 64,
-            USER_CANCEL_REQUEST = 65,
-            USER_RELEASE_REQUEST = 66,
-            KERN_CONN_REQUEST = 71,
-            KERN_CONN_REPLY = 72,
-            KERN_DATA_REQUEST = 73,
-            KERN_DATA_REPLY = 74,
-            KERN_RELEASE_REQUEST = 76,
-            DUMP_REQUEST = 81,
-            CTRL_CONN_REQUEST = 91,
-            CTRL_CONN_REPLY = 92,
-            CTRL_CANCEL_REQUEST = 93,
-            NORMAL = 0;
+        public const byte RTEPROTTCP = 3;
+
+        // request/reply types
+        public const byte INFOREQUESTKEEPALIVE = 50;
+
+        // request/reply types
+        public const byte INFOREQUEST = 51;
+
+        // request/reply types
+        public const byte INFOREPLY = 52;
+
+        // request/reply types
+        public const byte USERCONNREQUEST = 61;
+
+        // request/reply types
+        public const byte USERCONNREPLY = 62;
+
+        // request/reply types
+        public const byte USERDATAREQUEST = 63;
+
+        // request/reply types
+        public const byte USERDATAREPLY = 64;
+
+        // request/reply types
+        public const byte USERCANCELREQUEST = 65;
+
+        // request/reply types
+        public const byte USERRELEASEREQUEST = 66;
+
+        // request/reply types
+        public const byte KERNCONNREQUEST = 71;
+
+        // request/reply types
+        public const byte KERNCONNREPLY = 72;
+
+        // request/reply types
+        public const byte KERNDATAREQUEST = 73;
+
+        // request/reply types
+        public const byte KERNDATAREPLY = 74;
+
+        // request/reply types
+        public const byte KERNRELEASEREQUEST = 76;
+
+        // request/reply types
+        public const byte DUMPREQUEST = 81;
+
+        // request/reply types
+        public const byte CTRLCONNREQUEST = 91;
+
+        // request/reply types
+        public const byte CTRLCONNREPLY = 92;
+
+        // request/reply types
+        public const byte CTRLCANCELREQUEST = 93;
+
+        // request/reply types
+        public const byte NORMAL = 0;
     }
 
     /// <summary>
@@ -926,10 +1079,10 @@ SqlState = 13; // c5
     {
 
         // geo03.h
-        public const byte PORT_NO = 0x50;   // = P
+        public const byte PORTNO = 0x50;   // = P
 
         // geo03.h
-        public const byte REM_PID = 0x49;   // = I
+        public const byte REMPID = 0x49;   // = I
 
         // geo03.h
         public const byte ACKNOWLEDGE = 0x52;   // = R
@@ -944,10 +1097,10 @@ SqlState = 13; // c5
         public const byte SERVERPGM = 0x70;   // = p
 
         // geo03.h
-        public const byte AUTH_ALLOW = 0x61;   // = a
+        public const byte AUTHALLOW = 0x61;   // = a
 
         // geo03.h
-        public const byte OMIT_REPLY_PART = 0x72;   // = r
+        public const byte OMITREPLYPART = 0x72;   // = r
     }
 
     internal struct DataType
@@ -1104,51 +1257,51 @@ END = 12;
 
     internal struct StreamHandle
     {
-        public const int Header_Length = 20;
+        public const int HeaderLength = 20;
         public const int RowDef = 0;
         public const int TabHandle = 4;
         public const int 
-TabHandle_Reserved = 4;
+TabHandleReserved = 4;
 
-        public const int TabHandle_Rowsize = 8;
-        public const int TabHandle_ColCount = 10;
-        public const int TabHandle_RowCount = 12;
-        public const int TabHandle_ABAPTabID = 16;
-        public const int TabHandle_ColDesc_0 = 20;
+        public const int TabHandleRowsize = 8;
+        public const int TabHandleColCount = 10;
+        public const int TabHandleRowCount = 12;
+        public const int TabHandleABAPTabID = 16;
+        public const int TabHandleColDesc0 = 20;
         public const int 
-ColDesc_InOut = 0;
+ColDescInOut = 0;
 
-        public const int ColDesc_ABAPType = 1;
-        public const int ColDesc_Dec = 2;
-        public const int ColDesc_Length = 4;
-        public const int ColDesc_Offset = 6;
+        public const int ColDescABAPType = 1;
+        public const int ColDescDec = 2;
+        public const int ColDescLength = 4;
+        public const int ColDescOffset = 6;
         public const int 
-ColDesc_Size = 8;
+ColDescSize = 8;
 
         public const int 
-StreamType_Bool = 0;
+StreamTypeBool = 0;
 
-        public const int StreamType_Int1 = 1;
-        public const int StreamType_UInt1 = 2;
-        public const int StreamType_Int2 = 3;
-        public const int StreamType_UInt2 = 4;
-        public const int StreamType_Int4 = 5;
-        public const int StreamType_UInt4 = 6;
-        public const int StreamType_Int8 = 7;
-        public const int StreamType_UInt8 = 8;
-        public const int StreamType_Float = 9;
-        public const int StreamType_Double = 10;
-        public const int StreamType_Int = 12;
-        public const int StreamType_UInt = 13;
-        public const int StreamType_Char = 14;
-        public const int StreamType_WChar = 15;
-        public const int StreamType_UDT = 16;
-        public const int StreamType_WYDE = 17;
+        public const int StreamTypeInt1 = 1;
+        public const int StreamTypeUInt1 = 2;
+        public const int StreamTypeInt2 = 3;
+        public const int StreamTypeUInt2 = 4;
+        public const int StreamTypeInt4 = 5;
+        public const int StreamTypeUInt4 = 6;
+        public const int StreamTypeInt8 = 7;
+        public const int StreamTypeUInt8 = 8;
+        public const int StreamTypeFloat = 9;
+        public const int StreamTypeDouble = 10;
+        public const int StreamTypeInt = 12;
+        public const int StreamTypeUInt = 13;
+        public const int StreamTypeChar = 14;
+        public const int StreamTypeWChar = 15;
+        public const int StreamTypeUDT = 16;
+        public const int StreamTypeWYDE = 17;
         public const int 
-Stream_IN = 0;
+StreamIN = 0;
 
-        public const int Stream_OUT = 1;
-        public const int Stream_INOUT = 2;
+        public const int StreamOUT = 1;
+        public const int StreamINOUT = 2;
     }
 
     internal enum FetchType
@@ -1171,39 +1324,39 @@ Stream_IN = 0;
 
     internal struct ConnectionStringParams
     {
-        public const string DATA_SOURCE = "DATA SOURCE";
+        public const string DATASOURCE = "DATA SOURCE";
 
-        public const string INITIAL_CATALOG = "INITIAL CATALOG";
+        public const string INITIALCATALOG = "INITIAL CATALOG";
 
-        public const string USER_ID = "USER ID";
+        public const string USERID = "USER ID";
 
         public const string PASSWORD = "PASSWORD";
 
         public const string TIMEOUT = "TIMEOUT";
 
-        public const string SPACE_OPTION = "SPACE OPTION";
+        public const string SPACEOPTION = "SPACE OPTION";
 
         public const string CACHE = "CACHE";
 
-        public const string CACHE_LIMIT = "CACHE LIMIT";
+        public const string CACHELIMIT = "CACHE LIMIT";
 
-        public const string CACHE_SIZE = "CACHE SIZE";
+        public const string CACHESIZE = "CACHE SIZE";
 
         public const string ENCRYPT = "ENCRYPT";
 
         public const string MODE = "MODE";
 
-        public const string SSL_CERTIFICATE = "SSL CERTIFICATE";
+        public const string SSLCERTIFICATE = "SSL CERTIFICATE";
 
         public const string POOLING = "POOLING";
 
-        public const string CONNECTION_LIFETIME = "CONNECTION LIFETIME";
+        public const string CONNECTIONLIFETIME = "CONNECTION LIFETIME";
 
-        public const string MIN_POOL_SIZE = "MIN POOL SIZE";
+        public const string MINPOOLSIZE = "MIN POOL SIZE";
 
-        public const string MAX_POOL_SIZE = "MAX POOL SIZE";
+        public const string MAXPOOLSIZE = "MAX POOL SIZE";
 
-        public const string CODE_PAGE = "CODE_PAGE";
+        public const string CODEPAGE = "CODE_PAGE";
     }
 
     /// <summary>
@@ -1261,7 +1414,7 @@ Stream_IN = 0;
         public const byte ASCIIClient = 0;
         public const byte UnicodeSwapClient = 19;
         public const byte UnicodeClient = 20;
-        public const byte RSQL_DOTNET = 13;
+        public const byte RSQLDOTNET = 13;
         public const byte DefinedAscii = 32;
         public const byte DefinedUnicode = 1;
 

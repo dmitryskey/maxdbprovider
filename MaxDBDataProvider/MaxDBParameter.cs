@@ -43,6 +43,7 @@ namespace MaxDB.Data
         internal object objInputValue;
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="MaxDBParameter"/> class.
         /// Initializes a new instance of the <b>MaxDBParameter</b> class.
         /// </summary>
         public MaxDBParameter()
@@ -83,7 +84,7 @@ namespace MaxDB.Data
         {
             if (value == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "value"));
             }
 
             this.strParamName = parameterName;
@@ -156,7 +157,7 @@ namespace MaxDB.Data
             {
                 case TypeCode.Empty:
                 case TypeCode.DBNull:
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INVALID_DATATYPE));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INVALIDDATATYPE));
 
                 case TypeCode.Object:
                     return MaxDBType.LongB;
@@ -203,7 +204,7 @@ namespace MaxDB.Data
                     return MaxDBType.StrUni;
 
                 default:
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.UNKNOWN_DATATYPE));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.UNKNOWNDATATYPE));
             }
         }
 

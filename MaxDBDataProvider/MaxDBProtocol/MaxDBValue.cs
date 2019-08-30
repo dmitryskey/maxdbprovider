@@ -65,7 +65,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (memory == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "memory"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "memory"));
             }
 
             if (this.byDescription == null)
@@ -82,7 +82,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (memory == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "memory"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "memory"));
             }
 
             if (this.byDescription == null)
@@ -99,7 +99,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (dataPart == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "dataPart"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "dataPart"));
             }
 
             if (this.AtEnd)
@@ -127,7 +127,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (dataPart == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "dataPart"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "dataPart"));
             }
 
             this.TransferStream(dataPart);
@@ -138,13 +138,13 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (dataPart == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "dataPart"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "dataPart"));
             }
 
             // avoid putting it in if this would break the aligned boundary.
             if (dataPart.Length - dataPart.Extent - 8 - LongDesc.Size - 1 < 0)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INDEX_OUTOFRANGE, dataPart.Length));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INDEXOUTOFRANGE, dataPart.Length));
             }
 
             int descriptorPos = dataPart.Extent;
@@ -286,7 +286,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             memory.WriteDefineByte(0, this.m_translator.BufPos - 1);
             memory.WriteBytes(this.m_descriptor.GetArrayData(), this.m_translator.BufPos);
-            this.m_descriptorMark = memory.baOrigData.Clone(this.m_translator.BufPos);
+            this.m_descriptorMark = memory.OrigData.Clone(this.m_translator.BufPos);
         }
 
         public abstract void TransferStream(DataPart dataPart, short rowCount);
@@ -315,7 +315,7 @@ namespace MaxDB.Data.MaxDBProtocol
             }
             catch (Exception ex)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STREAM_IOEXCEPTION, ex.Message));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STREAMIOEXCEPTION, ex.Message));
             }
         }
     }
@@ -374,7 +374,7 @@ namespace MaxDB.Data.MaxDBProtocol
             }
             catch (Exception ex)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STREAM_IOEXCEPTION, ex.Message));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STREAMIOEXCEPTION, ex.Message));
             }
         }
     }
@@ -434,7 +434,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 this.byDescriptor = replyPacket.ReadDataBytes(dataPos, LongDesc.Size + 1);
                 if (this.byDescriptor[LongDesc.ValMode] == LongDesc.StartposInvalid)
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INVALID_STARTPOSITION));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INVALIDSTARTPOSITION));
                 }
 
                 this.SetupStreamBuffer(this.byDescriptor, replyPacket.Clone(dataPos));
@@ -727,7 +727,7 @@ namespace MaxDB.Data.MaxDBProtocol
             }
             catch (PartNotFoundException)
             {
-                throw new DataException(MaxDBMessages.Extract(MaxDBError.FETCH_NODATAPART));
+                throw new DataException(MaxDBMessages.Extract(MaxDBError.FETCHNODATAPART));
             }
 
             this.Size = replyPacket.PartArgsCount;

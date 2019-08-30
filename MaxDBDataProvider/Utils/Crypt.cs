@@ -1,5 +1,8 @@
-// Copyright © 2005-2018 Dmitry S. Kataev
-// Copyright © 2002-2003 SAP AG
+//-----------------------------------------------------------------------------------------------
+// <copyright file="Crypt.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -22,163 +25,47 @@ namespace MaxDB.Data.Utilities
     using System.Security.Cryptography;
     using MaxDB.Data.MaxDBProtocol;
 
-    #region "Sample HMACMD5 implementation"
-
-    internal class HMACMD5 : KeyedHashAlgorithm
-    {
-        private readonly MD5 hashOne;
-        private readonly MD5 hashTwo;
-        private bool bHashing;
-
-        private readonly byte[] rgbInner = new byte[64];
-        private readonly byte[] rgbOuter = new byte[64];
-
-        public HMACMD5(byte[] rgbKey)
-        {
-            this.HashSizeValue = 128;
-            // Create the hash algorithms.
-            this.hashOne = MD5.Create();
-            this.hashTwo = MD5.Create();
-
-            // Get the key.
-            if (rgbKey.Length > 64)
-            {
-                this.KeyValue = this.hashOne.ComputeHash(rgbKey);
-                // No need to call Initialize; ComputeHash does it automatically.
-            }
-            else
-            {
-                this.KeyValue = (byte[])rgbKey.Clone();
-            }
-
-            // Compute rgbInner and rgbOuter.
-            int i = 0;
-            for (i = 0; i < 64; i++)
-            {
-                this.rgbInner[i] = 0x36;
-                this.rgbOuter[i] = 0x5C;
-            }
-
-            for (i = 0; i < this.KeyValue.Length; i++)
-            {
-                this.rgbInner[i] ^= this.KeyValue[i];
-                this.rgbOuter[i] ^= this.KeyValue[i];
-            }
-        }
-
-        public override byte[] Key
-        {
-            get => (byte[])this.KeyValue.Clone();
-
-            set
-            {
-                if (this.bHashing)
-                {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.HASH_CHANGE_KEY));
-                }
-
-                if (value.Length > 64)
-                {
-                    this.KeyValue = this.hashOne.ComputeHash(value);
-                    // No need to call Initialize; ComputeHash does it automatically.
-                }
-                else
-                {
-                    this.KeyValue = (byte[])value.Clone();
-                }
-
-                // Compute rgbInner and rgbOuter.
-                int i = 0;
-                for (i = 0; i < 64; i++)
-                {
-                    this.rgbInner[i] = 0x36;
-                    this.rgbOuter[i] = 0x5C;
-                }
-
-                for (i = 0; i < this.KeyValue.Length; i++)
-                {
-                    this.rgbInner[i] ^= this.KeyValue[i];
-                    this.rgbOuter[i] ^= this.KeyValue[i];
-                }
-            }
-        }
-
-        public override void Initialize()
-        {
-            this.hashOne.Initialize();
-            this.hashTwo.Initialize();
-            this.bHashing = false;
-        }
-
-        protected override void HashCore(byte[] rgb, int ib, int cb)
-        {
-            if (this.bHashing == false)
-            {
-                this.hashOne.TransformBlock(this.rgbInner, 0, 64, this.rgbInner, 0);
-                this.bHashing = true;
-            }
-
-            this.hashOne.TransformBlock(rgb, ib, cb, rgb, ib);
-        }
-
-        protected override byte[] HashFinal()
-        {
-            if (this.bHashing == false)
-            {
-                this.hashOne.TransformBlock(this.rgbInner, 0, 64, this.rgbInner, 0);
-                this.bHashing = true;
-            }
-
-            // Finalize the original hash.
-            this.hashOne.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
-            // Write the outer array.
-            this.hashTwo.TransformBlock(this.rgbOuter, 0, 64, this.rgbOuter, 0);
-            // Write the inner hash and finalize the hash.
-            this.hashTwo.TransformFinalBlock(this.hashOne.Hash, 0, this.hashOne.Hash.Length);
-            this.bHashing = false;
-            return this.hashTwo.Hash;
-        }
-    }
-
-    #endregion
-
-    #region "Cryptography class"
-
     /// <summary>
-    /// Summary description for Crypt.
+    /// Cryptography class.
     /// </summary>
     internal class Crypt
     {
-        Crypt()
-        {
-        }
+        /// <summary>
+        /// Algorithm name.
+        /// </summary>
+        public const string ScramMD5Name = "SCRAMMD5";
 
-        public static string ScramMD5Name => "SCRAMMD5";
-
-        // This section is designed to provide a quick understanding of SCRAM for
-        // those who like functional notation.
-        // + octet concatenation XOR the exclusive-or function AU is the
-        // authentication user identity (NUL terminated) AZ is the authorization
-        // user identity (NUL terminated) if AZ is the same as AU, a single NUL is
-        // used instead. csecinfo client security layer option bits and buffer size
-        // ssecinfo server security layer option bits and buffer size service is the
-        // name of the service and server (NUL terminated) pass is the plain-text
-        // passphrase H(x) is a one-way hash function applied to "x", such as MD5
-        // MAC(x,y) is a message authentication code (MAC) such as HMAC-MD5 "y" is
-        // the key and "x" is the text signed by the key. salt is a per-user salt
-        // value the server stores Us is a unique nonce the server sends to the
-        // client Uc is a unique nonce the client sends to the server
-        //
-        // The SCRAM computations and exchange are as follows:
-        //
-        // client-msg-1 = AZ + AU + Uc (1) client -> server: client-msg-1
-        // server-msg-1 = salt + ssecinfo + service + Us (2) server -> client:
-        // server-msg-1 salted-pass = MAC(salt, pass) client-key = H(salted-pass)
-        // client-verifier = H(client-key) shared-key = MAC(server-msg-1 +
-        // client-msg-1 + csecinfo, client-verifier) client-proof = client-key XOR
-        // shared-key (3) client -> server: csecinfo + client-proof server-key =
-        // MAC(salt, salted-pass) server-proof = MAC(client-msg-1 + server-msg-1 +
-        // csecinfo, server-key) (4) server -> client: server-proof
+        /// <summary>
+        /// This section is designed to provide a quick understanding of SCRAM for
+        /// those who like functional notation.
+        /// + octet concatenation XOR the exclusive-or function AU is the
+        /// authentication user identity (NUL terminated) AZ is the authorization
+        /// user identity (NUL terminated) if AZ is the same as AU, a single NUL is
+        /// used instead. csecinfo client security layer option bits and buffer size
+        /// ssecinfo server security layer option bits and buffer size service is the
+        /// name of the service and server (NUL terminated) pass is the plain-text
+        /// passphrase H(x) is a one-way hash function applied to "x", such as MD5
+        /// MAC(x,y) is a message authentication code (MAC) such as HMAC-MD5 "y" is
+        /// the key and "x" is the text signed by the key. salt is a per-user salt
+        /// value the server stores Us is a unique nonce the server sends to the
+        /// client Uc is a unique nonce the client sends to the server
+        ///
+        /// The SCRAM computations and exchange are as follows:
+        ///
+        /// client-msg-1 = AZ + AU + Uc (1) client -> server: client-msg-1
+        /// server-msg-1 = salt + ssecinfo + service + Us (2) server -> client:
+        /// server-msg-1 salted-pass = MAC(salt, pass) client-key = H(salted-pass)
+        /// client-verifier = H(client-key) shared-key = MAC(server-msg-1 +
+        /// client-msg-1 + csecinfo, client-verifier) client-proof = client-key XOR
+        /// shared-key (3) client -> server: csecinfo + client-proof server-key =
+        /// MAC(salt, salted-pass) server-proof = MAC(client-msg-1 + server-msg-1 +
+        /// csecinfo, server-key) (4) server -> client: server-proof.
+        /// </summary>
+        /// <param name="salt">Salt bytes.</param>
+        /// <param name="password">Password bytes.</param>
+        /// <param name="clientkey">Client key bytes.</param>
+        /// <param name="serverkey">Server key bytes.</param>
+        /// <returns>ScrammMD5 bytes.</returns>
         public static byte[] ScrammMD5(byte[] salt, byte[] password, byte[] clientkey, byte[] serverkey)
         {
             using (var md5 = new MD5CryptoServiceProvider())
@@ -213,6 +100,12 @@ namespace MaxDB.Data.Utilities
             }
         }
 
+        /// <summary>
+        /// Mangle password.
+        /// </summary>
+        /// <param name="passwd">Password string.</param>
+        /// <param name="isUnicode">Flag indicating if the password is Unicode string.</param>
+        /// <returns>Mangled password.</returns>
         public static byte[] Mangle(string passwd, bool isUnicode)
         {
             const int vp1 = 2;
@@ -270,115 +163,130 @@ namespace MaxDB.Data.Utilities
 
             return result.GetArrayData();
         }
-    }
 
-    #endregion
-
-    #region "Authentication Class"
-
-    internal class Auth
-    {
-        private byte[] bySalt;
-        private byte[] byServerChallenge;
-
-        public Auth()
+        /// <summary>
+        /// Authentication Class.
+        /// </summary>
+        internal class Auth
         {
-            this.ClientChallenge = new byte[64];
-            new RNGCryptoServiceProvider().GetBytes(this.ClientChallenge);
-        }
+            private byte[] bySalt;
+            private byte[] byServerChallenge;
 
-        public byte[] ClientChallenge { get; }
-
-        public int MaxPasswordLength { get; private set; }
-
-        public byte[] GetClientProof(byte[] password)
-        {
-            return Crypt.ScrammMD5(this.bySalt, password, this.ClientChallenge, this.byServerChallenge);
-        }
-
-        // Parses the serverchallenge and split it into salt and real server challenge.
-        public void ParseServerChallenge(DataPartVariable vData)
-        {
-            if (!vData.NextRow() || !vData.NextField())
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Auth"/> class.
+            /// </summary>
+            public Auth()
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_WRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
-            }
+                this.ClientChallenge = new byte[64];
 
-            string alg = vData.ReadAscii(vData.CurrentOffset, vData.CurrentFieldLen);
-            if (alg.ToUpper(CultureInfo.InvariantCulture).Trim() != Crypt.ScramMD5Name)
-            {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_WRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
-            }
-
-            if (!vData.NextField() || vData.CurrentFieldLen < 8)
-            {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_WRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
-            }
-
-            if (vData.CurrentFieldLen == 40)
-            {
-                // first version of challenge response should only occurs with database version 7.6.0.0 <= kernel <= 7.6.0.7
-                this.bySalt = vData.ReadBytes(vData.CurrentOffset, 8);
-                this.byServerChallenge = vData.ReadBytes(vData.CurrentOffset + 8, vData.CurrentFieldLen - 8);
-            }
-            else
-            {
-                var vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen), 0, vData.baOrigData.Swapped), 1);
-                if (!vd.NextRow() || !vd.NextField())
+                using (var provider = new RNGCryptoServiceProvider())
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_WRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
+                    provider.GetBytes(this.ClientChallenge);
+                }
+            }
+
+            /// <summary>
+            /// Gets client challange byte array.
+            /// </summary>
+            public byte[] ClientChallenge { get; }
+
+            /// <summary>
+            /// Gets password maximum length.
+            /// </summary>
+            public int MaxPasswordLength { get; private set; }
+
+            /// <summary>
+            /// Get client password hash.
+            /// </summary>
+            /// <param name="password">Password string.</param>
+            /// <returns>Hashed password.</returns>
+            public byte[] GetClientProof(byte[] password) => Crypt.ScrammMD5(this.bySalt, password, this.ClientChallenge, this.byServerChallenge);
+
+            /// <summary>
+            /// Parses the server challenge and split it into salt and real server challenge.
+            /// </summary>
+            /// <param name="vData">Variable data part.</param>
+            public void ParseServerChallenge(DataPartVariable vData)
+            {
+                if (!vData.NextRow() || !vData.NextField())
+                {
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTIONWRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
                 }
 
-                this.bySalt = vd.ReadBytes(vd.CurrentOffset, vd.CurrentFieldLen);
-                if (!vd.NextField())
+                string alg = vData.ReadAscii(vData.CurrentOffset, vData.CurrentFieldLen);
+                if (alg.ToUpper(CultureInfo.InvariantCulture).Trim() != Crypt.ScramMD5Name)
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_WRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTIONWRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
                 }
 
-                this.byServerChallenge = vd.ReadBytes(vd.CurrentOffset, vd.CurrentFieldLen);
-
-                // from Version 7.6.0.10 on also the max password length will be delivered
-                if (vData.NextField())
+                if (!vData.NextField() || vData.CurrentFieldLen < 8)
                 {
-                    var mp_vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen), 0, vData.baOrigData.Swapped), 1);
-                    if (!mp_vd.NextRow() || !mp_vd.NextField())
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTIONWRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
+                }
+
+                if (vData.CurrentFieldLen == 40)
+                {
+                    // first version of challenge response should only occurs with database version 7.6.0.0 <= kernel <= 7.6.0.7
+                    this.bySalt = vData.ReadBytes(vData.CurrentOffset, 8);
+                    this.byServerChallenge = vData.ReadBytes(vData.CurrentOffset + 8, vData.CurrentFieldLen - 8);
+                }
+                else
+                {
+                    var vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen), 0, vData.OrigData.Swapped), 1);
+                    if (!vd.NextRow() || !vd.NextField())
                     {
-                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_WRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
+                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTIONWRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
                     }
 
-                    do
+                    this.bySalt = vd.ReadBytes(vd.CurrentOffset, vd.CurrentFieldLen);
+                    if (!vd.NextField())
                     {
-                        if (string.Compare(mp_vd.ReadAscii(mp_vd.CurrentOffset, mp_vd.CurrentFieldLen).Trim(), Packet.MaxPasswordLenTag, true, CultureInfo.InvariantCulture) == 0)
+                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTIONWRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
+                    }
+
+                    this.byServerChallenge = vd.ReadBytes(vd.CurrentOffset, vd.CurrentFieldLen);
+
+                    // from Version 7.6.0.10 on also the max password length will be delivered
+                    if (vData.NextField())
+                    {
+                        var mp_vd = new DataPartVariable(new ByteArray(vData.ReadBytes(vData.CurrentOffset, vData.CurrentFieldLen), 0, vData.OrigData.Swapped), 1);
+                        if (!mp_vd.NextRow() || !mp_vd.NextField())
                         {
-                            if (!mp_vd.NextField())
+                            throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTIONWRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
+                        }
+
+                        do
+                        {
+                            if (string.Compare(mp_vd.ReadAscii(mp_vd.CurrentOffset, mp_vd.CurrentFieldLen).Trim(), Packet.MaxPasswordLenTag, true, CultureInfo.InvariantCulture) == 0)
                             {
-                                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_WRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
+                                if (!mp_vd.NextField())
+                                {
+                                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTIONWRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
+                                }
+                                else
+                                {
+                                    try
+                                    {
+                                        this.MaxPasswordLength = int.Parse(mp_vd.ReadAscii(mp_vd.CurrentOffset, mp_vd.CurrentFieldLen), CultureInfo.InvariantCulture);
+                                    }
+                                    catch
+                                    {
+                                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTIONWRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
+                                    }
+                                }
                             }
                             else
                             {
-                                try
+                                if (!mp_vd.NextField())
                                 {
-                                    this.MaxPasswordLength = int.Parse(mp_vd.ReadAscii(mp_vd.CurrentOffset, mp_vd.CurrentFieldLen), CultureInfo.InvariantCulture);
-                                }
-                                catch
-                                {
-                                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_WRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
+                                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTIONWRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
                                 }
                             }
                         }
-                        else
-                        {
-                            if (!mp_vd.NextField())
-                            {
-                                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONNECTION_WRONGSERVERCHALLENGERECEIVED, Consts.ToHexString(vData.ReadBytes(0, vData.Length))));
-                            }
-                        }
+                        while (mp_vd.NextField());
                     }
-                    while (mp_vd.NextField());
                 }
             }
         }
     }
-
-    #endregion
 }

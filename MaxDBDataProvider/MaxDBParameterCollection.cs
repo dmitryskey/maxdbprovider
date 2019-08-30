@@ -270,7 +270,7 @@ namespace MaxDB.Data
         {
             if (value == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(value)));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, nameof(value)));
             }
 
             if (value.ParameterName != null)
@@ -283,7 +283,7 @@ namespace MaxDB.Data
             }
             else
             {
-                throw new ArgumentException(MaxDBMessages.Extract(MaxDBError.UNNAMED_PARAMETER));
+                throw new ArgumentException(MaxDBMessages.Extract(MaxDBError.UNNAMEDPARAMETER));
             }
         }
 
@@ -358,7 +358,7 @@ namespace MaxDB.Data
         {
             if (values == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(values)));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, nameof(values)));
             }
 
             foreach (MaxDBParameter param in values)
@@ -376,7 +376,7 @@ namespace MaxDB.Data
         {
             if (values == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, nameof(values)));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, nameof(values)));
             }
 
             foreach (MaxDBParameter param in values)

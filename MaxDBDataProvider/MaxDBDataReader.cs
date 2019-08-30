@@ -486,7 +486,7 @@ namespace MaxDB.Data
         {
             if (values == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "values"));
             }
 
             for (int i = 0; i < Math.Min(this.FieldCount, values.Length); i++)
@@ -506,7 +506,7 @@ namespace MaxDB.Data
         {
             if (name == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAME_NOTFOUND, name));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAMENOTFOUND, name));
             }
 
             // Throw an exception if the ordinal cannot be found.
@@ -518,7 +518,7 @@ namespace MaxDB.Data
                 }
             }
 
-            throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAME_NOTFOUND, name));
+            throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.COLNAMENOTFOUND, name));
         }
 
         /// <summary>
@@ -665,7 +665,7 @@ namespace MaxDB.Data
         {
             if (buffer == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "buffer"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "buffer"));
             }
 
             if (i < 0 || i >= this.FieldCount)
@@ -1063,12 +1063,12 @@ namespace MaxDB.Data
             {
                 if (this.mPositionState == PositionType.BEFORE_FIRST)
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSET_BEFOREFIRST));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSETBEFOREFIRST));
                 }
 
                 if (this.mPositionState == PositionType.AFTER_LAST)
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSET_AFTERLAST));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.RESULTSETAFTERLAST));
                 }
 
                 return this.mCurrentChunk.CurrentRecord;

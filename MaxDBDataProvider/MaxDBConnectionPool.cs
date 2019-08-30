@@ -66,7 +66,7 @@ namespace MaxDB.Data
                     var poolEntry = (MaxDBConnectionPoolEntry)Pool[key];
                     if (poolEntry == null)
                     {
-                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.POOL_NOT_FOUND, key));
+                        throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.POOLNOTFOUND, key));
                     }
 
                     poolEntry.ReleaseEntry(conn.mComm);

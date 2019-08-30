@@ -354,7 +354,7 @@ namespace MaxDB.Data
             catch (IndexOutOfRangeException)
             {
                 // tbd: info about current length?
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLSTATEMENT_TOOLONG), "42000");
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLSTATEMENTTOOLONG), "42000");
             }
 
             return replyPacket;
@@ -379,7 +379,7 @@ namespace MaxDB.Data
         {
             if (this.dbConnection == null)
             {
-                throw new DataException(MaxDBMessages.Extract(MaxDBError.INTERNAL_CONNECTIONNULL));
+                throw new DataException(MaxDBMessages.Extract(MaxDBError.INTERNALCONNECTIONNULL));
             }
 
             ////>>> SQL TRACE
@@ -401,7 +401,7 @@ namespace MaxDB.Data
                 this.baReplyMemory = null;
                 if (this.dbConnection == null)
                 {
-                    throw new DataException(MaxDBMessages.Extract(MaxDBError.INTERNAL_CONNECTIONNULL));
+                    throw new DataException(MaxDBMessages.Extract(MaxDBError.INTERNALCONNECTIONNULL));
                 }
 
                 this.Reparse();
@@ -471,7 +471,7 @@ namespace MaxDB.Data
                     }
                     else
                     {
-                        throw new NotSupportedException(MaxDBMessages.Extract(MaxDBError.OMS_UNSUPPORTED));
+                        throw new NotSupportedException(MaxDBMessages.Extract(MaxDBError.OMSUNSUPPORTED));
                     }
 
                     dataPart.Close();
@@ -1273,12 +1273,12 @@ namespace MaxDB.Data
         {
             if (sql == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLSTATEMENT_NULL), "42000");
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLSTATEMENTNULL), "42000");
             }
 
             if (this.mCmdType == CommandType.TableDirect)
             {
-                throw new NotSupportedException(MaxDBMessages.Extract(MaxDBError.TABLEDIRECT_UNSUPPORTED));
+                throw new NotSupportedException(MaxDBMessages.Extract(MaxDBError.TABLEDIRECTUNSUPPORTED));
             }
 
             MaxDBReplyPacket replyPacket;
@@ -1463,7 +1463,7 @@ namespace MaxDB.Data
                 var putval = this.lstInputLongs[i];
                 if (putval.AtEnd)
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STREAM_ISATEND));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STREAMISATEND));
                 }
 
                 putval.TransferStream(dataPart, i);
@@ -1498,7 +1498,7 @@ namespace MaxDB.Data
         {
             if (packet.ExistsPart(PartKind.AbapIStream))
             {
-                throw new NotSupportedException(MaxDBMessages.Extract(MaxDBError.OMS_UNSUPPORTED));
+                throw new NotSupportedException(MaxDBMessages.Extract(MaxDBError.OMSUNSUPPORTED));
             }
 
             this.lstInputProcedureLongs.ForEach(pv => pv.CloseStream());
@@ -1588,7 +1588,7 @@ namespace MaxDB.Data
 
             if (this.bCanceled)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STATEMENT_CANCELLED), "42000", -102);
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STATEMENTCANCELLED), "42000", -102);
             }
         }
 
@@ -1618,7 +1618,7 @@ namespace MaxDB.Data
             }
             catch (IndexOutOfRangeException)
             {
-                throw new DataException(MaxDBMessages.Extract(MaxDBError.COLINDEX_NOTFOUND, colIndex, this));
+                throw new DataException(MaxDBMessages.Extract(MaxDBError.COLINDEXNOTFOUND, colIndex, this));
             }
         }
 
@@ -1754,7 +1754,7 @@ namespace MaxDB.Data
 
             if (this.mParseInfo != null && this.mParseInfo.IsSelect)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLSTATEMENT_RESULTSET));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLSTATEMENTRESULTSET));
             }
 
             this.Execute(CommandBehavior.Default);
@@ -1809,7 +1809,7 @@ namespace MaxDB.Data
             {
                 if (this.mCurrentDataReader == null)
                 {
-                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLCOMMAND_NORESULTSET));
+                    throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.SQLCOMMANDNORESULTSET));
                 }
 
                 this.mCurrentDataReader.bCloseConn = (behavior & CommandBehavior.CloseConnection) != 0;
@@ -1891,7 +1891,7 @@ namespace MaxDB.Data
         {
             if (this.mCmdType == CommandType.TableDirect)
             {
-                throw new NotSupportedException(MaxDBMessages.Extract(MaxDBError.TABLEDIRECT_UNSUPPORTED));
+                throw new NotSupportedException(MaxDBMessages.Extract(MaxDBError.TABLEDIRECTUNSUPPORTED));
             }
 
             this.mParseInfo = this.DoParse(this.strCmdText, false);

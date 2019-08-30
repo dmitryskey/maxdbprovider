@@ -152,6 +152,7 @@ namespace MaxDB.Data
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="MaxDBException"/> class.
         /// This constructor is intended for internal use and can not to be called directly from your code.
         /// </summary>
         protected MaxDBException(SerializationInfo info, StreamingContext context)
@@ -205,7 +206,7 @@ namespace MaxDB.Data
         {
             if (info == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "info"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "info"));
             }
 
             base.GetObjectData(info, context);
@@ -276,7 +277,7 @@ namespace MaxDB.Data
             : base((errorPosition > 1)
             ? MaxDBMessages.Extract(MaxDBError.DATABASEEXCEPTION,
                 vendorCode.ToString(CultureInfo.InvariantCulture), errorPosition.ToString(CultureInfo.InvariantCulture), message)
-            : MaxDBMessages.Extract(MaxDBError.DATABASEEXCEPTION_WOERRPOS, vendorCode.ToString(CultureInfo.InvariantCulture), message),
+            : MaxDBMessages.Extract(MaxDBError.DATABASEEXCEPTIONWOERRPOS, vendorCode.ToString(CultureInfo.InvariantCulture), message),
             sqlState, vendorCode, errorPosition)
         {
         }
@@ -434,7 +435,7 @@ namespace MaxDB.Data
         {
             if (info == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "info"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "info"));
             }
 
             base.GetObjectData(info, context);
@@ -451,17 +452,17 @@ namespace MaxDB.Data
         }
 
         public InvalidColumnException(int columnIndex)
-            : base(MaxDBMessages.Extract(MaxDBError.INVALID_COLUMNINDEX, columnIndex))
+            : base(MaxDBMessages.Extract(MaxDBError.INVALIDCOLUMNINDEX, columnIndex))
         {
         }
 
         public InvalidColumnException(string columnName)
-            : base(MaxDBMessages.Extract(MaxDBError.INVALID_COLUMNNAME, columnName))
+            : base(MaxDBMessages.Extract(MaxDBError.INVALIDCOLUMNNAME, columnName))
         {
         }
 
         public InvalidColumnException(string columnName, Exception ex)
-            : base(MaxDBMessages.Extract(MaxDBError.INVALID_COLUMNNAME, columnName), ex)
+            : base(MaxDBMessages.Extract(MaxDBError.INVALIDCOLUMNNAME, columnName), ex)
         {
         }
 

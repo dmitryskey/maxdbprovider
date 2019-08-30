@@ -339,7 +339,7 @@ namespace MaxDB.Data.MaxDBProtocol
             this.WriteByte(Consts.IsLittleEndian ? SwapMode.Swapped : SwapMode.NotSwapped, HeaderOffset.END + ConnectPacketOffset.MessCode + 1);
             this.WriteUInt16(ConnectPacketOffset.END, HeaderOffset.END + ConnectPacketOffset.ConnectLength);
             this.WriteByte(SqlType.USER, HeaderOffset.END + ConnectPacketOffset.ServiceType);
-            this.WriteByte(Consts.RSQL_DOTNET, HeaderOffset.END + ConnectPacketOffset.OSType);
+            this.WriteByte(Consts.RSQLDOTNET, HeaderOffset.END + ConnectPacketOffset.OSType);
             this.WriteByte(0, HeaderOffset.END + ConnectPacketOffset.Filler1);
             this.WriteByte(0, HeaderOffset.END + ConnectPacketOffset.Filler2);
             this.WriteInt32(packetData.MaxSegmentSize, HeaderOffset.END + ConnectPacketOffset.MaxSegmentSize);
@@ -355,12 +355,12 @@ namespace MaxDB.Data.MaxDBProtocol
             this.WriteAscii("        ", HeaderOffset.END + ConnectPacketOffset.ClientDB);
             // fill out variable part
             this.WriteByte(4, this.PacketLength++);
-            this.WriteByte(ArgType.REM_PID, this.PacketLength++);
+            this.WriteByte(ArgType.REMPID, this.PacketLength++);
             this.WriteAscii("0", this.PacketLength++);
             this.WriteByte(0, this.PacketLength++);
             // add port number
             this.WriteByte(4, this.PacketLength++);
-            this.WriteByte(ArgType.PORT_NO, this.PacketLength++);
+            this.WriteByte(ArgType.PORTNO, this.PacketLength++);
             this.WriteUInt16((ushort)packetData.Port, this.PacketLength);
             this.PacketLength += 2;
             // add aknowledge flag
@@ -369,7 +369,7 @@ namespace MaxDB.Data.MaxDBProtocol
             this.WriteByte(0, this.PacketLength++);
             // add omit reply part flag
             this.WriteByte(3, this.PacketLength++);
-            this.WriteByte(ArgType.OMIT_REPLY_PART, this.PacketLength++);
+            this.WriteByte(ArgType.OMITREPLYPART, this.PacketLength++);
             this.WriteByte(1, this.PacketLength++);
         }
 
@@ -433,7 +433,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         break;
                     }
 
-                    if (this.ReadByte(pos + 1) == ArgType.AUTH_ALLOW)
+                    if (this.ReadByte(pos + 1) == ArgType.AUTHALLOW)
                     {
                         foreach (string authParam in Encoding.ASCII.GetString(this.byData, pos + 2, len - 3).Split(','))
                         {
@@ -477,7 +477,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (data == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "data"));
             }
 
             this.WriteByte(clientEncoding, PacketHeaderOffset.MessCode);
@@ -529,7 +529,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (data == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "data"));
             }
 
             this.WriteByte(0, this.DataPos);
@@ -541,7 +541,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (data == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "data"));
             }
 
             this.WriteBytes(data, this.DataPos);
@@ -552,7 +552,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (data == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "data"));
             }
 
             this.WriteByte(Consts.DefinedAscii, this.DataPos);
@@ -564,7 +564,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (data == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "data"));
             }
 
             this.WriteBytes(Encoding.ASCII.GetBytes(data), this.DataPos, data.Length, Consts.BlankBytes);
@@ -585,7 +585,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (parseId == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "pid"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "pid"));
             }
 
             if (reset)
@@ -622,7 +622,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (parseId == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "pid"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "pid"));
             }
 
             int remainingSpace = this.Length - this.iLength - SegmentHeaderOffset.Part - PartHeaderOffset.Data
@@ -671,7 +671,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (command == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "command"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "command"));
             }
 
             if (!reset)
@@ -864,7 +864,7 @@ namespace MaxDB.Data.MaxDBProtocol
             }
             else
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INTERNAL_INVALIDPARSEID));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.INTERNALINVALIDPARSEID));
             }
         }
 
@@ -962,7 +962,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (data == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "data"));
             }
 
             this.WriteByte(Consts.DefinedUnicode, this.DataPos);
@@ -982,7 +982,7 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             if (data == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "data"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "data"));
             }
 
             if (Consts.IsLittleEndian)
@@ -1072,7 +1072,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 bool result;
 
                 partAttributes = this.ReadByte(this.iPartOffset + PartHeaderOffset.Attributes);
-                result = (partAttributes & PartAttributes.LastPacket_Ext) != 0;
+                result = (partAttributes & PartAttributes.LastPacketExt) != 0;
                 return result;
             }
         }

@@ -77,7 +77,7 @@ namespace MaxDB.Data.Utilities
         {
             if (values == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "values"));
             }
 
             offset += this.iOffset;
@@ -94,7 +94,7 @@ namespace MaxDB.Data.Utilities
         {
             if (values == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "values"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "values"));
             }
 
             offset += this.iOffset;
@@ -196,7 +196,7 @@ namespace MaxDB.Data.Utilities
         {
             if (value == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "value"));
             }
 
             this.WriteUnicode(value, offset, value.Length);
@@ -206,7 +206,7 @@ namespace MaxDB.Data.Utilities
         {
             if (value == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETER_NULL, "value"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "value"));
             }
 
             if (this.bSwapMode)
