@@ -423,47 +423,44 @@ namespace MaxDB.Data
             }
         }
 
-        private DataTable ExecuteInternalQuery(string sql, string table, MaxDBParameterCollection parameters)
+        private DataTable ExecuteInternalQuery(string sql, string table, MaxDBParameterCollection parameters = null)
         {
-            var dt = new DataTable(table);
-            var oldMode = this.mComm.ConnStrBuilder.Mode;
-            if (oldMode != SqlMode.Internal)
+            using (var dt = new DataTable(table))
             {
-                this.mComm.ConnStrBuilder.Mode = SqlMode.Internal;
-            }
-
-            try
-            {
-                using (var cmd = new MaxDBCommand(sql, this))
+                var oldMode = this.mComm.ConnStrBuilder.Mode;
+                if (oldMode != SqlMode.Internal)
                 {
-                    if (parameters != null)
+                    this.mComm.ConnStrBuilder.Mode = SqlMode.Internal;
+                }
+
+                try
+                {
+                    using (var cmd = new MaxDBCommand(sql, this))
                     {
-                        foreach (var parameter in parameters)
+                        if (parameters != null)
                         {
-                            cmd.Parameters.Add(parameter);
+                            foreach (var parameter in parameters)
+                            {
+                                cmd.Parameters.Add(parameter);
+                            }
+                        }
+
+                        using (var da = new MaxDBDataAdapter { SelectCommand = cmd, })
+                        {
+                            da.Fill(dt);
                         }
                     }
-
-                    using (var da = new MaxDBDataAdapter { SelectCommand = cmd, })
+                }
+                finally
+                {
+                    if (this.mComm.ConnStrBuilder.Mode != oldMode)
                     {
-                        da.Fill(dt);
+                        this.mComm.ConnStrBuilder.Mode = oldMode;
                     }
                 }
-            }
-            finally
-            {
-                if (this.mComm.ConnStrBuilder.Mode != oldMode)
-                {
-                    this.mComm.ConnStrBuilder.Mode = oldMode;
-                }
-            }
 
-            return dt;
-        }
-
-        private DataTable ExecuteInternalQuery(string sql, string table)
-        {
-            return this.ExecuteInternalQuery(sql, table, null);
+                return dt;
+            }
         }
 
         /// <summary>
@@ -493,12 +490,9 @@ namespace MaxDB.Data
         /// <returns>A <see cref="DataTable"/> that contains schema information.</returns>
         public override DataTable GetSchema(string collectionName, string[] restrictionValues)
         {
-            var dt = new DataTable("SchemaTable")
-            {
-                Locale = CultureInfo.InvariantCulture,
-            };
+            var dt = new DataTable("SchemaTable") { Locale = CultureInfo.InvariantCulture, };
 
-            if (string.Compare(collectionName, "MetaDataCollections", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "MetaDataCollections", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 dt.Columns.Add(new DataColumn("CollectionName", typeof(string)));
                 dt.Columns.Add(new DataColumn("NumberOfRestriction", typeof(int)));
@@ -531,7 +525,7 @@ namespace MaxDB.Data
                 dt.Rows.Add("SystemInfo", 0, 0);
             }
 
-            if (string.Compare(collectionName, "DataSourceInformation", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "DataSourceInformation", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 dt.Columns.Add(new DataColumn("CompositeIdentifierSeparatorPattern", typeof(string)));
                 dt.Columns.Add(new DataColumn("DataSourceProductName", typeof(string)));
@@ -577,7 +571,7 @@ namespace MaxDB.Data
                     SupportedJoinOperators.FullOuter);
             }
 
-            if (string.Compare(collectionName, "DataTypes", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "DataTypes", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 dt.Columns.Add(new DataColumn("TypeName", typeof(string)));
                 dt.Columns.Add(new DataColumn("ProviderDbType", typeof(int)));
@@ -800,7 +794,7 @@ namespace MaxDB.Data
                 });
             }
 
-            if (string.Compare(collectionName, "Restrictions", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "Restrictions", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 dt.Columns.Add(new DataColumn("CollectionName", typeof(string)));
                 dt.Columns.Add(new DataColumn("RestrictionName", typeof(string)));
@@ -839,7 +833,7 @@ namespace MaxDB.Data
                 dt.Rows.Add(new object[] { "Constraints", "TABLE_NAME", ":TABLE_NAME", null, 2 });
             }
 
-            if (string.Compare(collectionName, "ReservedWords", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "ReservedWords", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 dt.Columns.Add(new DataColumn("ReservedWord", typeof(string)));
 
@@ -870,22 +864,22 @@ namespace MaxDB.Data
                 keywords.ForEach(keyword => dt.Rows.Add(keyword));
             }
 
-            if (string.Compare(collectionName, "Catalogs", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "Catalogs", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.CATALOGS", "Catalogs");
             }
 
-            if (string.Compare(collectionName, "Schemas", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "Schemas", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.SCHEMAS ORDER BY TABLE_SCHEM", "Schemas");
             }
 
-            if (string.Compare(collectionName, "TableTypes", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "TableTypes", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.TABLETYPES ORDER BY TABLE_TYPE", "TableTypes");
             }
 
-            if (string.Compare(collectionName, "ForeignKeys", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "ForeignKeys", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.CROSSREFERENCES WHERE 1=1 ";
 
@@ -906,7 +900,7 @@ namespace MaxDB.Data
                 dt = this.ExecuteInternalQuery(sql, "ForeignKeys", parameters);
             }
 
-            if (string.Compare(collectionName, "PrimaryKeys", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "PrimaryKeys", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.PRIMARYKEYS WHERE 1=1 ";
 
@@ -926,7 +920,7 @@ namespace MaxDB.Data
                 dt = this.ExecuteInternalQuery(sql, "PrimaryKeys", parameters);
             }
 
-            if (string.Compare(collectionName, "Procedures", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "Procedures", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.PROCEDURES WHERE 1=1 ";
 
@@ -948,17 +942,17 @@ namespace MaxDB.Data
                 dt = this.ExecuteInternalQuery(sql, "Procedures", parameters);
             }
 
-            if (string.Compare(collectionName, "SuperTables", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "SuperTables", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.SUPERTABLES", "SuperTables");
             }
 
-            if (string.Compare(collectionName, "SuperTypes", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "SuperTypes", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.SUPERTYPES", "SuperTypes");
             }
 
-            if (string.Compare(collectionName, "TablePrivileges", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "TablePrivileges", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.TABLEPRIVILEGES WHERE 1=1 ";
 
@@ -980,12 +974,12 @@ namespace MaxDB.Data
                 dt = this.ExecuteInternalQuery(sql, "TablePrivileges", parameters);
             }
 
-            if (string.Compare(collectionName, "VersionColumns", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "VersionColumns", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.VERSIONCOLUMNS", "VersionColumns");
             }
 
-            if (string.Compare(collectionName, "BestRowIdentifier", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "BestRowIdentifier", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.BESTROWIDENTIFIER WHERE 1=1 ";
 
@@ -1005,16 +999,16 @@ namespace MaxDB.Data
                 dt = this.ExecuteInternalQuery(sql, "BestRowIdentifier", parameters);
             }
 
-            if (string.Compare(collectionName, "Indexes", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "Indexes", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 bool unique = restrictionValues != null && restrictionValues.Length > 2 && restrictionValues[2] != null &&
-                        (string.Compare(restrictionValues[2].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
-                         string.Compare(restrictionValues[2].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
+                        (string.Compare(restrictionValues[2].Trim(), "TRUE", StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                         string.Compare(restrictionValues[2].Trim(), "YES", StringComparison.InvariantCultureIgnoreCase) == 0 ||
                          restrictionValues[2].Trim() == "1");
 
                 bool approximate = restrictionValues != null && restrictionValues.Length > 3 && restrictionValues[3] != null &&
-                        (string.Compare(restrictionValues[3].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
-                         string.Compare(restrictionValues[3].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
+                        (string.Compare(restrictionValues[3].Trim(), "TRUE", StringComparison.InvariantCultureIgnoreCase) == 0 ||
+                         string.Compare(restrictionValues[3].Trim(), "YES", StringComparison.InvariantCultureIgnoreCase) == 0 ||
                          restrictionValues[3].Trim() == "1");
 
                 string sql = "SELECT * FROM SYSJDBC." + (approximate ? "APPROXINDEXINFO" : "INDEXINFO");
@@ -1048,12 +1042,12 @@ namespace MaxDB.Data
                 dt = this.ExecuteInternalQuery(sql, "Indexes", parameters);
             }
 
-            if (string.Compare(collectionName, "UserDefinedTypes", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "UserDefinedTypes", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.UDTS", "UserDefinedTypes");
             }
 
-            if (string.Compare(collectionName, "Attributes", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "Attributes", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.ATTRIBUTES WHERE 1=1 ";
 
@@ -1073,7 +1067,7 @@ namespace MaxDB.Data
                 dt = this.ExecuteInternalQuery(sql, "Attributes", parameters);
             }
 
-            if (string.Compare(collectionName, "ColumnPrivileges", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "ColumnPrivileges", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.COLUMNPRIVILEGES WHERE 1=1 ";
 
@@ -1099,7 +1093,7 @@ namespace MaxDB.Data
                 dt = this.ExecuteInternalQuery(sql, "ColumnPrivileges", parameters);
             }
 
-            if (string.Compare(collectionName, "Columns", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "Columns", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.COLUMNS WHERE 1=1 ";
 
@@ -1127,7 +1121,7 @@ namespace MaxDB.Data
                 dt = this.ExecuteInternalQuery(sql, "Columns", parameters);
             }
 
-            if (string.Compare(collectionName, "ProcedureColumns", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "ProcedureColumns", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.PROCEDURECOLUMNS WHERE 1=1 ";
 
@@ -1155,7 +1149,7 @@ namespace MaxDB.Data
                 dt = this.ExecuteInternalQuery(sql, "ProcedureColumns", parameters);
             }
 
-            if (string.Compare(collectionName, "Tables", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "Tables", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.TABLES WHERE 1=1 ";
 
@@ -1175,7 +1169,7 @@ namespace MaxDB.Data
                 dt = this.ExecuteInternalQuery(sql, "Tables", parameters);
             }
 
-            if (string.Compare(collectionName, "Constraints", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "Constraints", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 string sql = "SELECT * FROM SYSJDBC.CONSTRAINTS WHERE 1=1 ";
 
@@ -1195,7 +1189,7 @@ namespace MaxDB.Data
                 dt = this.ExecuteInternalQuery(sql, "Constraints", parameters);
             }
 
-            if (string.Compare(collectionName, "SystemInfo", true, CultureInfo.InvariantCulture) == 0)
+            if (string.Compare(collectionName, "SystemInfo", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 dt = this.ExecuteInternalQuery("SELECT * FROM SYSJDBC.SYSTEMINFO", "SystemInfo");
             }

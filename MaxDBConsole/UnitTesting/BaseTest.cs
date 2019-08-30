@@ -34,7 +34,7 @@ namespace MaxDB.UnitTesting
     {
         protected MaxDBConnection mconn;
         protected StreamWriter msw;
-        protected IConfiguration config = new ConfigurationBuilder().AddJsonFile("appsettings.json", true, true).Build();
+        protected static IConfiguration config = new ConfigurationBuilder().AddJsonFile("appsettings.json", true, true).Build();
 
         public BaseTest()
         {

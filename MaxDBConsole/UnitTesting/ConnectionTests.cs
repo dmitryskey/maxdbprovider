@@ -98,6 +98,21 @@ namespace MaxDB.UnitTesting
             Assert.Throws(typeof(MaxDBException), () => TestConnectionByString(mconnStrBadDbName));
         }
 
+        [Test]
+        public void TestGetSchema()
+        {
+            using (var maxdbconn = new MaxDBConnection(mconnStr))
+            {
+                maxdbconn.Open();
+
+                var schema = maxdbconn.GetSchema();
+
+                Assert.AreEqual(schema.TableName, "SchemaTable", "Schema table name");
+
+                maxdbconn.Close();
+            }
+        }
+
         private void TestConnectionByString(string connection)
         {
             using (var maxdbconn = new MaxDBConnection(connection))
