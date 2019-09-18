@@ -52,7 +52,7 @@ namespace MaxDB.Data.MaxDBProtocol
         private bool bIsServerLittleEndian;
         private int iMaxCmdSize;
         private bool bSession;
-        private GarbageParseId garbageParseids;
+        private MaxDBGarbage garbageParseids;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MaxDBComm"/> class.
@@ -641,7 +641,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
             if (this.garbageParseids == null)
             {
-                this.garbageParseids = new GarbageParseId(this.IsKernelFeatureSupported(Feature.MultipleDropParseid));
+                this.garbageParseids = new MaxDBGarbage(this.IsKernelFeatureSupported(Feature.MultipleDropParseid));
             }
 
             this.garbageParseids.ThrowIntoGarbageCan(pid);

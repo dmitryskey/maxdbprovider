@@ -1,5 +1,8 @@
-// Copyright © 2005-2006 Dmitry S. Kataev
-// Copyright © 2002-2003 SAP AG
+//-----------------------------------------------------------------------------------------------
+// <copyright file="VDNNumber.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -18,19 +21,26 @@
 namespace MaxDB.Data.Utilities
 {
     using System;
+    using System.Globalization;
     using System.Numerics;
     using System.Text;
     using MaxDB.Data.MaxDBProtocol;
 
+    /// <summary>
+    /// VDN Number class.
+    /// </summary>
     internal abstract class VDNNumber
     {
-        private const int iZeroExpValue = 128;
-        private const int iTensComplement = 9;
-        private const int iNumberDigits = 38;
-        private const string strZeroString = "0000000000000000000000000000000000000000000000000000000000000000";
+        private const int ZeroExpValue = 128;
+        private const int TensComplement = 9;
+        private const int NumberDigits = 38;
+        private const string ZeroString = "0000000000000000000000000000000000000000000000000000000000000000";
 
-        public static byte[] BigDecimal2Number(BigDecimal dec) => BigDecimal2Number(dec, iNumberDigits);
-
+        /// <summary>
+        /// Convert <see cref="BigDecimal"/> to string.
+        /// </summary>
+        /// <param name="val">Big Decimal number.</param>
+        /// <returns>String presentation.</returns>
         public static string BigDecimal2PlainString(BigDecimal val)
         {
             string res;
@@ -43,18 +53,17 @@ namespace MaxDB.Data.Utilities
 
             if (scale == 0)
             {
-                res = ((BigInteger)val).ToString();
+                res = ((BigInteger)val).ToString(CultureInfo.InvariantCulture);
             }
             else
             {
-                string unsignedIntVal = BigInteger.Abs(val.UnscaledValue).ToString();
+                string unsignedIntVal = BigInteger.Abs(val.UnscaledValue).ToString(CultureInfo.InvariantCulture);
                 string prefix = val < 0 ? "-0." : "0.";
                 int pointPos = unsignedIntVal.Length - scale;
                 if (pointPos == 0)
                 {
                     res = prefix + unsignedIntVal;
                 }
-
                 else if (pointPos > 0)
                 {
                     var buf = new StringBuilder(unsignedIntVal);
@@ -83,7 +92,13 @@ namespace MaxDB.Data.Utilities
             return res;
         }
 
-        public static byte[] BigDecimal2Number(BigDecimal dec, int validDigits)
+        /// <summary>
+        /// Convert <see cref="BigDecimal"/> to byte array.
+        /// </summary>
+        /// <param name="dec">Big decimal value.</param>
+        /// <param name="validDigits">Number of digits.</param>
+        /// <returns>Byte array.</returns>
+        public static byte[] BigDecimal2Number(BigDecimal dec, int validDigits = NumberDigits)
         {
             byte[] number;
             string plain = BigDecimal2PlainString(dec);
@@ -114,7 +129,7 @@ namespace MaxDB.Data.Utilities
             digitCount = chars.Length - firstDigit;
             if (digitCount == 1 && chars[firstDigit] == '0')
             {
-                return new byte[] { (byte)iZeroExpValue };
+                return new byte[] { (byte)ZeroExpValue };
             }
 
             if (exponent > 0 && scale > 0)
@@ -149,19 +164,24 @@ namespace MaxDB.Data.Utilities
             return number;
         }
 
+        /// <summary>
+        /// Convert <see cref="long"/> to byte array.
+        /// </summary>
+        /// <param name="val">Long value.</param>
+        /// <returns>Byte array.</returns>
         public static byte[] Long2Number(long val)
         {
             bool isNegative = false;
             int negativeVal = 1;
             byte[] number;
-            char[] scratch = new char[iNumberDigits + 1];
+            char[] scratch = new char[NumberDigits + 1];
             char digit;
-            int scratchPos = iNumberDigits - 1;
+            int scratchPos = NumberDigits - 1;
             int exponent;
 
             if (val == 0)
             {
-                return new byte[] { iZeroExpValue };
+                return new byte[] { ZeroExpValue };
             }
 
             if (val < 0)
@@ -170,9 +190,7 @@ namespace MaxDB.Data.Utilities
                 isNegative = true;
             }
 
-            /*
-             * calculate digits
-             */
+            // calculate digits
             while (val != 0)
             {
                 digit = (char)(negativeVal * (val % 10));
@@ -181,10 +199,10 @@ namespace MaxDB.Data.Utilities
                 scratchPos--;
             }
 
-            exponent = iNumberDigits - scratchPos - 1;
+            exponent = NumberDigits - scratchPos - 1;
             scratchPos++;
-            number = new byte[iNumberDigits - scratchPos + 1];
-            PackDigits(scratch, scratchPos, iNumberDigits - scratchPos, isNegative, number);
+            number = new byte[NumberDigits - scratchPos + 1];
+            PackDigits(scratch, scratchPos, NumberDigits - scratchPos, isNegative, number);
 
             exponent = isNegative ? 64 - exponent : exponent + 192;
 
@@ -192,9 +210,13 @@ namespace MaxDB.Data.Utilities
             return number;
         }
 
+        /// <summary>
+        /// Convert VDN Number to <see cref="BigDecimal"/>.
+        /// </summary>
+        /// <param name="rawNumber">VDN Number byte array.</param>
+        /// <returns>Big Decimal.</returns>
         public static BigDecimal Number2BigDecimal(byte[] rawNumber)
         {
-            BigDecimal result = null;
             int characteristic;
             int digitCount = (rawNumber.Length - 1) * 2;
             int exponent;
@@ -204,13 +226,13 @@ namespace MaxDB.Data.Utilities
             try
             {
                 characteristic = rawNumber[0] & 0xff;
-                if (characteristic == iZeroExpValue)
+                if (characteristic == ZeroExpValue)
                 {
                     return new BigDecimal(0);
                 }
 
                 digits = new byte[digitCount + 2];
-                if (characteristic < iZeroExpValue)
+                if (characteristic < ZeroExpValue)
                 {
                     exponent = -(characteristic - 64);
                     digits[0] = (byte)'-';
@@ -225,14 +247,14 @@ namespace MaxDB.Data.Utilities
                             lastSignificant = i * 2;
                         }
 
-                        digits[i * 2] = (byte)(iTensComplement - val + '0');
+                        digits[i * 2] = (byte)(TensComplement - val + '0');
                         val = ((char)rawNumber[i]) & 0x0f;
                         if (val != 0)
                         {
                             lastSignificant = (i * 2) + 1;
                         }
 
-                        digits[(i * 2) + 1] = (byte)(iTensComplement - val + '0');
+                        digits[(i * 2) + 1] = (byte)(TensComplement - val + '0');
                     }
 
                     digits[lastSignificant]++;
@@ -263,7 +285,7 @@ namespace MaxDB.Data.Utilities
                 }
 
                 numberString = Encoding.ASCII.GetString(digits, 0, lastSignificant + 1);
-                result = new BigDecimal(numberString);
+                BigDecimal result = new BigDecimal(numberString);
                 return result.MovePointRight(exponent);
             }
             catch (Exception)
@@ -272,6 +294,11 @@ namespace MaxDB.Data.Utilities
             }
         }
 
+        /// <summary>
+        /// Convert VDN Number to <see cref="long"/>.
+        /// </summary>
+        /// <param name="rawNumber">VDN Number byte array.</param>
+        /// <returns>64-bit Long integer.</returns>
         public static long Number2Long(byte[] rawNumber)
         {
             long result = 0;
@@ -281,12 +308,12 @@ namespace MaxDB.Data.Utilities
             int numberDigits = (rawNumber.Length * 2) - 2;
 
             characteristic = rawNumber[0] & 0xFF;
-            if (characteristic == iZeroExpValue)
+            if (characteristic == ZeroExpValue)
             {
                 return 0;
             }
 
-            if (characteristic < iZeroExpValue)
+            if (characteristic < ZeroExpValue)
             {
                 exponent = -(characteristic - 64);
                 if (exponent < 0 || exponent > numberDigits)
@@ -309,7 +336,7 @@ namespace MaxDB.Data.Utilities
                     }
 
                     result *= 10;
-                    result += iTensComplement - val;
+                    result += TensComplement - val;
                 }
 
                 result++;
@@ -346,53 +373,21 @@ namespace MaxDB.Data.Utilities
             return result;
         }
 
+        /// <summary>
+        /// Convert VDN Number to <see cref="int"/>.
+        /// </summary>
+        /// <param name="rawBytes">VDN Number byte array.</param>
+        /// <returns>32-bit integer.</returns>
         public static int Number2Int(byte[] rawBytes) => (int)Number2Long(rawBytes);
 
-        private static void PackDigits(char[] digits, int start, int count, bool isNegative, byte[] number)
-        {
-            int lastDigit = start + count - 1;
-            byte highNibble;
-            byte lowNibble;
-
-            if (isNegative)
-            {
-                // 10s complement
-                for (int i = start; i < lastDigit; ++i)
-                {
-                    digits[i] = (char)(9 - digits[i]);
-                }
-
-                digits[lastDigit] = (char)(10 - digits[lastDigit]);
-
-                // handle overflow
-                int digitPos = lastDigit;
-                while (digits[digitPos] == 10)
-                {
-                    digits[digitPos] = '\0';
-                    digits[digitPos - 1]++;
-                    digitPos--;
-                }
-            }
-
-            /*
-             * pack digits into bytes
-             */
-            for (int i = 1; start <= lastDigit; ++i, start += 2)
-            {
-                highNibble = (byte)digits[start];
-                if ((start + 1) <= lastDigit)
-                {
-                    lowNibble = (byte)digits[start + 1];
-                }
-                else
-                {
-                    lowNibble = 0;
-                }
-
-                number[i] = (byte)(highNibble << 4 | lowNibble);
-            }
-        }
-
+        /// <summary>
+        /// Convert VDN Number to <see cref="string"/>.
+        /// </summary>
+        /// <param name="number">VDN Number byte array.</param>
+        /// <param name="fixedtype">Flag indicating whether the number is the fixed decimal point one.</param>
+        /// <param name="logicalLength">Logical length.</param>
+        /// <param name="frac">Faction part length.</param>
+        /// <returns>String presentation.</returns>
         public static string Number2String(byte[] number, bool fixedtype, int logicalLength, int frac)
         {
             int characteristic;
@@ -400,7 +395,7 @@ namespace MaxDB.Data.Utilities
             try
             {
                 characteristic = number[0] & 0xFF;
-                if (characteristic == iZeroExpValue)
+                if (characteristic == ZeroExpValue)
                 {
                     return "0";
                 }
@@ -409,7 +404,7 @@ namespace MaxDB.Data.Utilities
                 int exponent;
                 int lastsignificant = 0;
                 bool isnegative = false;
-                if (characteristic < iZeroExpValue)
+                if (characteristic < ZeroExpValue)
                 {
                     isnegative = true;
                     exponent = -(characteristic - 64);
@@ -449,7 +444,7 @@ namespace MaxDB.Data.Utilities
                     {
                         if (numberstr.Length < logicalLength)
                         {
-                            numberstr = numberstr + strZeroString.Substring(0, logicalLength - numberstr.Length);
+                            numberstr += ZeroString.Substring(0, logicalLength - numberstr.Length);
                         }
 
                         return sign + numberstr.Substring(0, exponent) + (frac != 0 ? "." + numberstr.Substring(exponent, exponent + frac) : string.Empty);
@@ -462,7 +457,7 @@ namespace MaxDB.Data.Utilities
                             zeroend = 0;
                         }
 
-                        return sign + "0." + strZeroString.Substring(0, -exponent) + numberstr + strZeroString.Substring(0, zeroend);
+                        return sign + "0." + ZeroString.Substring(0, -exponent) + numberstr + ZeroString.Substring(0, zeroend);
                     }
                 }
                 else
@@ -486,7 +481,7 @@ namespace MaxDB.Data.Utilities
                         }
 
                         return numberstr.Length <= exponent
-                            ? sign + numberstr + strZeroString.Substring(0, exponent - numberstr.Length)
+                            ? sign + numberstr + ZeroString.Substring(0, exponent - numberstr.Length)
                             : sign + numberstr.Substring(0, exponent) + "." + numberstr.Substring(exponent);
                     }
                 }
@@ -494,6 +489,49 @@ namespace MaxDB.Data.Utilities
             catch (Exception)
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.CONVERSIONVDNnumber, Consts.ToHexString(number)));
+            }
+        }
+
+        private static void PackDigits(char[] digits, int start, int count, bool isNegative, byte[] number)
+        {
+            int lastDigit = start + count - 1;
+            byte highNibble;
+            byte lowNibble;
+
+            if (isNegative)
+            {
+                // 10s complement
+                for (int i = start; i < lastDigit; ++i)
+                {
+                    digits[i] = (char)(9 - digits[i]);
+                }
+
+                digits[lastDigit] = (char)(10 - digits[lastDigit]);
+
+                // handle overflow
+                int digitPos = lastDigit;
+                while (digits[digitPos] == 10)
+                {
+                    digits[digitPos] = '\0';
+                    digits[digitPos - 1]++;
+                    digitPos--;
+                }
+            }
+
+            // pack digits into bytes
+            for (int i = 1; start <= lastDigit; ++i, start += 2)
+            {
+                highNibble = (byte)digits[start];
+                if ((start + 1) <= lastDigit)
+                {
+                    lowNibble = (byte)digits[start + 1];
+                }
+                else
+                {
+                    lowNibble = 0;
+                }
+
+                number[i] = (byte)(highNibble << 4 | lowNibble);
             }
         }
     }

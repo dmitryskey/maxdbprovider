@@ -1,5 +1,8 @@
-// Copyright © 2005-2018 Dmitry S. Kataev
-// Copyright © 2002-2003 SAP AG
+//-----------------------------------------------------------------------------------------------
+// <copyright file="MaxDBGarbage.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------------------------------
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,81 +23,85 @@ namespace MaxDB.Data.MaxDBProtocol
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
 
-    internal class GarbageParseId
+    /// <summary>
+    /// MaxDB GC class.
+    /// </summary>
+    internal class MaxDBGarbage
     {
-        protected int iCanTrashOld = 20;
-        protected bool bObjPending;
-        protected bool bCurrentEmptyRun;
-        protected bool bCurrentEmptyRun2;
+        private readonly int canTrashOld = 20;
         private readonly List<byte[]> lstGarbage;
-        private readonly bool bSupportsMultipleDropParseIDs;
+        private readonly bool supportsMultipleDropParseIDs;
 
-        public GarbageParseId(bool supportMultipleDropParseIds)
-            : base()
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MaxDBGarbage"/> class.
+        /// </summary>
+        /// <param name="supportMultipleDropParseIds">Flag indicating if one can drop multiple parse ids.</param>
+        public MaxDBGarbage(bool supportMultipleDropParseIds)
         {
-            this.bSupportsMultipleDropParseIDs = supportMultipleDropParseIds;
-            this.lstGarbage = new List<byte[]>(this.iCanTrashOld);
+            this.supportsMultipleDropParseIDs = supportMultipleDropParseIds;
+            this.lstGarbage = new List<byte[]>(this.canTrashOld);
         }
 
-        public bool IsPending => this.GarbageSize >= this.iCanTrashOld;
+        /// <summary>
+        /// Gets a value indicating whether GC can is already full.
+        /// </summary>
+        public bool IsPending => this.GarbageSize >= this.canTrashOld;
 
-        public void EmptyCan(MaxDBComm communication, ConnectArgs connArgs)
+        private int GarbageSize => this.lstGarbage.Count;
+
+        /// <summary>
+        /// Empty GC Can.
+        /// </summary>
+        /// <param name="comm">Communication object.</param>
+        /// <param name="connArgs">Connection arguments.</param>
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public void EmptyCan(MaxDBComm comm, ConnectArgs connArgs)
         {
-            if (communication == null)
+            if (comm == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "communication"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, nameof(comm)));
             }
-
-            if (this.bCurrentEmptyRun)
-            {
-                return;
-            }
-
-            this.bCurrentEmptyRun = true;
 
             MaxDBRequestPacket requestPacket;
-            this.bObjPending = false;
             while (this.GarbageSize > 0)
             {
                 try
                 {
-                    requestPacket = communication.GetRequestPacket();
+                    requestPacket = comm.GetRequestPacket();
                     requestPacket.Init(short.MaxValue);
                     this.EmptyCan(requestPacket);
-                    communication.Execute(connArgs, requestPacket, this, GCMode.NONE);
+                    comm.Execute(connArgs, requestPacket, this, GCMode.NONE);
                 }
                 catch (MaxDBException)
                 {
                     // ignore
                 }
             }
-
-            this.bCurrentEmptyRun = false;
         }
 
+        /// <summary>
+        /// Throw an object into GC can.
+        /// </summary>
+        /// <param name="obj">Object to throw into.</param>
         public void ThrowIntoGarbageCan(byte[] obj) => this.lstGarbage.Add(obj);
 
-        protected int GarbageSize => this.lstGarbage.Count;
-
+        /// <summary>
+        /// Empty GC can.
+        /// </summary>
+        /// <param name="requestPacket">Request packet.</param>
+        /// <returns><c>true</c> if packet action succeeded and <c>false</c> otherwise.</returns>
         [MethodImpl(MethodImplOptions.Synchronized)]
         public bool EmptyCan(MaxDBRequestPacket requestPacket)
         {
             if (requestPacket == null)
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "requestPacket"));
+                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, nameof(requestPacket)));
             }
-
-            if (this.bCurrentEmptyRun2)
-            {
-                return false;
-            }
-
-            this.bCurrentEmptyRun2 = true;
 
             bool packetActionFailed = false;
             int sz = this.GarbageSize;
 
-            if (!this.bSupportsMultipleDropParseIDs)
+            if (!this.supportsMultipleDropParseIDs)
             {
                 while (sz > 0 && !packetActionFailed)
                 {
@@ -139,10 +146,12 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
             }
 
-            this.bCurrentEmptyRun2 = false;
             return !packetActionFailed;
         }
 
+        /// <summary>
+        /// Empty GC can.
+        /// </summary>
         public void EmptyCan() => this.lstGarbage.Clear();
     }
 }

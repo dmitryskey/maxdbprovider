@@ -1874,7 +1874,7 @@ namespace MaxDB.Data.MaxDBProtocol
             public StructMemberTranslator(StructureElement structElement, bool unicode)
             {
                 this.mStructElement = structElement;
-                this.iOffset = unicode ? structElement.iUnicodeOffset : structElement.iASCIIOffset;
+                this.iOffset = unicode ? structElement.UnicodeOffset : structElement.AsciiOffset;
             }
 
             public abstract object GetValue(ByteArray memory, int recordOffset);
@@ -1893,69 +1893,69 @@ namespace MaxDB.Data.MaxDBProtocol
             public static StructMemberTranslator CreateStructMemberTranslator(DBProcParameterInfo paramInfo, int index, bool unicode)
             {
                 StructureElement s = paramInfo[index];
-                if (string.Compare(s.strTypeName.Trim(), "CHAR", true, CultureInfo.InvariantCulture) == 0)
+                if (string.Compare(s.TypeName.Trim(), "CHAR", true, CultureInfo.InvariantCulture) == 0)
                 {
-                    if (string.Compare(s.strCodeType.Trim(), "BYTE", true, CultureInfo.InvariantCulture) == 0)
+                    if (string.Compare(s.CodeType.Trim(), "BYTE", true, CultureInfo.InvariantCulture) == 0)
                     {
                         return new ByteStructureElementTranslator(s, unicode);
                     }
-                    else if (string.Compare(s.strCodeType.Trim(), "ASCII", true, CultureInfo.InvariantCulture) == 0)
+                    else if (string.Compare(s.CodeType.Trim(), "ASCII", true, CultureInfo.InvariantCulture) == 0)
                     {
                         return new CharASCIIStructureElementTranslator(s, unicode);
                     }
                 }
-                else if (string.Compare(s.strTypeName.Trim(), "WYDE", true, CultureInfo.InvariantCulture) == 0)
+                else if (string.Compare(s.TypeName.Trim(), "WYDE", true, CultureInfo.InvariantCulture) == 0)
                 {
                     return unicode ? new WydeStructureElementTranslator(s, unicode) : (StructMemberTranslator)new CharASCIIStructureElementTranslator(s, unicode);
                 }
-                else if (string.Compare(s.strTypeName.Trim(), "SMALLINT", true, CultureInfo.InvariantCulture) == 0)
+                else if (string.Compare(s.TypeName.Trim(), "SMALLINT", true, CultureInfo.InvariantCulture) == 0)
                 {
-                    if (s.iLength == 5)
+                    if (s.Length == 5)
                     {
                         return new ShortStructureElementTranslator(s, unicode);
                     }
                 }
-                else if (string.Compare(s.strTypeName.Trim(), "INTEGER", true, CultureInfo.InvariantCulture) == 0)
+                else if (string.Compare(s.TypeName.Trim(), "INTEGER", true, CultureInfo.InvariantCulture) == 0)
                 {
-                    if (s.iLength == 10)
+                    if (s.Length == 10)
                     {
                         return new IntStructureElementTranslator(s, unicode);
                     }
-                    else if (s.iLength == 19)
+                    else if (s.Length == 19)
                     {
                         return new LongStructureElementTranslator(s, unicode);
                     }
                 }
-                else if (string.Compare(s.strTypeName.Trim(), "FIXED", true, CultureInfo.InvariantCulture) == 0)
+                else if (string.Compare(s.TypeName.Trim(), "FIXED", true, CultureInfo.InvariantCulture) == 0)
                 {
-                    if (s.iPrecision == 0)
+                    if (s.Precision == 0)
                     {
-                        if (s.iLength == 5)
+                        if (s.Length == 5)
                         {
                             return new ShortStructureElementTranslator(s, unicode);
                         }
-                        else if (s.iLength == 10)
+                        else if (s.Length == 10)
                         {
                             return new IntStructureElementTranslator(s, unicode);
                         }
-                        else if (s.iLength == 19)
+                        else if (s.Length == 19)
                         {
                             return new LongStructureElementTranslator(s, unicode);
                         }
                     }
                 }
-                else if (string.Compare(s.strTypeName.Trim(), "FLOAT", true, CultureInfo.InvariantCulture) == 0)
+                else if (string.Compare(s.TypeName.Trim(), "FLOAT", true, CultureInfo.InvariantCulture) == 0)
                 {
-                    if (s.iLength == 15)
+                    if (s.Length == 15)
                     {
                         return new DoubleStructureElementTranslator(s, unicode);
                     }
-                    else if (s.iLength == 6)
+                    else if (s.Length == 6)
                     {
                         return new FloatStructureElementTranslator(s, unicode);
                     }
                 }
-                else if (string.Compare(s.strTypeName.Trim(), "BOOLEAN", true, CultureInfo.InvariantCulture) == 0)
+                else if (string.Compare(s.TypeName.Trim(), "BOOLEAN", true, CultureInfo.InvariantCulture) == 0)
                 {
                     return new BooleanStructureElementTranslator(s, unicode);
                 }
@@ -2019,8 +2019,8 @@ namespace MaxDB.Data.MaxDBProtocol
 
             public override object GetValue(ByteArray memory, int recordOffset)
             {
-                byte[] bytes = memory.ReadBytes(this.iOffset + recordOffset, this.mStructElement.iLength);
-                return this.mStructElement.iLength == 1 ? bytes[0] : (object)bytes;
+                byte[] bytes = memory.ReadBytes(this.iOffset + recordOffset, this.mStructElement.Length);
+                return this.mStructElement.Length == 1 ? bytes[0] : (object)bytes;
             }
 
             public override void PutValue(ByteArray memory, object obj)
@@ -2053,8 +2053,8 @@ namespace MaxDB.Data.MaxDBProtocol
 
             public override object GetValue(ByteArray memory, int recordOffset)
             {
-                byte[] bytes = memory.ReadBytes(this.iOffset + recordOffset, this.mStructElement.iLength);
-                if (this.mStructElement.iLength == 1)
+                byte[] bytes = memory.ReadBytes(this.iOffset + recordOffset, this.mStructElement.Length);
+                if (this.mStructElement.Length == 1)
                 {
                     return (char)bytes[0];
                 }
@@ -2100,8 +2100,8 @@ namespace MaxDB.Data.MaxDBProtocol
 
             public override object GetValue(ByteArray memory, int recordOffset)
             {
-                string ca = memory.ReadUnicode(this.iOffset + recordOffset, this.mStructElement.iLength * 2);
-                if (this.mStructElement.iLength == 1)
+                string ca = memory.ReadUnicode(this.iOffset + recordOffset, this.mStructElement.Length * 2);
+                if (this.mStructElement.Length == 1)
                 {
                     return ca[0];
                 }

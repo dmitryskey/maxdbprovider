@@ -424,7 +424,7 @@ namespace MaxDB.Data.MaxDBProtocol
             get
             {
                 int pos = HeaderOffset.END + ConnectPacketOffset.VarPart;
-                while (pos < this.byData.Length)
+                while (pos < this.Data.Length)
                 {
                     byte len = this.ReadByte(pos);
 
@@ -435,7 +435,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
                     if (this.ReadByte(pos + 1) == ArgType.AUTHALLOW)
                     {
-                        foreach (string authParam in Encoding.ASCII.GetString(this.byData, pos + 2, len - 3).Split(','))
+                        foreach (string authParam in Encoding.ASCII.GetString(this.Data, pos + 2, len - 3).Split(','))
                         {
                             if (string.Compare(authParam, Crypt.ScramMD5Name, true, CultureInfo.InvariantCulture) == 0)
                             {
@@ -677,7 +677,7 @@ namespace MaxDB.Data.MaxDBProtocol
             if (!reset)
             {
                 this.CloseSegment();
-                if (this.byData.Length - HeaderOffset.END - this.iLength - SegmentHeaderOffset.Part - PartHeaderOffset.Data
+                if (this.Data.Length - HeaderOffset.END - this.iLength - SegmentHeaderOffset.Part - PartHeaderOffset.Data
                     - this.iReplyReserve - Consts.ReserveForReply < command.Length || this.sSegments >= this.iMaxNumberOfSegment)
                 {
                     return false;
@@ -810,7 +810,7 @@ namespace MaxDB.Data.MaxDBProtocol
             this.WriteInt16(1, this.iPartOffset + PartHeaderOffset.ArgCount);
             this.WriteInt32(this.iSegmentOffset - PacketHeaderOffset.Segment, this.iPartOffset + PartHeaderOffset.SegmOffset);
             this.WriteInt32(PartHeaderOffset.Data, this.iPartOffset + PartHeaderOffset.BufLen);
-            this.WriteInt32(this.byData.Length - HeaderOffset.END - this.iPartOffset, this.iPartOffset + PartHeaderOffset.BufSize);
+            this.WriteInt32(this.Data.Length - HeaderOffset.END - this.iPartOffset, this.iPartOffset + PartHeaderOffset.BufSize);
         }
 
         public void AddPartAttr(byte attr)
@@ -1247,8 +1247,8 @@ namespace MaxDB.Data.MaxDBProtocol
 
                 case DataType.UNICODE:
                 case DataType.VARCHARUNI:
-                    return spaceoption ? new MaxDBTranslators.SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode) :
-                        new MaxDBTranslators.UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
+                    return spaceoption ? new MaxDBTranslators.SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.Swapped) :
+                        new MaxDBTranslators.UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.Swapped);
                 case DataType.LONGUNI:
                 case DataType.STRUNI:
                     return isDBProcedure
@@ -1499,8 +1499,8 @@ namespace MaxDB.Data.MaxDBProtocol
                 case DataType.CHE:
                 case DataType.VARCHARA:
                 case DataType.VARCHARE:
-                    return spaceoption ? new MaxDBTranslators.SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode) :
-                        new MaxDBTranslators.UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
+                    return spaceoption ? new MaxDBTranslators.SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.Swapped) :
+                        new MaxDBTranslators.UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.Swapped);
                 case DataType.CHB:
                     return procParamInfo != null && procParamInfo.ElementType == DBProcParameterInfo.STRUCTURE
                         ? new MaxDBTranslators.StructureTranslator(mode, ioType, dataType, len, ioLen, bufpos, false)
@@ -1511,11 +1511,11 @@ namespace MaxDB.Data.MaxDBProtocol
                 case DataType.BOOLEAN:
                     return new MaxDBTranslators.BooleanTranslator(mode, ioType, dataType, len, ioLen, bufpos);
                 case DataType.TIME:
-                    return new MaxDBTranslators.UnicodeTimeTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
+                    return new MaxDBTranslators.UnicodeTimeTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.Swapped);
                 case DataType.DATE:
-                    return new MaxDBTranslators.UnicodeDateTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
+                    return new MaxDBTranslators.UnicodeDateTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.Swapped);
                 case DataType.TIMESTAMP:
-                    return new MaxDBTranslators.UnicodeTimestampTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
+                    return new MaxDBTranslators.UnicodeTimestampTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.Swapped);
                 case DataType.FIXED:
                 case DataType.FLOAT:
                 case DataType.VFLOAT:
@@ -1538,8 +1538,8 @@ namespace MaxDB.Data.MaxDBProtocol
 
                 case DataType.UNICODE:
                 case DataType.VARCHARUNI:
-                    return spaceoption ? new MaxDBTranslators.SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode) :
-                        new MaxDBTranslators.UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.bSwapMode);
+                    return spaceoption ? new MaxDBTranslators.SpaceOptionUnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.Swapped) :
+                        new MaxDBTranslators.UnicodeStringTranslator(mode, ioType, dataType, len, ioLen, bufpos, this.Swapped);
                 case DataType.LONGUNI:
                 case DataType.STRUNI:
                     return isDBProcedure

@@ -600,9 +600,8 @@ SqlState = 13; // c5
         public const byte UseUCS2Swap = 3;
 
         // tsp00_LdbChange
-        public const byte 
-// tsp00_ValMode
-DataPart = 0;
+        // tsp00_ValMode
+        public const byte DataPart = 0;
 
         // tsp00_LdbChange
         public const byte AllData = 1;
@@ -632,9 +631,8 @@ DataPart = 0;
         public const byte StartposInvalid = 9;
 
         // tsp00_LdbChange
-        public const byte 
-// infoset
-ExTrigger = 1;
+        // infoset
+        public const byte ExTrigger = 1;
 
         // tsp00_LdbChange
         public const byte WithLock = 2;
@@ -655,9 +653,8 @@ ExTrigger = 1;
         public const byte Unicode = 64;
 
         // tsp00_LdbChange
-        public const byte 
-// state
-StateUseTermChar = 1;
+        // state
+        public const byte StateUseTermChar = 1;
 
         // tsp00_LdbChange
         public const byte StateStream = 1;
@@ -799,58 +796,55 @@ Descriptor = 0;   // c8
 
     internal struct FunctionCode
     {
-        public const int Nil = 0,
-            CreateTable = 1,
-            SetRole = 2,
-            Insert = 3,
-            Select = 4,
-            Update = 5,
-            Delete = 9,
-            Explain = 27,
-            DBProcExecute = 34,
+        public const int Nil = 0;
+        public const int CreateTable = 1;
+        public const int SetRole = 2;
+        public const int Insert = 3;
+        public const int Select = 4;
+        public const int Update = 5;
+        public const int Delete = 9;
+        public const int Explain = 27;
+        public const int DBProcExecute = 34;
+        public const int FetchFirst = 206;
+        public const int FetchLast = 207;
+        public const int FetchNext = 208;
+        public const int FetchPrev = 209;
+        public const int FetchPos = 210;
+        public const int FetchSame = 211;
+        public const int FetchRelative = 247;
+        public const int Show = 216;
+        public const int Describe = 224;
+        public const int SelectInto = 244;
+        public const int DBProcWithResultSetExecute = 248;
+        public const int MSelect = 1004;
+        public const int MDelete = 1009;
+        public const int MFetchFirst = 1206;
+        public const int MFetchLast = 1207;
+        public const int MFetchNext = 1208;
+        public const int MFetchPrev = 1209;
+        public const int MFetchPos = 1210;
+        public const int MFetchSame = 1211;
+        public const int MSelectInto = 1244;
+        public const int MFetchRelative = 1247;
 
-            FetchFirst = 206,
-            FetchLast = 207,
-            FetchNext = 208,
-            FetchPrev = 209,
-            FetchPos = 210,
-            FetchSame = 211,
-            FetchRelative = 247,
-
-            Show = 216,
-            Describe = 224,
-            SelectInto = 244,
-            DBProcWithResultSetExecute = 248,
-            MSelect = 1004,
-            MDelete = 1009,
-
-            MFetchFirst = 1206,
-            MFetchLast = 1207,
-            MFetchNext = 1208,
-            MFetchPrev = 1209,
-            MFetchPos = 1210,
-            MFetchSame = 1211,
-            MSelectInto = 1244,
-            MFetchRelative = 1247,
-
-            // copy of application codes coded in the 11th byte of parseid
-            none = 0,
-            commandExecuted = 1,
-            useAdbs = 2,
-            releaseFound = 10,
-            fastSelectDirPossible = 20,
-            notAllowedForProgram = 30,
-            closeFound = 40,
-            describeFound = 41,
-            fetchFound = 42,
-            mfetchFound = 43,
-            massSelectFound = 44,
-            reuseMassSelectFound = 46,
-            massCommand = 70,
-            mselectFound = 114,
-            forUpdMselectFound = 115,
-            reuseMselectFound = 116,
-            reuseUpdMselectFound = 117;
+        // copy of application codes coded in the 11th byte of parseid
+        public const int none = 0;
+        public const int commandExecuted = 1;
+        public const int useAdbs = 2;
+        public const int releaseFound = 10;
+        public const int fastSelectDirPossible = 20;
+        public const int notAllowedForProgram = 30;
+        public const int closeFound = 40;
+        public const int describeFound = 41;
+        public const int fetchFound = 42;
+        public const int mfetchFound = 43;
+        public const int massSelectFound = 44;
+        public const int reuseMassSelectFound = 46;
+        public const int massCommand = 70;
+        public const int mselectFound = 114;
+        public const int forUpdMselectFound = 115;
+        public const int reuseMselectFound = 116;
+        public const int reuseUpdMselectFound = 117;
 
         public static readonly int[] massCmdAppCodes =
         {
@@ -865,7 +859,7 @@ Descriptor = 0;   // c8
         };
 
         public static bool IsQuery(int code) =>
-            code == FunctionCode.Select || code == FunctionCode.Show || code == FunctionCode.DBProcWithResultSetExecute || code == FunctionCode.Explain;
+            code == Select || code == Show || code == DBProcWithResultSetExecute || code == Explain;
     }
 
     internal struct Ports
@@ -898,7 +892,6 @@ Descriptor = 0;   // c8
 
     internal struct RTEReturnCodes
     {
-
         // rte return codes
         public const byte SQLOK = 0;
 
@@ -1077,7 +1070,6 @@ Descriptor = 0;   // c8
 
     internal struct ArgType
     {
-
         // geo03.h
         public const byte PORTNO = 0x50;   // = P
 
@@ -1196,7 +1188,6 @@ Descriptor = 0;   // c8
     // copies of tsp1_param_opt_type, tsp1_param_io_type, tsp1_param_info
     internal struct ParamInfo
     {
-
         // param modes, declared as set values
         public const int Mandatory = 1;
 
@@ -1251,8 +1242,7 @@ ModeOffset = 0;  // Set 1
         public const int SerialOffset = 11; // int1
 
         // param modes, declared as set values
-        public const int // The size of tsp1_param_info
-END = 12;
+        public const int END = 12;// The size of tsp1_param_info
     }
 
     internal struct StreamHandle
@@ -1260,26 +1250,22 @@ END = 12;
         public const int HeaderLength = 20;
         public const int RowDef = 0;
         public const int TabHandle = 4;
-        public const int 
-TabHandleReserved = 4;
+        public const int  TabHandleReserved = 4;
 
         public const int TabHandleRowsize = 8;
         public const int TabHandleColCount = 10;
         public const int TabHandleRowCount = 12;
         public const int TabHandleABAPTabID = 16;
         public const int TabHandleColDesc0 = 20;
-        public const int 
-ColDescInOut = 0;
+        public const int ColDescInOut = 0;
 
         public const int ColDescABAPType = 1;
         public const int ColDescDec = 2;
         public const int ColDescLength = 4;
         public const int ColDescOffset = 6;
-        public const int 
-ColDescSize = 8;
+        public const int ColDescSize = 8;
 
-        public const int 
-StreamTypeBool = 0;
+        public const int StreamTypeBool = 0;
 
         public const int StreamTypeInt1 = 1;
         public const int StreamTypeUInt1 = 2;
@@ -1297,8 +1283,7 @@ StreamTypeBool = 0;
         public const int StreamTypeWChar = 15;
         public const int StreamTypeUDT = 16;
         public const int StreamTypeWYDE = 17;
-        public const int 
-StreamIN = 0;
+        public const int StreamIN = 0;
 
         public const int StreamOUT = 1;
         public const int StreamINOUT = 2;

@@ -125,7 +125,7 @@ namespace MaxDB.Data
             }
 
             if (this.mParseInfo != null && (this.mParseInfo.FuncCode == FunctionCode.DBProcExecute || this.mParseInfo.FuncCode == FunctionCode.DBProcWithResultSetExecute) &&
-                Array.Exists(this.mParseInfo.mParamInfos, t => t.IsOutput))
+                Array.Exists(this.mParseInfo.ParamInfos, t => t.IsOutput))
             {
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.BATCHPROCOUT, Array.Empty<int>()));
             }
@@ -175,9 +175,9 @@ namespace MaxDB.Data
                     this.ParseMassCmd(false);
                 }
 
-                if (this.mParseInfo != null && this.mParseInfo.mParamInfos.Length > 0)
+                if (this.mParseInfo != null && this.mParseInfo.ParamInfos.Length > 0)
                 {
-                    foreach (var currentInfo in Array.FindAll(this.mParseInfo.mParamInfos, i => i.IsInput))
+                    foreach (var currentInfo in Array.FindAll(this.mParseInfo.ParamInfos, i => i.IsInput))
                     {
                         int currentFieldEnd = currentInfo.PhysicalLength + currentInfo.BufPos - 1;
                         recordSize = Math.Max(recordSize, currentFieldEnd);
@@ -202,9 +202,9 @@ namespace MaxDB.Data
 
                     requestPacket.AddCursorPart(this.strCursorName);
                     DataPart dataPart;
-                    if (this.mParseInfo.mParamInfos.Length > 0)
+                    if (this.mParseInfo.ParamInfos.Length > 0)
                     {
-                        dataPart = requestPacket.NewDataPart(this.mParseInfo.bVarDataInput);
+                        dataPart = requestPacket.NewDataPart(this.mParseInfo.VarDataInput);
                         if (executeCount == -1)
                         {
                             dataPart.SetFirstPart();
@@ -214,11 +214,11 @@ namespace MaxDB.Data
                         {
                             object[] row = new object[batchParams[inputCursor].Count];
                             this.FillInputParameters(batchParams[inputCursor], ref row);
-                            dataPart.AddRow(this.mParseInfo.sInputCount);
-                            for (int i = 0; i < this.mParseInfo.mParamInfos.Length; i++)
+                            dataPart.AddRow(this.mParseInfo.InputCount);
+                            for (int i = 0; i < this.mParseInfo.ParamInfos.Length; i++)
                             {
                                 // check whether the parameter was set by application or throw an exception
-                                var transl = this.mParseInfo.mParamInfos[i];
+                                var transl = this.mParseInfo.ParamInfos[i];
 
                                 if (transl.IsInput && row[i] != null && strInitialParamValue == row[i].ToString())
                                 {
@@ -438,21 +438,21 @@ namespace MaxDB.Data
 
                 this.FillInputParameters(this.dbParameters, ref this.objInputArgs);
 
-                if (this.mParseInfo.sInputCount > 0)
+                if (this.mParseInfo.InputCount > 0)
                 {
-                    dataPart = requestPacket.NewDataPart(this.mParseInfo.bVarDataInput);
-                    if (this.mParseInfo.sInputCount > 0)
+                    dataPart = requestPacket.NewDataPart(this.mParseInfo.VarDataInput);
+                    if (this.mParseInfo.InputCount > 0)
                     {
-                        dataPart.AddRow(this.mParseInfo.sInputCount);
-                        for (int i = 0; i < this.mParseInfo.mParamInfos.Length; i++)
+                        dataPart.AddRow(this.mParseInfo.InputCount);
+                        for (int i = 0; i < this.mParseInfo.ParamInfos.Length; i++)
                         {
-                            if (this.mParseInfo.mParamInfos[i].IsInput && this.objInputArgs[i] != null && strInitialParamValue == this.objInputArgs[i].ToString())
+                            if (this.mParseInfo.ParamInfos[i].IsInput && this.objInputArgs[i] != null && strInitialParamValue == this.objInputArgs[i].ToString())
                             {
                                 throw new DataException(MaxDBMessages.Extract(MaxDBError.MISSINGINOUT, i + 1, "02000"));
                             }
                             else
                             {
-                                this.mParseInfo.mParamInfos[i].Put(dataPart, this.objInputArgs[i]);
+                                this.mParseInfo.ParamInfos[i].Put(dataPart, this.objInputArgs[i]);
                             }
                         }
 
@@ -518,7 +518,7 @@ namespace MaxDB.Data
                 bool isQuery;
                 if (this.mParseInfo.IsSelect)
                 {
-                    isQuery = this.ParseResult(replyPacket, this.mParseInfo.ColumnInfo, this.mParseInfo.strColumnNames, behavior);
+                    isQuery = this.ParseResult(replyPacket, this.mParseInfo.ColumnInfo, this.mParseInfo.ColumnNames, behavior);
                 }
                 else
                 {
@@ -527,7 +527,7 @@ namespace MaxDB.Data
                         replyPacket = this.ProcessProcedureStreams(replyPacket);
                     }
 
-                    isQuery = this.ParseResult(replyPacket, this.mParseInfo.ColumnInfo, this.mParseInfo.strColumnNames, behavior);
+                    isQuery = this.ParseResult(replyPacket, this.mParseInfo.ColumnInfo, this.mParseInfo.ColumnNames, behavior);
                     int returnCode = replyPacket.ReturnCode;
                     if (replyPacket.ExistsPart(PartKind.Data))
                     {
@@ -568,7 +568,7 @@ namespace MaxDB.Data
             DateTime dt = DateTime.Now;
 
             ////>>> SQL TRACE
-            if (this.dbConnection.mLogger.TraceSQL && this.mParseInfo.sInputCount > 0)
+            if (this.dbConnection.mLogger.TraceSQL && this.mParseInfo.InputCount > 0)
             {
                 this.dbConnection.mLogger.SqlTrace(dt, "INPUT PARAMETERS:");
                 this.dbConnection.mLogger.SqlTrace(dt, "APPLICATION");
@@ -848,7 +848,7 @@ namespace MaxDB.Data
             DateTime dt = DateTime.Now;
 
             ////>>> SQL TRACE
-            if (this.dbConnection.mLogger.TraceSQL && this.mParseInfo.sInputCount < this.mParseInfo.ParamInfo.Length)
+            if (this.dbConnection.mLogger.TraceSQL && this.mParseInfo.InputCount < this.mParseInfo.ParamInfo.Length)
             {
                 this.dbConnection.mLogger.SqlTrace(dt, "OUTPUT PARAMETERS:");
                 this.dbConnection.mLogger.SqlTrace(dt, "APPLICATION");
@@ -1346,11 +1346,11 @@ namespace MaxDB.Data
                             ////<<< SQL TRACE
                             break;
                         case PartKind.ShortInfo:
-                            shortInfos = replyPacket.ParseShortFields(this.dbConnection.mComm.ConnStrBuilder.SpaceOption, result.IsDBProc, result.mProcParamInfos, false);
+                            shortInfos = replyPacket.ParseShortFields(this.dbConnection.mComm.ConnStrBuilder.SpaceOption, result.IsDBProc, result.ProcParamInfos, false);
                             break;
                         case PartKind.VardataShortInfo:
-                            result.bVarDataInput = true;
-                            shortInfos = replyPacket.ParseShortFields(this.dbConnection.mComm.ConnStrBuilder.SpaceOption, result.IsDBProc, result.mProcParamInfos, true);
+                            result.VarDataInput = true;
+                            shortInfos = replyPacket.ParseShortFields(this.dbConnection.mComm.ConnStrBuilder.SpaceOption, result.IsDBProc, result.ProcParamInfos, true);
                             break;
                         case PartKind.ResultTableName:
                             result.IsSelect = true;
@@ -1385,7 +1385,7 @@ namespace MaxDB.Data
                 }
             }
 
-            this.objInputArgs = new object[result.mParamInfos.Length];
+            this.objInputArgs = new object[result.ParamInfos.Length];
             this.ClearParameters();
 
             ////>>> SQL TRACE
@@ -1395,7 +1395,7 @@ namespace MaxDB.Data
             }
             ////<<< SQL TRACE
 
-            result.dbConnection = this.dbConnection;
+            result.DbConnection = this.dbConnection;
             return result;
         }
 
@@ -1434,7 +1434,7 @@ namespace MaxDB.Data
         {
             // get all putval objects
             this.lstInputLongs = new List<PutValue>();
-            for (int i = 0; i < this.mParseInfo.mParamInfos.Length; i++)
+            for (int i = 0; i < this.mParseInfo.ParamInfos.Length; i++)
             {
                 object inarg = args[i];
                 if (inarg == null)
@@ -1473,7 +1473,7 @@ namespace MaxDB.Data
         private void HandleProcedureStreamsForExecute()
         {
             this.lstInputProcedureLongs = new List<AbstractProcedurePutValue>();
-            for (int i = 0; i < this.mParseInfo.mParamInfos.Length; ++i)
+            for (int i = 0; i < this.mParseInfo.ParamInfos.Length; ++i)
             {
                 object arg = this.objInputArgs[i];
                 if (arg == null)
@@ -1614,7 +1614,7 @@ namespace MaxDB.Data
         {
             try
             {
-                return this.mParseInfo.mParamInfos[colIndex];
+                return this.mParseInfo.ParamInfos[colIndex];
             }
             catch (IndexOutOfRangeException)
             {

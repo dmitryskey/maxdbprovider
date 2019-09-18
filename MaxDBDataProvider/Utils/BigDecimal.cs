@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------------------------
-// <copyright file="BigNumber.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
+// <copyright file="BigDecimal.cs" company="2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG">
 // Copyright (c) 2005-2019 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------------------------------
@@ -24,32 +24,63 @@ namespace MaxDB.Data.Utilities
     using System.Globalization;
     using System.Numerics;
 
+    /// <summary>
+    /// Big decimal number.
+    /// </summary>
     internal class BigDecimal
     {
         private readonly string strSeparator = CultureInfo.InvariantCulture.NumberFormat.CurrencyDecimalSeparator;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BigDecimal"/> class.
+        /// </summary>
         public BigDecimal() => this.UnscaledValue = new BigInteger(0);
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BigDecimal"/> class.
+        /// </summary>
+        /// <param name="num">Long number.</param>
         public BigDecimal(long num) => this.UnscaledValue = new BigInteger(num);
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BigDecimal"/> class.
+        /// </summary>
+        /// <param name="num">Unsigned long number.</param>
         public BigDecimal(ulong num) => this.UnscaledValue = new BigInteger(num);
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BigDecimal"/> class.
+        /// </summary>
+        /// <param name="num">Double number.</param>
         public BigDecimal(double num)
             : this(num.ToString(CultureInfo.InvariantCulture))
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BigDecimal"/> class.
+        /// </summary>
+        /// <param name="num">Big integer.</param>
         public BigDecimal(BigInteger num)
             : this(num, 0)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BigDecimal"/> class.
+        /// </summary>
+        /// <param name="num">Big integer.</param>
+        /// <param name="scale">Decimal scale.</param>
         public BigDecimal(BigInteger num, int scale)
         {
             this.UnscaledValue = num;
             this.Scale = scale;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BigDecimal"/> class.
+        /// </summary>
+        /// <param name="num">String presentation.</param>
         public BigDecimal(string num)
         {
             string int_part;
@@ -190,31 +221,35 @@ namespace MaxDB.Data.Utilities
             }
         }
 
+        /// <summary>
+        /// Gets a big decimal scale.
+        /// </summary>
         public int Scale { get; }
 
-        public BigDecimal SetScale(int val)
-        {
-            var ten = new BigInteger(10);
-            var num = this.UnscaledValue;
-            if (val > this.Scale)
-            {
-                for (int i = 0; i < val - this.Scale; i++)
-                {
-                    num *= ten;
-                }
-            }
-            else
-            {
-                for (int i = 0; i < this.Scale - val; i++)
-                {
-                    num /= ten;
-                }
-            }
-
-            return new BigDecimal(num, val);
-        }
-
+        /// <summary>
+        /// Gets unscaled value.
+        /// </summary>
         public BigInteger UnscaledValue { get; }
+
+        public static explicit operator BigInteger(BigDecimal val) => val.SetScale(0).UnscaledValue;
+
+        public static explicit operator long(BigDecimal val) => (long)val.SetScale(0).UnscaledValue;
+
+        public static explicit operator float(BigDecimal val) => float.Parse(val.ToString(), CultureInfo.InvariantCulture);
+
+        public static explicit operator double(BigDecimal val) => double.Parse(val.ToString(), CultureInfo.InvariantCulture);
+
+        public static explicit operator decimal(BigDecimal val) => decimal.Parse(val.ToString(), CultureInfo.InvariantCulture);
+
+        public static implicit operator BigDecimal(long val) => new BigDecimal(val);
+
+        public static implicit operator BigDecimal(ulong val) => new BigDecimal(val);
+
+        public static implicit operator BigDecimal(int val) => new BigDecimal(val);
+
+        public static implicit operator BigDecimal(uint val) => new BigDecimal(val);
+
+        public static implicit operator BigDecimal(double val) => new BigDecimal(val);
 
         public static BigDecimal operator +(BigDecimal bd1, BigDecimal bd2)
         {
@@ -271,28 +306,45 @@ namespace MaxDB.Data.Utilities
 
         public static bool operator !=(BigDecimal bd1, BigDecimal bd2) => !(bd1 == bd2);
 
-        public static explicit operator BigInteger(BigDecimal val) => val.SetScale(0).UnscaledValue;
+        /// <summary>
+        /// Set big decimal scale.
+        /// </summary>
+        /// <param name="val">Scale value.</param>
+        /// <returns>Big decimal with updated scale.</returns>
+        public BigDecimal SetScale(int val)
+        {
+            var ten = new BigInteger(10);
+            var num = this.UnscaledValue;
+            if (val > this.Scale)
+            {
+                for (int i = 0; i < val - this.Scale; i++)
+                {
+                    num *= ten;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < this.Scale - val; i++)
+                {
+                    num /= ten;
+                }
+            }
 
-        public static explicit operator long(BigDecimal val) => (long)val.SetScale(0).UnscaledValue;
+            return new BigDecimal(num, val);
+        }
 
-        public static explicit operator float(BigDecimal val) => float.Parse(val.ToString(), CultureInfo.InvariantCulture);
-
-        public static explicit operator double(BigDecimal val) => double.Parse(val.ToString(), CultureInfo.InvariantCulture);
-
-        public static explicit operator decimal(BigDecimal val) => decimal.Parse(val.ToString(), CultureInfo.InvariantCulture);
-
-        public static implicit operator BigDecimal(long val) => new BigDecimal(val);
-
-        public static implicit operator BigDecimal(ulong val) => new BigDecimal(val);
-
-        public static implicit operator BigDecimal(int val) => new BigDecimal(val);
-
-        public static implicit operator BigDecimal(uint val) => new BigDecimal(val);
-
-        public static implicit operator BigDecimal(double val) => new BigDecimal(val);
-
+        /// <summary>
+        /// Move decimal point left.
+        /// </summary>
+        /// <param name="n">Number of positions to move.</param>
+        /// <returns>Updated big decimal.</returns>
         public BigDecimal MovePointLeft(int n) => n >= 0 ? new BigDecimal(this.UnscaledValue, this.Scale + n) : this.MovePointRight(-n);
 
+        /// <summary>
+        /// Move decimal point right.
+        /// </summary>
+        /// <param name="n">Number of positions to move.</param>
+        /// <returns>Updated big decimal.</returns>
         public BigDecimal MovePointRight(int n)
         {
             if (n >= 0)
@@ -319,6 +371,10 @@ namespace MaxDB.Data.Utilities
             }
         }
 
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>A string that represents the current object.</returns>
         public override string ToString()
         {
             string s_num = this.UnscaledValue.ToString(CultureInfo.InvariantCulture);
@@ -349,8 +405,17 @@ namespace MaxDB.Data.Utilities
             return s_num;
         }
 
+        /// <summary>
+        /// Determines whether the specified object is equal to the current object.
+        /// </summary>
+        /// <param name="o">The object to compare with the current object.</param>
+        /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c>.</returns>
         public override bool Equals(object o) => this == (BigDecimal)o;
 
+        /// <summary>
+        /// Serves as the big decimal hash function.
+        /// </summary>
+        /// <returns>A hash code for the current object.</returns>
         public override int GetHashCode() => this.ToString().GetHashCode();
     }
 }
