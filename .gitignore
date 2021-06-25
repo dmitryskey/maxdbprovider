@@ -1,7 +1,9 @@
-MaxDBConsole/bin/
-MaxDBConsole/obj/
-MaxDBDataProvider/bin/
-MaxDBDataProvider/obj/
+MaxDB.Data/bin/
+MaxDB.Data/obj/
+MaxDB.IntegrationTests/bin/
+MaxDB.IntegrationTests/obj/
+MaxDB.UnitTests/bin/
+MaxDB.UnitTests/obj/
 packages/
 .vs
 
