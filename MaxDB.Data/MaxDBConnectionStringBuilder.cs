@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using MaxDB.Data.MaxDBProtocol;
 
@@ -43,6 +44,9 @@ namespace MaxDB.Data
         /// </summary>
         public MaxDBConnectionStringBuilder()
         {
+            typeof(ConnectionStringParams).GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Where(fi => fi.IsLiteral && !fi.IsInitOnly).ToList()
+                .ForEach(p => mKeyValuePairs.Add(p.GetValue(null) as string, null));
         }
 
         /// <summary>
@@ -50,7 +54,8 @@ namespace MaxDB.Data
         /// A constructor that takes a connection string.
         /// </summary>
         /// <param name="connectionString">Connection string.</param>
-        public MaxDBConnectionStringBuilder(string connectionString) => this.ConnectionString = connectionString;
+        public MaxDBConnectionStringBuilder(string connectionString) : this()
+            => this.ConnectionString = connectionString;
 
         /// <summary>
         /// Gets or sets a value that indicates whether the <see cref="ConnectionString"/> property is visible in Visual Studio designers.
@@ -75,12 +80,15 @@ namespace MaxDB.Data
                 throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "keyword"));
             }
 
-            if (value == null)
+            if (!string.IsNullOrWhiteSpace(value))
             {
-                throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.PARAMETERNULL, "value"));
+                if (builder.Length > 0)
+                {
+                    builder.Append(';');
+                }
+                
+                builder.Append(keyword).Append('=').Append(value);
             }
-
-            builder.Append(keyword).Append("=").Append(value).Append(";");
         }
 
         /// <summary>
@@ -116,48 +124,6 @@ namespace MaxDB.Data
             }
         }
 
-        private void ParseIntParameter(string key, string parameter)
-        {
-            this.mKeyValuePairs[key] = "0";
-            try
-            {
-                this.mKeyValuePairs[key] = int.Parse(parameter.Split('=')[1], CultureInfo.InvariantCulture).ToString();
-            }
-            catch (IndexOutOfRangeException)
-            {
-            }
-            catch (ArgumentNullException)
-            {
-            }
-            catch (FormatException)
-            {
-            }
-            catch (OverflowException)
-            {
-            }
-        }
-
-        private void ParseBoolParameter(string key, string parameter)
-        {
-            this.mKeyValuePairs[key] = bool.TrueString;
-            try
-            {
-                this.mKeyValuePairs[key] = bool.Parse(parameter.Split('=')[1]).ToString();
-            }
-            catch (IndexOutOfRangeException)
-            {
-            }
-            catch (ArgumentNullException)
-            {
-            }
-            catch (FormatException)
-            {
-            }
-            catch (OverflowException)
-            {
-            }
-        }
-
         /// <summary>
         /// Gets or sets the string used to connect to a MaxDB Server database.
         /// </summary>
@@ -172,7 +138,7 @@ namespace MaxDB.Data
         {
             get =>
                  string.Join(";", new SortedList<string, string>(this.mKeyValuePairs)
-                     .Select(item => $"{item.Key}={item.Value}"));
+                     .Where(i => !string.IsNullOrWhiteSpace(i.Value)).Select(i => $"{i.Key}={i.Value}"));
 
             set
             {
@@ -212,7 +178,7 @@ namespace MaxDB.Data
                                 this.ParseIntParameter(ConnectionStringParams.TIMEOUT, param);
                                 break;
                             case ConnectionStringParams.SPACEOPTION:
-                                if (string.Compare(param.Split('=')[1].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
+                                if (string.Compare(param.Split('=')[1].Trim(), bool.TrueString, true, CultureInfo.InvariantCulture) == 0 ||
                                     string.Compare(param.Split('=')[1].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
                                     param.Split('=')[1].Trim() == "1")
                                 {
@@ -230,7 +196,7 @@ namespace MaxDB.Data
                                 this.ParseIntParameter(ConnectionStringParams.CACHESIZE, param);
                                 break;
                             case ConnectionStringParams.ENCRYPT:
-                                if (string.Compare(param.Split('=')[1].Trim(), "TRUE", true, CultureInfo.InvariantCulture) == 0 ||
+                                if (string.Compare(param.Split('=')[1].Trim(), bool.TrueString, true, CultureInfo.InvariantCulture) == 0 ||
                                     string.Compare(param.Split('=')[1].Trim(), "YES", true, CultureInfo.InvariantCulture) == 0 ||
                                     param.Split('=')[1].Trim() == "1")
                                 {
@@ -577,5 +543,14 @@ namespace MaxDB.Data
         public object SyncRoot { get; }
 
         #endregion
+
+        private void ParseIntParameter(string key, string parameter) =>
+            this.mKeyValuePairs[key] =
+                int.TryParse(parameter.Split('=')[1], NumberStyles.Number, CultureInfo.InvariantCulture, out int val) ?
+                val.ToString() : "0";
+
+        private void ParseBoolParameter(string key, string parameter) =>
+            this.mKeyValuePairs[key] = bool.TryParse(parameter.Split('=')[1], out bool val) ? val.ToString() : bool.FalseString;
+
     }
 }

@@ -81,11 +81,14 @@ namespace MaxDB.Data.MaxDBProtocol
                 {
                     object result = null;
 
-                    var entry = this.lookup[key];
-                    if (entry != null)
+                    if (this.lookup.ContainsKey(key))
                     {
-                        result = entry.Data;
-                        this.MoveToTop(entry);
+                        var entry = this.lookup[key];
+                        if (entry != null)
+                        {
+                            result = entry.Data;
+                            this.MoveToTop(entry);
+                        }
                     }
 
                     return result;

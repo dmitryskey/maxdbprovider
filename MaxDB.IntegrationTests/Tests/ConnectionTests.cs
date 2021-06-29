@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------------------------
 // <copyright file="ConnectionTests.cs" company="Dmitry S. Kataev">
-//     Copyright © 2005-2018 Dmitry S. Kataev
+//     Copyright © 2005-2021 Dmitry S. Kataev
 //     Copyright © 2004-2005 MySQL AB
 // </copyright>
 //-----------------------------------------------------------------------------------------------
@@ -20,8 +20,9 @@
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 using System;
-using NUnit.Framework;
+using FluentAssertions;
 using MaxDB.Data;
+using NUnit.Framework;
 
 namespace MaxDB.IntegrationTests
 {
@@ -57,69 +58,53 @@ namespace MaxDB.IntegrationTests
         }
 
         [Test]
-        public void TestConnection()
-        {
-            TestConnectionByString(mconnStr);
-        }
+        public void TestConnection() => TestConnectionByString(mconnStr);
 
         [Test]
         public void TestConnectionTimeout()
         {
-            using (var maxdbconn = new MaxDBConnection(mconnStrBadAddr))
-            {
-                DateTime start = DateTime.Now;
+            using var maxdbconn = new MaxDBConnection(mconnStrBadAddr);
+            DateTime start = DateTime.Now;
 
-                try
-                {
-                    maxdbconn.Open();
-                }
-                catch (MaxDBException)
-                {
-                    Assert.IsTrue(DateTime.Now.Subtract(start).TotalSeconds <= maxdbconn.ConnectionTimeout + 2, "Timeout exceeded");
-                }
-            }
+            Assert.Throws<MaxDBException>(() => maxdbconn.Open())
+                .Message.Should().Be("Cannot connect to host 1.1.1.1:7210.");
+
+            DateTime.Now.Subtract(start).TotalSeconds.Should().BeLessOrEqualTo(maxdbconn.ConnectionTimeout + 2, "Timeout exceeded");
         }
 
         [Test]
-        public void TestConnectionBadLogin()
-        {
-            Assert.Throws(typeof(MaxDBException), () => TestConnectionByString(mconnStrBadLogin));
-        }
+        public void TestConnectionBadLogin() =>
+            Assert.Throws<MaxDBException>(() => TestConnectionByString(mconnStrBadLogin))
+                .Message.Should().Be("Unknown user name/password combination");
 
         [Test]
-        public void TestConnectionBadPassword()
-        {
-            Assert.Throws(typeof(MaxDBException), () => TestConnectionByString(mconnStrBadPassword));
-        }
+        public void TestConnectionBadPassword() =>
+            Assert.Throws<MaxDBException>(() => TestConnectionByString(mconnStrBadPassword))
+                .Message.Should().Be("Unknown user name/password combination");
 
         [Test]
-        public void TestConnectionBadDbName()
-        {
-            Assert.Throws(typeof(MaxDBException), () => TestConnectionByString(mconnStrBadDbName));
-        }
+        public void TestConnectionBadDbName() =>
+            Assert.Throws<MaxDBException>(() => TestConnectionByString(mconnStrBadDbName))
+                .Message.Should().Be("Cannot connect to host localhost:7210.");
 
         [Test]
         public void TestGetSchema()
         {
-            using (var maxdbconn = new MaxDBConnection(mconnStr))
-            {
-                maxdbconn.Open();
+            using var maxdbconn = new MaxDBConnection(mconnStr);
+            maxdbconn.Open();
 
-                var schema = maxdbconn.GetSchema();
+            var schema = maxdbconn.GetSchema();
 
-                Assert.AreEqual(schema.TableName, "SchemaTable", "Schema table name");
+            maxdbconn.Close();
 
-                maxdbconn.Close();
-            }
+            schema.TableName.Should().Be("SchemaTable", "Schema table name");
         }
 
-        private void TestConnectionByString(string connection)
+        private static void TestConnectionByString(string connection)
         {
-            using (var maxdbconn = new MaxDBConnection(connection))
-            {
-                maxdbconn.Open();
-                maxdbconn.Close();
-            }
+            using var maxdbconn = new MaxDBConnection(connection);
+            maxdbconn.Open();
+            maxdbconn.Close();
         }
     }
 }

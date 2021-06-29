@@ -960,15 +960,5 @@ namespace MaxDB.Data.MaxDBProtocol
 
             return replyPacket;
         }
-
-        void IMaxDBComm.Cancel(object reqObj)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IDisposable.Dispose()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

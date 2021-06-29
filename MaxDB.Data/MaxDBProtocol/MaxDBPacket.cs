@@ -141,72 +141,72 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             var dump = new StringBuilder();
 
-            dump.Append("   ").Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.SegmKind).ToString(CultureInfo.InvariantCulture));
-            dump.Append(" Segment ").Append(this.ReadInt16(this.iSegmentOffset + SegmentHeaderOffset.OwnIndex).ToString(CultureInfo.InvariantCulture));
-            dump.Append(" at ").Append(this.ReadInt32(this.iSegmentOffset + SegmentHeaderOffset.Offset).ToString(CultureInfo.InvariantCulture));
-            dump.Append("(").Append(this.ReadInt32(this.iSegmentOffset + SegmentHeaderOffset.Len).ToString(CultureInfo.InvariantCulture));
-            dump.Append(" of ").Append((this.ReadInt32(PacketHeaderOffset.VarPartSize) - this.iSegmentOffset).ToString(CultureInfo.InvariantCulture));
-            dump.Append(" bytes)\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
+            dump.Append("   ").Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.SegmKind).ToString(CultureInfo.InvariantCulture))
+                .Append(" Segment ").Append(this.ReadInt16(this.iSegmentOffset + SegmentHeaderOffset.OwnIndex).ToString(CultureInfo.InvariantCulture))
+                .Append(" at ").Append(this.ReadInt32(this.iSegmentOffset + SegmentHeaderOffset.Offset).ToString(CultureInfo.InvariantCulture))
+                .Append('(').Append(this.ReadInt32(this.iSegmentOffset + SegmentHeaderOffset.Len).ToString(CultureInfo.InvariantCulture))
+                .Append(" of ").Append((this.ReadInt32(PacketHeaderOffset.VarPartSize) - this.iSegmentOffset).ToString(CultureInfo.InvariantCulture))
+                .Append(" bytes)\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
 
             switch (this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.SegmKind))
             {
                 case SegmKind.Cmd:
                 case SegmKind.Proccall:
-                    dump.Append("        messtype: ").Append(CmdMessType.Name[this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.MessType)]);
-                    dump.Append("  sqlmode: ").Append(
-                        SqlModeName.Value[this.ReadByte(this.iSegmentOffset +
-                        SegmentHeaderOffset.SqlMode)].ToLower(CultureInfo.InvariantCulture));
-                    dump.Append("  producer: ").Append(ProducerType.Name[this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Producer)]);
+                    dump.Append("        messtype: ").Append(CmdMessType.Name[this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.MessType)])
+                        .Append("  sqlmode: ").Append(
+                            SqlModeName.Value[this.ReadByte(this.iSegmentOffset +
+                            SegmentHeaderOffset.SqlMode)].ToLower(CultureInfo.InvariantCulture))
+                        .Append("  producer: ").Append(ProducerType.Name[this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Producer)])
 
-                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture)).Append("        Options: ");
-                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : string.Empty);
-                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : string.Empty);
-                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : string.Empty);
-                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : string.Empty);
-                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : string.Empty);
-                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : string.Empty);
+                        .Append('\n').Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture)).Append("        Options: ")
+                        .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : string.Empty)
+                        .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : string.Empty)
+                        .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : string.Empty)
+                        .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : string.Empty)
+                        .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : string.Empty)
+                        .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : string.Empty);
                     break;
                 case SegmKind.Return:
                 case SegmKind.Procreply:
                     dump.Append("        RC: ").Append(this.ReadInt16(this.iSegmentOffset +
-                        SegmentHeaderOffset.ReturnCode).ToString(CultureInfo.InvariantCulture));
-                    dump.Append("  ").Append(this.ReadAscii(this.iSegmentOffset + SegmentHeaderOffset.SqlState,
-                        SegmentHeaderOffset.ReturnCode - SegmentHeaderOffset.SqlState));
-                    dump.Append("  (Pos ").Append(this.ReadInt32(this.iSegmentOffset +
-                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
-                    dump.Append(") Function ").Append(this.ReadInt16(this.iSegmentOffset +
-                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
-                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
+                            SegmentHeaderOffset.ReturnCode).ToString(CultureInfo.InvariantCulture))
+                        .Append("  ").Append(this.ReadAscii(this.iSegmentOffset + SegmentHeaderOffset.SqlState,
+                            SegmentHeaderOffset.ReturnCode - SegmentHeaderOffset.SqlState))
+                        .Append("  (Pos ").Append(this.ReadInt32(this.iSegmentOffset +
+                            SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture))
+                        .Append(") Function ").Append(this.ReadInt16(this.iSegmentOffset +
+                            SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture))
+                        .Append('\n').Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
                     break;
                 default:
-                    dump.Append("unknown segment kind");
-                    dump.Append("        messtype: ").Append(CmdMessType.Name[this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.MessType)]);
-                    dump.Append("  sqlmode: ").Append(SqlModeName.Value[this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.SqlMode)]);
-                    dump.Append("  producer: ").Append(ProducerType.Name[this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Producer)]);
+                    dump.Append("unknown segment kind")
+                        .Append("        messtype: ").Append(CmdMessType.Name[this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.MessType)])
+                        .Append("  sqlmode: ").Append(SqlModeName.Value[this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.SqlMode)])
+                        .Append("  producer: ").Append(ProducerType.Name[this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Producer)])
 
-                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture)).Append("        Options: ");
-                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : string.Empty);
-                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : string.Empty);
-                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : string.Empty);
-                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : string.Empty);
-                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : string.Empty);
-                    dump.Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : string.Empty);
-
-                    dump.Append("        RC: ").Append(this.ReadInt16(this.iSegmentOffset +
-                        SegmentHeaderOffset.ReturnCode).ToString(CultureInfo.InvariantCulture));
-                    dump.Append("  ").Append(this.ReadAscii(this.iSegmentOffset + SegmentHeaderOffset.SqlState,
-                        SegmentHeaderOffset.ReturnCode - SegmentHeaderOffset.SqlState));
-                    dump.Append("  (Pos ").Append(this.ReadInt32(this.iSegmentOffset +
-                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
-                    dump.Append(") Function ").Append(this.ReadInt16(this.iSegmentOffset +
-                        SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture));
-                    dump.Append("\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
+                        .Append('\n').Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture)).Append("        Options: ")
+                        .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.CommitImmediately) == 1 ? "commit " : string.Empty)
+                        .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.IgnoreCostwarning) == 1 ? "ignore costwarning " : string.Empty)
+                        .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.Prepare) == 1 ? "prepare " : string.Empty)
+                        .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : string.Empty)
+                        .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : string.Empty)
+                        .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : string.Empty)
+                        
+                        .Append("        RC: ").Append(this.ReadInt16(this.iSegmentOffset +
+                            SegmentHeaderOffset.ReturnCode).ToString(CultureInfo.InvariantCulture))
+                        .Append("  ").Append(this.ReadAscii(this.iSegmentOffset + SegmentHeaderOffset.SqlState,
+                            SegmentHeaderOffset.ReturnCode - SegmentHeaderOffset.SqlState))
+                        .Append("  (Pos ").Append(this.ReadInt32(this.iSegmentOffset +
+                            SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture))
+                        .Append(") Function ").Append(this.ReadInt16(this.iSegmentOffset +
+                            SegmentHeaderOffset.ErrorPos).ToString(CultureInfo.InvariantCulture))
+                        .Append('\n').Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
                     break;
             }
 
             dump.Append("        ").Append(this.ReadInt16(this.iSegmentOffset +
-                SegmentHeaderOffset.NoOfParts).ToString(CultureInfo.InvariantCulture));
-            dump.Append(" parts:\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
+                    SegmentHeaderOffset.NoOfParts).ToString(CultureInfo.InvariantCulture))
+                .Append(" parts:\n").Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
 
             this.ClearPartOffset();
             for (int i = 0; i < this.PartCount; i++)
@@ -258,11 +258,11 @@ namespace MaxDB.Data.MaxDBProtocol
                 partkindname = PartKind.Name[this.PartType] + " Part";
             }
 
-            dump.Append("        ").Append(partkindname).Append(" ");
-            dump.Append(this.PartArgsCount.ToString(CultureInfo.InvariantCulture)).Append(" Arguments (");
-            dump.Append(this.PartLength.ToString(CultureInfo.InvariantCulture)).Append(" of ");
-            dump.Append(this.PartSize.ToString(CultureInfo.InvariantCulture)).Append(") (Segment at ");
-            dump.Append(this.PartSegmentOffset.ToString(CultureInfo.InvariantCulture)).Append(")\n")
+            dump.Append("        ").Append(partkindname).Append(' ')
+                .Append(this.PartArgsCount.ToString(CultureInfo.InvariantCulture)).Append(" Arguments (")
+                .Append(this.PartLength.ToString(CultureInfo.InvariantCulture)).Append(" of ")
+                .Append(this.PartSize.ToString(CultureInfo.InvariantCulture)).Append(") (Segment at ")
+                .Append(this.PartSegmentOffset.ToString(CultureInfo.InvariantCulture)).Append(")\n")
                 .Append(dt.ToString(Consts.TimeStampFormat, CultureInfo.InvariantCulture));
 
             byte[] data = this.ReadBytes(this.PartDataPos, this.PartLength);
@@ -275,7 +275,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
                 for (int k = 0; k < tailLen; k++)
                 {
-                    dump.Append(data[(i * 0x10) + k].ToString("x2", CultureInfo.InvariantCulture)).Append(" ");
+                    dump.Append(data[(i * 0x10) + k].ToString("x2", CultureInfo.InvariantCulture)).Append(' ');
                 }
 
                 dump.Append("  |".PadLeft((0x10 - tailLen + 1) * 3));
@@ -297,14 +297,14 @@ namespace MaxDB.Data.MaxDBProtocol
         {
             var dump = new StringBuilder();
 
-            dump.Append(Consts.MessageCode[this.ReadByte(PacketHeaderOffset.MessCode)]).Append(" ");
-            dump.Append(SwapMode.SwapType[this.ReadByte(PacketHeaderOffset.MessSwap)]).Append(" swap ");
-            dump.Append(this.ReadAscii(PacketHeaderOffset.Appl,
-                PacketHeaderOffset.VarPartSize - PacketHeaderOffset.Appl).ToString(CultureInfo.InvariantCulture)).Append("-");
-            dump.Append(this.ReadAscii(PacketHeaderOffset.ApplVersion,
-                PacketHeaderOffset.Appl - PacketHeaderOffset.ApplVersion).ToString(CultureInfo.InvariantCulture));
-            dump.Append(" (transfer len ").Append((this.ReadInt32(PacketHeaderOffset.VarPartLen) +
-                PacketHeaderOffset.Segment).ToString(CultureInfo.InvariantCulture)).Append(")");
+            dump.Append(Consts.MessageCode[this.ReadByte(PacketHeaderOffset.MessCode)]).Append(' ')
+                .Append(SwapMode.SwapType[this.ReadByte(PacketHeaderOffset.MessSwap)]).Append(" swap ")
+                .Append(this.ReadAscii(PacketHeaderOffset.Appl,
+                    PacketHeaderOffset.VarPartSize - PacketHeaderOffset.Appl).ToString(CultureInfo.InvariantCulture)).Append('-')
+                .Append(this.ReadAscii(PacketHeaderOffset.ApplVersion,
+                    PacketHeaderOffset.Appl - PacketHeaderOffset.ApplVersion).ToString(CultureInfo.InvariantCulture))
+                .Append(" (transfer len ").Append((this.ReadInt32(PacketHeaderOffset.VarPartLen) +
+                    PacketHeaderOffset.Segment).ToString(CultureInfo.InvariantCulture)).Append(')');
 
             return dump.ToString();
         }
@@ -419,9 +419,9 @@ namespace MaxDB.Data.MaxDBProtocol
             get
             {
                 string dbname = this.ReadAscii(HeaderOffset.END + ConnectPacketOffset.ClientDB, 8);
-                if (dbname.IndexOf("\0") >= 0)
+                if (dbname.IndexOf('\0') >= 0)
                 {
-                    dbname = dbname.Substring(0, dbname.IndexOf("\0"));
+                    dbname = dbname.Substring(0, dbname.IndexOf('\0'));
                 }
 
                 return dbname;
@@ -1028,9 +1028,9 @@ namespace MaxDB.Data.MaxDBProtocol
             this.iPartLength += data.Length * Consts.UnicodeWidth;
         }
 
-        public override void InitDbsCommand(string command, bool autoCommit) => this.InitDbsCommand(command, true, autoCommit, true);
+        public override void InitDbsCommand(string command, bool autoCommit) => base.InitDbsCommand(command, true, autoCommit, true);
 
-        public override bool InitDbsCommand(string command, bool reset, bool autoCommit, bool unicode = true) => this.InitDbsCommand(command, reset, autoCommit, unicode);
+        public override bool InitDbsCommand(string command, bool reset, bool autoCommit, bool unicode = true) => base.InitDbsCommand(command, reset, autoCommit, unicode);
     }
 
     #region "MaxDB Reply Packet"

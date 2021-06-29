@@ -309,64 +309,52 @@ FETCHNODATAPART = "fetch_nodatapart";
 // Fetch operation
 FETCHDATAFAILED = "fetch_data_failed";
 
+        // Runtime: connect to host failed.
         public const string
-
-// Runtime: connect to host failed.
 HOSTCONNECTFAILED = "host_connect_failed";
 
+        // Runtime: execution failed.
         public const string
-
-// Runtime: execution failed.
 EXECFAILED = "exec_failed";
 
+        // Runtime: receive of connect failed.
         public const string
-
-// Runtime: receive of connect failed.
 RECVCONNECT = "recv_connect";
 
+        // Runtime: receive garbled reply
         public const string
-
-// Runtime: receive garbled reply
 REPLYGARBLED = "connectreply_garbled";
 
+        // Runtime: reconnect on admin session unsupported
         public const string
-
-// Runtime: reconnect on admin session unsupported
 ADMINRECONNECT = "admin_reconnect";
 
+        // Runtime: chunk overflow in read
         public const string
-
-// Runtime: chunk overflow in read
 CHUNKOVERFLOW = "chunkoverflow";
 
+        // Reading from a stream resulted in an IOException
         public const string
-
-// Reading from a stream resulted in an IOException
 STREAMIOEXCEPTION = "stream_ioexception";
 
+        // Column nullable unknown
         public const string
-
-// Column nullable unknown
 DBNULLUNKNOWN = "dbnull_unknown";
 
+        // Output parameter value truncated
         public const string
-
-// Output parameter value truncated
 PARAMETERTRUNC = "parameter_truncated";
 
+        // Parameter is null
         public const string
-
-// Parameter is null
 PARAMETERNULL = "parameter_null";
 
+        // Index is out if range
         public const string
-
-// Index is out if range
 INDEXOUTOFRANGE = "index_outofrange";
 
+        // Unsupported database features
         public const string
-
-// Unsupported database features
 SPECIALNUMBERUNSUPPORTED = "special_number_unsupported";
 
         public const string
@@ -375,9 +363,8 @@ OMSUNSUPPORTED = "oms_unsupported";
         public const string
 TABLEDIRECTUNSUPPORTED = "tabledirect_unsupported";
 
+        // Streams
         public const string
-
-// Streams
 CONVERSIONSTRINGSTREAM = "streamconversion_string";
 
         public const string
@@ -398,12 +385,11 @@ STRUCTELEMENTNULL = "structure_element_null";
         public const string
 STRUCTELEMENTCONVERSION = "structure_element_conversion";
 
+        // Connection
         public const string
 STRUCTELEMENTOVERFLOW = "structure_element_overflow";
 
         public const string
-
-// Connection
 CONNECTIONWRONGSERVERCHALLENGERECEIVED = "connection_wrongserverchallengereceived";
 
         public const string
@@ -412,9 +398,8 @@ CONNECTIONCHALLENGERESPONSENOTSUPPORTED = "connection_challengeresponsenotsuppor
         public const string
 SSLCERTIFICATE = "ssl_certificate";
 
+        // communication errors
         public const string
-
-// communication errors
 COMMOK = "commok";
 
         public const string
@@ -456,9 +441,8 @@ COMMUNKNOWNREQUEST = "communknownrequest";
         public const string
 COMMSERVERDBUNKNOWN = "commserverdbunknown";
 
+        // big integer messages
         public const string
-
-// big integer messages
 BIGINTOVERFLOW = "bigint_overflow";
 
         public const string
@@ -467,16 +451,12 @@ BIGINTUNDERFLOW = "bigint_underflow";
         public const string
 BIGINTRADIXOVERFLOW = "bigint_radix_overflow";
 
+        public const string HASHCHANGEKEY = "hash_change_key";
+
+        public const string POOLNOTFOUND = "pool_not_found";
+
+        // the rest
         public const string
-
-HASHCHANGEKEY = "hash_change_key";
-
-        public const string
-POOLNOTFOUND = "pool_not_found";
-
-        public const string
-
-// the rest
 ERROR = "error";
 
         public const string
@@ -485,7 +465,7 @@ UNKNOWNTYPE = "unknowntype";
 
     internal class MaxDBMessages
     {
-        private static ResourceManager rm = new ResourceManager("MaxDBMessages", typeof(MaxDBMessages).Assembly);
+        private static readonly ResourceManager rm = new ResourceManager("MaxDB.Data.MaxDBMessages", typeof(MaxDBMessages).Assembly);
 
         public static string Extract(string key, object o1 = null, object o2 = null, object o3 = null)
         {
@@ -530,7 +510,7 @@ UNKNOWNTYPE = "unknowntype";
                 // if arguments given append them
                 if (args == null || args.Length == 0)
                 {
-                    result.Append(".");
+                    result.Append('.');
                 }
                 else
                 {

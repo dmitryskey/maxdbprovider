@@ -758,20 +758,8 @@ namespace MaxDB.Data.MaxDBProtocol
             {
             }
 
-            public override byte GetByte(ISqlParameterController controller, IByteArray mem)
-            {
-                byte[] result = null;
-                if (this.IsDBNull(mem))
-                {
-                    return 0;
-                }
-                else
-                {
-                    result = mem.ReadBytes(this.iBufferPosition, 1);
-                }
-
-                return result[0];
-            }
+            public override byte GetByte(ISqlParameterController controller, IByteArray mem) =>
+                !this.IsDBNull(mem) ? mem.ReadBytes(this.iBufferPosition, 1)[0] : (byte)0;
 
             public override byte[] GetBytes(ISqlParameterController controller, IByteArray mem) => !this.IsDBNull(mem) ? mem.ReadBytes(this.iBufferPosition, 1) : null;
 
@@ -861,7 +849,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 return this.GetBoolean(mem) ? new BigDecimal(1) : new BigDecimal(0);
             }
 
-            public override bool GetBoolean(IByteArray mem) => !this.IsDBNull(mem) ? mem.ReadByte(this.iBufferPosition) == 0x00 ? false : true : false;
+            public override bool GetBoolean(IByteArray mem) => !this.IsDBNull(mem) && (mem.ReadByte(this.iBufferPosition) != 0x00);
 
             public override byte GetByte(ISqlParameterController controller, IByteArray mem) => (byte)(this.GetBoolean(mem) ? 1 : 0);
 
@@ -919,7 +907,6 @@ namespace MaxDB.Data.MaxDBProtocol
                     case DataType.FLOAT:
                     case DataType.VFLOAT:
                         // more digits are unreliable anyway
-                        frac = 38;
                         this.isFloatingPoint = true;
                         break;
                     default:
@@ -2406,7 +2393,6 @@ namespace MaxDB.Data.MaxDBProtocol
             private Stream GetStream(ISqlParameterController controller, IByteArray mem, IByteArray longdata)
             {
                 Stream result = null;
-                AbstractGetValue getval = null;
                 if (!this.IsDBNull(mem))
                 {
                     var descriptor = mem.ReadBytes(this.iBufferPosition, this.iLogicalLength);
@@ -2417,7 +2403,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         return null;
                     }
 
-                    getval = new GetLOBValue(controller.Connection, descriptor, longdata);
+                    var getval = new GetLOBValue(controller.Connection, descriptor, longdata);
                     result = getval.ASCIIStream;
                 }
 
@@ -2998,7 +2984,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
             public override object TransBinaryStreamForInput(Stream stream, int length) => this.TransStreamForInput(stream, length);
 
-            protected override object TransSpecificForInput(object obj) => obj is Stream ? this.TransBinaryStreamForInput((Stream)obj, -1) : null;
+            protected override object TransSpecificForInput(object obj) => obj is Stream stream ? this.TransBinaryStreamForInput(stream, -1) : null;
         }
 
         /// <summary>

@@ -90,7 +90,7 @@ namespace MaxDB.Data
             this.iMaxRows = maxRows;
 
             this.cmdCommand = cmd;
-            this.strUpdatedTableName = cmd.mParseInfo.UpdatedTableName;
+            this.strUpdatedTableName = cmd.ParseInfo.UpdatedTableName;
 
             this.InitializeFields();
             this.lstOpenStreams = new List<Stream>(5);

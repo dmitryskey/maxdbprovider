@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------------------------
-// <copyright file="MaxDBCommand.cs" company="2005-2021 Dmitry S. Kataev, 2002-2003 SAP AG">
+// <copyright file="MaxDBCommandTests.cs" company="2005-2021 Dmitry S. Kataev, 2002-2003 SAP AG">
 // Copyright © 2005-2021 Dmitry S. Kataev, 2002-2003 SAP AG. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------------------------------
@@ -52,9 +52,7 @@ namespace MaxDB.UnitTests
         {
             var cmd = new MaxDBCommand();
 
-            Action act = () => cmd.Cancel();
-
-            act.Should().Throw<MaxDBException>().WithMessage("objectisclosed");
+            Assert.Throws<MaxDBException>(() => cmd.Cancel()).Message.Should().Be("Object is closed.");
         }
     }
 }

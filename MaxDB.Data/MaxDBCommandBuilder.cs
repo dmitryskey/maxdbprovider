@@ -43,8 +43,6 @@ namespace MaxDB.Data
     [DesignerCategory("Code")]
     public sealed class MaxDBCommandBuilder : DbCommandBuilder
     {
-        private string strPrefix = "'";
-        private string strSuffix = "'";
         private MaxDBDataAdapter mAdapter;
         private DataTable mSchema;
         private string strBaseTable;
@@ -77,18 +75,7 @@ namespace MaxDB.Data
         /// <value>
         /// The beginning character or characters to use.  The default value is '.
         /// </value>
-        public override string QuotePrefix
-        {
-            get
-            {
-                return this.strPrefix;
-            }
-
-            set
-            {
-                this.strPrefix = value;
-            }
-        }
+        public override string QuotePrefix { get; set; } = "'";
 
         /// <summary>
         /// Gets or sets the ending character or characters to use when specifying MaxDB
@@ -98,18 +85,7 @@ namespace MaxDB.Data
         /// <value>
         /// The ending character or characters to use.  The default value is '.
         /// </value>
-        public override string QuoteSuffix
-        {
-            get
-            {
-                return this.strSuffix;
-            }
-
-            set
-            {
-                this.strSuffix = value;
-            }
-        }
+        public override string QuoteSuffix { get; set; } = "'";
 
         /// <summary>
         /// Gets or sets a <see cref="MaxDBDataAdapter"/> object for which SQL statements are automatically generated.
