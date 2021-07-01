@@ -16,11 +16,11 @@
 
 namespace MaxDB.Data.Utils
 {
+    using MaxDB.Data.Interfaces.MaxDBProtocol;
+    using MaxDB.Data.MaxDBProtocol;
     using System;
     using System.Diagnostics;
     using System.Globalization;
-    using MaxDB.Data.Interfaces.MaxDBProtocol;
-    using MaxDB.Data.MaxDBProtocol;
 
     internal enum MaxDBTraceLevel
     {

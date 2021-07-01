@@ -1,11 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2019
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaxDB.Data", "MaxDB.Data\MaxDB.Data.csproj", "{96EABFAC-9C28-40C6-AD1F-08121496C11E}"
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31410.357
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MaxDB.Data", "MaxDB.Data\MaxDB.Data.csproj", "{96EABFAC-9C28-40C6-AD1F-08121496C11E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaxDB.IntegrationTests", "MaxDB.IntegrationTests\MaxDB.IntegrationTests.csproj", "{78C374CB-3D0C-4EC7-B670-C8190B4E844B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MaxDB.IntegrationTests", "MaxDB.IntegrationTests\MaxDB.IntegrationTests.csproj", "{78C374CB-3D0C-4EC7-B670-C8190B4E844B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaxDB.UnitTests", "MaxDB.UnitTests\MaxDB.UnitTests.csproj", "{C21A53CB-5191-4278-AC29-09CA7EF6BD4A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MaxDB.UnitTests", "MaxDB.UnitTests\MaxDB.UnitTests.csproj", "{C21A53CB-5191-4278-AC29-09CA7EF6BD4A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DF3F3C27-4951-4CAF-AFFE-2A79E7541401}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,5 +35,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0554D843-01E7-45BA-B821-CEC01F269EAD}
 	EndGlobalSection
 EndGlobal

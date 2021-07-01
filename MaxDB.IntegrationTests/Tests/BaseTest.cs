@@ -18,12 +18,12 @@
 //	along with this program; if not, write to the Free Software
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-using System;
 using MaxDB.Data;
-using NUnit.Framework;
-using System.IO;
-using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
+using NUnit.Framework;
+using System;
+using System.Diagnostics;
+using System.IO;
 
 namespace MaxDB.IntegrationTests
 {
@@ -34,7 +34,7 @@ namespace MaxDB.IntegrationTests
     {
         protected MaxDBConnection mconn;
         protected StreamWriter msw;
-        protected static IConfiguration config = new ConfigurationBuilder().AddJsonFile("appsettings.json", true, true).Build();
+        protected static readonly IConfiguration config = new ConfigurationBuilder().AddJsonFile("appsettings.json", true, true).Build();
 
         public BaseTest()
         {
@@ -91,17 +91,10 @@ namespace MaxDB.IntegrationTests
             }
         }
 
-        protected void ClearTestTable()
-        {
-            ExecuteNonQuery("DELETE FROM Test");
-        }
-
         protected void ExecuteNonQuery(string cmdSql)
         {
-            using (var cmd = new MaxDBCommand(cmdSql, mconn))
-            {
-                cmd.ExecuteNonQuery();
-            }
+            using var cmd = new MaxDBCommand(cmdSql, mconn);
+            cmd.ExecuteNonQuery();
         }
 
         protected void DropDbProcedure(string proc)
@@ -134,7 +127,7 @@ namespace MaxDB.IntegrationTests
             }
         }
 
-        protected byte[] CreateBlob(int size)
+        protected static byte[] CreateBlob(int size)
         {
             byte[] buf = new byte[size];
 

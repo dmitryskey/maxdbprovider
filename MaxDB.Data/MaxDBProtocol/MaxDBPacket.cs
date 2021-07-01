@@ -20,11 +20,11 @@
 
 namespace MaxDB.Data.MaxDBProtocol
 {
+    using MaxDB.Data.Interfaces.MaxDBProtocol;
+    using MaxDB.Data.Utils;
     using System;
     using System.Globalization;
     using System.Text;
-    using MaxDB.Data.Interfaces.MaxDBProtocol;
-    using MaxDB.Data.Utils;
 
     #region "MaxDB Packet"
 
@@ -191,7 +191,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.WithInfo) == 1 ? "with info " : string.Empty)
                         .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.MassCmd) == 1 ? "mass cmd " : string.Empty)
                         .Append(this.ReadByte(this.iSegmentOffset + SegmentHeaderOffset.ParsingAgain) == 1 ? "parsing again " : string.Empty)
-                        
+
                         .Append("        RC: ").Append(this.ReadInt16(this.iSegmentOffset +
                             SegmentHeaderOffset.ReturnCode).ToString(CultureInfo.InvariantCulture))
                         .Append("  ").Append(this.ReadAscii(this.iSegmentOffset + SegmentHeaderOffset.SqlState,

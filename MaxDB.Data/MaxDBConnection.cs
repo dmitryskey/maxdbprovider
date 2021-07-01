@@ -20,6 +20,9 @@
 
 namespace MaxDB.Data
 {
+    using MaxDB.Data.Interfaces;
+    using MaxDB.Data.MaxDBProtocol;
+    using MaxDB.Data.Utils;
     using System;
     using System.Collections.Generic;
     using System.Data;
@@ -27,9 +30,6 @@ namespace MaxDB.Data
     using System.Globalization;
     using System.Runtime.CompilerServices;
     using System.Text;
-    using MaxDB.Data.Interfaces;
-    using MaxDB.Data.MaxDBProtocol;
-    using MaxDB.Data.Utils;
 
     internal struct ConnectArgs
     {
@@ -86,7 +86,7 @@ namespace MaxDB.Data
         internal IMaxDBComm Comm
         {
             get => (this as IMaxDBConnection).Comm;
-            
+
             private set => (this as IMaxDBConnection).Comm = value;
         }
 
@@ -132,28 +132,13 @@ namespace MaxDB.Data
 
             if (this.ConnStrBuilder.DataSource != null)
             {
-                string[] hostPort = this.ConnStrBuilder.DataSource.Split(':');
+                string[] hostPort = this.ConnStrBuilder.DataSource.Split(',');
 
                 args.host = hostPort[0];
                 args.port = 0;
-                try
+                if (hostPort.Length > 1)
                 {
-                    if (hostPort.Length > 1)
-                    {
-                        args.port = int.Parse(hostPort[1], CultureInfo.InvariantCulture);
-                    }
-                }
-                catch (IndexOutOfRangeException)
-                {
-                }
-                catch (ArgumentNullException)
-                {
-                }
-                catch (FormatException)
-                {
-                }
-                catch (OverflowException)
-                {
+                    int.TryParse(hostPort[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out args.port);
                 }
             }
 
@@ -162,7 +147,7 @@ namespace MaxDB.Data
             args.password = this.ConnStrBuilder.Password;
 
             this.ConnArgs = args;
-            
+
             if (this.ConnStrBuilder.CodePage > 0)
             {
                 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -327,7 +312,7 @@ namespace MaxDB.Data
         /// and not a property because the operation requires an expensive round trip.
         /// </summary>
         /// <param name="databaseName">Database name</param>
-        public override void ChangeDatabase(string databaseName) 
+        public override void ChangeDatabase(string databaseName)
         {
             var args = this.ConnArgs;
             args.dbname = databaseName;

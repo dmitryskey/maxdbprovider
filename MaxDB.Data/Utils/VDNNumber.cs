@@ -20,11 +20,11 @@
 
 namespace MaxDB.Data.Utils
 {
+    using MaxDB.Data.MaxDBProtocol;
     using System;
     using System.Globalization;
     using System.Numerics;
     using System.Text;
-    using MaxDB.Data.MaxDBProtocol;
 
     /// <summary>
     /// VDN Number class.

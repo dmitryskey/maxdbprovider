@@ -21,13 +21,13 @@
 
 namespace MaxDB.IntegrationTests
 {
+    using FluentAssertions;
+    using MaxDB.Data;
+    using NUnit.Framework;
     using System;
     using System.Globalization;
     using System.Text;
     using System.Threading;
-    using FluentAssertions;
-    using MaxDB.Data;
-    using NUnit.Framework;
 
     [TestFixture()]
     public class LanguageTests : BaseTest

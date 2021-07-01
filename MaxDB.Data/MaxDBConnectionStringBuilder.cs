@@ -18,6 +18,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+using MaxDB.Data.MaxDBProtocol;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,7 +27,6 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using MaxDB.Data.MaxDBProtocol;
 
 namespace MaxDB.Data
 {
@@ -86,7 +86,7 @@ namespace MaxDB.Data
                 {
                     builder.Append(';');
                 }
-                
+
                 builder.Append(keyword).Append('=').Append(value);
             }
         }

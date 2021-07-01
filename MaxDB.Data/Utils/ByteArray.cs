@@ -20,10 +20,10 @@
 
 namespace MaxDB.Data.Utils
 {
-    using System;
-    using System.Text;
     using MaxDB.Data.Interfaces.Utils;
     using MaxDB.Data.MaxDBProtocol;
+    using System;
+    using System.Text;
 
     /// <summary>
     /// Byte Array class.

@@ -35,7 +35,7 @@ namespace MaxDB.Data.Interfaces.MaxDBProtocol
         /// <param name="parseinfo">Parse infor.</param>
         void AddParseInfo(IMaxDBParseInfo parseinfo);
 
-         /// <summary>
+        /// <summary>
         /// Clear the cache.
         /// </summary>
         void Clear();

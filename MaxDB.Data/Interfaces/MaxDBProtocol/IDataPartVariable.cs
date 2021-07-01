@@ -20,7 +20,7 @@
 
 namespace MaxDB.Data.Interfaces.MaxDBProtocol
 {
-        /// <summary>
+    /// <summary>
     /// Variable Data Part interface.
     /// </summary>
     internal interface IDataPartVariable : IMaxDBDataPart

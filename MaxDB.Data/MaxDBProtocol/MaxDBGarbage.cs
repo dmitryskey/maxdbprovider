@@ -20,10 +20,10 @@
 
 namespace MaxDB.Data.MaxDBProtocol
 {
+    using MaxDB.Data.Interfaces;
+    using MaxDB.Data.Interfaces.MaxDBProtocol;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
-    using MaxDB.Data.Interfaces.MaxDBProtocol;
-    using MaxDB.Data.Interfaces;
 
     /// <summary>
     /// MaxDB GC class.

@@ -19,12 +19,12 @@
 //	along with this program; if not, write to the Free Software
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+using FluentAssertions;
+using MaxDB.Data;
+using NUnit.Framework;
 using System;
 using System.Data;
 using System.Threading;
-using FluentAssertions;
-using NUnit.Framework;
-using MaxDB.Data;
 
 namespace MaxDB.IntegrationTests
 {
@@ -66,7 +66,7 @@ namespace MaxDB.IntegrationTests
 
         [Test]
         public void TestUpdate()
-        {            
+        {
             ExecuteNonQuery("INSERT INTO Test (id, name) VALUES(10, 'Test')");
             ExecuteNonQuery("INSERT INTO Test (id,name) VALUES(11, 'Test2')");
 
@@ -110,7 +110,7 @@ namespace MaxDB.IntegrationTests
 
         [Test]
         public void TestInsertNullParameter()
-        {  
+        {
             using var cmd = new MaxDBCommand("INSERT INTO test VALUES(1, :str)", mconn);
             cmd.Parameters.Add(":str", MaxDBType.VarCharA);
             cmd.Parameters[0].Value = null;
@@ -146,7 +146,7 @@ namespace MaxDB.IntegrationTests
                 using (var cmd = new MaxDBCommand("SELECT sysdate FROM DUAL", mconn))
                 {
                     DateTime.Now.Subtract(DateTime.Parse(cmd.ExecuteScalar().ToString())).TotalSeconds
-                        .Should().BeLessThan (10, "Oracle returned bad time " + cmd.ExecuteScalar().ToString());
+                        .Should().BeLessThan(10, "Oracle returned bad time " + cmd.ExecuteScalar().ToString());
                 }
 
                 using (var cmd = new MaxDBCommand("SELECT sysdate FROM DUAL FOR UPDATE", mconn))

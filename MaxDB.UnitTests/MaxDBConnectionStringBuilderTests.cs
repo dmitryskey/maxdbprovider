@@ -21,7 +21,6 @@
 using System.Text;
 using FluentAssertions;
 using MaxDB.Data;
-using NSubstitute;
 using NUnit.Framework;
 
 namespace MaxDB.UnitTests
@@ -29,7 +28,7 @@ namespace MaxDB.UnitTests
     [TestFixture]
     public class MaxDBConnectionStringBuilderTests
     {
-        private class AppendKeyValuePairTest
+        private class AppendKeyValuePairTests
         {
             [Test]
             public void ShouldThrowException_WhenBuilderIsNull() =>
@@ -62,6 +61,34 @@ namespace MaxDB.UnitTests
                 MaxDBConnectionStringBuilder.AppendKeyValuePair(sb, "key2", "val2");
                 sb.ToString().Should().Be("key=val;key2=val2");
             }
+        }
+
+        private class ShouldSerializeTests
+        {
+            private readonly MaxDBConnectionStringBuilder builder = new("server=value");
+
+            [Test]
+            public void ShouldSerialize_AndHasValue() =>
+                builder.ShouldSerialize("DATA SOURCE").Should().BeTrue();
+
+            [Test]
+            public void ShouldSerialize_AndHasNoValue() =>
+                builder.ShouldSerialize("key").Should().BeFalse();
+
+            [Test]
+            public void ToString_ShouldReturnConnectionString() =>
+                builder.ToString().Should().Be("DATA SOURCE=value;MODE=Internal");
+
+            [Test]
+            public void TryGetValue_ShouldReturnValue()
+            {
+                builder.TryGetValue("DATA SOURCE", out object val).Should().BeTrue();
+                val.Should().Be("value");
+            }
+
+            [Test]
+            public void TryGetValue_ShouldNotReturnValue() =>
+                builder.TryGetValue("server", out _).Should().BeFalse();
         }
     }
 }

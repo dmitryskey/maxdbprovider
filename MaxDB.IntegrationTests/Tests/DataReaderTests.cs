@@ -19,12 +19,12 @@
 //	along with this program; if not, write to the Free Software
 //	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-using System;
-using System.Data;
-using System.Text;
 using FluentAssertions;
 using MaxDB.Data;
 using NUnit.Framework;
+using System;
+using System.Data;
+using System.Text;
 
 namespace MaxDB.IntegrationTests
 {
@@ -62,7 +62,7 @@ namespace MaxDB.IntegrationTests
                 using (var reader = cmd.ExecuteReader())
                 {
                     reader.Should().NotBeNull("First execution - data reader shouldn't be null");
-                    while (reader.Read());
+                    while (reader.Read()) ;
                     reader.HasRows.Should().BeTrue("First execution - data reader must has rows");
                     reader.FieldCount.Should().Be(7, "First execution - field count");
                 }
@@ -71,7 +71,7 @@ namespace MaxDB.IntegrationTests
                 using (var reader = cmd.ExecuteReader())
                 {
                     reader.Should().NotBeNull("Second execution - Data Reader shouldn't be null");
-                    while (reader.Read());
+                    while (reader.Read()) ;
                     reader.HasRows.Should().BeTrue("Second execution - Data Reader must has rows");
                     reader.FieldCount.Should().Be(7, "Second execution - field count");
                 }
@@ -302,8 +302,8 @@ namespace MaxDB.IntegrationTests
         [Test]
         public void TestTextFields()
         {
-                ExecuteNonQuery("INSERT INTO Test (id, name) VALUES (1, 'Text value')");
-                ExecuteNonQuery("INSERT INTO Test (id, name) VALUES (2, '123.456')");
+            ExecuteNonQuery("INSERT INTO Test (id, name) VALUES (1, 'Text value')");
+            ExecuteNonQuery("INSERT INTO Test (id, name) VALUES (2, '123.456')");
 
             using var cmd = new MaxDBCommand("SELECT * FROM Test", mconn);
             using var reader = cmd.ExecuteReader();

@@ -20,6 +20,7 @@
 
 namespace MaxDB.Data.Utils
 {
+    using MaxDB.Data.Interfaces.Utils;
     using System;
     using System.IO;
     using System.Net;
@@ -27,7 +28,6 @@ namespace MaxDB.Data.Utils
     using System.Net.Sockets;
     using System.Security.Authentication;
     using System.Text;
-    using MaxDB.Data.Interfaces.Utils;
 
     internal class SocketClass : IMaxDBSocket, IDisposable
     {
@@ -95,7 +95,7 @@ namespace MaxDB.Data.Utils
 
         public virtual bool ReopenSocketAfterInfoPacket => true;
 
-        public virtual bool DataAvailable => this.Client != null ? this.Client.GetStream().DataAvailable : false;
+        public virtual bool DataAvailable => this.Client != null && this.Client.GetStream().DataAvailable;
 
         protected TcpClient Client { get; set; }
 

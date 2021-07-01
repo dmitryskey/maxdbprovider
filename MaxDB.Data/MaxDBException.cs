@@ -20,6 +20,7 @@
 
 namespace MaxDB.Data
 {
+    using MaxDB.Data.MaxDBProtocol;
     using System;
     using System.Data;
     using System.Data.Common;
@@ -27,7 +28,6 @@ namespace MaxDB.Data
     using System.IO;
     using System.Runtime.Serialization;
     using System.Security.Permissions;
-    using MaxDB.Data.MaxDBProtocol;
 
     /// <summary>
     /// Summary description for MaxDBException.

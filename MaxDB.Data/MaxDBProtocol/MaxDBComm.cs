@@ -20,16 +20,16 @@
 
 namespace MaxDB.Data.MaxDBProtocol
 {
+    using MaxDB.Data.Interfaces;
+    using MaxDB.Data.Interfaces.MaxDBProtocol;
+    using MaxDB.Data.Interfaces.Utils;
+    using MaxDB.Data.Utils;
     using System;
     using System.Collections.Generic;
     using System.Data;
     using System.Globalization;
     using System.Runtime.CompilerServices;
     using System.Text;
-    using MaxDB.Data.Interfaces;
-    using MaxDB.Data.Interfaces.Utils;
-    using MaxDB.Data.Interfaces.MaxDBProtocol;
-    using MaxDB.Data.Utils;
 
     /// <summary>
     /// MaxDB communication class.
@@ -37,7 +37,7 @@ namespace MaxDB.Data.MaxDBProtocol
     internal sealed class MaxDBComm : IMaxDBComm
     {
         private static readonly object SyncObj = string.Empty;
-        private static byte[] byDefFeatureSet = { 1, 0, 2, 0, 3, 0, 4, 0, 5, 0 };
+        private static readonly byte[] byDefFeatureSet = { 1, 0, 2, 0, 3, 0, 4, 0, 5, 0 };
         private readonly MaxDBLogger logger;
         private readonly TimeSpan ts = new TimeSpan(1);
 
@@ -304,7 +304,7 @@ namespace MaxDB.Data.MaxDBProtocol
                             this.garbageParseids.EmptyCan();
                         }
 
-                        this.ExecuteSqlString(default(ConnectArgs), "ROLLBACK WORK RELEASE", GCMode.NONE);
+                        this.ExecuteSqlString(default, "ROLLBACK WORK RELEASE", GCMode.NONE);
                     }
                     catch (MaxDBException)
                     {

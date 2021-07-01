@@ -20,13 +20,13 @@
 
 namespace MaxDB.Data.MaxDBProtocol
 {
+    using MaxDB.Data.Interfaces.MaxDBProtocol;
     using System;
     using System.Collections.Generic;
     using System.Data;
     using System.Globalization;
     using System.Runtime.CompilerServices;
     using System.Text;
-    using MaxDB.Data.Interfaces.MaxDBProtocol;
 
     /// <summary>
     /// Parse information class.
@@ -37,7 +37,7 @@ namespace MaxDB.Data.MaxDBProtocol
         private const int ApplCodeByte = 10;
 
         private byte[] byMassParseId;
-        
+
         // unique identifier for the connection
         private int iSessionId;
 
@@ -532,7 +532,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 }
             }
 
-            for (; ;)
+            for (; ; )
             {
                 if ((cmdchars[i] == '.' && !quoted) || (cmdchars[i] == '(' && !quoted) ||
                     (char.IsWhiteSpace(cmdchars[i]) && !quoted) || (quoted && cmdchars[i] == '"'))
@@ -598,7 +598,7 @@ namespace MaxDB.Data.MaxDBProtocol
                         }
                     }
 
-                    for (; ;)
+                    for (; ; )
                     {
                         if ((cmdchars[i] == '.' && !quoted) || (cmdchars[i] == '(' && !quoted) ||
                             (char.IsWhiteSpace(cmdchars[i]) && !quoted) || (quoted && cmdchars[i] == '"'))

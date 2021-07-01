@@ -20,11 +20,11 @@
 
 namespace MaxDB.Data.Utils
 {
+    using MaxDB.Data.Interfaces.MaxDBProtocol;
+    using MaxDB.Data.MaxDBProtocol;
     using System;
     using System.Globalization;
     using System.Security.Cryptography;
-    using MaxDB.Data.Interfaces.MaxDBProtocol;
-    using MaxDB.Data.MaxDBProtocol;
 
     /// <summary>
     /// Cryptography class.

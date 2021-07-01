@@ -18,14 +18,14 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-using System;
-using System.Data;
-using System.Globalization;
-using System.IO;
 using MaxDB.Data.Interfaces;
 using MaxDB.Data.Interfaces.MaxDBProtocol;
 using MaxDB.Data.Interfaces.Utils;
 using MaxDB.Data.Utils;
+using System;
+using System.Data;
+using System.Globalization;
+using System.IO;
 
 namespace MaxDB.Data.MaxDBProtocol
 {

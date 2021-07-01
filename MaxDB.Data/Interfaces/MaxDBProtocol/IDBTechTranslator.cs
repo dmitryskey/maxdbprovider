@@ -20,10 +20,10 @@
 
 namespace MaxDB.Data.Interfaces.MaxDBProtocol
 {
-    using System;
-    using System.IO;
     using MaxDB.Data.Interfaces.Utils;
     using MaxDB.Data.Utils;
+    using System;
+    using System.IO;
 
     /// <summary>
     /// DB Tech translator interface.

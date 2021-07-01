@@ -20,8 +20,8 @@
 
 namespace MaxDB.Data.Interfaces.Utils
 {
-    using System;
     using MaxDB.Data.Interfaces.MaxDBProtocol;
+    using System;
 
     internal interface IPutValue : IDisposable
     {

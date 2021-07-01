@@ -18,6 +18,11 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+using MaxDB.Data.Interfaces;
+using MaxDB.Data.Interfaces.MaxDBProtocol;
+using MaxDB.Data.Interfaces.Utils;
+using MaxDB.Data.MaxDBProtocol;
+using MaxDB.Data.Utils;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -25,11 +30,6 @@ using System.Data.Common;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using MaxDB.Data.Interfaces;
-using MaxDB.Data.Interfaces.MaxDBProtocol;
-using MaxDB.Data.Interfaces.Utils;
-using MaxDB.Data.MaxDBProtocol;
-using MaxDB.Data.Utils;
 
 namespace MaxDB.Data
 {
@@ -644,7 +644,7 @@ namespace MaxDB.Data
 
                             if (param.objInputValue != DBNull.Value)
                             {
-                                strValue = param.objInputValue is char[] ? new string((char[])param.objInputValue) : (string)param.objInputValue;
+                                strValue = param.objInputValue is char[] c ? new string(c) : (string)param.objInputValue;
 
                                 sbOut.Append((strValue.Length * Consts.UnicodeWidth).ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
                                 if (strValue.Length > MaxDBLogger.DataSize)
@@ -681,11 +681,11 @@ namespace MaxDB.Data
                             sbOut.Append(this.ParseInfo.ParamInfo[i].PhysicalLength.ToString(CultureInfo.InvariantCulture).PadRight(MaxDBLogger.LenSize));
                             if (param.objInputValue != DBNull.Value)
                             {
-                                if (param.objInputValue is DateTime)
+                                if (param.objInputValue is DateTime dtValue)
                                 {
-                                    sbOut.Append(((byte[])this.FindColumnInfo(i).TransDateTimeForInput((DateTime)param.objInputValue)).Length.ToString(
+                                    sbOut.Append(((byte[])this.FindColumnInfo(i).TransDateTimeForInput(dtValue)).Length.ToString(
                                         CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize))
-                                         .Append(((DateTime)param.objInputValue).ToString(CultureInfo.InvariantCulture));
+                                         .Append(dtValue.ToString(CultureInfo.InvariantCulture));
                                 }
                                 else
                                 {
@@ -806,9 +806,9 @@ namespace MaxDB.Data
                             inputArgs[i] = this.FindColumnInfo(i).TransDateTimeForInput((DateTime)param.objInputValue);
                             break;
                         case MaxDBType.Time:
-                            if (param.objInputValue is DateTime)
+                            if (param.objInputValue is DateTime dtValue)
                             {
-                                inputArgs[i] = this.FindColumnInfo(i).TransDateTimeForInput((DateTime)param.objInputValue);
+                                inputArgs[i] = this.FindColumnInfo(i).TransDateTimeForInput(dtValue);
                             }
                             else
                             {
@@ -1007,9 +1007,9 @@ namespace MaxDB.Data
                                 {
                                     sbOut.Append(this.FindColumnInfo(i).GetBytes(this, this.baReplyMemory).Length.ToString(
                                         CultureInfo.InvariantCulture).PadRight(MaxDBLogger.InputSize));
-                                    if (param.objValue is DateTime)
+                                    if (param.objValue is DateTime dtValue)
                                     {
-                                        sbOut.Append(((DateTime)param.objValue).ToString(CultureInfo.InvariantCulture));
+                                        sbOut.Append(dtValue.ToString(CultureInfo.InvariantCulture));
                                     }
                                     else
                                     {

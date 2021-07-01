@@ -18,6 +18,11 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+using MaxDB.Data.Interfaces;
+using MaxDB.Data.Interfaces.MaxDBProtocol;
+using MaxDB.Data.Interfaces.Utils;
+using MaxDB.Data.MaxDBProtocol;
+using MaxDB.Data.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,11 +31,6 @@ using System.Data.Common;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using MaxDB.Data.Interfaces;
-using MaxDB.Data.Interfaces.MaxDBProtocol;
-using MaxDB.Data.Interfaces.Utils;
-using MaxDB.Data.MaxDBProtocol;
-using MaxDB.Data.Utils;
 
 namespace MaxDB.Data
 {
@@ -63,12 +63,11 @@ namespace MaxDB.Data
         private FetchChunk mCurrentChunk;               // The data of the last fetch operation.
         private PositionType mPositionState;            // the status of the position
         private PositionType mPositionStateOfChunk;     // The status of the current chunk.
-        private bool bEmpty;                           // is this result set totally empty
+        private bool bEmpty;                            // is this result set totally empty
 
-        private readonly List<Stream> lstOpenStreams;           // a vector of all streams that went outside.
+        private readonly List<Stream> lstOpenStreams;  // a vector of all streams that went outside.
         private int iRowsInResultSet;                  // the number of rows in this result set, or -1 if not known
         private int iLargestKnownAbsPos;               // largest known absolute position to be inside.
-        private int iModifiedKernelPos;                // contains 0 if the kernel pos is not modified or the current kernel position.
         internal int iMaxRows;                         // how many rows fetch
 
         internal MaxDBDataReader() => this.bEmpty = true;
@@ -116,14 +115,12 @@ namespace MaxDB.Data
             this.bEmpty = false;
             this.iLargestKnownAbsPos = 1;
             this.iRowsInResultSet = -1;
-            this.iModifiedKernelPos = 0;
         }
 
         private void SetCurrentChunk(FetchChunk newChunk)
         {
             this.mPositionState = this.mPositionStateOfChunk = PositionType.INSIDE;
             this.mCurrentChunk = newChunk;
-            this.iModifiedKernelPos = 0; // clear this out, until someone will de
             this.UpdateRowStatistics();
         }
 
@@ -1011,22 +1008,6 @@ namespace MaxDB.Data
         private bool FetchNextChunk()
         {
             IMaxDBReplyPacket reply;
-
-            // int usedFetchSize = this.fetchSize;
-            int usedOffset = 1;
-
-            if (this.mCurrentChunk.IsForward)
-            {
-                if (this.iModifiedKernelPos != 0)
-                {
-                    usedOffset += this.mCurrentChunk.End - this.iModifiedKernelPos;
-                }
-                else
-                {
-                    // if an update destroyed the cursor position, we have to honor this ...
-                    usedOffset += this.mCurrentChunk.End - (this.iModifiedKernelPos == 0 ? this.mCurrentChunk.KernelPos : this.iModifiedKernelPos);
-                }
-            }
 
             try
             {

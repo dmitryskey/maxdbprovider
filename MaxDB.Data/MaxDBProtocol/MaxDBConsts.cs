@@ -678,7 +678,7 @@ SqlState = 13; // c5
         public const byte StateFirstCall = 128;
 
         // tsp00_LdbChange
-        public const byte 
+        public const byte
 // tsp00_LongDescBlock = RECORD
 Descriptor = 0;   // c8
 
@@ -1247,7 +1247,7 @@ ModeOffset = 0;  // Set 1
         public const int HeaderLength = 20;
         public const int RowDef = 0;
         public const int TabHandle = 4;
-        public const int  TabHandleReserved = 4;
+        public const int TabHandleReserved = 4;
 
         public const int TabHandleRowsize = 8;
         public const int TabHandleColCount = 10;

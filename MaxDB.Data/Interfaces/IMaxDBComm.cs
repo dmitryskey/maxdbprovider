@@ -18,12 +18,12 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+using MaxDB.Data.Interfaces.MaxDBProtocol;
+using MaxDB.Data.Interfaces.Utils;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
-using MaxDB.Data.Interfaces.MaxDBProtocol;
-using MaxDB.Data.Interfaces.Utils;
 
 namespace MaxDB.Data.Interfaces
 {
@@ -75,7 +75,7 @@ namespace MaxDB.Data.Interfaces
         /// <summary>
         /// Gets connection open time.
         /// </summary>
-        DateTime OpenTime { get;}
+        DateTime OpenTime { get; }
 
         /// <summary>
         /// Gets a parsing cache.
@@ -85,7 +85,7 @@ namespace MaxDB.Data.Interfaces
         /// <summary>
         /// Gets a network socket.
         /// </summary>
-        IMaxDBSocket Socket { get;}
+        IMaxDBSocket Socket { get; }
 
         /// <summary>
         /// Gets a request packets pool.

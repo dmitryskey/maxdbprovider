@@ -20,14 +20,14 @@
 
 namespace MaxDB.Data.MaxDBProtocol
 {
+    using MaxDB.Data.Interfaces.MaxDBProtocol;
+    using MaxDB.Data.Interfaces.Utils;
+    using MaxDB.Data.Utils;
     using System;
     using System.Data;
     using System.Globalization;
     using System.IO;
     using System.Text;
-    using MaxDB.Data.Interfaces.MaxDBProtocol;
-    using MaxDB.Data.Interfaces.Utils;
-    using MaxDB.Data.Utils;
 
     /// <summary>
     /// MaxDB translators.
@@ -244,26 +244,26 @@ namespace MaxDB.Data.MaxDBProtocol
                     return result;
                 }
 
-                if (value is string)
+                if (value is string strVal)
                 {
-                    return this.TransStringForInput((string)value);
+                    return this.TransStringForInput(strVal);
                 }
 
-                if (value is BigDecimal)
+                if (value is BigDecimal bigDecVal)
                 {
-                    return this.TransStringForInput(VDNNumber.BigDecimal2PlainString((BigDecimal)value));
+                    return this.TransStringForInput(VDNNumber.BigDecimal2PlainString(bigDecVal));
                 }
 
                 if (value.GetType().IsArray)
                 {
-                    if (value is byte[])
+                    if (value is byte[] byteVal)
                     {
-                        return this.TransBytesForInput((byte[])value);
+                        return this.TransBytesForInput(byteVal);
                     }
 
-                    if (value is char[])
+                    if (value is char[] charVal)
                     {
-                        return this.TransStringForInput(new string((char[])value));
+                        return this.TransStringForInput(new string(charVal));
                     }
 
                     // cannot convert other arrays
@@ -787,7 +787,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 return arg;
             }
 
-            protected override object TransSpecificForInput(object obj) => obj is byte[] ? this.TransBytesForInput((byte[])obj) : null;
+            protected override object TransSpecificForInput(object obj) => obj is byte[] b ? this.TransBytesForInput(b) : null;
 
             public override object TransStringForInput(string val) => val != null ? this.TransBytesForInput(Encoding.Unicode.GetBytes(val)) : null;
 
@@ -1105,44 +1105,44 @@ namespace MaxDB.Data.MaxDBProtocol
                     return null;
                 }
 
-                if (obj is BigDecimal)
+                if (obj is BigDecimal bd)
                 {
-                    return this.TransBigDecimalForInput((BigDecimal)obj);
+                    return this.TransBigDecimalForInput(bd);
                 }
 
-                if (obj is bool)
+                if (obj is bool b)
                 {
-                    return this.TransBooleanForInput((bool)obj);
+                    return this.TransBooleanForInput(b);
                 }
 
-                if (obj is byte)
+                if (obj is byte by)
                 {
-                    return this.TransByteForInput((byte)obj);
+                    return this.TransByteForInput(by);
                 }
 
-                if (obj is double)
+                if (obj is double dbl)
                 {
-                    return this.TransDoubleForInput((double)obj);
+                    return this.TransDoubleForInput(dbl);
                 }
 
-                if (obj is float)
+                if (obj is float f)
                 {
-                    return this.TransFloatForInput((float)obj);
+                    return this.TransFloatForInput(f);
                 }
 
-                if (obj is int)
+                if (obj is int i)
                 {
-                    return this.TransInt32ForInput((int)obj);
+                    return this.TransInt32ForInput(i);
                 }
 
-                if (obj is long)
+                if (obj is long l)
                 {
-                    return this.TransInt64ForInput((long)obj);
+                    return this.TransInt64ForInput(l);
                 }
 
-                if (obj is short)
+                if (obj is short s)
                 {
-                    return this.TransInt16ForInput((short)obj);
+                    return this.TransInt16ForInput(s);
                 }
 
                 return null;
@@ -1241,7 +1241,7 @@ namespace MaxDB.Data.MaxDBProtocol
 
             public virtual object TransTimeForInput(TimeSpan ts) => this.TransDateTimeForInput(DateTime.MinValue.AddTicks(ts.Ticks));
 
-            protected override object TransSpecificForInput(object obj) => (obj is DateTime) ? this.TransTimeForInput((DateTime)obj) : this.TransTimeForInput((TimeSpan)obj);
+            protected override object TransSpecificForInput(object obj) => obj is DateTime dt ? this.TransTimeForInput(dt) : this.TransTimeForInput((TimeSpan)obj);
 
             public override object TransStringForInput(string val)
             {
@@ -1435,7 +1435,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 return formattedTimestamp;
             }
 
-            protected override object TransSpecificForInput(object obj) => obj is DateTime ? this.TransTimestampForInput((DateTime)obj) : null;
+            protected override object TransSpecificForInput(object obj) => obj is DateTime dt ? this.TransTimestampForInput(dt) : null;
 
             public override object TransStringForInput(string val)
             {
@@ -1589,7 +1589,7 @@ namespace MaxDB.Data.MaxDBProtocol
                 return formattedDate;
             }
 
-            protected override object TransSpecificForInput(object obj) => obj is DateTime ? this.TransDateForInput((DateTime)obj) : null;
+            protected override object TransSpecificForInput(object obj) => obj is DateTime dt ? this.TransDateForInput(dt) : null;
 
             public override object TransStringForInput(string val)
             {
@@ -1737,17 +1737,17 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 object result = null;
 
-                if (obj is byte[])
+                if (obj is byte[] b)
                 {
-                    result = this.TransBytesForInput((byte[])obj);
+                    result = this.TransBytesForInput(b);
                 }
-                else if (obj is object[])
+                else if (obj is object[] o)
                 {
-                    result = this.TransObjectArrayForInput((object[])obj);
+                    result = this.TransObjectArrayForInput(o);
                 }
-                else if (obj is DBProcStructure)
+                else if (obj is DBProcStructure s)
                 {
-                    result = this.TransObjectArrayForInput(((DBProcStructure)obj).Attributes);
+                    result = this.TransObjectArrayForInput(s.Attributes);
                 }
 
                 return result;
@@ -1985,9 +1985,9 @@ namespace MaxDB.Data.MaxDBProtocol
 
             public override void PutValue(IByteArray memory, object obj)
             {
-                if (obj is bool)
+                if (obj is bool b)
                 {
-                    memory.WriteByte((byte)((bool)obj ? 1 : 0), this.iOffset);
+                    memory.WriteByte((byte)(b ? 1 : 0), this.iOffset);
                 }
                 else
                 {
@@ -2014,14 +2014,13 @@ namespace MaxDB.Data.MaxDBProtocol
 
             public override void PutValue(IByteArray memory, object obj)
             {
-                if (obj is byte[])
+                if (obj is byte[] bArray)
                 {
-                    memory.WriteBytes((byte[])obj, this.iOffset);
+                    memory.WriteBytes(bArray, this.iOffset);
                 }
-                else if (obj is byte)
+                else if (obj is byte b)
                 {
-                    byte[] ba = new byte[1];
-                    ba[0] = (byte)obj;
+                    memory.WriteBytes(new byte[1] { b }, this.iOffset);
                 }
                 else
                 {
@@ -2056,17 +2055,17 @@ namespace MaxDB.Data.MaxDBProtocol
             public override void PutValue(IByteArray memory, object obj)
             {
                 string convStr = null;
-                if (obj is char[])
+                if (obj is char[] cArray)
                 {
-                    convStr = new string((char[])obj);
+                    convStr = new string(cArray);
                 }
-                else if (obj is string)
+                else if (obj is string s)
                 {
-                    convStr = (string)obj;
+                    convStr = s;
                 }
-                else if (obj is char)
+                else if (obj is char c)
                 {
-                    convStr = new string(new char[] { (char)obj });
+                    convStr = new string(new char[] { c });
                 }
                 else
                 {
@@ -2103,17 +2102,17 @@ namespace MaxDB.Data.MaxDBProtocol
             public override void PutValue(IByteArray memory, object obj)
             {
                 string convStr = null;
-                if (obj is char[])
+                if (obj is char[] cArray)
                 {
-                    convStr = new string((char[])obj);
+                    convStr = new string(cArray);
                 }
-                else if (obj is string)
+                else if (obj is string s)
                 {
-                    convStr = (string)obj;
+                    convStr = s;
                 }
-                else if (obj is char)
+                else if (obj is char c)
                 {
-                    convStr = new string(new char[] { (char)obj });
+                    convStr = new string(new char[] { c });
                 }
                 else
                 {
@@ -2140,17 +2139,17 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 if (obj is byte || obj is short || obj is int || obj is long
                     || obj is ushort || obj is uint || obj is ulong
-                    || (obj is float && (float)obj <= short.MaxValue && (float)obj >= short.MinValue)
-                    || (obj is double && (double)obj <= short.MaxValue && (double)obj >= short.MinValue)
-                    || (obj is decimal && (decimal)obj <= short.MaxValue && (decimal)obj >= short.MinValue))
+                    || (obj is float f && f <= short.MaxValue && f >= short.MinValue)
+                    || (obj is double d && d <= short.MaxValue && d >= short.MinValue)
+                    || (obj is decimal dc && dc <= short.MaxValue && dc >= short.MinValue))
                 {
                     memory.WriteInt16((short)obj, this.iOffset);
                 }
                 else
                 {
-                    if ((obj is float && ((float)obj > short.MaxValue || (float)obj < short.MinValue))
-                        || (obj is double && ((double)obj > short.MaxValue || (double)obj < short.MinValue))
-                        || (obj is decimal && ((decimal)obj > short.MaxValue || (decimal)obj < short.MinValue)))
+                    if ((obj is float fl && (fl > short.MaxValue || fl < short.MinValue))
+                        || (obj is double dbl && (dbl > short.MaxValue || dbl < short.MinValue))
+                        || (obj is decimal dec && (dec > short.MaxValue || dec < short.MinValue)))
                     {
                         throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCTELEMENTOVERFLOW, this.mStructElement.SqlTypeName, obj.ToString()));
                     }
@@ -2178,17 +2177,17 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 if (obj is byte || obj is short || obj is int || obj is long
                     || obj is ushort || obj is uint || obj is ulong
-                    || (obj is float && (float)obj <= int.MaxValue && (float)obj >= int.MinValue)
-                    || (obj is double && (double)obj <= int.MaxValue && (double)obj >= int.MinValue)
-                    || (obj is decimal && (decimal)obj <= int.MaxValue && (decimal)obj >= int.MinValue))
+                    || (obj is float f && f <= int.MaxValue && f >= int.MinValue)
+                    || (obj is double d && d <= int.MaxValue && d >= int.MinValue)
+                    || (obj is decimal dc && dc <= int.MaxValue && dc >= int.MinValue))
                 {
                     memory.WriteInt32((int)obj, this.iOffset);
                 }
                 else
                 {
-                    if ((obj is float && ((float)obj > int.MaxValue || (float)obj < int.MinValue))
-                        || (obj is double && ((double)obj > int.MaxValue || (double)obj < int.MinValue))
-                        || (obj is decimal && ((decimal)obj > int.MaxValue || (decimal)obj < int.MinValue)))
+                    if ((obj is float fl && (fl > int.MaxValue || fl < int.MinValue))
+                        || (obj is double dbl && (dbl > int.MaxValue || dbl < int.MinValue))
+                        || (obj is decimal dec && (dec > int.MaxValue || dec < int.MinValue)))
                     {
                         throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCTELEMENTOVERFLOW, this.mStructElement.SqlTypeName, obj.ToString()));
                     }
@@ -2216,17 +2215,17 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 if (obj is byte || obj is short || obj is int || obj is long
                     || obj is ushort || obj is uint || obj is ulong
-                    || (obj is float && (float)obj <= long.MaxValue && (float)obj >= long.MinValue)
-                    || (obj is double && (double)obj <= long.MaxValue && (double)obj >= long.MinValue)
-                    || (obj is decimal && (decimal)obj <= long.MaxValue && (decimal)obj >= long.MinValue))
+                    || (obj is float f && f <= long.MaxValue && f >= long.MinValue)
+                    || (obj is double d && d <= long.MaxValue && d >= long.MinValue)
+                    || (obj is decimal dc && dc <= long.MaxValue && dc >= long.MinValue))
                 {
                     memory.WriteInt64((long)obj, this.iOffset);
                 }
                 else
                 {
-                    if ((obj is float && ((float)obj > long.MaxValue || (float)obj < long.MinValue))
-                        || (obj is double && ((double)obj > long.MaxValue || (double)obj < long.MinValue))
-                        || (obj is decimal && ((decimal)obj > long.MaxValue || (decimal)obj < long.MinValue)))
+                    if ((obj is float fl && (fl > long.MaxValue || fl < long.MinValue))
+                        || (obj is double dbl && (dbl > long.MaxValue || dbl < long.MinValue))
+                        || (obj is decimal dec && (dec > long.MaxValue || dec < long.MinValue)))
                     {
                         throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCTELEMENTOVERFLOW, this.mStructElement.SqlTypeName, obj.ToString()));
                     }
@@ -2254,15 +2253,15 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 if (obj is byte || obj is short || obj is int || obj is long
                     || obj is ushort || obj is uint || obj is ulong || obj is float
-                    || (obj is double && (double)obj <= long.MaxValue && (double)obj >= float.MinValue)
-                    || (obj is decimal && (decimal)obj <= long.MaxValue))
+                    || (obj is double dbl && dbl <= long.MaxValue && dbl >= float.MinValue)
+                    || (obj is decimal dec && dec <= long.MaxValue))
                 {
                     memory.WriteBytes(BitConverter.GetBytes((float)obj), this.iOffset);
                 }
                 else
                 {
-                    if ((obj is double && ((double)obj > long.MaxValue || (double)obj < float.MinValue))
-                        || (obj is decimal && ((decimal)obj > long.MaxValue)))
+                    if ((obj is double d && (d > long.MaxValue || d < float.MinValue))
+                        || (obj is decimal de && de > long.MaxValue))
                     {
                         throw new MaxDBException(MaxDBMessages.Extract(MaxDBError.STRUCTELEMENTOVERFLOW, this.mStructElement.SqlTypeName, obj.ToString()));
                     }
@@ -2290,7 +2289,7 @@ namespace MaxDB.Data.MaxDBProtocol
             {
                 if (obj is byte || obj is short || obj is int || obj is long
                     || obj is ushort || obj is uint || obj is ulong || obj is float || obj is double
-                    || (obj is decimal && (decimal)obj <= long.MaxValue && (decimal)obj >= long.MinValue))
+                    || (obj is decimal dec && dec <= long.MaxValue && dec >= long.MinValue))
                 {
                     memory.WriteBytes(BitConverter.GetBytes((double)obj), this.iOffset);
                 }
@@ -2367,7 +2366,8 @@ namespace MaxDB.Data.MaxDBProtocol
                 putval.PutDescriptor(dataPart);
             }
 
-            protected override object TransSpecificForInput(object obj) => obj is Stream ? this.TransASCIIStreamForInput((Stream)obj, -1) : null;
+            protected override object TransSpecificForInput(object obj) =>
+                obj is Stream stream ? this.TransASCIIStreamForInput(stream, -1) : null;
 
             public virtual object TransASCIIStreamForInput(Stream stream, int length)
             {
@@ -2880,7 +2880,8 @@ namespace MaxDB.Data.MaxDBProtocol
             /// <returns>The Putval instance created for this one.</returns>
             public override object TransBytesForInput(byte[] val) => throw new MaxDBConversionException(MaxDBMessages.Extract(MaxDBError.BINARYPUTTOLONG));
 
-            protected override object TransSpecificForInput(object obj) => obj is Stream ? this.TransASCIIStreamForInput((Stream)obj, -1) : null;
+            protected override object TransSpecificForInput(object obj) =>
+                obj is Stream stream ? this.TransASCIIStreamForInput(stream, -1) : null;
 
             public object TransStreamForInput(Stream stream, int length) => stream != null ? new PutValue(stream, length, this.iBufferPosition) : null;
 

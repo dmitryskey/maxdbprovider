@@ -18,13 +18,13 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+using MaxDB.Data.Interfaces;
+using MaxDB.Data.MaxDBProtocol;
+using MaxDB.Data.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using MaxDB.Data.Interfaces;
-using MaxDB.Data.MaxDBProtocol;
-using MaxDB.Data.Utils;
 
 namespace MaxDB.Data
 {
@@ -106,20 +106,20 @@ namespace MaxDB.Data
 
         internal class MaxDBConnectionPoolEntry
         {
-            private readonly MaxDBConnectionStringBuilder mConnStrBuilder;
-            private readonly MaxDBLogger mLogger;
+            private readonly MaxDBConnectionStringBuilder ConnStrBuilder;
+            private readonly MaxDBLogger Logger;
             private List<IMaxDBComm> entryList = new List<IMaxDBComm>();
             private int activeCount;
 
             public MaxDBConnectionPoolEntry(MaxDBConnection conn, MaxDBLogger logger)
             {
-                this.mConnStrBuilder = conn.ConnStrBuilder;
+                this.ConnStrBuilder = conn.ConnStrBuilder;
 
-                this.entryList.Capacity = this.mConnStrBuilder.MinPoolSize;
+                this.entryList.Capacity = this.ConnStrBuilder.MinPoolSize;
 
-                this.mLogger = logger;
+                this.Logger = logger;
 
-                for (int i = 0; i < this.mConnStrBuilder.MinPoolSize; i++)
+                for (int i = 0; i < this.ConnStrBuilder.MinPoolSize; i++)
                 {
                     this.entryList.Add(this.CreateEntry());
                 }
@@ -133,7 +133,7 @@ namespace MaxDB.Data
                     foreach (var comm in this.entryList)
                     {
                         var conn = new MaxDBConnection();
-                        if ((this.mConnStrBuilder.ConnectionLifetime > 0 && comm.OpenTime.AddSeconds(this.mConnStrBuilder.ConnectionLifetime) < DateTime.Now) || !conn.Ping(comm))
+                        if ((this.ConnStrBuilder.ConnectionLifetime > 0 && comm.OpenTime.AddSeconds(this.ConnStrBuilder.ConnectionLifetime) < DateTime.Now) || !conn.Ping(comm))
                         {
                             comm.Close(true, false);
                             this.activeCount--;
@@ -146,7 +146,7 @@ namespace MaxDB.Data
 
                     this.entryList = newList;
 
-                    for (int i = this.entryList.Count; i < this.mConnStrBuilder.MinPoolSize; i++)
+                    for (int i = this.entryList.Count; i < this.ConnStrBuilder.MinPoolSize; i++)
                     {
                         this.entryList.Add(this.CreateEntry());
                     }
@@ -163,7 +163,7 @@ namespace MaxDB.Data
                             this.entryList.RemoveAt(this.entryList.Count - 1);
                         }
 
-                        if (comm == null && this.activeCount < this.mConnStrBuilder.MaxPoolSize)
+                        if (comm == null && this.activeCount < this.ConnStrBuilder.MaxPoolSize)
                         {
                             comm = this.CreateEntry();
                         }
@@ -181,9 +181,9 @@ namespace MaxDB.Data
 
             private MaxDBComm CreateEntry()
             {
-                var comm = new MaxDBComm(this.mLogger)
+                var comm = new MaxDBComm(this.Logger)
                 {
-                    ConnStrBuilder = this.mConnStrBuilder,
+                    ConnStrBuilder = this.ConnStrBuilder,
                 };
 
                 comm.Open(this.ConnectionArguments);
@@ -202,10 +202,13 @@ namespace MaxDB.Data
 
             private ConnectArgs ConnectionArguments => new ConnectArgs
             {
-                host = this.mConnStrBuilder.DataSource,
-                dbname = this.mConnStrBuilder.InitialCatalog,
-                username = this.mConnStrBuilder.UserId,
-                password = this.mConnStrBuilder.Password,
+                host = this.ConnStrBuilder.DataSource?.Split(',')[0],
+                port = this.ConnStrBuilder.DataSource != null && this.ConnStrBuilder.DataSource.Split(',').Length > 1 &&
+                    int.TryParse(ConnStrBuilder.DataSource.Split(',')[1], out _)
+                        ? int.Parse(ConnStrBuilder.DataSource.Split(',')[1]) : 0,
+                dbname = this.ConnStrBuilder.InitialCatalog,
+                username = this.ConnStrBuilder.UserId,
+                password = this.ConnStrBuilder.Password,
             };
         }
     }

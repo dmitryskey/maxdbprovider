@@ -20,10 +20,10 @@
 
 namespace MaxDB.Data.MaxDBProtocol
 {
+    using MaxDB.Data.Interfaces.MaxDBProtocol;
+    using MaxDB.Data.Interfaces.Utils;
     using System;
     using System.IO;
-    using MaxDB.Data.Interfaces.Utils;
-    using MaxDB.Data.Interfaces.MaxDBProtocol;
 
     /// <summary>
     /// DataPart class.
